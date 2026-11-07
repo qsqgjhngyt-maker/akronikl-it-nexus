@@ -21,14 +21,58 @@ export function cppProgramProgress(state={},curriculum=null){
 const defaultState=()=>({schemaVersion:1,courses:{},skills:{},migrations:{},updatedAt:null});
 const defaultPrefs=()=>({uiLocale:'ru',courseLocale:'ru',mentorLocale:'ru',sidebarCollapsed:false,focusReading:false,effectsQuality:'auto',rightRailCollapsed:false});
 function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{return fallback}}
-export function loadState(){return {...defaultState(),...parse(accountLocalStorage().getItem(STATE_KEY),defaultState())}}
-export function saveState(state){const next={...state,updatedAt:new Date().toISOString()};accountLocalStorage().setItem(STATE_KEY,JSON.stringify(next));return next}
-export function updateState(mutator){const s=loadState();return saveState(mutator(s)||s)}
+const stateSources=new WeakMap();let writerContext=null;
+const storageError=code=>Object.assign(Error(code),{code});
+const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const context=()=>{const account=verifiedAccount();if(!account||accountStorageLocked())throw storageError('VERIFIED_ACCOUNT_REQUIRED');return{account,storage:accountLocalStorage()}};
+function checkContext(c){if(accountStorageLocked()||verifiedAccount()!==c.account)throw storageError('ACCOUNT_STORAGE_CONTEXT_CHANGED');}
+function validateState(s){if(!plain(s)||s.schemaVersion!==1||!plain(s.courses))throw storageError('COURSE_STATE_INVALID');const cpp=s.courses.cpp;if(cpp!==undefined&&(!plain(cpp)||(cpp.lessons!==undefined&&!plain(cpp.lessons))||(cpp.practicums!==undefined&&!plain(cpp.practicums))))throw storageError('COURSE_STATE_INVALID');return s;}
+function readState(strict){
+ const c=writerContext||context();checkContext(c);const raw=c.storage.getItem(STATE_KEY);let value;
+ if(raw===null)value=defaultState();else try{value=JSON.parse(raw);}catch{if(strict)throw storageError('COURSE_STATE_UNREADABLE');value=null;}
+ if(strict)validateState(value);const result={...defaultState(),...(plain(value)?value:{})};
+ if(value?.schemaVersion===1&&plain(value.courses))stateSources.set(result,{raw,context:c});
+ return result;
+}
+export function loadState(){return readState(!!writerContext)}
+export function readCourseStateStrict(){return readState(true)}
+function requireWriter(){if(!writerContext){context();throw storageError('COURSE_WRITER_REQUIRED');}checkContext(writerContext);return writerContext;}
+export async function withCourseStateWriter(fn,{expectedContext=verifiedAccount()}={}){
+ if(typeof fn!=='function'||fn.constructor?.name==='AsyncFunction')throw storageError('COURSE_WRITER_SYNC_REQUIRED');
+ if(writerContext)throw storageError('COURSE_WRITER_REENTRY');const captured=context();if(captured.account!==expectedContext)throw storageError('ACCOUNT_STORAGE_CONTEXT_CHANGED');
+ const locks=globalThis.navigator?.locks;if(!locks?.request)throw storageError('COURSE_WRITER_UNAVAILABLE');
+ return locks.request('nexus:cpp-course-state:writer:'+encodeURIComponent(captured.account.accountId),{mode:'exclusive'},()=>{
+  checkContext(captured);writerContext=captured;
+  try{const result=fn();if(result&&typeof result.then==='function')throw storageError('COURSE_WRITER_SYNC_REQUIRED');checkContext(captured);return result;}
+  finally{writerContext=null;}
+ });
+}
+export function saveState(state,{expected=state}={}){
+ const c=requireWriter(),source=stateSources.get(expected);if(!source||source.context.account!==c.account)throw storageError('COURSE_STATE_SOURCE_REQUIRED');
+ checkContext(source.context);if(source.context.storage.getItem(STATE_KEY)!==source.raw)throw storageError('COURSE_STATE_CONFLICT');
+ validateState(state);const next={...state,updatedAt:new Date().toISOString()},serialized=JSON.stringify(next);checkContext(c);c.storage.setItem(STATE_KEY,serialized);
+ checkContext(c);if(c.storage.getItem(STATE_KEY)!==serialized)throw storageError('COURSE_STATE_ACK_MISSING');stateSources.set(next,{raw:serialized,context:c});return next;
+}
+export function updateState(mutator){requireWriter();const s=readCourseStateStrict(),next=mutator(s)||s;if(next&&typeof next.then==='function')throw storageError('COURSE_WRITER_SYNC_REQUIRED');return saveState(next,{expected:s})}
+export function courseWorkToken(state,kind,id){
+ const area=kind==='lesson'?'lessons':kind==='practicum'?'practicums':null;if(!area)throw storageError('COURSE_WORK_KIND_INVALID');
+ const entry=state.courses?.cpp?.[area]?.[id];if(entry!==undefined&&!plain(entry))throw storageError('COURSE_STATE_INVALID');
+ return JSON.stringify({workspace:entry?.workspace??null,code:entry?.code??null,stdin:entry?.stdin??''});
+}
+function validateWorkPatch(s,kind,id,patch,options){
+ if(Object.hasOwn(patch,'clarityDraft'))throw storageError('CLARITY_WRITER_REQUIRED');
+ if(['workspace','code','stdin'].some(k=>Object.hasOwn(patch,k))){if(typeof options.expectedWorkToken!=='string')throw storageError('COURSE_WORK_SOURCE_REQUIRED');if(courseWorkToken(s,kind,id)!==options.expectedWorkToken)throw storageError('COURSE_WORK_CONFLICT');}
+}
+export async function saveCppClarityDraft(id,draft,options={}){
+ const captured=context();if(options.expectedContext&&captured.account!==options.expectedContext)throw storageError('ACCOUNT_STORAGE_CONTEXT_CHANGED');
+ const module=await import('./cpp-clarity-r3-session.mjs');checkContext(captured);return module.writeCppClarityDraft(id,draft,{...options,expectedContext:captured.account});
+}
+
 function preferenceStore(){if(accountStorageLocked())throw Object.assign(Error('VERIFIED_ACCOUNT_REQUIRED'),{code:'VERIFIED_ACCOUNT_REQUIRED'});return verifiedAccount()?accountLocalStorage():localStorage}
 export function loadPrefs(){return {...defaultPrefs(),...parse(preferenceStore().getItem(PREFS_KEY),{})}}
 export function savePrefs(p){const n={...defaultPrefs(),...p};preferenceStore().setItem(PREFS_KEY,JSON.stringify(n));return n}
 export function storageKeys(){return{state:STATE_KEY,prefs:PREFS_KEY}}
 export function lessonState(id){return loadState().courses?.cpp?.lessons?.[id]||{}}
-export function patchLesson(id,patch){return updateState(s=>{s.courses??={};s.courses.cpp??={courseId:'cpp'};s.courses.cpp.lessons??={};s.courses.cpp.lessons[id]={...(s.courses.cpp.lessons[id]||{}),...patch};return s})}
+export function patchLesson(id,patch,options={}){return updateState(s=>{validateWorkPatch(s,'lesson',id,patch,options);s.courses??={};s.courses.cpp??={courseId:'cpp'};s.courses.cpp.lessons??={};s.courses.cpp.lessons[id]={...(s.courses.cpp.lessons[id]||{}),...patch};return s})}
 export function toggleLesson(id,value){return patchLesson(id,{completed:value})}
-export function patchPracticum(id,patch){return updateState(s=>{s.courses??={};s.courses.cpp??={courseId:'cpp'};s.courses.cpp.practicums??={};s.courses.cpp.practicums[id]={...(s.courses.cpp.practicums[id]||{}),...patch};return s})}
+export function patchPracticum(id,patch,options={}){return updateState(s=>{validateWorkPatch(s,'practicum',id,patch,options);s.courses??={};s.courses.cpp??={courseId:'cpp'};s.courses.cpp.practicums??={};s.courses.cpp.practicums[id]={...(s.courses.cpp.practicums[id]||{}),...patch};return s})}

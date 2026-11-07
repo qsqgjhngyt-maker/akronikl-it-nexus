@@ -575,5 +575,432 @@
     "completionRule": "Ручная приёмка: все обязательные случаи пройдены, не менее 8/10, без нуля за корректность и проверки; обязательна защита собственного решения. Отметка completed не является автоматической оценкой навыка.",
     "verification": "manual-output-comparison"
   },
-  "locale": "ru"
+  "locale": "ru",
+  "teachingEdition": {
+    "revision": "b4-author-v1",
+    "title": "Ассоциативные контейнеры и выбор структуры",
+    "goal": "Подсчитайте частоты слов и проверьте, меняется ли набор ключей при чтении отсутствующего слова.",
+    "prerequisites": [
+      {
+        "text": "Module 1–3: ввод с проверкой, функции, vector, структуры, ссылки и время жизни."
+      },
+      {
+        "text": "Прямые учебные зависимости: cpp.search-linear-binary, cpp.structures. Новые конструкции объясняются до задания."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Ключ, значение и уникальность",
+        "paragraphs": [
+          "Два pear занимают одну запись с частотой 2. Набор хранит факт присутствия, а словарь хранит ещё и число.",
+          "set хранит множество ключей, map связывает ключ с mapped value. В частотном индексе ключ — слово, а значение — число встреч. Повтор слова увеличивает счётчик, но не создаёт ещё один уникальный ключ. Уникальность ID записи — отдельное предметное правило: две записи с одинаковой суммой могут быть допустимы, а с одинаковым ID — нет.",
+          "Элемент map похож на пару: first — ключ, second — значение. В обходе const auto& entry позволяет читать пару без копирования; запись const auto& [word,count] даёт имена её частям через structured binding. Ключ map не меняют на месте: изменение нарушило бы организацию поиска. Чтобы сменить ключ, спроектируйте явное удаление и вставку либо другой документированный способ."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Упорядоченные map и set",
+        "paragraphs": [
+          "std::map и std::set хранят ключи в порядке comparator. find, вставка и удаление имеют логарифмические гарантии по числу элементов с учётом своего контракта. На практике применяются сбалансированные деревья, но стандартный интерфейс не требует от вас знать конкретную схему балансировки. Порядок обхода полезен, если его действительно требует отчёт.",
+          "Для уникальности ordered-контейнер использует эквивалентность по comparator: ни a не меньше b, ни b не меньше a. Она не обязана совпадать с произвольным operator== пользовательского типа. В наших примерах обычные целые и ASCII строки используют согласованный естественный порядок. Не вводите нечувствительность к регистру только в поиск, оставив вставку в другом порядке.",
+          "std::map выдаёт ключи в порядке компаратора. Для этой задачи это даёт apple перед pear даже при другом порядке ввода."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Unordered: хеш и проверка равенства",
+        "paragraphs": [
+          "unordered_map и unordered_set используют hash для организации поиска, а равенство — чтобы различать ключи. Разные ключи могут иметь одинаковый hash: это коллизия, а не разрешение потерять одну запись. Ожидаемая средняя стоимость многих операций близка к константной по числу элементов при подходящих условиях; худший случай может быть линейным.",
+          "Равные ключи должны давать одинаковый hash, а используемые правила должны оставаться согласованными. Для строки вычисление hash и сравнение читают её содержимое, поэтому O(1) по числу ключей не означает независимость от длины строки. Лабораторная ограничивает ASCII ключ двенадцатью байтами, чтобы модель ввода и сравнения оставалась явной.",
+          "Хеш помогает выбрать место поиска. Совпадение хешей всё равно оставляет сравнение самих ключей."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Чтение не должно незаметно вставлять",
+        "paragraphs": [
+          "Выражение counts[word] вставляет отсутствующий ключ со значением по умолчанию. Для int оно равно нулю, поэтому ++counts[word] удобно при подсчёте. Но проверка counts[\"missing\"]==0 изменяет контейнер, хотя внешне выглядит как чтение. Для вопроса «есть ли ключ?» используйте find и сравнение с end, сохраняя размер карты.",
+          "Разыменовывать end нельзя и здесь. Сначала проверьте результат, затем читайте second. at может сообщать отсутствие исключением; данный runtime не используется для обучения EH, поэтому лабораторная предпочитает явный find. Различайте отсутствие ключа и существующее значение 0: в общем каталоге это могут быть разные предметные состояния.",
+          "При подсчёте ++counts[word] должен создать новый ключ при первой встрече. Для вопроса о наличии используйте find."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Поиск без вставки и упорядоченный отчёт",
+        "paragraphs": [
+          "До запуска запишите, сколько записей будет после второго pear и после поиска absent."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}"
+        ],
+        "predictionInput": "pear apple pear",
+        "reveal": {
+          "title": "Открыть вывод и разбор",
+          "paragraphs": [
+            "apple:1 pear:2 — пары, 2 — размер множества ключей, 1 — признак отсутствия absent."
+          ],
+          "tables": [
+            {
+              "caption": "Что происходит по шагам",
+              "columns": [
+                "Действие",
+                "До",
+                "После",
+                "Почему"
+              ],
+              "rows": [
+                [
+                  "Прочитать pear, затем apple",
+                  "∅",
+                  "pear:1, apple:1",
+                  "Первое вхождение создаёт запись."
+                ],
+                [
+                  "Прочитать второй pear",
+                  "pear:1",
+                  "pear:2",
+                  "Меняется значение прежнего ключа."
+                ],
+                [
+                  "Найти absent",
+                  "size = 2",
+                  "size = 2, missing = 1",
+                  "find не вставляет запись. Отчёт печатает ключи по порядку."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}",
+            "stdin": "pear apple pear",
+            "output": "apple:1 pear:2 | 2 1\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Инвалидирование зависит от контейнера",
+        "paragraphs": [
+          "Перенос опыта vector на unordered_map без чтения контракта опасен. В unordered rehash меняет организацию buckets и делает итераторы недействительными; ссылки и указатели на сохранившиеся элементы при этом сохраняют действительность. Удаление делает недействительным доступ к удалённому элементу. reserve может вызвать rehash, поэтому удержанный до него итератор нельзя автоматически считать действительным.",
+          "При обходе и вставках сначала определите, может ли произойти rehash; часто проще собрать изменения отдельно и применить после прохода. Для пользовательского каталога храните устойчивый ID и заново выполняйте find вместо длительного хранения итератора. Даже правильная инвалидизация не защищает от логически устаревших данных: индекс должен соответствовать текущей версии набора.",
+          "При росте unordered_map старый итератор может перестать действовать из-за rehash. Если нужен следующий поиск, получите итератор заново."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Коллизии и проверочная заготовка",
+        "paragraphs": [
+          "В разобранном примере готовый SameHash возвращает 0 для каждого int. Все ключи коллидируют, но проверка равенства по-прежнему отличает их. Синтаксис operator()(int) const делает объект вызываемым: контейнер получает результат при обращении к hash. Здесь достаточно прочитать эту заготовку; проектирование шаблонных hash библиотек относится к более позднему модулю.",
+          "Проверьте вставку, поиск всех ключей и удаление одного из них. Такой опыт показывает, что коллизия не равна потере данных, но не измеряет production-производительность и не делает плохой hash пригодным к использованию. Обычный hash контейнера не следует путать с криптографическим примитивом или обещанием защиты от специально подобранного ввода.",
+          "В примере SameHash все хеши совпадают. Сумма 1240 показывает, что нашлись значения для всех 16 разных ключей."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Коллизия не означает потерю ключа",
+        "paragraphs": [
+          "Предскажите размер после удаления ключа 7. Коллизии затрагивают поиск, но ключи остаются разными."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <unordered_map>\n#include <cstddef>\nstruct SameHash {\n    std::size_t operator()(int) const { return 0; }\n};\nint main() {\n    std::unordered_map<int, int, SameHash> m;\n    for (int n = 0; n < 16; ++n) {\n        m.emplace(n, n * n);\n    }\n    int sum = 0;\n    for (int n = 0; n < 16; ++n) {\n        auto p = m.find(n);\n        if (p == m.end() || p->second != n * n) {\n            return 2;\n        }\n        sum += p->second;\n    }\n    m.erase(7);\n    std::cout << sum << ' ' << m.size() << ' ' << (m.find(7) == m.end())\n              << '\\n';\n}",
+          "stdin": "",
+          "output": "1240 15 1\n"
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Детерминированный отчёт и сравнение каталогов",
+        "paragraphs": [
+          "Не ожидайте от unordered стабильного порядка обхода между библиотеками, запусками или после rehash. Для отчёта скопируйте пары в vector и отсортируйте по ключу либо используйте ordered map. Хранение, поиск и представление могут использовать разные структуры; это явная архитектурная граница, а не лишнее дублирование ради красивого stdout.",
+          "В накопительном практикуме сравниваются два каталога по объединению ключей. Для каждого ID различайте только старую запись, только новую и обе; в последнем случае сравнивайте значения. find не создаёт отсутствующую сторону. Полностью проверьте оба входа до отчёта, иначе повреждённый второй каталог может породить ложные массовые удаления.",
+          "Для отчёта передайте пары в упорядоченную карту или отсортируйте отдельный список ключей."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Выбор по нагрузке и независимые проверки",
+        "paragraphs": [
+          "Составьте таблицу операций: число вставок, точечных запросов, диапазонных запросов и отчётов в порядке ключа. Для небольшого неизменного набора отсортированный vector может быть разумнее дерева или hash; для частых изменений изменится компромисс. Учитывайте подготовку, память, длину ключа и гарантии худшего случая, а не только рекламную запись O(1).",
+          "Проверьте пустоту, повтор одного ключа, несколько ключей в разном порядке, недопустимое слово и дубликат ID. Сопоставьте частоты с независимым проходом по исходному списку. Сохраните отчёт в явном порядке. Следующая тема даст воспроизводимый генератор тестовых данных и объяснит, почему seed сам по себе ещё не обеспечивает переносимость полного эксперимента.",
+          "Смените порядок слов во вводе. Частоты и строки отчёта должны остаться прежними."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь ваша задача",
+        "paragraphs": [
+          "В лабораторной проверяйте формат слов до вывода. Отчёт нужен построчно и без служебного признака из демонстрации.",
+          "Вручную посчитайте b a b c a b."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Что выведет этот же код для pear pear apple pear?",
+        "options": [
+          "apple:1 pear:3 | 2 1\n",
+          "pear:3 apple:1 | 2 1",
+          "absent:0 apple:1 pear:3 | 3 0"
+        ],
+        "correct": 0,
+        "feedback": "Третье pear увеличивает старую частоту, find не вставляет absent, а std::map печатает apple первым.",
+        "code": {
+          "source": "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}",
+          "stdin": "pear pear apple pear"
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}",
+          "stdin": "pear pear apple pear",
+          "expected": "apple:1 pear:3 | 2 1\n"
+        },
+        "recall": "example-1"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Как искать без вставки? ",
+        "options": [
+          "find",
+          "operator[]",
+          "clear"
+        ],
+        "correct": 0,
+        "feedback": "find не создаёт отсутствующий ключ.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Одинаковый хеш означает…",
+        "options": [
+          "Одинаковый ключ",
+          "Возможную коллизию",
+          "Обязательную ошибку контейнера"
+        ],
+        "correct": 1,
+        "feedback": "Эквивалентность проверяется отдельно.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Для детерминированного отчёта из unordered_map…",
+        "options": [
+          "Полагаться на seed",
+          "Увеличить bucket_count",
+          "Отсортировать ключи или пары"
+        ],
+        "correct": 2,
+        "feedback": "Порядок обхода не является переносимым контрактом.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Худший поиск unordered_map? ",
+        "options": [
+          "Линейный по числу элементов",
+          "Всегда константный",
+          "Всегда логарифмический"
+        ],
+        "correct": 0,
+        "feedback": "Коллизии могут сосредоточить элементы в одном бакете.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "rehash сохраняет…",
+        "options": [
+          "Все прежние итераторы",
+          "Ссылки на оставшиеся элементы",
+          "Прежний порядок обхода"
+        ],
+        "correct": 1,
+        "feedback": "Итераторы инвалидируются, ссылки и указатели на элементы сохраняются.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Что изменится, если заменить поиск absent на чтение counts[\"absent\"]?",
+        "feedback": "Чтение через [] вставит absent со значением 0. Размер станет 3, проверка размера завершит демонстрацию с ошибкой.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Лабораторная: Ассоциативные контейнеры и выбор структуры",
+      "task": "Прочитайте n в 0…64 и ровно n слов из a…z длиной 1…12. Подсчитайте частоты и выведите word count по одному на строку в лексическом порядке. При n=0 — empty. При нарушении границ, неверном или лишнем вводе — только invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <algorithm>\n#include <map>\n#include <string>\n#include <vector>\n\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 64) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<std::string> words;\n    for (int i = 0; i < n; ++i) {\n        std::string word;\n        if (!(std::cin >> word) || word.size() > 12 ||\n            !std::all_of(word.begin(), word.end(),\n                         [](char ch) { return ch >= 'a' && ch <= 'z'; })) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        words.push_back(word);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    if (words.empty()) {\n        std::cout << \"empty\\n\";\n        return 0;\n    }\n    std::map<std::string, int> counts;\n    // TODO: Добавьте в словарь все слова и увеличивайте частоту при каждом\n    // вхождении.\n    for (const auto &[word, count] : counts) {\n        std::cout << word << ' ' << count << '\\n';\n    }\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "3 pear apple pear",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Случай 1",
+          "input": "0",
+          "output": "empty\n"
+        },
+        {
+          "label": "Случай 2",
+          "input": "1 pear",
+          "output": "pear 1\n"
+        },
+        {
+          "label": "Первый содержательный запуск",
+          "input": "3 pear apple pear",
+          "output": "apple 1\npear 2\n"
+        },
+        {
+          "label": "Случай 4",
+          "input": "6 b a b c a b",
+          "output": "a 2\nb 3\nc 1\n"
+        },
+        {
+          "label": "Случай 5",
+          "input": "64 same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same",
+          "output": "same 64\n"
+        },
+        {
+          "label": "Ошибка ввода · 6",
+          "input": "65",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 7",
+          "input": "-1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 8",
+          "input": "1 Upper",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 9",
+          "input": "1 abc123",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 10",
+          "input": "1 abcdefghijklm",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 11",
+          "input": "2 one",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 12",
+          "input": "0 tail",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 13",
+          "input": "1 a-b",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "В лексическом порядке a 2, b 3, c 1.",
+        "Строки apple 1 и pear 2.",
+        "Пустой набор даёт empty, оба других ввода дают invalid.",
+        "Добавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче."
+      ],
+      "hint": "Чтение через [] вставит absent со значением 0. Размер станет 3, проверка размера завершит демонстрацию с ошибкой.",
+      "steps": [
+        {
+          "where": "До запуска",
+          "action": "Вручную посчитайте b a b c a b.",
+          "why": "Повторы проверяют, что значение растёт у прежнего ключа.",
+          "expected": "В лексическом порядке a 2, b 3, c 1."
+        },
+        {
+          "where": "В моей программе",
+          "action": "Реализуйте счётчик и запустите 3 pear apple pear.",
+          "why": "Первое во вводе слово должно оказаться вторым в отчёте.",
+          "expected": "Строки apple 1 и pear 2."
+        },
+        {
+          "where": "После запуска",
+          "action": "Сравните 0, 1 Upper и 0 tail.",
+          "why": "Пустой допустимый набор отличается от отказа.",
+          "expected": "Пустой набор даёт empty, оба других ввода дают invalid."
+        }
+      ],
+      "recall": "example-1",
+      "starterRevision": "b4-starter-v1",
+      "starterObservation": {
+        "case": 2,
+        "stdout": "",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-unordered",
+        "title": "C++20 [unord.req]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[unord.req]",
+        "language": "English",
+        "purpose": "Сверьте требования C++20 в [unord.req] после работы с примерами урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/unord.req"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-2",
+      "3": "example-1",
+      "4": "example-2",
+      "5": "concept-7"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Ключ, значение и уникальность",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Упорядоченные map и set",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Unordered: хеш и проверка равенства",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Чтение не должно незаметно вставлять",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Инвалидирование зависит от контейнера",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Коллизии и проверочная заготовка",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Детерминированный отчёт и сравнение каталогов",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Выбор по нагрузке и независимые проверки",
+        "anchor": "concept-8"
+      }
+    ]
+  }
 }

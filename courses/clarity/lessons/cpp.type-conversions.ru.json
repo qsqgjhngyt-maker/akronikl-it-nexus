@@ -1,0 +1,493 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b1-author-v1",
+  "id": "cpp.type-conversions",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "Программирование на C++",
+  "module": "Основы C++",
+  "locale": "ru",
+  "title": "Преобразования типов: исправить вычисление до потери значения",
+  "goal": "Выберите место преобразования, распознайте смешение знаковых типов и объясните, чего static_cast не проверяет.",
+  "prerequisites": [
+    {
+      "text": "Целое деление, диапазоны, long long и промежуточные значения."
+    },
+    {
+      "text": "bool и простые сравнения из лабораторной; защитный if даётся готовым."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "До деления или после него",
+      "paragraphs": [
+        "Семь баллов нужно разделить между двумя участниками. Вы уже знаете, что целое деление потеряет половину. Кажется, достаточно написать static_cast<double>, но важно, что именно стоит в его скобках.",
+        "В одном выражении преобразуется готовое частное, в другом — числитель до деления. Предскажите оба результата и назовите типы операндов в момент выполнения /."
+      ],
+      "prediction": [
+        "#include <iostream>\n\nint main() {\n    int total{7};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n"
+      ],
+      "reveal": {
+        "title": "Сверить прогноз и разобрать шаги",
+        "paragraphs": [
+          "В total / count при двух int выполняется целое деление. Сохранение результата в double позже не возвращает дробную часть. static_cast<double>(total / count) сначала получает целое 3, затем double 3.0; static_cast<double>(total) / count сначала делает операнд вещественным и даёт 3.5 для 7 и 2.",
+          "В static_cast<double>(total) ключевое слово static_cast задаёт явное преобразование, <double> указывает целевой тип, круглые скобки содержат исходное выражение. Это оператор языка, а не написанная нами функция. Используйте его, чтобы показать обоснованное намерение; лишние casts способны лишь скрыть смысл.",
+          "В выводе ниже первый double показан как 3, без .0: обычный cout не обязан печатать дробную часть целого значения. Измените total на 9, оставив count=2: раннее преобразование сохранит 4.5, позднее даст 4."
+        ],
+        "tables": [
+          {
+            "caption": "Проследим трудный шаг",
+            "columns": [
+              "Выражение",
+              "Что делает /",
+              "Результат"
+            ],
+            "rows": [
+              [
+                "static_cast<double>(7 / 2)",
+                "int / int → 3",
+                "double 3.0"
+              ],
+              [
+                "static_cast<double>(7) / 2",
+                "double / double → 3.5",
+                "double 3.5"
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int total{7};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "3 3.5\n"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Как операнды получают общий тип",
+      "paragraphs": [
+        "Перед многими целочисленными операциями bool, char и short проходят integral promotions: обычно в int, если тот представляет все значения исходного типа, иначе в unsigned int. Поэтому нельзя считать, что сумма двух char обязательно имеет тип char. Результат определяется правилами типов, не длиной напечатанного числа.",
+        "После promotions арифметические операции выбирают общий тип. В наших примерах с double и int целый операнд преобразуется в double. Для целых одного знака меньший ранг переходит к большему; смешанные знаки требуют дополнительных правил. Ранг — порядок типов по правилам языка, а не просто sizeof. Полную таблицу не заменяйте догадкой «большой размер всегда побеждает»."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Почему −1 может оказаться больше 1u",
+      "paragraphs": [
+        "В выбранном примере debt имеет тип int, credit — unsigned int. Их ранги соответствуют, поэтому int преобразуется в unsigned int перед сравнением. −1 становится максимальным значением unsigned int, и сравнение с 1 даёт false. Это определённое правило преобразования, а не ошибка компилятора.",
+        "Для unsigned результат преобразования целого согласован по модулю 2^N, где N — разрядность целевого типа. Не фиксируем N=32 как универсальное значение. В примере сравниваем с numeric_limits<unsigned int>::max(), а не печатаем одно магическое максимальное число. Исправление предметного сравнения требует учесть допустимые знаки и диапазоны, а не бездумно привести обе стороны к unsigned."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <limits>\n\nint main() {\n    int debt{-1};\n    unsigned int credit{1};\n    std::cout << (debt < credit) << '\\n';\n    std::cout << (static_cast<unsigned int>(debt) == std::numeric_limits<unsigned int>::max()) << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "0\n1\n"
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "Преобразование не проверяет смысл данных",
+      "paragraphs": [
+        "Преобразование double 3.75 в int даёт 3, а −3.75 — −3: дробная часть отбрасывается к нулю. Это не округление до ближайшего. Выполняем только значения, у которых усечённый результат представим. Выход double → int за диапазон не является безопасным способом проверить «что будет».",
+        "Перед сужением определите диапазон назначения и правила задачи. Если значение обязано быть целым количеством, потеря дроби может быть ошибкой даже внутри диапазона. static_cast не отклоняет такую предметную ошибку автоматически. Скобки int count{2.5}; помогают обнаружить определённое narrowing при сборке; cast нельзя добавлять только ради исчезновения диагностики."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    double positive{3.75};\n    double negative{-3.75};\n    std::cout << static_cast<int>(positive) << ' ' << static_cast<int>(negative) << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "3 -3\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Точная сумма и приближённое среднее",
+      "paragraphs": [
+        "Расширение перед умножением из предыдущей темы и преобразование перед делением решают одну архитектурную задачу: выбрать семантику операции до её выполнения. Приведение готового переполненного или усечённого результата не исправляет прошлое.",
+        "Для прикладных расчётов сохраняйте точную целую сумму в минимальных единицах, а приближённое среднее вычисляйте отдельно. Так отчёт различает исходное точное значение и производное приближение. Если нужна точность до последнего цента, формат и правило округления должны стать явной частью контракта, а не следствием случайного cast."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Проверяем случаи, в которых дробь важна",
+      "paragraphs": [
+        "Для среднего проверьте 7/2, 0/2, 10/4 и отказ при нулевом количестве. Первый и третий случаи обнаруживают раннее целое деление; ноль сам по себе его не замечает. Сначала запишите ожидаемые 3.5, 0 и 2.5, затем выполните программу.",
+        "Практикум B объединяет именованные этапы, границы целого произведения и вещественное среднее. Значения тестов подобраны для простого вывода; полный договор форматирования введём в теме 12. Разбор в этом уроке сравнивает два конкретных пути деления и не исполняет произвольные преобразования C++."
+      ]
+    },
+    {
+      "id": "diagnose-narrowing-fraction",
+      "title": "Намеренно: narrowing без разрешения",
+      "paragraphs": [
+        "Это отдельная неисправная программа для разбора диагностики. Она не заменяет вашу работу. Сначала найдите причину, затем сравните отказ сборки с исправленным вариантом.",
+        "Не обходите отказ без объяснения требуемой точности."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int count{3.5};\n    std::cout << count << '\\n';\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      },
+      "deep": {
+        "title": "Почему размер типа не заменяет правила преобразований?",
+        "text": "Размер в байтах — свойство представления. Ранг и правила преобразования задают, какой тип участвует в выражении. int и unsigned int могут иметь один размер, но отрицательное значение при переходе к unsigned меняет числовой смысл. Поэтому сначала определяют допустимые значения задачи, а затем выбирают общий тип.",
+        "sourceId": "cpp20-expr.static.cast"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь решите другую задачу",
+      "paragraphs": [
+        "Исправьте вычисление среднего, не меняя типы исходных данных. Защитный if уже дан: объясните его границы до запуска. В самостоятельной задаче разделите 11 баллов между 4 участниками. Сохраните исходные int, проверьте диапазоны до операции и получите average=2.75. Объясните, почему преобразование после / дало бы другое число.",
+        "Откройте «Практику». Заготовка и ваш текущий код находятся отдельно от примеров. Запишите прогноз до запуска; после проверки объясните результат своими словами."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "При int total{9}; int count{2}; что напечатают late и early из примера?",
+      "options": [
+        "4 4.5\n",
+        "4.5 4.5\n",
+        "4 4\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Да: только early меняет тип до деления.",
+        "У late целое частное уже вычислено до static_cast. Потерянная половина не возвращается.",
+        "У early числитель уже double, поэтому второе деление вещественное."
+      ],
+      "recall": "concept-1",
+      "code": "#include <iostream>\n\nint main() {\n    int total{9};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+      "execution": {
+        "source": "#include <iostream>\n\nint main() {\n    int total{9};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "4 4.5\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int total{9};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "Как получить 3.5 при total=7 и count=2?",
+      "options": [
+        "static_cast<double>(total / count)",
+        "static_cast<double>(total) / count",
+        "total / count"
+      ],
+      "correct": 1,
+      "feedback": "Операнд должен стать double до целого деления.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "static_cast<int>(3.75) округляет к ближайшему?",
+      "options": [
+        "Да, 4",
+        "Нет, усечение к нулю даёт 3",
+        "Всегда ошибка сборки"
+      ],
+      "correct": 1,
+      "feedback": "Для представимого результата дробная часть отбрасывается.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "Что следует сделать перед сужением?",
+      "options": [
+        "Установить диапазон и допустимость потери точности",
+        "Только убрать предупреждения",
+        "Проверить цвет подсветки"
+      ],
+      "correct": 0,
+      "feedback": "Cast выражает намерение, но сам по себе не проверяет предметный контракт.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "В самостоятельной задаче разделите 11 баллов между 4 участниками. Сохраните исходные int, проверьте диапазоны до операции и получите average=2.75. Объясните, почему преобразование после / дало бы другое число.",
+      "feedback": "Объясните словами, какой объект или промежуточное значение меняется. Совпадение stdout само по себе не заменяет это объяснение.",
+      "recall": "concept-1"
+    }
+  ],
+  "practice": {
+    "title": "Среднее без ранней потери дроби",
+    "task": "Исправьте вычисление среднего, не меняя типы исходных данных. Защитный if уже дан: объясните его границы до запуска. В самостоятельной задаче разделите 11 баллов между 4 участниками. Сохраните исходные int, проверьте диапазоны до операции и получите average=2.75. Объясните, почему преобразование после / дало бы другое число.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    int totalPoints{11};\n    int participantCount{4};\n    // Protective scaffold: domain checks precede the division.\n    if (totalPoints < 0 || totalPoints > 1000 || participantCount < 1 || participantCount > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    double average = totalPoints / participantCount;\n    std::cout << \"average=\" << average << '\\n';\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "",
+    "returnAnchor": "concept-1",
+    "recall": "concept-1",
+    "cases": [
+      {
+        "label": "Основное новое условие",
+        "input": "",
+        "output": "average=2.75\n"
+      }
+    ],
+    "criteria": [
+      "Исходные значения хранятся точно как целые.",
+      "Деление выполняется после проверки количества.",
+      "Указан момент появления double.",
+      "Есть реальный до/после протокол.",
+      "Объясните словами, какой объект или промежуточное значение меняется. Совпадение stdout само по себе не заменяет это объяснение."
+    ],
+    "hint": "В самостоятельной задаче разделите 11 баллов между 4 участниками. Сохраните исходные int, проверьте диапазоны до операции и получите average=2.75. Объясните, почему преобразование после / дало бы другое число.",
+    "steps": [
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Сохраните исходный неверный результат 3.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Определите тип деления до исправления.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Перенесите преобразование на операнд.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Проверьте кратный, некратный, нулевой итог и нулевое количество.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Неявное преобразование",
+      "definition": "Переход к требуемому типу без отдельной записи cast в исходнике."
+    },
+    {
+      "term": "Integral promotion",
+      "definition": "Повышение малого целочисленного типа до int либо unsigned int по представимости его значений."
+    },
+    {
+      "term": "static_cast<T>(value)",
+      "definition": "Явная запись разрешённого преобразования к T, не универсальная проверка безопасности."
+    },
+    {
+      "term": "Сужение",
+      "definition": "Преобразование с риском потери диапазона или точности; list-initialization запрещает определённые такие случаи."
+    },
+    {
+      "term": "Unsigned modulo",
+      "definition": "Правило значений беззнакового типа по модулю 2 в степени числа его разрядов."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CONVERSIONS",
+    "CPP20-ARITH-CONV",
+    "CPP20-INTEGRAL-CONV",
+    "CPP20-STATIC-CAST",
+    "CPP20-INIT",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.type-conversions",
+    "locale": "ru",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-CONVERSIONS",
+      "CPP20-ARITH-CONV",
+      "CPP20-INTEGRAL-CONV",
+      "CPP20-STATIC-CAST",
+      "CPP20-INIT",
+      "CPP-GUIDELINES"
+    ],
+    "blockPracticum": {
+      "title": "Практикум B: безопасные выражения и преобразования",
+      "label": "НАКОПИТЕЛЬНЫЙ ПРАКТИКУМ B",
+      "starterLabel": "Заготовка: начните с собственного решения",
+      "challenge": "Постройте отчёт о товарах, доставке и средней стоимости на предмет. Сумма точная в центах, среднее отдельное вещественное.",
+      "readiness": "Темы 5–8: состояние, промежуточные имена, целый диапазон, преобразование до деления.",
+      "skills": [
+        {
+          "lessonId": "cpp.variables-scope",
+          "title": "Переменные, блоки и время жизни: журнал состояний"
+        },
+        {
+          "lessonId": "cpp.expressions-operators-blocks",
+          "title": "Выражения и операторы: группировка, значение и понятные шаги"
+        },
+        {
+          "lessonId": "cpp.arithmetic-assignment",
+          "title": "Арифметика и присваивание: частное, остаток и безопасные промежуточные значения"
+        },
+        {
+          "lessonId": "cpp.type-conversions",
+          "title": "Преобразования типов: намерение, потеря информации и проверка диапазона"
+        }
+      ],
+      "requirements": [
+        "1…1000 предметов, цена и доставка 0…100000 центов.",
+        "Используйте long long до умножения, максимум суммы 100100000.",
+        "Сначала товары, затем разовая доставка, затем среднее с ранним double.",
+        "Некорректные фиксированные параметры дают invalid до расчёта."
+      ],
+      "milestones": [
+        "Запишите формулу и диапазон.",
+        "Разделите этапы на именованные результаты.",
+        "Проверьте три корректных и один ошибочный вариант.",
+        "Сохраните журнал и объяснение преобразования."
+      ],
+      "walkthrough": [
+        "Для 3 × 125 + 50 получаем 425 центов, среднее при обычном выводе 141.667. Это приближённое отображение, не договор денежного округления.",
+        "Варианты с 2 и 1 предметом дают простые средние 150 и 175. Они помогают проверить формулу независимо."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    long long totalCents = itemCount * unitPriceCents + deliveryCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+      "starterExpectedStdout": "total_cents=425\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    if (itemCount < 1 || itemCount > 1000 || unitPriceCents < 0 || unitPriceCents > 100000 || deliveryCents < 0 || deliveryCents > 100000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long goodsCents = itemCount * unitPriceCents;\n    long long totalCents = goodsCents + deliveryCents;\n    double averageCents = static_cast<double>(totalCents) / itemCount;\n    std::cout << \"goods_cents=\" << goodsCents << '\\n';\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    std::cout << \"average_cents=\" << averageCents << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "goods_cents=375\ntotal_cents=425\naverage_cents=141.667\n"
+        }
+      ],
+      "verificationVariants": [
+        {
+          "id": "two-items",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{2};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "goods_cents=250\ntotal_cents=300\naverage_cents=150\n"
+        },
+        {
+          "id": "one-item",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{1};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "goods_cents=125\ntotal_cents=175\naverage_cents=175\n"
+        },
+        {
+          "id": "none-rejected",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{0};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ],
+      "artifacts": [
+        "Исходник и контракт единиц.",
+        "Таблица типов и границ промежуточных выражений.",
+        "Четыре реальных запуска.",
+        "Один объяснённый исправленный дефект."
+      ],
+      "rubric": [
+        {
+          "criterion": "Корректность формулы",
+          "complete": "Доставка добавлена один раз.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Состояние и имена",
+          "complete": "Все этапы имеют понятные имена.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Безопасность",
+          "complete": "Проверки предшествуют операции, long long выбран заранее.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Преобразование",
+          "complete": "Среднее получает double до деления.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Проверки",
+          "complete": "Все четыре запуска и ожидания сохранены.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        }
+      ],
+      "completionRule": "Самопроверка: не менее 8/10, без нуля за корректность, безопасность и проверки. Это ручная рубрика, а не автоматический балл или блокировка следующего урока.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\type-conversions.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-expr.static.cast",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.static.cast]",
+      "language": "English",
+      "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.static.cast"
+    },
+    {
+      "id": "cpp20-conv",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[conv]",
+      "language": "English",
+      "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/conv"
+    },
+    {
+      "id": "cpp20-expr.arith.conv",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.arith.conv]",
+      "language": "English",
+      "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.arith.conv"
+    }
+  ],
+  "authored": true
+}

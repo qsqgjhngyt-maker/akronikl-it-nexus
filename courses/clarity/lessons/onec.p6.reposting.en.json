@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p6.reposting",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Registers and accounting models",
+  "locale": "en",
+  "title": "Reposting:75 stays 75, changes yield 90 and unposting preserves the other recorder",
+  "goal": "Verify repeat/replacement/unposting without duplication or losing another recorder.",
+  "prerequisites": [
+    {
+      "text": "onec.p5; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "A repeatable transformation",
+      "paragraphs": [
+        "Posting transforms the current document into a movement set. Identical input should yield an equivalent set regardless of repetition. Compare dimensions, resources, periods and recorder—not merely one total. Opposite duplicates can cancel numerically while leaving invalid records.",
+        "Begin with own 30/45 requests totaling 75. Reposting the first is not another 30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Native worked example",
+      "paragraphs": [
+        "Excerpt only; the complete source below belongs to the stated server common module."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Первая.Записать(РежимЗаписиДокумента.Проведение);\nПервая.Записать(РежимЗаписиДокумента.Проведение);\n// Verify every stage, not only the final state.",
+        "output": "Five True; own-set75 → 75 → 90 → 45 → 0."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Two documents",
+              "30/45",
+              "75."
+            ],
+            [
+              "Repeat",
+              "First unchanged",
+              "75."
+            ],
+            [
+              "Replace",
+              "First 45",
+              "90."
+            ],
+            [
+              "Unpost",
+              "First then second",
+              "45 then 0; other sets retained."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "A change replaces the prior effect",
+      "paragraphs": [
+        "Changing 30 → 45 replaces the recorder’s old effect under the agreed policy. Appending 45 gives 75 incorrectly. For multiline documents, test a removed line: its old movement must disappear. Define behavior for an empty document too.",
+        "Changing the first 30 → 45 replaces its effect, giving 90 rather than 120. Unposting it leaves the second 45; unposting the second leaves 0 for this own customer, without clearing other customers."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Failures must not mix versions",
+      "paragraphs": [
+        "Failure between removing old and writing new records must not leave a partial effect. Inject failure only in a new copy and test atomicity. Reread document/register in a fresh session. Transactions and locks address different concerns: one change’s consistency versus interacting concurrent changes.",
+        "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Discriminating semantic control",
+      "paragraphs": [
+        "A compilable wrong value is not a syntax-only test."
+      ],
+      "code": {
+        "language": "text",
+        "source": "In another copy use 31/45 rather than 30/45; initial 75 must detect 76.",
+        "output": "The independent original expectation fails; preserve the original copy."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Mutation",
+              "In another copy use 31/45 rather than 30/45; initial 75 must detect 76.",
+              "Only another own copy."
+            ],
+            [
+              "Check",
+              "Five True; own-set75 → 75 → 90 → 45 → 0.",
+              "Observe the failed claim."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Use a matrix beyond the happy path",
+      "paragraphs": [
+        "Use post 30, repeat 30, change 45, remove a line, reverse, repost. Record counts and movement identities at every step. Include another recorder to expose accidental deletion of someone else’s set. Preserve both the current invariant and independent earlier documents.",
+        "A31/45 negative set gives 76 despite the same count. The initial 75 expectation must detect it. Specify a separate injected posting failure to check atomic old/new state; concurrent posting needs suitable separate sessions and is not established by one file-base experiment."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "A helper definition is duplicated inside the startup handler. Keep one module-level helper and only its call inside startup.",
+        "Whole-register totals replace the own-key control. Filter by the actual customer/service/recorder reference for this experiment.",
+        "A runnable result is treated as proof of all accounting/security behavior. Record each checked mechanism and retain untested concurrency/edition limits."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Repeating first 30 at total 75 yields",
+      "options": [
+        "75",
+        "105",
+        "0"
+      ],
+      "correct": 0,
+      "feedback": "Begin with own 30/45 requests totaling 75. Reposting the first is not another 30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Changing 30 → 45 with another 45 yields",
+      "options": [
+        "120",
+        "90",
+        "75"
+      ],
+      "correct": 1,
+      "feedback": "Changing the first 30 → 45 replaces its effect, giving 90 rather than 120. Unposting it leaves the second 45; unposting the second leaves 0 for this own customer, without clearing other customers."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Unposting the first retains",
+      "options": [
+        "Every register empty",
+        "A deleted document",
+        "The second own recorder’s45"
+      ],
+      "correct": 2,
+      "feedback": "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Specify injected failure and separate concurrency testing without a server-PASS claim.",
+      "feedback": "Atomicity/concurrency have separate checks/environments."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Reposting:75 stays 75, changes yield 90 and unposting preserves the other recorder",
+    "task": "Specify injected failure and separate concurrency testing without a server-PASS claim.",
+    "environment": "Own synthetic infobase and original metadata; no real accounting, mandatory Studio or Sandbox.",
+    "externalRoute": "Installed official 1C Designer → server module → managed application",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытПовторногоПроведения() Экспорт\n    Набор = НовыйНаборРегистров(30,45); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\"); Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение); ПервыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.Проведение); ПовторныйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.ДлительностьМинут = 45; Первая.Записать(РежимЗаписиДокумента.Проведение); НовыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ЧужойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Вторая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ПустойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Возврат Новый Структура(\"НачалоВерно,ПовторНеУдвоил,ЗаменаВерна,ДругойСохранен,СвоиОтменены,Клиент\",ПервыйИтог = 75,ПовторныйИтог = 75,НовыйИтог = 90,ЧужойИтог = 45,ПустойИтог = 0,Набор.Клиент);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "copy",
+        "title": "Identify the own experiment copy",
+        "where": "Own-copy Designer",
+        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+        "why": "Keep prior work independent.",
+        "expected": "Own copy/path and provenance identified.",
+        "troubleshooting": "Check actual directories rather than list-entry names.",
+        "before": "P5 work, backup and exact own-copy path retained."
+      },
+      {
+        "id": "metadata",
+        "title": "Prepare the stated metadata",
+        "where": "Конфигуратор → дерево конфигурации",
+        "action": "Reuse module 5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
+        "why": "The native function needs these actual platform objects.",
+        "expected": "Names/types/recorder connections match.",
+        "troubleshooting": "Inspect existing objects before adding duplicates; retain old UUIDs/fields.",
+        "before": "Own copy/path and provenance identified."
+      },
+      {
+        "id": "source",
+        "title": "Place the complete function",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеРегистры",
+        "action": "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+        "why": "Definitions have explicit server scope.",
+        "expected": "One definition per function; earlier code retained.",
+        "troubleshooting": "Do not nest functions inside startup or duplicate shared preparation.",
+        "before": "Names/types/recorder connections match."
+      },
+      {
+        "id": "call",
+        "title": "Add only the client call",
+        "where": "Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеРегистры.ОпытПовторногоПроведения();\nСообщить(Результат.НачалоВерно);\nСообщить(Результат.ПовторНеУдвоил);\nСообщить(Результат.ЗаменаВерна);\nСообщить(Результат.ДругойСохранен);\nСообщить(Результат.СвоиОтменены);",
+        "why": "Print every independent claim.",
+        "expected": "Caller is inside the existing handler.",
+        "troubleshooting": "Keep one startup handler and retain its earlier source.",
+        "before": "One definition per function; earlier code retained."
+      },
+      {
+        "id": "run",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+        "why": "Observe real 1C, then reconcile with the prediction.",
+        "expected": "Five True; own-set75 → 75 → 90 → 45 → 0.",
+        "troubleshooting": "Retain the actual module/line and failed claim; never change expected values to conceal a defect.",
+        "before": "Caller is inside the existing handler."
+      },
+      {
+        "id": "retain",
+        "title": "Preserve observations and stop startup repetition",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols.",
+        "why": "Reopening must not silently recreate datasets.",
+        "expected": "Work retained; no automatic repetition.",
+        "troubleshooting": "Do not clear whole registers or remove prior work.",
+        "before": "Five True; own-set75 → 75 → 90 → 45 → 0."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Own copy/path and provenance identified."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Names/types/recorder connections match."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "One definition per function; earlier code retained."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Caller is inside the existing handler."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Five True; own-set75 → 75 → 90 → 45 → 0."
+      },
+      {
+        "label": "Observation 6",
+        "input": "",
+        "output": "Work retained; no automatic repetition."
+      }
+    ],
+    "criteria": [
+      "Each transition has an independent expectation.",
+      "Other recorder retained until its own unposting.",
+      "Atomicity/concurrency have separate checks/environments.",
+      "Actual source, version and per-field observations with own identities.",
+      "Separate compilable negative control and retained original; no server grading/authorship claim.",
+      "In another copy use 31/45 rather than 30/45; initial 75 must detect 76."
+    ],
+    "hint": "Keep one module-level helper and only its call inside startup.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Predict all five totals before running.",
+        "criteria": "Each transition has an independent expectation."
+      },
+      {
+        "level": "Applied",
+        "task": "Run repeat/replacement/two unpostings and reconcile.",
+        "criteria": "Other recorder retained until its own unposting."
+      },
+      {
+        "level": "Advanced",
+        "task": "Specify injected failure and separate concurrency testing without a server-PASS claim.",
+        "criteria": "Atomicity/concurrency have separate checks/environments."
+      }
+    ],
+    "sourceFile": "code/pedagogy/register-reposting-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "register",
+    "recorder",
+    "dimension",
+    "resource",
+    "reference",
+    "transaction",
+    "posting",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p6-reposting.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Repeating first 30 at total 75 yields",
+        "options": [
+          "75",
+          "105",
+          "0"
+        ],
+        "correct": 0,
+        "explanation": "Begin with own 30/45 requests totaling 75. Reposting the first is not another 30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
+      },
+      {
+        "question": "Changing 30 → 45 with another 45 yields",
+        "options": [
+          "120",
+          "90",
+          "75"
+        ],
+        "correct": 1,
+        "explanation": "Changing the first 30 → 45 replaces its effect, giving 90 rather than 120. Unposting it leaves the second 45; unposting the second leaves 0 for this own customer, without clearing other customers."
+      },
+      {
+        "question": "Unposting the first retains",
+        "options": [
+          "Every register empty",
+          "A deleted document",
+          "The second own recorder’s45"
+        ],
+        "correct": 2,
+        "explanation": "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity."
+      }
+    ]
+  }
+}

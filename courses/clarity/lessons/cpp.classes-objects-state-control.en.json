@@ -1,0 +1,461 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b5-author-v1",
+  "id": "cpp.classes-objects-state-control",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.oop",
+  "course": "C++ programming",
+  "module": "Object-Oriented Programming",
+  "locale": "en",
+  "title": "Classes, interfaces and state",
+  "goal": "Design stock operations so that rejected receipts and shipments preserve the previous quantity.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
+    },
+    {
+      "text": "Direct prerequisites: cpp.oop-principles"
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "An interface is a set of promises",
+      "paragraphs": [
+        "A warehouse receives eight items and then a request to ship nine. The caller needs both a rejection result and the unchanged quantity.",
+        "Stock models a quantity between zero and one hundred. receive and ship are not merely ways to assign a field: they define valid transitions. Receiving cannot exceed capacity, and shipping cannot create a negative quantity. Before coding, describe the pre-call state, success condition, resulting state and behaviour on rejection.",
+        "Test the public interface as a client who cannot access a private field. A quantity() observer can establish a successful delivery and preservation after rejection. A test that bypasses access control becomes tied to implementation. It would obstruct a representation change even if the application's observable result remained unchanged."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Private and public",
+      "paragraphs": [
+        "class and struct differ in default access: private for class, public for struct. Their underlying mechanisms are the same. Private access restricts ordinary use at compile time; it neither encrypts memory nor creates a security boundary. The laboratory hides the field and exposes operations. This is a code organization rule rather than secret protection.",
+        "An interface declaration should provide the types, parameters and results a client needs. Do not return a mutable reference to the internal quantity: a caller could assign minus one and bypass validation. In larger types a pointer or view also needs a lifetime contract. For now the observer returns a small int by value.",
+        "Returning a mutable reference to quantity_ would let a caller write −5 without using receive or ship."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Const and observation",
+      "paragraphs": [
+        "A quantity() const method can be called through const Stock&. Inside it, this points to a const object, so ordinary field assignment is forbidden. The method marks an observation and helps the compiler catch accidental changes. receive and ship are not const because a successful call changes domain state.",
+        "Const does not automatically imply thread safety or the absence of external effects. A method could write to cout, and mutable fields follow special rules. Our observer deliberately performs no input or output. That is a stronger design agreement than the keyword alone. A free printing function can use a const reference without owning the object.",
+        "const Stock& view refers to the same object. It can call quantity() to observe it, and cannot call a modifying operation."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Shipping more than the available stock",
+      "paragraphs": [
+        "Track quantity_ through receive and ship. Notice when the const observer is created."
+      ],
+      "prediction": [
+        "#include <iostream>\nclass Stock {\n    int quantity_ = 0;\n\n  public:\n    bool receive(int n) {\n        if (n < 0 || n > 100 - quantity_) {\n            return false;\n        }\n        quantity_ += n;\n        return true;\n    }\n    bool ship(int n) {\n        if (n < 0 || n > quantity_) {\n            return false;\n        }\n        quantity_ -= n;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock s;\n    s.receive(8);\n    bool ok = s.ship(9);\n    const Stock &view = s;\n    std::cout << ok << ' ' << view.quantity() << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal the output and walkthrough",
+        "paragraphs": [
+          "The rejected shipment leaves eight. The const reference observes that same quantity without changing the object."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "receive(8)",
+                "quantity = 0",
+                "quantity = 8",
+                "8 fits in the stock."
+              ],
+              [
+                "ship(9)",
+                "quantity = 8",
+                "quantity = 8, ok = 0",
+                "The request exceeds availability."
+              ],
+              [
+                "Read through view",
+                "quantity = 8",
+                "0 8",
+                "The first value is a bool, and the second is the current quantity."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 0;\n\n  public:\n    bool receive(int n) {\n        if (n < 0 || n > 100 - quantity_) {\n            return false;\n        }\n        quantity_ += n;\n        return true;\n    }\n    bool ship(int n) {\n        if (n < 0 || n > quantity_) {\n            return false;\n        }\n        quantity_ -= n;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock s;\n    s.receive(8);\n    bool ok = s.ship(9);\n    const Stock &view = s;\n    std::cout << ok << ' ' << view.quantity() << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 8\n"
+        }
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "Related fields and domain atomicity",
+      "paragraphs": [
+        "Window has two fields with the invariant low_≤high_. Two independent setters could create an invalid intermediate state when changing [0,0] to [2,7]. reset(a,b) accepts both values, checks their relationship and only then assigns them. This atomicity concerns domain meaning; it does not describe synchronization between threads.",
+        "After reset(2,7), the worked example calls reset(9,1) and receives false. contains(4) remains true, while contains(8) is false. This checks preservation as well as rejection. Validation before small nonthrowing assignments suffices here. Operations that allocate memory need a separate exception guarantee analysis later in the module.",
+        "An interval checks low and high together. Rejecting reset(9,1) must preserve both previous bounds."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Replacing both interval bounds",
+      "paragraphs": [
+        "For the interval, mark the bounds retained after rejection. Test points 4 and 8 separately."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nclass Window {\n    int low_ = 0, high_ = 0;\n\n  public:\n    bool reset(int a, int b) {\n        if (a > b) {\n            return false;\n        }\n        low_ = a;\n        high_ = b;\n        return true;\n    }\n    bool contains(int n) const { return low_ <= n && n <= high_; }\n};\nint main() {\n    Window w;\n    w.reset(2, 7);\n    bool ok = w.reset(9, 1);\n    std::cout << ok << ' ' << w.contains(4) << ' ' << w.contains(8) << '\\n';\n}\n",
+        "stdin": "",
+        "output": "0 1 0\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Choosing an error result",
+      "paragraphs": [
+        "A bool works when a caller only needs to know whether an operation succeeded. If callers must distinguish insufficient stock from a negative argument, introduce a result enum or a structure with an error code. Do not encode failure as a valid quantity: zero can be a normal stock level. Exceptions follow resource management later in this module.",
+        "An operation rejection and an input syntax error belong to different layers. A negative amount is a correctly parsed int but is rejected by Stock. A letter in place of an amount fails parsing and produces invalid. Classify the error before deciding which layer has enough information to handle it. This improves messages and test stability.",
+        "Here bool reports whether the stock changed. A richer result can add a reason while retaining the state-preservation promise."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Executing commands step by step",
+      "paragraphs": [
+        "Input contains n pairs: a plus or minus sign and an integer amount. After validating all pairs, the application creates Stock and executes commands in order. Receiving eight, shipping nine and shipping three produces states zero, eight, eight, five, with one rejection. Reordering commands can change the result; these are events, not an unordered collection of numbers.",
+        "receive checks n<0 before comparing n to the remaining capacity. ship checks n<0 and n>quantity_. No rejected path writes the field. Locate that property in the program and create a separate test for each condition. A maximum-int case demonstrates one safe rejection rather than promising arbitrary-precision arithmetic.",
+        "For +8, −9, −3, the first shipment is rejected. The second still sees quantity 8 and leaves 5."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "A negative compilation check",
+      "paragraphs": [
+        "A small diagnostic example tries to read s.quantity_ from main. Compilation must fail because that member is private. This is an expected compile error, not an executable demonstration or a runtime failure. Compare it with s.quantity(), which uses the public contract and leaves state unchanged.",
+        "Keep these checks separate from the working application. Do not add a second main to the same executable or leave the intentional error in its primary file. Diagnostic wording varies between compilers; the access restriction is what matters. Memory inspection or reinterpret_cast would not test the interface and is not an appropriate workaround.",
+        "A separate invalid example tries to access a private member. Its compile failure checks the interface boundary."
+      ]
+    },
+    {
+      "id": "concept-8",
+      "title": "Reviewing an interface",
+      "paragraphs": [
+        "Present a transition table and explain why every public method preserves the invariant. Add a requirement that partial shipping is either forbidden or explicitly supported. Show the changed contract and tests before editing implementation. Preserving an interface does not mean preserving every accidental behaviour that an earlier implementation happened to expose.",
+        "Also check const usage and the absence of a mutable alias to the field. A good interface makes invalid actions difficult and valid actions understandable. The next lesson answers the remaining lifecycle questions: how an object obtains its initial state, which parts are created first and when automatic cleanup occurs.",
+        "Check a zero command and a shipment of the exact stock. Both are allowed when the sign and format are valid."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Implement receipt and shipment for a command list. Validate the signs before applying any operations.",
+        "Record the quantities after +8, −9, −3."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What prints when a shipment of 9 follows receipt of 8?",
+      "options": [
+        "0 8\n",
+        "0 -1",
+        "1 0"
+      ],
+      "correct": 0,
+      "feedback": "ship checks availability before subtraction, returns false and preserves 8.",
+      "code": {
+        "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 0;\n\n  public:\n    bool receive(int n) {\n        if (n < 0 || n > 100 - quantity_) {\n            return false;\n        }\n        quantity_ += n;\n        return true;\n    }\n    bool ship(int n) {\n        if (n < 0 || n > quantity_) {\n            return false;\n        }\n        quantity_ -= n;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock s;\n    s.receive(8);\n    bool ok = s.ship(9);\n    const Stock &view = s;\n    std::cout << ok << ' ' << view.quantity() << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 0;\n\n  public:\n    bool receive(int n) {\n        if (n < 0 || n > 100 - quantity_) {\n            return false;\n        }\n        quantity_ += n;\n        return true;\n    }\n    bool ship(int n) {\n        if (n < 0 || n > quantity_) {\n            return false;\n        }\n        quantity_ -= n;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock s;\n    s.receive(8);\n    bool ok = s.ship(9);\n    const Stock &view = s;\n    std::cout << ok << ' ' << view.quantity() << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 8\n"
+      },
+      "recall": "example-1"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does ship rejection mean?",
+      "options": [
+        "Quantity is preserved and the caller receives false.",
+        "Quantity is always reset to zero.",
+        "Quantity becomes negative."
+      ],
+      "correct": 0,
+      "feedback": "ship checks its argument and available quantity before assignment. On rejection the caller therefore sees the previous quantity and false, rather than zeroing or a negative quantity.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Why not return int& to the quantity?",
+      "options": [
+        "A reference must copy the field.",
+        "A caller could bypass the checked operations.",
+        "An int cannot be returned by value."
+      ],
+      "correct": 1,
+      "feedback": "A returned int& would let a caller assign -1 without calling ship or receive. Returning a value keeps mutations under class control; a reference is not itself a copy of the field.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Does const guarantee thread safety?",
+      "options": [
+        "Yes; it locks all threads.",
+        "Yes; it forbids every external effect.",
+        "No; const does not synchronize access."
+      ],
+      "correct": 2,
+      "feedback": "const restricts ordinary member modification through this object, but supplies no lock and does not exclude external effects. Concurrent access needs a separately chosen synchronization protocol.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "How does amount -1 differ from x?",
+      "options": [
+        "The former parses and is rejected by the domain; the latter fails parsing.",
+        "Both always mean success.",
+        "Both parse as zero."
+      ],
+      "correct": 0,
+      "feedback": "Minus one parses as an int and then violates the Stock domain constraint. The token x cannot be read as an amount, so input syntax is rejected before commands execute.",
+      "recall": "concept-5"
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "Why does reset take both bounds?",
+      "options": [
+        "To bypass the invariant.",
+        "To validate their relationship before changing state.",
+        "For automatic inheritance."
+      ],
+      "correct": 1,
+      "feedback": "The invariant relates low and high, so validate the pair before assigning either field. Independent setters can finish a public call with low>high even when the caller intended a valid final interval.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why is assigning both fields and checking afterward unsuitable for reset(9,1)?",
+      "feedback": "The object would lose its previous bounds. Check before either assignment.",
+      "recall": "independent-work"
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Classes, interfaces and state",
+    "task": "Read n=0…20 and n sign/integer pairs. Only + and - are valid. Stock starts at zero and stays in 0…100. + receives and - ships; negative amounts or a violated bound reject without mutation. Print quantity and rejection count. Invalid parsing, sign or extra tokens: invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <vector>\nclass Stock {\n    int quantity_ = 0;\n\n  public:\n    bool receive(int n) {\n        // TODO: Receive only an allowed quantity, preserving the field on\n        // rejection.\n        return false;\n    }\n    bool ship(int n) {\n        // TODO: Check availability before subtraction and perform the\n        // shipment.\n        return false;\n    }\n    int quantity() const { return quantity_; }\n};\nstruct Command {\n    char op;\n    int amount;\n};\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<Command> commands;\n    for (int i = 0; i < n; ++i) {\n        Command c;\n        if (!(std::cin >> c.op >> c.amount) ||\n            (c.op != '+' && c.op != '-')) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        commands.push_back(c);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Stock s;\n    int rejected = 0;\n    for (const auto &c : commands) {\n        if (!(c.op == '+' ? s.receive(c.amount) : s.ship(c.amount))) {\n            ++rejected;\n        }\n    }\n    std::cout << s.quantity() << ' ' << rejected << '\\n';\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "3 + 8 - 9 - 3",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0",
+        "output": "0 0\n"
+      },
+      {
+        "label": "First substantive run",
+        "input": "3 + 8 - 9 - 3",
+        "output": "5 1\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "4 + 100 + 1 - 100 - 1",
+        "output": "0 2\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "2 + -1 - -2",
+        "output": "0 2\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "2 + 2147483647 - 2147483647",
+        "output": "0 2\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "2 + 10 - 10",
+        "output": "0 0\n"
+      },
+      {
+        "label": "Input error · 7",
+        "input": "1 ? 4",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 8",
+        "input": "1 +",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 9",
+        "input": "21",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 10",
+        "input": "0 extra",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 11",
+        "input": "",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "0 → 8 → 8 → 5, one rejection.",
+      "Output 5 1.",
+      "First output 0 2, second invalid.",
+      "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
+    ],
+    "hint": "The object would lose its previous bounds. Check before either assignment.",
+    "steps": [
+      {
+        "where": "Before running",
+        "action": "Record the quantities after +8, −9, −3.",
+        "why": "State after the rejected command must be checked.",
+        "expected": "0 → 8 → 8 → 5, one rejection."
+      },
+      {
+        "where": "In my program",
+        "action": "Complete receive and ship, then run 3 + 8 - 9 - 3.",
+        "why": "The input exercises both operations and a rejection.",
+        "expected": "Output 5 1."
+      },
+      {
+        "where": "After running",
+        "action": "Compare 2 + -1 - -2 with 1 ? 4.",
+        "why": "Negative quantities cause operation rejections, while an unknown sign breaks the format.",
+        "expected": "First output 0 2, second invalid."
+      }
+    ],
+    "recall": "example-1",
+    "starterRevision": "b5-starter-v1",
+    "starterObservation": {
+      "case": 1,
+      "stdout": "0 3\n",
+      "exitCode": 0
+    },
+    "outputFields": [
+      "Stock quantity",
+      "Rejection count"
+    ]
+  },
+  "terms": [
+    {
+      "term": "Encapsulation",
+      "definition": "Controlling state through an interface that preserves domain meaning."
+    },
+    {
+      "term": "Public access",
+      "definition": "Members available to ordinary client code."
+    },
+    {
+      "term": "Private access",
+      "definition": "Language-restricted access without a promise of encrypted storage."
+    },
+    {
+      "term": "Const member function",
+      "definition": "A method that disallows ordinary mutation of the object through this."
+    },
+    {
+      "term": "Observer",
+      "definition": "An operation that reports state according to a contract."
+    },
+    {
+      "term": "Precondition",
+      "definition": "A condition required before a valid call."
+    },
+    {
+      "term": "Postcondition",
+      "definition": "A promise about result and state when a call finishes."
+    },
+    {
+      "term": "Domain atomicity",
+      "definition": "Completing a related update while preserving a joint invariant."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS"
+  ],
+  "extras": {
+    "lessonId": "cpp.classes-objects-state-control",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Classes, interfaces and state",
+      "description": "A stepwise textual model; actual execution happens in Code Studio.",
+      "steps": [
+        {
+          "title": "An interface is a set of promises",
+          "description": "Stock models a quantity between zero and one hundred. receive and ship are not merely ways to assign a field: they define valid transitions. Receiving cannot exceed capacity, and shipping cannot create a negative quantity. Before coding, describe the pre-call state, success condition, resulting state and behaviour on rejection."
+        },
+        {
+          "title": "Private and public",
+          "description": "class and struct differ in default access: private for class, public for struct. Their underlying mechanisms are the same. Private access restricts ordinary use at compile time; it neither encrypts memory nor creates a security boundary. The laboratory hides the field and exposes operations. This is a code organization rule rather than secret protection."
+        },
+        {
+          "title": "Const and observation",
+          "description": "A quantity() const method can be called through const Stock&. Inside it, this points to a const object, so ordinary field assignment is forbidden. The method marks an observation and helps the compiler catch accidental changes. receive and ship are not const because a successful call changes domain state."
+        },
+        {
+          "title": "Choosing an error result",
+          "description": "A bool works when a caller only needs to know whether an operation succeeded. If callers must distinguish insufficient stock from a negative argument, introduce a result enum or a structure with an error code. Do not encode failure as a valid quantity: zero can be a normal stock level. Exceptions follow resource management later in this module."
+        },
+        {
+          "title": "A negative compilation check",
+          "description": "A small diagnostic example tries to read s.quantity_ from main. Compilation must fail because that member is private. This is an expected compile error, not an executable demonstration or a runtime failure. Compare it with s.quantity(), which uses the public contract and leaves state unchanged."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-CLASS"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\oop\\classes-objects-state-control.en.json",
+  "reading": [
+    {
+      "id": "cpp20-class",
+      "title": "C++20 [class]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[class]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [class] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+    }
+  ],
+  "authored": true
+}

@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p11.topic-2",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Integrations and background operations",
+  "locale": "en",
+  "title": "JSON, XML and exchange schemas",
+  "goal": "Validate JSON/XML schema, types and limits without executing input text.",
+  "prerequisites": [
+    {
+      "text": "onec.p10; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Serialization carries data",
+      "paragraphs": [
+        "JSON carries values but does not automatically preserve every 1C-specific type. References need agreed external keys, dates a format/timezone, and money precision rules. A customer display name is not identity. Define required fields, types, ranges and protocol version in a schema.",
+        "The complete source accepts JSON text with exactly schemaVersion,minutes,text. Validate string type/4096 length, syntax, field set, types and integer range 0…1440. Parsing alone is not schema validation. This limit applies to materialized input; a network stream needs its own bound."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Reconcile the complete experiment",
+      "paragraphs": [
+        "The complete source accepts JSON text with exactly schemaVersion,minutes,text. Validate string type/4096 length, syntax, field set, types and integer range 0…1440. Parsing alone is not schema validation. This limit applies to materialized input; a network stream needs its own bound."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Text → Version 1,numeric 30 → Contract validated.\nRound trip → JSON→data→JSON → Type/text retained.\nXML → Own root/attribute → Read checked.",
+        "output": "Own root/attribute; Read checked."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Text",
+              "Version 1, numeric 30",
+              "Contract validated."
+            ],
+            [
+              "Round trip",
+              "JSON → data → JSON",
+              "Type/text retained."
+            ],
+            [
+              "XML",
+              "Own root/attribute",
+              "Read checked."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Parsing is not validation",
+      "paragraphs": [
+        "Syntactically valid{\"minutes\": \"30\"}can violate a numeric requirement. Do not coerce every input and hide sender defects. Separate parsing, schema validation, business rules and persistence. Handle unknown versions and critical unexpected fields under an explicit policy.",
+        "A valid packet uses version 1, numeric 30 and synthetic text containing& and< >. JSON writing/reading preserves number and text. String\"30\" is deliberately rejected; implicit coercion would change the versioned contract."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Bound size and structure",
+      "paragraphs": [
+        "Check byte limits before expensive parsing and structure depth/count during validation. Reject DOCTYPE/ENTITY in teaching XML imports; do not enable external entities for convenience. Never pass text toExecute. Regex is not a general XML parser, so exercise formats are deliberately constrained.",
+        "Generate XML only from own data using the platform writer: request root, minutes attribute and text node. The API escapes special characters. This test checks root/attribute and is not a complete arbitrary-XML/XSD validator; it accepts no user DTD/external documents."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A case that distinguishes the wrong solution",
+      "paragraphs": [
+        "Run from the server common module and print JSONВерный,ТипОтклонен,XMLВерный. In another copy test an unknown fourth field, version 2, fraction 30.5 and length 4097. Record each expected rejection; none should modify infobase documents."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Pass minutes:\"30\", an unknown field or version 2.",
+        "output": "Explicit contract rejection; documents unchanged."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Separate copy",
+              "Pass minutes:\"30\", an unknown field or version 2.",
+              "Retain the accepted original."
+            ],
+            [
+              "Observe",
+              "Explicit contract rejection; documents unchanged.",
+              "Run from the server common module and print JSONВерный,ТипОтклонен,XMLВерный. In another copy test an unknown fourth field, version 2, fraction 30.5 and length 4097. Record each expected rejection; none should modify infobase documents."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Test round trips",
+      "paragraphs": [
+        "Serialize a synthetic request, parse and compare semantic fields rather than JSON key order. Include Cyrillic, quotes, zero, missing required data, wrong types and oversized input. Rejection must not leave partially created customers/documents. Raw-payload hash and semantic identity are distinct.",
+        "Run from the server common module and print JSONВерный,ТипОтклонен,XMLВерный. In another copy test an unknown fourth field, version 2, fraction 30.5 and length 4097. Record each expected rejection; none should modify infobase documents."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "Success is inferred from an unavailable environment. Separate actual observations from a planned advanced scenario and name edition limits.",
+        "A failed attempt is removed to make the record look successful. Retain the original failure, its cause, correction and regression evidence.",
+        "An own-copy change is applied over the accepted original. Verify the actual directory and preserve source identities before making changes."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does successful JSON parsing prove schema validity?",
+      "options": [
+        "Yes",
+        "No",
+        "For numbers"
+      ],
+      "correct": 1,
+      "feedback": "Check types and required fields separately."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Should received data be executed withExecute?",
+      "options": [
+        "Always",
+        "For XML",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "Serialized input remains data."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Compare a round trip by",
+      "options": [
+        "Semantic fields",
+        "Always key order",
+        "Color"
+      ],
+      "correct": 0,
+      "feedback": "JSON field order does not define message identity."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Investigate the separate adverse case without claiming an unavailable environment was tested. Pass minutes:\"30\", an unknown field or version 2.",
+      "feedback": "Accepted original preserved; rejection and its limits explained."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "JSON, XML and exchange schemas",
+    "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. Pass minutes:\"30\", an unknown field or version 2.",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "Функция ПроверитьПакет(Текст) Экспорт\n    Если ТипЗнч(Текст) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Нужен текст\"; КонецЕсли;\n    Если СтрДлина(Текст) > 4096 Тогда ВызватьИсключение \"Пакет слишком большой\"; КонецЕсли;\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Текст);\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Если ТипЗнч(Данные) <> Тип(\"Структура\") Тогда ВызватьИсключение \"Нужен объект\"; КонецЕсли;\n    Если Данные.Количество() <> 3 Тогда ВызватьИсключение \"Ровно три поля\"; КонецЕсли;\n    Версия = Неопределено; Минуты = Неопределено; Метка = Неопределено;\n    Если Не Данные.Свойство(\"schemaVersion\",Версия) Или Не Данные.Свойство(\"minutes\",Минуты) Или Не Данные.Свойство(\"text\",Метка) Тогда ВызватьИсключение \"Неверные поля\"; КонецЕсли;\n    Если ТипЗнч(Версия) <> Тип(\"Число\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(Метка) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если Версия <> 1 Или Минуты < 0 Или Минуты > 1440 Или Цел(Минуты) <> Минуты Или СтрДлина(Метка) > 80 Тогда ВызватьИсключение \"Неверные значения\"; КонецЕсли;\n    Возврат Данные;\nКонецФункции\n\nФункция ОпытJSONXML() Экспорт\n    Данные = ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":30,\"\"text\"\":\"\"Учебный & <текст>\"\"}\");\n    Запись = Новый ЗаписьJSON; Запись.УстановитьСтроку(); ЗаписатьJSON(Запись,Данные); Текст = Запись.Закрыть(); Повтор = ПроверитьПакет(Текст);\n    Отказ = Ложь; Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":\"\"30\"\",\"\"text\"\":\"\"Учебный\"\"}\"); Исключение Отказ = Истина; КонецПопытки;\n    Запись = Новый ЗаписьXML; Запись.УстановитьСтроку(); Запись.ЗаписатьНачалоЭлемента(\"request\"); Запись.ЗаписатьАтрибут(\"minutes\",Строка(Данные.minutes)); Запись.ЗаписатьТекст(Данные.text); Запись.ЗаписатьКонецЭлемента(); XML = Запись.Закрыть();\n    Чтение = Новый ЧтениеXML; Чтение.УстановитьСтроку(XML); Чтение.Прочитать();\n    XMLВерный = Чтение.Имя = \"request\" И Чтение.ПолучитьАтрибут(\"minutes\") = \"30\"; Чтение.Закрыть();\n    Возврат Новый Структура(\"JSONВерный,ТипОтклонен,XMLВерный\",Повтор.minutes = 30 И Повтор.text = Данные.text,Отказ,XMLВерный);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Preserve the starting state",
+        "where": "Own-copy Designer",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Keep the accepted work independent.",
+        "expected": "Separate copy opens with the earlier records.",
+        "troubleshooting": "A new list name alone does not create another database directory.",
+        "before": "Own path, prior sources and a restorable backup identified."
+      },
+      {
+        "id": "step-2",
+        "title": "Add the complete server source",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
+        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+        "why": "Database access has an explicit server boundary.",
+        "expected": "Definitions are module-level; no duplicate helper.",
+        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+        "before": "Separate copy opens with the earlier records."
+      },
+      {
+        "id": "step-3",
+        "title": "Prepare and call the experiment",
+        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытJSONXML();\nСообщить(Результат.JSONВерный);\nСообщить(Результат.ТипОтклонен);\nСообщить(Результат.XMLВерный);",
+        "why": "Print every named result instead of accepting compilation alone.",
+        "expected": "Only the stated caller is inside the existing startup handler.",
+        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+        "before": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "id": "step-4",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Run once and compare the fields with the worked trace. Own root/attribute; Read checked.",
+        "why": "Observe actual 1C data, not the browser diagram.",
+        "expected": "Own root/attribute; Read checked.",
+        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+        "before": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "id": "step-5",
+        "title": "Retain both results",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
+        "why": "Preserve provenance and avoid repeating data creation at every startup.",
+        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+        "before": "Own root/attribute; Read checked."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate copy opens with the earlier records."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Own root/attribute; Read checked."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Original retained, negative experiment isolated, automatic caller removed."
+      }
+    ],
+    "criteria": [
+      "Numbers remain numeric rather than strings.",
+      "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+      "Accepted original preserved; rejection and its limits explained.",
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits.",
+      "Pass minutes:\"30\", an unknown field or version 2."
+    ],
+    "hint": "Separate actual observations from a planned advanced scenario and name edition limits.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Explain the checked boundary using the first trace. Parseminutes 30 and 0.",
+        "criteria": "Numbers remain numeric rather than strings."
+      },
+      {
+        "level": "Applied",
+        "task": "Perform the stated available experiment and retain actual observations. Round-tripCyrillic text with quotes.",
+        "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+      },
+      {
+        "level": "Advanced",
+        "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. Pass minutes:\"30\", an unknown field or version 2.",
+        "criteria": "Accepted original preserved; rejection and its limits explained."
+      }
+    ],
+    "sourceFile": "code/pedagogy/exchange-schema-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p11-serialization.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Does successful JSON parsing prove schema validity?",
+        "options": [
+          "Yes",
+          "No",
+          "For numbers"
+        ],
+        "correct": 1,
+        "explanation": "Check types and required fields separately."
+      },
+      {
+        "question": "Should received data be executed withExecute?",
+        "options": [
+          "Always",
+          "For XML",
+          "No"
+        ],
+        "correct": 2,
+        "explanation": "Serialized input remains data."
+      },
+      {
+        "question": "Compare a round trip by",
+        "options": [
+          "Semantic fields",
+          "Always key order",
+          "Color"
+        ],
+        "correct": 0,
+        "explanation": "JSON field order does not define message identity."
+      }
+    ]
+  }
+}

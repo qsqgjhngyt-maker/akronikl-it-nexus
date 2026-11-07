@@ -1,0 +1,71 @@
+name: B06-QT-03 — один диагностический Linux-контроль, без публикации
+on:
+  push:
+    branches: [feature/cpp-clarity-01-m1-m2-20261104]
+    paths:
+      - '.github/workflows/cpp-clarity-qt03-selected.yml'
+      - 'tools/cpp-clarity-qt03-*.mjs'
+      - 'tests/helpers/cpp-clarity-qt03-selection-diagnostic.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: cpp-clarity-qt03-selected
+  cancel-in-progress: false
+jobs:
+  selected-12:
+    name: SELECTED-RANGE 12..13 — неизменный кандидат 7bafbe8
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: baseline
+    env:
+      NEXUS_QT03_CONTROL_SHA: ${{ github.sha }}
+      NEXUS_M6_EVIDENCE: ${{ github.workspace }}/qt03-evidence
+      NEXUS_QT_EVIDENCE_DIR: ${{ github.workspace }}/qt03-evidence
+      NEXUS_GOLD_EVIDENCE: ${{ github.workspace }}/qt03-evidence/runtime-bytes
+      NEXUS_FRONTEND_DIR: ${{ github.workspace }}/qt03-frontend
+      NEXUS_PINNED_RUNTIME_DIR: ${{ github.workspace }}/qt03-runtime
+      NEXUS_JSCPP_FIXTURE: ${{ github.workspace }}/qt03-runtime/jscpp.js
+      NEXUS_QT_BROWSER_PACK: ${{ github.workspace }}/qt03-qt-runtime
+      NEXUS_STUDIO_TEST_STORE: ${{ github.workspace }}/qt03-synthetic-private-jobs
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/baseline/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_M6_GUI_START_INDEX: '12'
+      NEXUS_M6_GUI_END_INDEX: '13'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 7bafbe88e2eb07c972c33525afb8f0de365faa31
+          path: baseline
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Подготовить исходный кандидат и закреплённые runtime bytes
+        run: |
+          npm ci --prefix server-access --ignore-scripts
+          npm ci --prefix tools/qa-browser-driver
+          node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
+          node tools/build-cpp-clarity-candidate.mjs
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+          node tools/check-cpp-clarity-b6-qt-bytes.mjs
+      - name: Создать отдельную QA-копию и сверить неизменность условий
+        run: |
+          node ../control/tools/cpp-clarity-qt03-prepare.mjs .
+          node ../control/tools/cpp-clarity-qt03-preflight.mjs
+          node --check tests/cpp-clarity-qt03-instrumented.mjs
+      - name: Один адресный сценарий с исходными click, 18px и timeout
+        run: node tests/cpp-clarity-qt03-instrumented.mjs
+      - name: Сохранить положительные и отрицательные наблюдения
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-clarity-qt03-selected-7bafbe8-control-${{ github.sha }}
+          path: qt03-evidence/
+          retention-days: 30
+          if-no-files-found: error

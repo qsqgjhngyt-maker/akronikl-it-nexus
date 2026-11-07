@@ -10,7 +10,7 @@
   ],
   "locale": "ru",
   "title": "От C++ исходника к результату: компиляция, компоновка, запуск и отладка",
-  "lead": "Исходный текст не исполняется сам по себе. Он проходит этапы сборки, а затем программа работает с конкретными входными данными.",
+  "lead": "Отличим ошибку сборки от неверного ответа и проверим исправление.",
   "why": "Если программа не собирается или выводит неверное число, важно определить фазу ошибки и проверить гипотезу, а не исправлять код наугад.",
   "objectives": [
     "Различать исходный код, компиляцию, компоновку и выполнение.",
@@ -576,5 +576,641 @@
     ],
     "completionRule": "Самопроверка готовности: не меньше 8 из 10 баллов и ни одного провала обязательной валидации или контрольного вывода. Рубрика применяется вручную и не выставляет оценку, mastery или завершение урока. Работающий эталон сам по себе не является доказательством вашей работы.",
     "verification": "manual-output-comparison"
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Отличим ошибку сборки от неверного ответа и проверим исправление.",
+    "prerequisites": [
+      "Знаете переменные, арифметику и вывод."
+    ],
+    "model": [
+      "Исходник — написанный нами текст. Компилятор проверяет правила C++ и переводит его, компоновщик соединяет необходимые части, среда запускает результат. Успешная сборка позволяет выполнить команды, но не доказывает соответствие задаче.",
+      "Для прямоугольника шириной 4 и высотой 3 площадь 12. В коде ниже умножение соответствует требованию. При + ответ 7 тоже допустим для C++, поэтому ошибку найдём сравнением с ручным ответом. Отладка — воспроизведение, поиск причины, исправление и повтор проверки."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Отличим ошибку сборки от неверного ответа и проверим исправление.",
+      "code": "#include <iostream>\n\nint main() {\n    int width = 4;\n    int height = 3;\n    int area = width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "12\n",
+      "trace": [
+        {
+          "line": "width; height",
+          "before": "—",
+          "after": "4; 3",
+          "why": "Восстановили исходные данные задачи."
+        },
+        {
+          "line": "width * height",
+          "before": "4 × 3",
+          "after": "area: 12",
+          "why": "Формула совпадает с ручным расчётом."
+        },
+        {
+          "line": "cout",
+          "before": "area: 12",
+          "after": "stdout: 12",
+          "why": "Наблюдаем результат конкретного запуска."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Тренировка",
+      "challenge": "Временно замените * на +. Запишите ожидаемый неверный результат, затем восстановите *.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int width = 4;\n    int height = 3;\n    int area = width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "7\n",
+      "hints": [
+        "Сравниваем с площадью 12, вычисленной до запуска.",
+        "4+3=7: неверна операция, а не среда. После исправления снова должно быть 12."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int width = 4;\n    int height = 3;\n    int area = width + height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "7\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Самостоятельная вариация",
+      "challenge": "Рассчитайте площадь 5×6. Проверьте 1×6 и 0×6. Сформулируйте, какие три наблюдения подтверждают исправление.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "30\n"
+        }
+      ],
+      "rubric": [
+        "Сравните вывод с показанным ниже контрольным случаем.",
+        "Объясните каждое изменение через объекты или операции этой темы.",
+        "После успешной сборки площади для 5×6, 1×6 и 0×6 равны 30, 6 и 0. При отказе новой сборки старый вывод 30 не доказывает выполнение изменённого кода."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int width = 5;\n    int height = 6;\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Отличим ошибку сборки от неверного ответа и проверим исправление.",
+      "steps": [
+        "Рассчитайте площадь 5×6. Проверьте 1×6 и 0×6. Сформулируйте, какие три наблюдения подтверждают исправление.",
+        "Предскажите результат до запуска.",
+        "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "Сравните фактический вывод с прогнозом и объясните расхождение."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Если новая сборка отказала, старый вывод 12 не доказывает выполнение новых команд. Найдите диагностику текущей сборки.",
+    "next": "После вариации переходите к углублению: там сохранены точные ограничения, дополнительные случаи и прежняя лабораторная. Старое завершение и попытки сохраняют отношение к прежней редакции."
+  },
+  "teachingEdition": {
+    "revision": "b2-author-v1",
+    "title": "Что сломалось: сборка, запуск или формула",
+    "goal": "Определяйте этап сбоя и проверяйте одну правку воспроизводимым опытом.",
+    "prerequisites": [
+      {
+        "text": "Понимание условий и простого ввода-вывода."
+      },
+      {
+        "text": "Понятия алгоритма, входных данных и теста."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Исходные файлы и команды сборки",
+        "paragraphs": [
+          "C++ хранится в текстовых файлах. Компилятор обрабатывает исходники с выбранной версией языка; точные сообщения ошибок зависят от компилятора и настройки.",
+          "В Nexus Code Studio фактическая возможность запуска зависит от выбранного provider. Не надо считать поддержку всех возможностей C++23 доказанной лишь названием инструмента.",
+          "Запустите минимальную программу и запишите вывод Nexus C++. Этот контроль показывает, что рабочая среда собрала и запустила простой исходник. Теперь изменяйте по одному условию."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\";\n}",
+          "stdin": "",
+          "output": "Nexus C++\n"
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "От препроцессора к компоновке",
+        "paragraphs": [
+          "На этапе предварительной обработки обрабатываются директивы вроде #include. Затем компилятор проверяет конструкции языка и формирует код; компоновщик разрешает зависимости между объектными файлами.",
+          "Отсутствующая точка с запятой обычно обнаруживается во время компиляции. Объявленная, но не определённая функция может вызвать ошибку компоновки."
+        ],
+        "diagram": {
+          "caption": "Где искать первую причину",
+          "text": "main.cpp → обработка #include\n         → перевод исходника\n         → компоновка программы\n         → запуск с заданным stdin"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Программа может сломаться после успешной сборки",
+        "paragraphs": [
+          "При выполнении возможны неверный ввод, запрещённые операции, неправильные условия и ошибочные расчёты. Деление на ноль для целого делителя не является допустимой операцией.",
+          "Для int выражение 10/3 даёт 3, а не 3.333. Здесь дробная часть отбрасывается по правилам целочисленного деления; путать это с ошибкой компилятора нельзя.",
+          "В примере 10 2 получаем 12, потому что его контракт требует сумму. Для задачи деления тот же вывод был бы ошибкой. Начните с ожидаемого результата, а не с догадки о компиляторе."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a + b << '\\n';\n}",
+          "stdin": "10 2\n",
+          "output": "12\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Диагностика начинается с воспроизведения",
+        "paragraphs": [
+          "В отчёте о прямоугольнике 4 на 3 ожидали 12, а программа напечатала 7. Прежде чем править, найдите оператор, который действительно выполняется.",
+          "Запишите фактический вывод и объясните, почему сборка может быть успешной."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+        ],
+        "predictionInput": "4 3\n",
+        "reveal": {
+          "title": "Сверить прогноз и пройти шаги",
+          "paragraphs": [
+            "Запишите команду, вход, ожидаемый результат, фактическое поведение и первую существенную диагностику. По этим фактам отделите проблему синтаксиса от ошибки алгоритма.",
+            "Исправляйте по одной обоснованной причине. Затем повторяйте и упавший тест, и ранее успешные: иначе исправление может создать регрессию.",
+            "Контракт площади требует умножения. Для 4 и 3 запишите «ожидалось 12, получилось 7». Сборка и запуск прошли, значит сначала проверьте формулу. Замените только + на *, затем проверьте 4 3 и 1 1."
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+            "stdin": "4 3\n",
+            "output": "7\n"
+          },
+          "tables": [
+            {
+              "caption": "Сигналы разных неисправностей",
+              "columns": [
+                "Наблюдение",
+                "Где искать",
+                "Что сравнить"
+              ],
+              "rows": [
+                [
+                  "Нет сборки",
+                  "Синтаксис или компоновка",
+                  "Первое сообщение сборки"
+                ],
+                [
+                  "Программа запущена, ввод отклонён",
+                  "Контракт ввода",
+                  "Точный stdin и допустимый диапазон"
+                ],
+                [
+                  "Программа печатает 7 вместо 12",
+                  "Формула площади",
+                  "Ожидаемый результат для 4 3"
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Стандарты и переносимость",
+        "paragraphs": [
+          "Эти примеры проверяются в режиме C++20 и используют основные средства языка. Стандарт описывает правила языка, а конкретный компилятор выбирает режим и сообщает диагностику. Записывайте версию среды и выбранный режим, если сравниваете результаты на двух машинах.",
+          "Для переносимого опыта не полагайтесь на одинаковые формулировки ошибок. Отдельно проверяйте факт успешной сборки, код завершения и точный stdout."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Минимальный воспроизводимый пример",
+        "paragraphs": [
+          "Синтаксический дефект не даёт собрать программу: например, пропущена точка с запятой. Ошибка выполнения или неверный результат проявляется после запуска: деление на ноль недопустимо, а 10/3 над целыми даёт 3, не 3.333. Для отрицательных целых C++ отбрасывает дробную часть к нулю: -8/3 равно -2. Сохраните исходник, вход, ожидаемый и фактический вывод; исправляйте одну причину и повторяйте прежние тесты.",
+          "Сравните исправленный исходник с предыдущим. В этой паре меняется ровно один оператор; чтение и проверка диапазона те же. При 1 1 неверный вариант дал бы 2, исправленный даёт 1."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n}\n",
+          "stdin": "4 3\n",
+          "output": "12\n"
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Правила ввода и пределы исполнения",
+        "paragraphs": [
+          "Для лаборатории a и b ограничены -1000000..1000000, b≠0. Ограничение также исключает переполнение частного.",
+          "Подавайте указанное число целых значений через пробелы. Лишние значения не входят в этот небольшой контракт ввода. Сохраняйте исходник, точный stdin, прогноз и фактический вывод. Эти примеры знакомят с логикой; следующие модули подробно разбирают типы, потоки и функции C++."
+        ]
+      },
+      {
+        "id": "diagnose-syntax",
+        "title": "Опыт: пропущена точка с запятой",
+        "paragraphs": [
+          "Эта версия должна быть отвергнута на этапе сборки. Посмотрите первое сообщение рядом со строкой std::cout и ближайшей закрывающей скобкой. Верните ; и проверьте контрольный вывод Nexus C++."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\"\n}",
+          "stdin": "",
+          "expectCompileFailure": true
+        }
+      },
+      {
+        "id": "diagnose-link",
+        "title": "Опыт: есть объявление, нет определения",
+        "paragraphs": [
+          "Компилятор знает сигнатуру area, поэтому может перевести вызов. Компоновщику всё ещё требуется тело функции. В этом единственном файле его нет, сборка не создаёт запускаемый результат. Добавьте определение с такой же сигнатурой."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "int area(int width, int height);\n\nint main() {\n    return area(4, 3);\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Попробуйте на другой задаче",
+        "paragraphs": [
+          "Отладьте программу целочисленного деления. В заготовке уже есть чтение и проверка диапазона −1000000..1000000 и ненулевого делителя, но формула ошибочна. Сначала воспроизведите расхождение для 17 −5, затем исправьте операцию. Для недопустимого или нечитаемого ввода печатайте invalid.",
+          "Сначала запишите прогноз для первого и одного граничного входа. В «Практике» уже есть отдельная заготовка. После запуска объясните, какая проверка или операция дала каждый результат."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Вход 5 3. Что выдаст показанный исходник до исправления формулы?",
+        "options": [
+          "8\n",
+          "15\n",
+          "invalid\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Да. Исходник складывает 5 и 3.",
+          "15 — правильная площадь. Это не наблюдаемый вывод ошибочного исходника.",
+          "Вход читается и проходит заданные границы."
+        ],
+        "recall": "concept-4",
+        "code": {
+          "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+          "stdin": "5 3\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+          "stdin": "5 3\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          },
+          "expected": "8\n"
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "На каком этапе обычно находят пропущенную ;?",
+        "options": [
+          "Компиляция",
+          "После завершения программы",
+          "Проектирование цвета кнопки"
+        ],
+        "correct": 0,
+        "feedback": "Это ошибка синтаксиса.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Каков результат 10/3 при двух int?",
+        "options": [
+          "3.333",
+          "3",
+          "4"
+        ],
+        "correct": 1,
+        "feedback": "Целочисленное деление отбрасывает дробную часть.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Что обязательно проверить перед a/b?",
+        "options": [
+          "Цвет интерфейса",
+          "a>0",
+          "b!=0"
+        ],
+        "correct": 2,
+        "feedback": "Деление на ноль недопустимо.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Для входа 17 −5 сравните результат заготовки и исправленной программы. Объясните, чем эта ошибка отличается от пропущенного ; и почему b = 0 проверяют заранее.",
+        "feedback": "Назовите тип дефекта заготовки и запишите исходник, ввод, ожидаемый и фактический вывод до и после.",
+        "recall": "concept-4"
+      }
+    ],
+    "practice": {
+      "title": "Исправление целочисленного деления",
+      "task": "Отладьте программу целочисленного деления. В заготовке уже есть чтение и проверка диапазона −1000000..1000000 и ненулевого делителя, но формула ошибочна. Сначала воспроизведите расхождение для 17 −5, затем исправьте операцию. Для недопустимого или нечитаемого ввода печатайте invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    // This placeholder builds but performs the wrong operation.\n    std::cout << a + b << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "17 -5\n",
+      "returnAnchor": "concept-4",
+      "recall": "concept-4",
+      "cases": [
+        {
+          "label": "Новый основной вход",
+          "input": "17 -5\n",
+          "output": "-3\n"
+        },
+        {
+          "label": "Проверка 1",
+          "input": "10 3\n",
+          "output": "3\n"
+        },
+        {
+          "label": "Проверка 2",
+          "input": "10 0\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 3",
+          "input": "-8 3\n",
+          "output": "-2\n"
+        },
+        {
+          "label": "Проверка 4",
+          "input": "oops\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 5",
+          "input": "-2147483648 -1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 6",
+          "input": "1000000 -1000000\n",
+          "output": "-1\n"
+        },
+        {
+          "label": "Проверка 7",
+          "input": "1000001 1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 8",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Сохраните предохранитель до операции и проверьте b=0.",
+        "Проверьте усечение к нулю на отрицательном частном.",
+        "Назовите тип дефекта заготовки и запишите исходник, ввод, ожидаемый и фактический вывод до и после."
+      ],
+      "hint": "Зафиксируйте ожидаемое и наблюдаемое для 17 −5, затем сделайте одну правку.",
+      "steps": [
+        {
+          "where": "Моя программа",
+          "action": "Запишите прогноз и выполните заготовку.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя программа",
+          "action": "Исправьте одну операцию.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя программа",
+          "action": "Повторите запуск и проверки нуля, знака и диапазона.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-lex.phases",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[lex.phases]",
+        "language": "English",
+        "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.phases"
+      },
+      {
+        "id": "cpp20-basic.def.odr",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[basic.def.odr]",
+        "language": "English",
+        "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.def.odr"
+      },
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+    "starterExpected": "12\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "17 -5\n",
+        "label": "transfer-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "-3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "10 3\n",
+        "label": "transfer-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "10 0\n",
+        "label": "transfer-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "-8 3\n",
+        "label": "transfer-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "-2\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "oops\n",
+        "label": "transfer-5",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "-2147483648 -1\n",
+        "label": "transfer-6",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "1000000 -1000000\n",
+        "label": "transfer-7",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "-1\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "1000001 1\n",
+        "label": "transfer-8",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "",
+        "label": "transfer-9",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+        "stdin": "1 1\n",
+        "label": "example-case-1",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "2\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n}\n",
+        "stdin": "1 1\n",
+        "label": "example-case-2",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "1\n"
+      }
+    ],
+    "coverage": {
+      "1": "concept-2",
+      "2": "concept-2",
+      "3": "concept-4",
+      "4": "concept-6"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ]
   }
 }

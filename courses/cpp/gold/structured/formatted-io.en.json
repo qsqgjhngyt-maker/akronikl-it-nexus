@@ -345,5 +345,401 @@
       "Opens a file"
     ],
     "correctIndex": 0
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "Formatted output: values and representations",
+    "goal": "Control a number’s text representation and check which settings survive one insertion.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+      },
+      {
+        "text": "Follow the prerequisite links: cpp.unions-typedef-enums. New constructs are introduced before the assignment."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "A value is separate from its text",
+        "paragraphs": [
+          "A report was rejected for 2.5 instead of 2.50. The number is unchanged, but the text interface requires exactly two digits after the point.",
+          "double stores a binary value; fixed and setprecision choose textual representation without increasing calculation precision. Money can use integral minor units and print whole and fractional parts separately.",
+          "Specify units, permitted signs, rounding, and separators. The lab price is an integer number of cents in 0…100000, quantity is 0…1000, and total is at most 100000000 cents. Integer arithmetic avoids decimal representation error."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "fixed and setprecision",
+        "paragraphs": [
+          "With fixed, setprecision(2) from <iomanip> requests two digits after the decimal point. Without fixed, precision normally means significant digits. The setting affects subsequent insertions until changed.",
+          "std::defaultfloat restores general floating formatting but does not reset every stream flag. An independent report can use its own ostringstream with explicit settings. Here first trace cout’s state.",
+          "fixed together with setprecision(2) gives two digits after the point. Both 1.25 and the following 2.0 use that setting until it changes."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Output precision persists",
+        "paragraphs": [
+          "Check two consecutive stream insertions after fixed and setprecision(2)."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::fixed << std::setprecision(2) << 1.25 << ' ' << 2.0 << '\\n';\n}\n",
+          "stdin": "",
+          "output": "1.25 2.00\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Width, fill, and alignment",
+        "paragraphs": [
+          "setw(n) sets the minimum width of the next formatted field; longer values are not truncated. setfill('0') changes the fill character persistently. std::left and std::right also persist.",
+          "To print five cents, output 0, a dot, and the remainder with setw(2) and setfill('0'), yielding 0.05. Repeat setw for another field. Field width is a representation rule, not protection against oversized input.",
+          "setw(3) with fill '0' gives 007. The width has reset by the next 8, and setw(2) does not truncate 123."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "State manipulators",
+        "paragraphs": [
+          "boolalpha prints true/false rather than 1/0 until noboolalpha. hex selects hexadecimal integer output; dec restores decimal. Avoid leaving an unexpected mode for the next report section.",
+          "\\n adds a newline; endl additionally flushes the buffer. Repeated flushing is usually unnecessary in a batch sandbox. The environment’s overall output limit applies regardless of formatting.",
+          "boolalpha changes Boolean formatting until noboolalpha. If one report uses the stream after another, check what state was handed over."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Width resets while fill persists",
+        "paragraphs": [
+          "Mark the width before each integer and the boolalpha state before each true."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::setfill('0') << std::setw(3) << 7 << '|' << 8 << '|' << std::setw(2) << 123 << '\\n';\n    std::cout << std::boolalpha << true << ' ' << std::noboolalpha << true << '\\n';\n}\n"
+        ],
+        "predictionInput": "",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Reveal output and trace execution",
+          "paragraphs": [
+            "007|8|123 demonstrates three width cases. The second line verifies switching the Boolean format."
+          ],
+          "tables": [
+            {
+              "caption": "Trace for this run",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "What to check"
+              ],
+              "rows": [
+                [
+                  "setw(3) → 7",
+                  "width = 3, fill = '0'",
+                  "007",
+                  "Width is applied then reset."
+                ],
+                [
+                  "8 and setw(2) → 123",
+                  "width = 0",
+                  "8|123",
+                  "Width is a minimum, not a maximum."
+                ],
+                [
+                  "Two true values",
+                  "boolalpha → noboolalpha",
+                  "true 1",
+                  "The representation changes."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::setfill('0') << std::setw(3) << 7 << '|' << 8 << '|' << std::setw(2) << 123 << '\\n';\n    std::cout << std::boolalpha << true << ' ' << std::noboolalpha << true << '\\n';\n}\n",
+            "stdin": "",
+            "output": "007|8|123\ntrue 1\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Locale and portability",
+        "paragraphs": [
+          "A text protocol should specify the decimal point and absence of grouping separators. Do not rely on incidental user locale. The examples explicitly form integer parts and a dot and use ASCII stdout.",
+          "Compare exact bytes separately from numeric closeness. 1.5 versus 1.50 may pass a numeric check while violating the interface. Approximate calculations need an explicit tolerance; setprecision does not repair the mathematics.",
+          "For a price in cents, compute the integer total first. Division by 100 gives the whole part, and the remainder gives cents. A literal dot preserves the task’s format."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Report checks",
+        "paragraphs": [
+          "Test zero, one minor unit, a whole amount, and the maximum amount. Preserve expected strings including spaces and newlines. For setw, include a value longer than the field to avoid treating width as a length limit.",
+          "Check persistent fill and reset width on the next field. Input states require the same discipline next: flags belong to a stream and affect later operations until explicitly handled.",
+          "Test 5 cents and 250 cents. Padding is visible in the first case, and the trailing zero must remain in the second. Compare the full line, not just the numeric value."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "A customer needs total=X.YY with two digits for cents. The input is in integer cents, so there is no need to round a double.",
+          "Calculate the whole part and remainder by hand for 5×1 and 125×2."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What prints after the manipulators in the shown program?",
+        "options": [
+          "007|8|123\ntrue 1\n",
+          "007|008|23\ntrue true\n",
+          "7|8|12\n1 1\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. Width resets after an integer, and boolalpha is changed by an explicit manipulator.",
+          "The next 8 does not inherit the previous width, and 123 is not truncated.",
+          "The first 7 is padded and the first true is printed as a word."
+        ],
+        "code": {
+          "source": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::setfill('0') << std::setw(3) << 7 << '|' << 8 << '|' << std::setw(2) << 123 << '\\n';\n    std::cout << std::boolalpha << true << ' ' << std::noboolalpha << true << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::setfill('0') << std::setw(3) << 7 << '|' << 8 << '|' << std::setw(2) << 123 << '\\n';\n    std::cout << std::boolalpha << true << ' ' << std::noboolalpha << true << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "007|8|123\ntrue 1\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "How long does setw(4) apply?",
+        "options": [
+          "It changes the number itself",
+          "For every field until program end",
+          "For the next formatted field"
+        ],
+        "correct": 2,
+        "feedback": "Unlike fill and several flags, width normally needs setting again.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Does fixed change double storage precision?",
+        "options": [
+          "Yes",
+          "No",
+          "Only with setw"
+        ],
+        "correct": 1,
+        "feedback": "It selects output representation.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Will setw(2) truncate 123?",
+        "options": [
+          "No; the field grows",
+          "Yes, to 23",
+          "Yes, to 12"
+        ],
+        "correct": 0,
+        "feedback": "Width is a minimum, not a maximum.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "How many cents are in total=2.50?",
+        "options": [
+          "2",
+          "25",
+          "250"
+        ],
+        "correct": 2,
+        "feedback": "Units must be part of the contract.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "What is needed to accept this lab?",
+        "options": [
+          "Only a copied reference",
+          "Source, actual results, original tests, and a contract explanation",
+          "Only a completed flag"
+        ],
+        "correct": 1,
+        "feedback": "A progress flag is not evidence of independent mastery.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Why is total=0.5 wrong for 5×1? Which two integer operations give 0 and 5, and where does the leading zero come from?",
+        "feedback": "The remainder needs two positions even when it is zero or below 10.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Receipt from integer cents",
+      "task": "Read a price in cents in 0…100000 and quantity in 0…1000; print total=X.YY. Require exactly two fields and reject extra input as invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iomanip>\n#include <iostream>\n\nint main() {\n    int priceCents{}, quantity{};\n    if (!(std::cin >> priceCents >> quantity) ||\n        priceCents < 0 || priceCents > 100000 ||\n        quantity < 0 || quantity > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    const int totalCents = priceCents * quantity;\n    // TODO: print whole units and exactly two digits for the remainder.\n    std::cout << \"total=\" << totalCents << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "5 1",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "5 1",
+          "output": "total=0.05\n"
+        },
+        {
+          "label": "Case 2",
+          "input": "0 1000",
+          "output": "total=0.00\n"
+        },
+        {
+          "label": "Case 3",
+          "input": "125 2",
+          "output": "total=2.50\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "100000 1000",
+          "output": "total=1000000.00\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "-1 2",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 6",
+          "input": "1 2.5",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Compare full lines total=0.05 and total=2.50. Check maximum inputs and a fractional token.",
+        "Formatting changes representation, not value precision.",
+        "Do not confuse setprecision with storage precision. Do not expect setw to truncate long values.",
+        "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+        "Keep the source, exact input and observed output."
+      ],
+      "hint": "The remainder needs two positions even when it is zero or below 10.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Calculate the whole part and remainder by hand for 5×1 and 125×2.",
+          "why": "Storing cents separates calculation and formatting without rounding a double.",
+          "expected": "For 5×1 the parts are 0 and 5; for 125×2 they are 2 and 50."
+        },
+        {
+          "where": "My program",
+          "action": "Validate both fields, multiply, and print quotient and remainder around a dot. Apply width to the remainder only.",
+          "why": "Padding is needed only for the fractional part of the text report.",
+          "expected": "The starter prints total=5; formatting gives total=0.05."
+        },
+        {
+          "where": "Check",
+          "action": "Compare full lines total=0.05 and total=2.50. Check maximum inputs and a fractional token.",
+          "why": "Numeric equality does not guarantee matching text.",
+          "expected": "125 2 prints total=2.50; fractional input 1 2.5 gives invalid."
+        }
+      ],
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "total=5\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-format",
+        "title": "C++20 [std.manip]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[std.manip]",
+        "language": "English",
+        "purpose": "Check what setprecision, setw and setfill do.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/std.manip"
+      },
+      {
+        "id": "cpp20-stream-state",
+        "title": "C++20 [basic.ios.members]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[basic.ios.members]",
+        "language": "English",
+        "purpose": "Check which settings the stream retains across operations.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1"
+      ],
+      "2": [
+        "concept-2",
+        "example-1"
+      ],
+      "3": [
+        "concept-3",
+        "concept-4",
+        "example-2"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-5",
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "A value is separate from its text",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "fixed and setprecision",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Width, fill, and alignment",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "State manipulators",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Locale and portability",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Report checks",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }

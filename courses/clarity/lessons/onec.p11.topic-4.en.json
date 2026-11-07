@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p11.topic-4",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Integrations and background operations",
+  "locale": "en",
+  "title": "Scheduled jobs and observability",
+  "goal": "Design a repeatable background job with observable state and safe cancellation.",
+  "prerequisites": [
+    {
+      "text": "onec.p10; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "A schedule is not success",
+      "paragraphs": [
+        "Scheduled jobs trigger procedures; background execution has its own lifecycle and errors. Define input, batch, commit boundary and state. “Every minute” does not mean the prior cycle finished. Prevent overlap by key or handle it through an idempotent design.",
+        "The complete runnable fragment is a manual batch-boundary handler, not a scheduled server job. For 12 items/batch5 it yields 5, 10, 12 and remains 12 at completion. Pass position explicitly so future persisted progress can survive calls independently of a form."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Reconcile the complete experiment",
+      "paragraphs": [
+        "The complete runnable fragment is a manual batch-boundary handler, not a scheduled server job. For 12 items/batch5 it yields 5, 10, 12 and remains 12 at completion. Pass position explicitly so future persisted progress can survive calls independently of a form."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Input → 12 items/batch5 → Position 0.\nProgress → 5→10→12 → Bounded by end.\nRepeat/reject → 12→12;size 0 → Stable end,zero rejected.",
+        "output": "12 → 12; size 0; Stable end,zero rejected."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Input",
+              "12 items/batch5",
+              "Position 0."
+            ],
+            [
+              "Progress",
+              "5 → 10 → 12",
+              "Bounded by end."
+            ],
+            [
+              "Repeat/reject",
+              "12 → 12; size 0",
+              "Stable end,zero rejected."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Batches bound work",
+      "paragraphs": [
+        "Use bounded batches with explicit progress and a persisted continuation point. One long transaction over all history blocks others and complicates recovery. Commit the continuation point with batch results. After failure, retries must neither skip unfinished items nor duplicate accepted ones.",
+        "ОдинПакет validates numeric integer inputs, nonnegative position and size≥1. Zero size could otherwise loop without progress. This function neither reads the course nor creates accounts or Nexus background jobs."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Observability and cancellation",
+      "paragraphs": [
+        "Distinguishqueued/running/succeeded/failed/cancelled. A processed counter is not committed success. Check cancellation between safe batches; it does not roll back already committed work. LogjobID, stage, counters and safe error details rather than secrets or full exchange copies.",
+        "Append the source to a server module and run ОпытРучногоОбработчика normally. Two assertions check boundaries and zero-size rejection. In another copy add a synthetic operationId/position/status/reason log without document contents or secrets."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A case that distinguishes the wrong solution",
+      "paragraphs": [
+        "Actual scheduling needs a supported licensed environment, own job metadata and an observed scheduled start. On a single-user training edition use the manual path and mark scheduling NOT RUN. Closing UI does not cancel an accepted server batch; cancellation needs a separate tested policy."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Report a manual call as proof of an actual server schedule.",
+        "output": "Reject; scheduling remains NOT RUN until separately executed."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Separate copy",
+              "Report a manual call as proof of an actual server schedule.",
+              "Retain the accepted original."
+            ],
+            [
+              "Observe",
+              "Reject; scheduling remains NOT RUN until separately executed.",
+              "Actual scheduling needs a supported licensed environment, own job metadata and an observed scheduled start. On a single-user training edition use the manual path and mark scheduling NOT RUN. Closing UI does not cancel an accepted server batch; cancellation needs a separate tested policy."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Make environment and tests explicit",
+      "paragraphs": [
+        "File and server deployments have different job behavior; training limits may prevent the exercise. Test normal batches, mid-batch failure, retry, overlap and cancellation in a permitted stand. Manually invoking a function tests its algorithm, not actual scheduled execution. Record those evidence separately.",
+        "Actual scheduling needs a supported licensed environment, own job metadata and an observed scheduled start. On a single-user training edition use the manual path and mark scheduling NOT RUN. Closing UI does not cancel an accepted server batch; cancellation needs a separate tested policy."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "Success is inferred from an unavailable environment. Separate actual observations from a planned advanced scenario and name edition limits.",
+        "A failed attempt is removed to make the record look successful. Retain the original failure, its cause, correction and regression evidence.",
+        "An own-copy change is applied over the accepted original. Verify the actual directory and preserve source identities before making changes."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does a manual call prove scheduling?",
+      "options": [
+        "No",
+        "Yes",
+        "After 12 items"
+      ],
+      "correct": 0,
+      "feedback": "Observe the triggering mechanism."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "The continuation point is committed",
+      "options": [
+        "Forever before work",
+        "With the consistent batch result",
+        "Only in UI"
+      ],
+      "correct": 1,
+      "feedback": "Otherwise work can be skipped or duplicated."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "DoesCancelafter commit roll back everything?",
+      "options": [
+        "Always",
+        "For every job",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "Committed effects differ from cancelling future work."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Investigate the separate adverse case without claiming an unavailable environment was tested. Report a manual call as proof of an actual server schedule.",
+      "feedback": "Accepted original preserved; rejection and its limits explained."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Scheduled jobs and observability",
+    "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. Report a manual call as proof of an actual server schedule.",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "Функция ОдинПакет(Знач Позиция,Размер,Всего) Экспорт\n    Если ТипЗнч(Позиция) <> Тип(\"Число\") Или ТипЗнч(Размер) <> Тип(\"Число\") Или ТипЗнч(Всего) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужны числа\"; КонецЕсли;\n    Если Позиция < 0 Или Размер < 1 Или Всего < Позиция Или Цел(Позиция) <> Позиция Или Цел(Размер) <> Размер Или Цел(Всего) <> Всего Тогда ВызватьИсключение \"Неверная граница пакета\"; КонецЕсли;\n    Возврат Мин(Позиция + Размер,Всего);\nКонецФункции\n\nФункция ОпытРучногоОбработчика() Экспорт\n    Первая = ОдинПакет(0,5,12); Вторая = ОдинПакет(Первая,5,12); Третья = ОдинПакет(Вторая,5,12); ПовторКонца = ОдинПакет(Третья,5,12);\n    Отказ = Ложь; Попытка ОдинПакет(0,0,12); Исключение Отказ = Истина; КонецПопытки;\n    Возврат Новый Структура(\"ГраницыВерны,НольОтклонен\",Первая = 5 И Вторая = 10 И Третья = 12 И ПовторКонца = 12,Отказ);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Preserve the starting state",
+        "where": "Own-copy Designer",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Keep the accepted work independent.",
+        "expected": "Separate copy opens with the earlier records.",
+        "troubleshooting": "A new list name alone does not create another database directory.",
+        "before": "Own path, prior sources and a restorable backup identified."
+      },
+      {
+        "id": "step-2",
+        "title": "Add the complete server source",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
+        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+        "why": "Database access has an explicit server boundary.",
+        "expected": "Definitions are module-level; no duplicate helper.",
+        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+        "before": "Separate copy opens with the earlier records."
+      },
+      {
+        "id": "step-3",
+        "title": "Prepare and call the experiment",
+        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытРучногоОбработчика();\nСообщить(Результат.ГраницыВерны);\nСообщить(Результат.НольОтклонен);",
+        "why": "Print every named result instead of accepting compilation alone.",
+        "expected": "Only the stated caller is inside the existing startup handler.",
+        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+        "before": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "id": "step-4",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Run once and compare the fields with the worked trace. 12 → 12; size 0; Stable end,zero rejected.",
+        "why": "Observe actual 1C data, not the browser diagram.",
+        "expected": "12 → 12; size 0; Stable end,zero rejected.",
+        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+        "before": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "id": "step-5",
+        "title": "Retain both results",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
+        "why": "Preserve provenance and avoid repeating data creation at every startup.",
+        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+        "before": "12 → 12; size 0; Stable end,zero rejected."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate copy opens with the earlier records."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "12 → 12; size 0; Stable end,zero rejected."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Original retained, negative experiment isolated, automatic caller removed."
+      }
+    ],
+    "criteria": [
+      "5+5+2 with consistent commit points.",
+      "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+      "Accepted original preserved; rejection and its limits explained.",
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits.",
+      "Report a manual call as proof of an actual server schedule."
+    ],
+    "hint": "Separate actual observations from a planned advanced scenario and name edition limits.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Explain the checked boundary using the first trace. Process 12 items in batches of 5.",
+        "criteria": "5+5+2 with consistent commit points."
+      },
+      {
+        "level": "Applied",
+        "task": "Perform the stated available experiment and retain actual observations. Fail the second batch and retry.",
+        "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+      },
+      {
+        "level": "Advanced",
+        "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. Report a manual call as proof of an actual server schedule.",
+        "criteria": "Accepted original preserved; rejection and its limits explained."
+      }
+    ],
+    "sourceFile": "code/pedagogy/job-batch-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p11-jobs.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Does a manual call prove scheduling?",
+        "options": [
+          "No",
+          "Yes",
+          "After 12 items"
+        ],
+        "correct": 0,
+        "explanation": "Observe the triggering mechanism."
+      },
+      {
+        "question": "The continuation point is committed",
+        "options": [
+          "Forever before work",
+          "With the consistent batch result",
+          "Only in UI"
+        ],
+        "correct": 1,
+        "explanation": "Otherwise work can be skipped or duplicated."
+      },
+      {
+        "question": "DoesCancelafter commit roll back everything?",
+        "options": [
+          "Always",
+          "For every job",
+          "No"
+        ],
+        "correct": 2,
+        "explanation": "Committed effects differ from cancelling future work."
+      }
+    ]
+  }
+}

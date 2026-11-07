@@ -23,7 +23,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Стандартный ввод-вывод: договор данных и проверяемый проект",
-  "lead": "Обработайте правильный и повреждённый ввод, разберите оставшийся перевод строки и завершите модуль точным расчётом времени передачи файла.",
+  "lead": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
   "why": "Программа получает не «готовые правильные числа», а поток символов. Надёжный интерфейс отличает синтаксис, допустимый диапазон и лишние данные, а результат остаётся воспроизводимым. Конечное поле stdin Nexus делает такие проверки удобными, но отличается от живого терминала.",
   "objectives": [
     "Читать числа через cin и проверять успех до использования.",
@@ -846,5 +846,785 @@
       "?:"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+    "prerequisites": [
+      "Знаете if/else, ||, !, int и умножение; смысл состояния потока вводится здесь."
+    ],
+    "model": [
+      "stdin — входной текст программы. В поле ввода напишем 4 3: std::cin >> width >> height пытается прочитать два целых. Пробел либо перевод строки разделяет числа. После успешного чтения width=4 и height=3. std::cout — отдельный выход, он не заполняет stdin.",
+      "!(std::cin >> width >> height) истинно при ошибке чтения: ! означает отрицание успешного состояния потока. Ранний return завершает main, поэтому после ошибки мы не вычисляем площадь. Проверка width<0 || height<0 отклоняет отрицательные размеры. Для этого примера используйте размеры 0..1000; перед умножением проверяем и верхние границы.",
+      "Этот маленький протокол читает два числа и не требует отсутствия дальнейших слов. Более строгий разбор всей строки и смешение cin с getline — отдельная следующая ступень. Пустой stdin здесь вызовет invalid, в отличие от примеров с числами прямо в коде."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+      "code": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+      "stdin": "4 3\n",
+      "expectedStdout": "12\n",
+      "trace": [
+        {
+          "line": "cin >> width >> height",
+          "before": "stdin: 4 3",
+          "after": "width: 4; height: 3",
+          "why": "Оба целых прочитаны, первая ветвь пропущена."
+        },
+        {
+          "line": "Проверка / bounds",
+          "before": "4; 3",
+          "after": "valid",
+          "why": "Размеры в пределах 0..1000."
+        },
+        {
+          "line": "cout << width * height",
+          "before": "4 × 3",
+          "after": "stdout: 12",
+          "why": "Вывод вычислен только после двух проверок."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Тренировка",
+      "challenge": "Контрольный опыт: stdin содержит oops и перевод строки. Предскажите результат отказа чтения.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+      "stdin": "oops\n",
+      "expectedStdout": "invalid\n",
+      "hints": [
+        "Два числовых токена становятся шириной и высотой.",
+        "При oops чтение int не удалось; умножение не выполняется."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+          "stdin": "5 6\n",
+          "stdout": "30\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Самостоятельная вариация",
+      "challenge": "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n",
+      "stdin": "70 5\n",
+      "cases": [
+        {
+          "stdin": "70 5\n",
+          "stdout": "350\n"
+        },
+        {
+          "stdin": "70 0\n",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "-1 5\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ],
+      "rubric": [
+        "Сравните вывод с показанным ниже контрольным случаем.",
+        "Объясните каждое изменение через объекты или операции этой темы.",
+        "Для входов 70 5, 70 0, -1 5 и пустого ввода ответы: 350, 0, invalid, invalid. При неудачном чтении или нарушении границ расчёт не выполняется."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int price = 0;\n    int count = 0;\n    if (!(std::cin >> price >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (price < 0 || price > 1000 || count < 0 || count > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << price * count << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+      "steps": [
+        "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+        "Предскажите результат до запуска.",
+        "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "Сравните фактический вывод с прогнозом и объясните расхождение."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Если вычислять после неудачного чтения, программа использует не полученные от пользователя данные. Проверка чтения должна предшествовать расчёту.",
+    "next": "После вариации переходите к углублению: там сохранены точные ограничения, дополнительные случаи и прежняя лабораторная. Старое завершение и попытки сохраняют отношение к прежней редакции."
+  },
+  "teachingEdition": {
+    "revision": "b1-author-v1",
+    "title": "Ввод и вывод: договориться о данных до расчёта",
+    "goal": "Прочитайте и проверьте данные, объясните оставшийся текст в потоке и получите отчёт с точным форматом.",
+    "prerequisites": [
+      {
+        "text": "Все предыдущие темы Module 2, простой if/else и раннее завершение из Module 1."
+      },
+      {
+        "text": "Целое деление, long long до умножения, сравнения, bool, ссылки и живые объекты. Циклы и собственные функции не нужны."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Получили ли мы число",
+        "paragraphs": [
+          "До этого числа жили прямо в исходнике. Теперь количество приходит снаружи: сегодня это 8, завтра — слово eight или пустое поле. Как программе понять, что число действительно получено?",
+          "Предскажите отдельные результаты для входов 8 и eight. Чтение числа и проверка его допустимого диапазона — разные шаги. В первом примере разберём только успех чтения."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n"
+        ],
+        "reveal": {
+          "title": "Сверить прогноз и разобрать шаги",
+          "paragraphs": [
+            "std::cin >> count пытается прочитать int и записать его в существующий объект. >> здесь извлечение из потока, не битовый сдвиг. При обычном формате начальные пробелы пропускаются. Цепочка cin >> a >> b читает значения последовательно, но может остановиться до второго.",
+            "if (!(std::cin >> count)) проверяет неудачу всей операции. Выражение потока в таком условии сообщает, пригодно ли состояние после чтения; ! обращает результат. При отказе печатаем invalid и завершаем обработку до использования числа. Успешное чтение не доказывает допустимость предметного диапазона: это следующая отдельная проверка.",
+            "Не меняя исходник, подайте 9, затем слово oops отдельным запуском. Сохраните вход рядом с каждым результатом. Иначе строка count=9 ничего не говорит о том, какой опыт вы провели."
+          ],
+          "tables": [
+            {
+              "caption": "Проследим трудный шаг",
+              "columns": [
+                "Точный ввод",
+                "Чтение int",
+                "stdout первого примера"
+              ],
+              "rows": [
+                [
+                  "8 и перевод строки",
+                  "Успех",
+                  "count=8"
+                ],
+                [
+                  "eight и перевод строки",
+                  "Отказ: первый токен не число",
+                  "invalid"
+                ],
+                [
+                  "Пустой буфер",
+                  "Отказ: числа нет",
+                  "invalid"
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
+            "stdin": "8\n",
+            "output": "count=8\n"
+          }
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "Перевод строки и конец ввода",
+        "paragraphs": [
+          "Nexus передаёт содержимое stdin как конечный буфер. После последнего символа чтение может обнаружить EOF — конец ввода. В интерактивном терминале Enter обычно добавляет перевод строки, но не закрывает поток; ожидание следующих данных продолжается. Поэтому строгая проверка всего хвоста через ws может ждать окончания ввода в живом терминале.",
+          "eof() сообщает установленное состояние после попытки обнаружить конец, а не «есть ли ещё число». Не пишите цикл while(!cin.eof()) как замену проверки чтения. Для нашего конечного задания сначала проверяется конкретное извлечение, затем после ws проверяется отсутствие непробельного хвоста."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Что сообщают fail и eof",
+        "paragraphs": [
+          "fail() сообщает о неуспешном чтении или плохом состоянии; eof() — об обнаруженном конце. Оба флага могут быть true одновременно, например при попытке получить число из пустого буфера. Успешно прочитанное последнее число без завершающего пробела может установить eof без ошибки извлечения. Поэтому eof само по себе не означает неверное число.",
+          "В этой теме при ошибке прекращаем обработку. Восстановление через clear и удаление повреждённого ввода требует отдельной политики и обычно цикла; оно не скрыто в заданиях. Слишком большой литерал ввода, который не помещается в long long, должен дать отказ чтения, а не участвовать в расчёте как достоверное значение."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    std::cin >> count;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << '\\n';\n    return 0;\n}\n",
+          "stdin": "8\n",
+          "output": "0 0\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "После числа осталась часть строки",
+        "paragraphs": [
+          "Подключение <string> даёт std::string — готовый тип текста. std::string line; создаёт пустую строку. std::getline(std::cin, line) получает строку до перевода, сохраняет символы до него и извлекает сам перевод. После cin >> count перевод строки часто ещё остаётся, поэтому следующий getline может успешно получить пустую строку.",
+          "std::getline(std::cin >> std::ws, name) сначала убирает все начальные пробельные символы, затем читает непустой по началу текст. Это удобно для имени без значимых ведущих пробелов, но уничтожает пустые строки и отступы. Если пустая строка — допустимые данные, такой рецепт не подходит. Комма разделяет аргументы готовой функции; своих функций писать не требуется."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <string>\n\nint main() {\n    int count{0};\n    std::string line;\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::getline(std::cin, line);\n    std::cout << count << '|' << line << '\\n';\n    return 0;\n}\n",
+          "stdin": "8 rest of line\n",
+          "output": "8| rest of line\n"
+        }
+      },
+      {
+        "id": "worked-line-ws",
+        "title": "Имя после начальных пробелов",
+        "paragraphs": [
+          "Применить ws только когда потеря пустых строк разрешена.",
+          "ws удаляет начальные пробелы и переводы.",
+          "getline сохраняет внутренний пробел в имени.",
+          "При пустом вводе чтение отклоняется."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name;\n    if (!std::getline(std::cin >> std::ws, name)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"name=\" << name << '\\n';\n    return 0;\n}\n",
+          "stdin": " \n  Nexus Academy\n",
+          "output": "name=Nexus Academy\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Прочитанные числа и непрочитанный хвост",
+        "paragraphs": [
+          "Чтение целого может успешно получить начальную целую часть текста 8.5 и оставить .5. Поэтому один bool-результат чтения не доказывает, что весь ввод соответствует требованию «ровно целые поля». После всех полей выполняем cin >> ws, затем проверяем eof(): остаток .5 или extra будет отвергнут. Пробельный хвост разрешён.",
+          "Для этого задания используем обычный числовой формат среды без переключения локали. В исходном C++ литерале 010 обозначал восьмеричное число; текст stdin читается по текущим настройкам потока и не обязан повторять грамматику литералов исходника. Контракт задаётся правилами чтения, а не внешним видом примера."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Формат текста не меняет внутреннее число",
+        "paragraphs": [
+          "<iomanip> предоставляет setprecision. std::fixed задаёт фиксированный формат, а std::setprecision(2) в нём — два знака после десятичной точки. Настройка действует на последующий вывод в этот поток. Она меняет текстовое представление, а не превращает double в точную десятичную арифметику.",
+          "Не добавляйте приглашения «Введите число», если контракт автоматического сравнения требует только ответ. Поле stdin уже задаёт вход отдельно от stdout. Для ручной проверки сохраните также код завершения и точные переводы строк; интерфейсный статус не входит в stdout."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    double lengthMeters{1.25};\n    std::cout << std::fixed << std::setprecision(2) << lengthMeters << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "1.25\n"
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Собираем навыки: ввод и один общий объект",
+        "paragraphs": [
+          "Прочитайте stock в 0…100, отклоните лишний хвост, создайте снимок, ссылку и указатель на живой stock. Выдайте не больше трёх предметов и покажите исходное значение, остаток и выданное. Сравнение &alias == selected проверяет, что оба пути ведут к одному объекту, без печати численного адреса.",
+          "Это накопительная задача: сначала проверьте ввод, затем проследите связи объектов и только после этого меняйте запас. Обычная самостоятельная задача ниже не требует решать весь практикум сразу."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Итоговый расчёт: секунды передачи данных",
+        "paragraphs": [
+          "Ввод m r h: m — объём MiB, то есть 1024 × 1024 байт; r — kbit/s, то есть 1000 бит в секунду; h — накладные расходы в процентах от полезных битов. Диапазоны: 0…1000000 MiB, 1…1000000 kbit/s, 0…100 процентов. Это расчётная модель с постоянной скоростью, не обещание времени реальной сети.",
+          "num = m × 1024 × 1024 × 8 × (100+h), den = 100 × r × 1000. Вверх до секунды: num/den + (num%den != 0). Сравнение даёт bool, который в сумме преобразуется в 0 или 1. Максимальный num равен 1677721600000000, den не больше 100000000000; long long достаточен, и первый множитель уже long long.",
+          "stdout содержит seconds, seconds/60, seconds%60 через пробелы и перевод строки. Так отчёт всегда согласован: seconds = 60 × minutes + remainder, остаток 0…59. Недопустимый, неполный, дробный, переполненный или лишний непробельный ввод даёт только invalid. Добавьте два собственных случая и объясните, какую ошибку они обнаруживают."
+        ]
+      },
+      {
+        "id": "diagnose-wrong-input-direction",
+        "title": "Намеренно: неверное направление потока",
+        "paragraphs": [
+          "Это отдельная неисправная программа для разбора диагностики. Она не заменяет вашу работу. Сначала найдите причину, затем сравните отказ сборки с исправленным вариантом.",
+          "cin извлекает через >>; cout вставляет через <<."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    std::cin << count;\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        },
+        "deep": {
+          "title": "Почему программа в терминале может ждать после Enter?",
+          "text": "В браузерной задаче stdin — законченный буфер: после его символов доступен конец ввода. В живом терминале Enter добавляет перевод строки, но поток часто остаётся открытым. Поэтому проверка отсутствия любых следующих символов может ждать завершения ввода. Не переносите поведение конечного тестового буфера на интерактивный диалог без изменения договора.",
+          "sourceId": "cpp20-istream.formatted.reqmts"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь решите другую задачу",
+        "paragraphs": [
+          "Прочитайте ровно два целых в 0…1000, выведите items=boxes*itemsPerBox. Пробельный хвост разрешён, любой иной хвост и ошибка чтения дают invalid. Начните самостоятельный расчёт коробок с входа 4 6: ожидается items=24. Затем отдельно проверьте 4 6 extra, 4 6.5 и пустой ввод: ожидается только invalid. Объясните, почему проверка чтения двух чисел без проверки хвоста недостаточна.",
+          "Откройте «Практику». Заготовка и ваш текущий код находятся отдельно от примеров. Запишите прогноз до запуска; после проверки объясните результат своими словами."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "В первом примере исходник прежний, stdin содержит ровно oops и перевод строки. Что будет в stdout?",
+        "options": [
+          "invalid\n",
+          "count=0\n",
+          "count=9\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Да: чтение не удалось, поэтому программа завершает обработку до использования count.",
+          "Начальный ноль не превращает неудачное чтение в успешное. Ветка отказа выводит invalid.",
+          "9 относилось к другому входу. Здесь первый токен oops не читается как int."
+        ],
+        "recall": "concept-1",
+        "code": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
+          "stdin": "oops\n",
+          "expected": "invalid\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "Что означает неудача cin >> value?",
+        "options": [
+          "Можно считать value проверенным числом",
+          "Нужно обработать отказ до использования значения",
+          "Любое число автоматически равно нулю"
+        ],
+        "correct": 1,
+        "feedback": "Инициализация не подменяет проверку результата извлечения.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Удаляет ли ws только один перевод строки?",
+        "options": [
+          "Да",
+          "Нет, все начальные whitespace, включая пустые строки",
+          "Он ничего не читает"
+        ],
+        "correct": 1,
+        "feedback": "Такой рецепт не сохраняет значимые начальные пробелы и пустые строки.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Почему 1 1000 0.5 отклоняется в проекте?",
+        "options": [
+          "После целого h остаётся непробельный хвост .5",
+          "Любой overhead запрещён",
+          "MiB не может быть 1"
+        ],
+        "correct": 0,
+        "feedback": "Ровно три целых поля проверяются вместе с полным хвостом.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "concept-3",
+        "kind": "choice",
+        "prompt": "Как округлить неотрицательное num/den вверх при den>0?",
+        "options": [
+          "num/den",
+          "num/den + (num%den != 0)",
+          "static_cast<double>(num/den)"
+        ],
+        "correct": 1,
+        "feedback": "Добавляется одна секунда только при ненулевом остатке.",
+        "recall": "concept-8"
+      },
+      {
+        "id": "concept-4",
+        "kind": "choice",
+        "prompt": "Что доказывает fixed/setprecision(2)?",
+        "options": [
+          "Точный внутренний десятичный double",
+          "Выбранный формат текстового вывода",
+          "Окончание stdin"
+        ],
+        "correct": 1,
+        "feedback": "Форматирование и представление числа — разные уровни.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Начните самостоятельный расчёт коробок с входа 4 6: ожидается items=24. Затем отдельно проверьте 4 6 extra, 4 6.5 и пустой ввод: ожидается только invalid. Объясните, почему проверка чтения двух чисел без проверки хвоста недостаточна.",
+        "feedback": "Каждый показанный вход запускается отдельно с одной и той же версией исходника.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Надёжный конечный интерфейс",
+      "task": "Прочитайте ровно два целых в 0…1000, выведите items=boxes*itemsPerBox. Пробельный хвост разрешён, любой иной хвост и ошибка чтения дают invalid. Начните самостоятельный расчёт коробок с входа 4 6: ожидается items=24. Затем отдельно проверьте 4 6 extra, 4 6.5 и пустой ввод: ожидается только invalid. Объясните, почему проверка чтения двух чисел без проверки хвоста недостаточна.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"received\\n\";\n    return 0;\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "4 6\n",
+      "returnAnchor": "concept-5",
+      "recall": "concept-5",
+      "cases": [
+        {
+          "label": "Проверка 1",
+          "input": "4 6\n",
+          "output": "items=24\n"
+        },
+        {
+          "label": "Проверка 2",
+          "input": "0 8",
+          "output": "items=0\n"
+        },
+        {
+          "label": "Проверка 3",
+          "input": "1000 1000",
+          "output": "items=1000000\n"
+        },
+        {
+          "label": "Проверка 4",
+          "input": "3 8 \n\t",
+          "output": "items=24\n"
+        },
+        {
+          "label": "Проверка 5",
+          "input": "",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 6",
+          "input": "3",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 7",
+          "input": "x 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 8",
+          "input": "-1 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 9",
+          "input": "1001 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 10",
+          "input": "3 1001",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 11",
+          "input": "3 8 extra",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 12",
+          "input": "3 8.5",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 13",
+          "input": "999999999999999999999999999999 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 14",
+          "input": "4 6 extra",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Проверка 15",
+          "input": "4 6.5",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Есть точный контракт stdin/stdout.",
+        "Все 15 случаев сопоставлены с результатом.",
+        "Лишняя дробная часть не игнорируется.",
+        "stdout содержит только ответ по контракту; исходник и протокол сохраняются вместе.",
+        "Объясните словами, какой объект или промежуточное значение меняется. Совпадение stdout само по себе не заменяет это объяснение.",
+        "Каждый показанный вход запускается отдельно с одной и той же версией исходника."
+      ],
+      "hint": "Начните самостоятельный расчёт коробок с входа 4 6: ожидается items=24. Затем отдельно проверьте 4 6 extra, 4 6.5 и пустой ввод: ожидается только invalid. Объясните, почему проверка чтения двух чисел без проверки хвоста недостаточна.",
+      "steps": [
+        {
+          "where": "Моя самостоятельная работа",
+          "action": "Разделите ошибки синтаксиса, диапазона и хвоста.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя самостоятельная работа",
+          "action": "Проверьте чтение до умножения.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя самостоятельная работа",
+          "action": "Используйте long long для всего произведения.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя самостоятельная работа",
+          "action": "Сохраните все контрольные входы, включая пустой.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-istream.formatted.reqmts",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[istream.formatted.reqmts]",
+        "language": "English",
+        "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/istream.formatted.reqmts"
+      },
+      {
+        "id": "cpp20-istream.unformatted",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[istream.unformatted]",
+        "language": "English",
+        "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/istream.unformatted"
+      },
+      {
+        "id": "cpp20-istream.manip",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[istream.manip]",
+        "language": "English",
+        "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/istream.manip"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 6\n",
+        "expected": "items=24\n",
+        "label": "independent",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "0 8",
+        "expected": "items=0\n",
+        "label": "input-0",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "1000 1000",
+        "expected": "items=1000000\n",
+        "label": "input-1",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 8 \n\t",
+        "expected": "items=24\n",
+        "label": "input-2",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "invalid\n",
+        "label": "input-3",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3",
+        "expected": "invalid\n",
+        "label": "input-4",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "x 8",
+        "expected": "invalid\n",
+        "label": "input-5",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "-1 8",
+        "expected": "invalid\n",
+        "label": "input-6",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "1001 8",
+        "expected": "invalid\n",
+        "label": "input-7",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 1001",
+        "expected": "invalid\n",
+        "label": "input-8",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 8 extra",
+        "expected": "invalid\n",
+        "label": "input-9",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 8.5",
+        "expected": "invalid\n",
+        "label": "input-10",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "999999999999999999999999999999 8",
+        "expected": "invalid\n",
+        "label": "input-11",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 6 extra",
+        "expected": "invalid\n",
+        "label": "transfer-invalid-13",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 6.5",
+        "expected": "invalid\n",
+        "label": "transfer-invalid-14",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-3",
+      "3": "concept-4",
+      "4": "concept-6",
+      "5": "concept-8"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      },
+      {
+        "sourceSection": 7,
+        "anchor": "concept-8"
+      }
+    ],
+    "starterExpected": "received\n"
   }
 }

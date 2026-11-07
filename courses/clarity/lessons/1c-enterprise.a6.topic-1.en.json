@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "1c-enterprise.a6.topic-1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a6",
+  "course": "1C:Enterprise Fundamentals and Configuration",
+  "module": "Administration and preservation",
+  "locale": "en",
+  "title": "Permissions in a training copy: allow reads and reject edits",
+  "goal": "Specify and test a minimal reader matrix in an own infobase, separate from the Nexus account.",
+  "prerequisites": [
+    {
+      "text": "1c-enterprise.a 5; A1–A2: separate infobase, catalogs, references and documents; synthetic data only.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Roles describe capabilities",
+      "paragraphs": [
+        "An operator creates and reads requests; a consultant configures variants; a developer changes configuration. These are teaching roles, not a complete production policy. Specify object, action and data scope per operation. Full access for everyone hides the symptom rather than solving responsibility boundaries.",
+        "The reader opens an existing request but cannot edit it. This differs from an input operator: define the task before granting access. Reading and editing are separate actions. A valid 30-to-31 edit is used so a duration-boundary refusal cannot masquerade as an access denial."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Both sides of the matrix",
+      "paragraphs": [
+        "This is a permission matrix, not BSL. Test operations rather than button appearance."
+      ],
+      "code": {
+        "language": "text",
+        "source": "УчебныйЧитательA6: ЗаявкаУслуги → read yes, update no\nSaved request: 30 minutes\nReader attempts 31 → denied",
+        "output": "Reading succeeds, editing is denied and a fresh read retains 30."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Prepare",
+              "Own copy and DT",
+              "Administration access retained."
+            ],
+            [
+              "Assign",
+              "Reader role only",
+              "No extra role added."
+            ],
+            [
+              "Read",
+              "Own 30-minute request",
+              "Allowed operation succeeds."
+            ],
+            [
+              "Edit",
+              "Valid 31",
+              "Denial and retained 30 verified."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Visibility is not permission",
+      "paragraphs": [
+        "Hiding a command can improve UI, but denial must apply to the operation. Another list or programmatic route must not bypass the rule. Denying everything is also incorrect. Alongside each denial, test a necessary allowed operation for the same role.",
+        "A role is configuration metadata; an infobase user receives one or more roles. Additional roles can grant more access than the new reader role alone. Assign only the reader role to that teaching profile. Preserve a DT and administration access beforehand; do not replace real profiles or roles."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "A check has an environment",
+      "paragraphs": [
+        "Training edition limits authentication and simultaneous sessions. It can teach role structure and scenarios but does not establish a complete multi-user security PASS. Execute the matrix in a permitted environment with separate teaching users. Never use real credentials or publish a password to simplify reproduction.",
+        "NexusA6Admin/NexusA6Reader belong only to this own copy. They are not Nexus, Yandex, Windows or production authentication accounts. The official training route does not depend on passwords or Windows authentication. With another authorized edition, retain its existing protection and use a separate teaching instance under its rules."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Denying everything does not prove the matrix",
+      "paragraphs": [
+        "Resolve the environment failure before drawing object-permission conclusions."
+      ],
+      "code": {
+        "language": "text",
+        "source": "The profile never entered the infobase.",
+        "output": "Object read/update checks remain NOT RUN."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Login",
+              "Not completed",
+              "Object not read."
+            ],
+            [
+              "Matrix",
+              "Both observations absent",
+              "No PASS claim."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Denial preserves state",
+      "paragraphs": [
+        "An operator may not change schema or delete a catalog. Record state before the attempt, observed denial and state afterwards. Login failure does not prove object permissions: first authenticate as the intended role and execute an allowed workflow. Distinguish environment failure, permission denial and business validation.",
+        "The narrow matrix requires an actual read, rejection of a valid edit and an administrator reread of the original 30 minutes. A login failure alone proves none of that. This exercise creates no row-level restriction: the reader may see all documents its object permissions allow. It does not establish multi-user server security."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "An unavailable button is treated as proof of every permission. Check an allowed read and persistent state, explicitly recording untested paths.",
+        "The reader also receives an administrator role. Inspect all assigned roles and retain only the intended teaching role.",
+        "1C teaching profiles are mistaken for Nexus account roles. Separate infobase profiles from platform accounts and retain real identities."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "This reader may",
+      "options": [
+        "Read requests",
+        "Edit everything",
+        "Delete the base"
+      ],
+      "correct": 0,
+      "feedback": "Access is granted to a specified action."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Does failed login prove update denial?",
+      "options": [
+        "Always",
+        "No, the operation never ran",
+        "Only by window colour"
+      ],
+      "correct": 1,
+      "feedback": "First establish a working profile and read."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Does this exercise change Nexus roles?",
+      "options": [
+        "Automatically",
+        "Through Windows",
+        "No, only an own training 1C base"
+      ],
+      "correct": 2,
+      "feedback": "Keep system boundaries distinct."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain an additional administrator role and the distinction from row restrictions.",
+      "feedback": "No conclusions from a hidden button alone; no extra privileges granted."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "A reader sees the request but cannot change 30 to 31",
+    "task": "Explain an additional administrator role and the distinction from row restrictions.",
+    "environment": "Own original service desk; synthetic records only. No real Nexus accounts, Windows identities or external services are changed.",
+    "externalRoute": "Official installed 1C Enterprise/Designer of your own separate training copy",
+    "files": [],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "copy",
+        "title": "Prepare a separate experiment",
+        "where": "Own-copy Designer → Administration → Dump infobase",
+        "action": "Save a DT and restore a separate base through module 1. Verify its path and available administration access. Leave real profiles, source roles and source base intact.",
+        "why": "Preserve work and access first.",
+        "expected": "Separate base and retained source identified.",
+        "troubleshooting": "Do not change users until administration access to the own teaching copy is established.",
+        "before": "Earlier A5 work/provenance and a verified separate-copy route are retained."
+      },
+      {
+        "id": "roles",
+        "title": "Create teaching roles",
+        "where": "Copy Designer → Common → Roles",
+        "action": "Add УчебныйАдминистратор A6 for servicing only this copy and УчебныйЧитатель A6. For the reader allow the needed client, Read/View on Клиенты, Услуги and ЗаявкаУслуги; no update/insert/delete. Retain earlier roles.",
+        "why": "Specify object operations.",
+        "expected": "Reader matrix permits reading without editing.",
+        "troubleshooting": "Do not grant full rights or rely on hidden form commands.",
+        "before": "Separate base and retained source identified."
+      },
+      {
+        "id": "profiles",
+        "title": "Assign only the intended role",
+        "where": "Copy Designer → Administration → Users",
+        "action": "First ensure a teaching NexusA6Admin profile with the administration role, then NexusA6Reader with only the reader role. Respect training-edition limits: this exercise configures no passwords or Windows authentication. Never overwrite existing profiles.",
+        "why": "Preserve manageability before adding a limited profile.",
+        "expected": "Teaching identities and roles are separated.",
+        "troubleshooting": "If names already exist, inspect your earlier attempt or choose new teaching names without changing unknown profiles.",
+        "before": "Reader matrix permits reading without editing."
+      },
+      {
+        "id": "read",
+        "title": "Perform an allowed read",
+        "where": "1C base list → copy Enterprise → teaching reader",
+        "action": "Close this copy’s administrator session, open as the teaching reader and read an own saved 30-minute request. Record its actual number.",
+        "why": "Establish a functioning positive control.",
+        "expected": "Request read successfully as 30 minutes.",
+        "troubleshooting": "Failure to log in or read is not an update-denial test.",
+        "before": "Teaching identities and roles are separated."
+      },
+      {
+        "id": "reject",
+        "title": "Check denial and preservation",
+        "where": "Copy Enterprise → same request",
+        "action": "If editing is available, try 31 and save; expect denial. If editing is unavailable, record that without bypassing it. Exit the teaching profile, open as administrator and reread the original 30.",
+        "why": "Denied changes must preserve state.",
+        "expected": "Same number/reference and 30 minutes.",
+        "troubleshooting": "Do not grant rights to perform the negative case; programmatic denial is a separate engineering check.",
+        "before": "Request read successfully as 30 minutes."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate base and retained source identified."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Reader matrix permits reading without editing."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Teaching identities and roles are separated."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Request read successfully as 30 minutes."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Same number/reference and 30 minutes."
+      }
+    ],
+    "criteria": [
+      "Read/update separated without attributing RLS.",
+      "Positive control, access refusal and preserved data recorded.",
+      "No conclusions from a hidden button alone; no extra privileges granted.",
+      "Actual versions and distinct own-copy paths; synthetic identities and before/after values.",
+      "Allowed/refused cases, completed controls and explicit untested scope; no secrets.",
+      "Use the second worked case to identify the unsafe or unproved condition. Never perform destructive restoration over existing work."
+    ],
+    "hint": "Check an allowed read and persistent state, explicitly recording untested paths.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Specify object/action/allowance for reader and administrator.",
+        "criteria": "Read/update separated without attributing RLS."
+      },
+      {
+        "level": "Applied",
+        "task": "Read as a teaching reader, try 31 and reread 30 as administrator.",
+        "criteria": "Positive control, access refusal and preserved data recorded."
+      },
+      {
+        "level": "Advanced",
+        "task": "Explain an additional administrator role and the distinction from row restrictions.",
+        "criteria": "No conclusions from a hidden button alone; no extra privileges granted."
+      }
+    ],
+    "sourceFile": null,
+    "setupGuide": true
+  },
+  "terms": [
+    "infobase",
+    "configuration",
+    "designer",
+    "dt",
+    "cf",
+    "rollback",
+    "reference",
+    "attribute",
+    "self-report"
+  ],
+  "sourcePath": "courses/1c-enterprise/lessons/en/a6-rights.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "This reader may",
+        "options": [
+          "Read requests",
+          "Edit everything",
+          "Delete the base"
+        ],
+        "correct": 0,
+        "explanation": "Access is granted to a specified action."
+      },
+      {
+        "question": "Does failed login prove update denial?",
+        "options": [
+          "Always",
+          "No, the operation never ran",
+          "Only by window colour"
+        ],
+        "correct": 1,
+        "explanation": "First establish a working profile and read."
+      },
+      {
+        "question": "Does this exercise change Nexus roles?",
+        "options": [
+          "Automatically",
+          "Through Windows",
+          "No, only an own training 1C base"
+        ],
+        "correct": 2,
+        "explanation": "Keep system boundaries distinct."
+      }
+    ]
+  }
+}

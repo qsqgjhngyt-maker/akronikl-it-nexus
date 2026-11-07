@@ -428,5 +428,419 @@
     ],
     "correctIndex": 0,
     "explanation": "variant содержит активную альтернативу."
+  },
+  "teachingEdition": {
+    "revision": "b6-author-v1",
+    "title": "Состояния и типизированные события",
+    "goal": "Опишите разрешённые переходы и реализуйте обработку типизированных событий без скрытых переходов.",
+    "prerequisites": [
+      {
+        "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
+      },
+      {
+        "text": "Перед этим занятием изучите связанные темы ниже."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Состояние задаёт разрешённые действия",
+        "paragraphs": [
+          "Пауза разрешена только во время работы. Поэтому одна команда P не содержит достаточной информации: ответ зависит и от текущего состояния. Таблица состояний делает эту зависимость проверяемой.",
+          "Два независимых bool running и paused допускают четыре комбинации, включая противоречивую. enum class State перечисляет только осмысленные имена: idle, running, paused, done. При каждом событии автомат проверяет текущее состояние и выбирает переход. Отсутствующий переход означает отказ, а не случайный выбор следующего состояния.",
+          "Нарисуйте таблицу: Start переводит idle в running, Pause — running в paused, Resume — paused в running, Finish — running в done. Остальные пары отклоняются. Это спецификация лабораторной. Она позволяет обсуждать требования до реализации: например, завершение из paused запрещено сознательно, хотя другой продукт мог бы принять такое действие."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Тип события вместо числового соглашения",
+        "paragraphs": [
+          "Пустые структуры Start, Pause, Resume и Finish обозначают разные типы команд. using Event = std::variant<...> создаёт имя для значения, которое хранит одну из перечисленных альтернатив. В отличие от незащищённого union, variant помнит активную альтернативу. Нельзя одновременно получить Start и Finish из одного обычного значения Event.",
+          "В первом примере Event event = Start{} создаёт альтернативу Start. Фигурные скобки конструируют пустой объект-команду; никаких пользовательских данных в нём пока нет. Когда потребуется Rename, структура сможет содержать std::string title. Тип события тогда свяжет название действия с нужными данными и устранит неосмысленные поля вроде title у команды Finish."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "visit выбирает тип Start",
+        "paragraphs": [
+          "variant хранит одно событие. decay_t снимает const и ссылку с типа параметра, а if constexpr оставляет подходящую ветвь при компиляции."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <variant>\n#include <type_traits>\nstruct Start {};\nstruct Finish {};\nusing Event = std::variant<Start, Finish>;\nint main() {\n    Event event = Start{};\n    std::visit(\n        [](const auto &item) {\n            using T = std::decay_t<decltype(item)>;\n            if constexpr (std::is_same_v<T, Start>) {\n                std::cout << \"start\\n\";\n            } else {\n                std::cout << \"finish\\n\";\n            }\n        },\n        event);\n}\n",
+          "stdin": "",
+          "output": "start\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Как читать std::visit",
+        "paragraphs": [
+          "std::visit вызывает обработчик с реально хранимой альтернативой. Generic lambda принимает const auto& item. decltype(item) описывает тип параметра; std::decay_t убирает ссылку и const для сравнения типов. std::is_same_v<T, Start> даёт логическое значение времени компиляции. Это не сравнение адресов и не проверка текста имени.",
+          "if constexpr выбирает допустимую ветвь при инстанцировании для конкретного типа. В лабораторной каждая альтернатива проверяет свою пару состояние→переход и возвращает bool. Все пути visitor возвращают bool, поэтому результат visit однозначен. Сначала прочитайте короткий пример, затем проследите один вызов apply с Pause в состоянии idle и объясните false."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "От текста к событию",
+        "paragraphs": [
+          "Драйвер лабораторной переводит символы S, P, R, F в типизированные значения. Этот перевод принадлежит адаптеру ввода. Сам автомат не читает cin и не знает, пришла команда из строки, кнопки или теста. Неизвестный символ увеличивает rejected, но не меняет состояние. Пустая строка является допустимой пустой трассой.",
+          "Строка ограничена ста символами; лишние непустые данные после неё нарушают протокол. Пробел внутри строки не игнорируется и считается неизвестным событием. Такая точность избавляет от споров о тестах. В настоящем GUI типизированное событие создаётся обработчиком виджета, поэтому студент не должен вводить буквы вместо обязательной графической работы."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Инварианты и отказы",
+        "paragraphs": [
+          "Переход выполняется только после проверки исходного состояния. При отказе state остаётся прежним, а rejected увеличивается ровно один раз. Состояние done терминально: в этом контракте из него нельзя возобновить задачу. Для требования «повторно открыть» нужно добавить отдельное событие и пересмотреть таблицу, а не скрыто переиспользовать Start.",
+          "Трассы SPF и SPRF различаются единственным Resume, но первая остаётся paused с отказом, а вторая заканчивается done. Такие парные проверки обнаруживают слишком широкие разрешения переходов. После добавления альтернативы variant проверьте visitor: общий else может принять новый тип как Finish. Более строгий вариант перечисляет Finish явно и использует статическую диагностику неизвестной альтернативы."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Finish в состоянии idle",
+        "paragraphs": [
+          "Вызов finish не обязан завершать работу: он сначала проверяет исходное состояние. Предскажите результат вызова и отдельную проверку s==idle."
+        ],
+        "prediction": [
+          "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Открыть вывод и разбор",
+          "paragraphs": [
+            "0 1 подтверждает, что отказ не переводит автомат в done. Для лабораторной перечислите разрешённую пару для каждого из S,P,R,F."
+          ],
+          "tables": [
+            {
+              "caption": "Что происходит по шагам",
+              "columns": [
+                "Действие",
+                "До",
+                "После",
+                "Почему"
+              ],
+              "rows": [
+                [
+                  "s = idle",
+                  "—",
+                  "idle",
+                  "Начальное состояние."
+                ],
+                [
+                  "finish(s)",
+                  "idle",
+                  "idle; false",
+                  "Условие state!=running завершает функцию до записи."
+                ],
+                [
+                  "Печать двух bool",
+                  "false; s==idle",
+                  "0 1",
+                  "0 — отказ,1 — сохранение idle."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}\n",
+            "stdin": "",
+            "output": "0 1\n"
+          }
+        }
+      },
+      {
+        "id": "concept-6",
+        "title": "Проверка автомата",
+        "paragraphs": [
+          "Покрыть все состояния недостаточно: нужно проверить разрешённые и запрещённые пары. Составьте матрицу 4×4 и отметьте ожидаемые переходы. Затем выберите короткие трассы, достигающие каждой пары из начального idle. Отдельно проверьте повтор Start, повтор Finish, неизвестный символ и пустую строку. Результат теста включает итоговое состояние и число отказов.",
+          "В задаче переноса спроектируйте автомат документа draft→review→published с возвратом на доработку. Сначала определите бизнес-правила, затем типы и тесты. Не копируйте четыре состояния планировщика без анализа. Общий навык состоит в создании проверяемого контракта переходов, который затем одинаково применяется текстовым адаптером, графическим интерфейсом и тестовым драйвером."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Контракт лабораторной: от входа к наблюдению",
+        "paragraphs": [
+          "Одна строка до 100 символов. S: idle→running; P: running→paused; R: paused→running; F: running→done. Иная пара или символ — один отказ без смены состояния. Пустая строка допустима; отсутствующая строка и лишние данные после строки: invalid.",
+          "До запуска проследите контрольный сценарий. Запишите состояние после каждого действия и причину отказа, если он ожидается. Затем сравните фактический результат с подписанным ожиданием ниже."
+        ],
+        "casePreview": {
+          "kind": "console",
+          "input": "SPRF",
+          "output": "done rejected 0\n"
+        }
+      },
+      {
+        "id": "concept-8",
+        "title": "Чтение работающего примера",
+        "paragraphs": [
+          "variant конструирует Start. visit получает Start, decay_t нормализует тип. if constexpr выбирает сообщение start. Сначала выпишите данные, владельцев и наблюдаемый результат. Затем измените ровно одно исходное условие и предскажите, какая часть результата изменится. Такой разбор связывает синтаксис с контрактом, вместо запоминания готового текста.",
+          "Начальное состояние idle. finish разрешён только для running. false и true показывают отказ и сохранённое idle. Сравните второй пример с первым: какая новая граница появилась и какой тест отличит корректную реализацию от внешне похожей ошибки? Сохраните оба исходника, прогноз и фактический результат, чтобы объяснение можно было воспроизвести."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь ваша задача",
+        "paragraphs": [
+          "Самостоятельно заполните apply для четырёх типов. Разбор символа остаётся снаружи: неизвестный X — один отказ, а не новый тип события.",
+          "Составьте таблицу 4×4 с разрешёнными парами."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Что напечатает finish для исходного idle?",
+        "correct": 0,
+        "feedback": "0 1 подтверждает, что отказ не переводит автомат в done. Для лабораторной перечислите разрешённую пару для каждого из S,P,R,F.",
+        "code": {
+          "source": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "recall": "example-2",
+        "options": [
+          "0 1\n",
+          "1 0\n",
+          "0 0\n"
+        ],
+        "execution": {
+          "source": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "0 1\n"
+        }
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Какие состояние и rejected получаются после SPF из idle?",
+        "options": [
+          "running и 1.",
+          "paused и 1.",
+          "done и 0."
+        ],
+        "correct": 1,
+        "feedback": "S переводит в running, P в paused, а F из paused запрещён. Отказ сохраняет paused.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Зачем visitor применяет decay_t к decltype(item), если item — const auto&?",
+        "options": [
+          "Чтобы сравнить обычный тип команды без const и ссылки.",
+          "Чтобы получить числовой код альтернативы.",
+          "Чтобы скопировать активный объект в heap."
+        ],
+        "correct": 0,
+        "feedback": "is_same_v сравнивает типы. Без удаления квалификаций const Start& не совпадает с Start.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Добавлен Reopen, но visitor завершён общим else, ранее означавшим Finish. В чём риск?",
+        "options": [
+          "Reopen может ошибочно обработаться как Finish.",
+          "variant запрещает добавлять пятую альтернативу.",
+          "std::visit автоматически допишет правильный переход."
+        ],
+        "correct": 0,
+        "feedback": "Общий else не отличает новые типы. Явная обработка альтернатив и проверка полноты делают расширение контролируемым.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Внутри допустимой строки событий встретился пробел. Что делает лабораторный контракт?",
+        "options": [
+          "Завершает состояние как Finish.",
+          "Считает неизвестный символ одним отказом без смены состояния.",
+          "Игнорирует любой whitespace внутри строки."
+        ],
+        "correct": 1,
+        "feedback": "Протокол читает строку целиком и не пропускает её внутренние символы как форматированный cin. Пробел не является событием S/P/R/F.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Какой тест отличает terminal done от ошибочного повторного Start?",
+        "options": [
+          "SPR с проверкой только итогового running.",
+          "Пустая строка с проверкой idle.",
+          "SFS с проверкой состояния и одного отказа."
+        ],
+        "correct": 2,
+        "feedback": "SF достигает done, следующий S должен быть отклонён. Другие трассы до done не доходят и этот запрет не проверяют.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Проследите SPF. Почему F после P отклоняется? Как добавить Reopen, чтобы общий else не принял его за Finish?",
+        "feedback": "idle→running→paused; F разрешён только в running. Сделайте явную ветвь Finish, затем отдельное правило Reopen и тесты всех пар.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Лабораторная: Состояния и типизированные события",
+      "task": "Одна строка до 100 символов. S: idle→running; P: running→paused; R: paused→running; F: running→done. Иная пара или символ — один отказ без смены состояния. Пустая строка допустима; отсутствующая строка и лишние данные после строки: invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {};\nstruct Pause {};\nstruct Resume {};\nstruct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State &state, const Event &event) {\n    // TODO: Посетите Event и выполните только разрешённый переход.\n    (void)state;\n    (void)event;\n    return false;\n}\nint main() {\n    std::string trace;\n    if (!std::getline(std::cin, trace) || trace.size() > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    State state = State::idle;\n    int rejected = 0;\n    for (char c : trace) {\n        bool ok = false;\n        if (c == 'S') {\n            ok = apply(state, Start{});\n        } else if (c == 'P') {\n            ok = apply(state, Pause{});\n        } else if (c == 'R') {\n            ok = apply(state, Resume{});\n        } else if (c == 'F') {\n            ok = apply(state, Finish{});\n        }\n        if (!ok) {\n            ++rejected;\n        }\n    }\n    const char *names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n    std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected\n              << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "SPRF",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Первый содержательный запуск",
+          "input": "SPRF",
+          "output": "done rejected 0\n"
+        },
+        {
+          "label": "Случай 2",
+          "input": "\n",
+          "output": "idle rejected 0\n"
+        },
+        {
+          "label": "Случай 3",
+          "input": "F",
+          "output": "idle rejected 1\n"
+        },
+        {
+          "label": "Случай 4",
+          "input": "SS",
+          "output": "running rejected 1\n"
+        },
+        {
+          "label": "Случай 5",
+          "input": "SPF",
+          "output": "paused rejected 1\n"
+        },
+        {
+          "label": "Случай 6",
+          "input": "SFF",
+          "output": "done rejected 1\n"
+        },
+        {
+          "label": "Случай 7",
+          "input": "X",
+          "output": "idle rejected 1\n"
+        },
+        {
+          "label": "Случай 8",
+          "input": "S\nX",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "idle/S→running; running/P→paused; paused/R→running; running/F→done.",
+        "done rejected 0.",
+        "SPF: paused rejected 1; пустая строка: idle rejected 0; X: idle rejected 1.",
+        "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
+      ],
+      "hint": "idle→running→paused; F разрешён только в running. Сделайте явную ветвь Finish, затем отдельное правило Reopen и тесты всех пар.",
+      "steps": [
+        {
+          "where": "До запуска",
+          "action": "Составьте таблицу 4×4 с разрешёнными парами.",
+          "why": "У одного события разные результаты из разных состояний.",
+          "expected": "idle/S→running; running/P→paused; paused/R→running; running/F→done."
+        },
+        {
+          "where": "В моей программе",
+          "action": "Допишите visitor и запустите SPRF.",
+          "why": "Запись состояния выполняется только в принятой ветви.",
+          "expected": "done rejected 0."
+        },
+        {
+          "where": "После запуска",
+          "action": "Проверьте SPF, пустую строку и неизвестный X.",
+          "why": "Пустая строка отличается от отсутствия строки.",
+          "expected": "SPF: paused rejected 1; пустая строка: idle rejected 0; X: idle rejected 1."
+        }
+      ],
+      "starterRevision": "b6-starter-v1",
+      "recall": "example-2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "idle rejected 4\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-enum",
+        "title": "WG21 N4861 (C++20 draft) — dcl.enum",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — dcl.enum",
+        "language": "English",
+        "purpose": "Сверьте правило с первоисточником после работы с примером.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.enum"
+      },
+      {
+        "id": "cpp20-variant",
+        "title": "WG21 N4861 (C++20 draft) — variant.get",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — variant.get",
+        "language": "English",
+        "purpose": "Сверьте правило с первоисточником после работы с примером.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/variant.get"
+      }
+    ],
+    "coverage": {
+      "1": "concept-6",
+      "2": "example-1",
+      "3": "independent-work",
+      "4": "concept-3",
+      "5": "concept-6"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Состояние задаёт разрешённые действия",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Тип события вместо числового соглашения",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Как читать std::visit",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "От текста к событию",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Инварианты и отказы",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Проверка автомата",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Контракт лабораторной: от входа к наблюдению",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Чтение работающего примера",
+        "anchor": "concept-8"
+      }
+    ],
+    "adaptedSourceSections": [
+      "concept-7"
+    ],
+    "contractAnchor": "concept-7"
   }
 }

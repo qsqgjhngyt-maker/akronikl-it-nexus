@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p11.topic-3",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Integrations and background operations",
+  "locale": "en",
+  "title": "Retries and idempotency",
+  "goal": "Handle redelivery and same-requestIDpayload conflicts without duplicate documents.",
+  "prerequisites": [
+    {
+      "text": "onec.p10; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Delivery can repeat",
+      "paragraphs": [
+        "A sender may miss the reply to an accepted request. Redelivery with the samerequestIDshould return the agreed result without another document. This differs from deduplicating similar names. Define the key’s sender/operation scope and retention policy.",
+        "Create an own operation with a fresh UUID key and 30 minutes. Store the key in the existing Comment field of a new synthetic request; it is not an account ID or an instruction to clear data. Repeats compare minutes/customer/service, not only key labels."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Reconcile the complete experiment",
+      "paragraphs": [
+        "Create an own operation with a fresh UUID key and 30 minutes. Store the key in the existing Comment field of a new synthetic request; it is not an account ID or an instruction to clear data. Repeats compare minutes/customer/service, not only key labels."
+      ],
+      "code": {
+        "language": "text",
+        "source": "First → KeyK,30 → ReferenceR created.\nRepeat → SameK/30 → SameR.\nConflict → K/31 → Rejected;one 30 effect.",
+        "output": "K/31; Rejected;one 30 effect."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "First",
+              "KeyK,30",
+              "ReferenceR created."
+            ],
+            [
+              "Repeat",
+              "SameK/30",
+              "SameR."
+            ],
+            [
+              "Conflict",
+              "K/31",
+              "Rejected;one 30 effect."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Bind key to content",
+      "paragraphs": [
+        "Store requestID, canonical payload semantics or hash, state and result reference. The sameIDwith different amounts is a conflict, not permission to overwrite the first request. Different JSON key order can have identical semantics; define hashing rules explicitly.",
+        "First reception creates a record, an equal repeat returns the same reference and a 31-minute conflict rolls back. An independent key query must find exactly one 30-minute effect. A transaction alone does not prove uniqueness for two concurrent first requests."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Acceptance and result are atomic",
+      "paragraphs": [
+        "Processing registry and created document need transactional consistency. MarkingDonebefore a failed write makes retries return a nonexistent result. Writing without registeringIDduplicates on retry. Concurrent repeats need key protection; external effects need a separate protocol.",
+        "Run the complete source in a separate own copy through the server module. Print ПовторТотЖе,КонфликтОтклонен,ОдинЭффект and retain the actual key/reference. Two preparation documents form a different set; three documents overall do not mean three operation effects."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A case that distinguishes the wrong solution",
+      "paragraphs": [
+        "This is a real sequential BSL experiment, not a production receiver. Concurrent receivers need a unique-key register/correct locking, atomic outcome storage and crash recovery. Diagram a lost response: unknown outcome requires state lookup or the same key, not a fresh UUID. These additional guarantees remain unproved."
+      ],
+      "code": {
+        "language": "text",
+        "source": "After a lost response propose using a fresh UUID.",
+        "output": "Reject: a new key can create a second effect; reconcile the earlier outcome."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Separate copy",
+              "After a lost response propose using a fresh UUID.",
+              "Retain the accepted original."
+            ],
+            [
+              "Observe",
+              "Reject: a new key can create a second effect; reconcile the earlier outcome.",
+              "This is a real sequential BSL experiment, not a production receiver. Concurrent receivers need a unique-key register/correct locking, atomic outcome storage and crash recovery. Diagram a lost response: unknown outcome requires state lookup or the same key, not a fresh UUID. These additional guarantees remain unproved."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Include unknown outcomes",
+      "paragraphs": [
+        "Test first call, exact retry, payload conflict, mid-step failure and concurrent repeats. After timeout, retry the sameIDand query state. Do not automatically create a newIDfor the same intent. Tie every reply to the original operation and persisted document.",
+        "This is a real sequential BSL experiment, not a production receiver. Concurrent receivers need a unique-key register/correct locking, atomic outcome storage and crash recovery. Diagram a lost response: unknown outcome requires state lookup or the same key, not a fresh UUID. These additional guarantees remain unproved."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "Success is inferred from an unavailable environment. Separate actual observations from a planned advanced scenario and name edition limits.",
+        "A failed attempt is removed to make the record look successful. Retain the original failure, its cause, correction and regression evidence.",
+        "An own-copy change is applied over the accepted original. Verify the actual directory and preserve source identities before making changes."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "SameIDwith a newpayload is",
+      "options": [
+        "Always a new request",
+        "A silent replacement",
+        "A contract conflict"
+      ],
+      "correct": 2,
+      "feedback": "Do not overwrite the first accepted intent."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "An exact repeat should return",
+      "options": [
+        "The same result without duplication",
+        "A new document",
+        "A randomID"
+      ],
+      "correct": 0,
+      "feedback": "The key binds retry to the prior operation."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "IsDonebefore document writing safe?",
+      "options": [
+        "Always",
+        "No",
+        "For small data"
+      ],
+      "correct": 1,
+      "feedback": "Registry and result need atomic consistency."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Investigate the separate adverse case without claiming an unavailable environment was tested. After a lost response propose using a fresh UUID.",
+      "feedback": "Accepted original preserved; rejection and its limits explained."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Retries and idempotency",
+    "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. After a lost response propose using a fresh UUID.",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\n// Последовательный опыт. Два конкурирующих получателя и crash recovery отдельно не доказаны.\nФункция ПринятьУчебнуюОперацию(Ключ,Минуты,Клиент,Услуга) Экспорт\n    Если ТипЗнч(Ключ) <> Тип(\"Строка\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если СтрДлина(Ключ) <> 36 Или Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Неверный договор\"; КонецЕсли;\n    НачатьТранзакцию();\n    Попытка\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты,З.Клиент,З.Услуга ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\",Ключ); Найдено = Запрос.Выполнить().Выгрузить();\n        Если Найдено.Количество() > 0 Тогда\n            Если Найдено.Количество() <> 1 Или Найдено[0].Минуты <> Минуты Или Найдено[0].Клиент <> Клиент Или Найдено[0].Услуга <> Услуга Тогда ВызватьИсключение \"Конфликт ключа/содержимого\"; КонецЕсли;\n            Ссылка = Найдено[0].Ссылка;\n        Иначе\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,12,0,0); Документ.Клиент = Клиент; Документ.Услуга = Услуга; Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Минуты; Документ.Комментарий = Ключ; Документ.Записать(); Ссылка = Документ.Ссылка;\n        КонецЕсли;\n        ЗафиксироватьТранзакцию(); Возврат Ссылка;\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\nКонецФункции\n\nФункция ОпытПовторногоПриёма() Экспорт\n    Д = НовыйНаборРегистров(); Ключ = Строка(Новый УникальныйИдентификатор);\n    Первая = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга); Повтор = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга);\n    Конфликт = Ложь; Попытка ПринятьУчебнуюОперацию(Ключ,31,Д.Клиент,Д.Услуга); Исключение Конфликт = Истина; КонецПопытки;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\"); Запрос.УстановитьПараметр(\"Ключ\",Ключ);\n    Возврат Новый Структура(\"ПовторТотЖе,КонфликтОтклонен,ОдинЭффект\",Первая = Повтор,Конфликт,Запрос.Выполнить().Выгрузить().Количество() = 1 И Первая.ДлительностьМинут = 30);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Preserve the starting state",
+        "where": "Own-copy Designer",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Keep the accepted work independent.",
+        "expected": "Separate copy opens with the earlier records.",
+        "troubleshooting": "A new list name alone does not create another database directory.",
+        "before": "Own path, prior sources and a restorable backup identified."
+      },
+      {
+        "id": "step-2",
+        "title": "Add the complete server source",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
+        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+        "why": "Database access has an explicit server boundary.",
+        "expected": "Definitions are module-level; no duplicate helper.",
+        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+        "before": "Separate copy opens with the earlier records."
+      },
+      {
+        "id": "step-3",
+        "title": "Prepare and call the experiment",
+        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытПовторногоПриёма();\nСообщить(Результат.ПовторТотЖе);\nСообщить(Результат.КонфликтОтклонен);\nСообщить(Результат.ОдинЭффект);",
+        "why": "Print every named result instead of accepting compilation alone.",
+        "expected": "Only the stated caller is inside the existing startup handler.",
+        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+        "before": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "id": "step-4",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Run once and compare the fields with the worked trace. K/31; Rejected;one 30 effect.",
+        "why": "Observe actual 1C data, not the browser diagram.",
+        "expected": "K/31; Rejected;one 30 effect.",
+        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+        "before": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "id": "step-5",
+        "title": "Retain both results",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
+        "why": "Preserve provenance and avoid repeating data creation at every startup.",
+        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+        "before": "K/31; Rejected;one 30 effect."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate copy opens with the earlier records."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "K/31; Rejected;one 30 effect."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Original retained, negative experiment isolated, automatic caller removed."
+      }
+    ],
+    "criteria": [
+      "R 1 is created andID → R 1 persisted.",
+      "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+      "Accepted original preserved; rejection and its limits explained.",
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits.",
+      "After a lost response propose using a fresh UUID."
+    ],
+    "hint": "Separate actual observations from a planned advanced scenario and name edition limits.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Explain the checked boundary using the first trace. Processjob-001 once.",
+        "criteria": "R 1 is created andID → R 1 persisted."
+      },
+      {
+        "level": "Applied",
+        "task": "Perform the stated available experiment and retain actual observations. Repeat the samepayload.",
+        "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+      },
+      {
+        "level": "Advanced",
+        "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. After a lost response propose using a fresh UUID.",
+        "criteria": "Accepted original preserved; rejection and its limits explained."
+      }
+    ],
+    "sourceFile": "code/pedagogy/exchange-repeat-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p11-idempotency.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "SameIDwith a newpayload is",
+        "options": [
+          "Always a new request",
+          "A silent replacement",
+          "A contract conflict"
+        ],
+        "correct": 2,
+        "explanation": "Do not overwrite the first accepted intent."
+      },
+      {
+        "question": "An exact repeat should return",
+        "options": [
+          "The same result without duplication",
+          "A new document",
+          "A randomID"
+        ],
+        "correct": 0,
+        "explanation": "The key binds retry to the prior operation."
+      },
+      {
+        "question": "IsDonebefore document writing safe?",
+        "options": [
+          "Always",
+          "No",
+          "For small data"
+        ],
+        "correct": 1,
+        "explanation": "Registry and result need atomic consistency."
+      }
+    ]
+  }
+}

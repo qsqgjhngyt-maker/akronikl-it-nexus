@@ -1,0 +1,347 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p2.numbers-dates-locales",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "BSL fundamentals",
+  "locale": "en",
+  "title": "Numbers, dates and strings: separate value from presentation",
+  "goal": "Separate values from presentation and explain units in date arithmetic.",
+  "prerequisites": [
+    {
+      "text": "The preceding language lesson; saving, updating and launching your own infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Quantity, presentation and unit",
+      "paragraphs": [
+        "Number 12.5 stores a quantity; string \"12.50\" stores a chosen representation. A trailing display zero adds no precision to the numeric value. Format for a person or an agreed text interface, while calculations continue to use numbers rather than decorative strings.",
+        "Calculation value, displayed string and measurement unit are separate parts of an explanation. Displayed 12.50 alone says neither money, hours nor ratio. Стоимость is a training number here; real payments additionally require currency, rounding and an agreed operation meaning."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Trace the main example",
+      "paragraphs": [
+        "Формат returns a string; date addition and subtraction use seconds."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Стоимость = 12.5;\nПредставление = Формат(Стоимость, \"ЧДЦ=2; ЧРД=.; ЧГ=0\");\nСообщить(Представление);\nНачало = Дата(2026, 10, 31, 9, 30, 0);\nКонец = Начало + 60;\nРазностьСекунд = Конец - Начало;\nСообщить(РазностьСекунд);",
+        "output": "Two messages: string “12.50” and number 60 seconds."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Стоимость",
+              "12.5 — number",
+              "A calculation value."
+            ],
+            [
+              "Формат",
+              "\"12.50\" — string",
+              "Presentation leaves the number unchanged."
+            ],
+            [
+              "Начало + 60",
+              "09:31:00",
+              "One minute added as seconds."
+            ],
+            [
+              "Конец - Начало",
+              "60",
+              "Difference in seconds."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Formatting is not input parsing",
+      "paragraphs": [
+        "ЧДЦ=2 requests two decimal places, ЧРД=. selects a dot and ЧГ=0 disables digit grouping. These options govern this output only. They do not define a universal parser for financial input: currency, rounding and accepted representations are separate requirements.",
+        "Use ТипЗнч to compare the original number and resulting string when uncertain. Формат options govern the selected output. Parsing someone else’s string is another task whose representation may differ. A function name is no proof of universal locale support."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Calendar components and seconds",
+      "paragraphs": [
+        "Дата(2026, 10, 31, 9, 30, 0) explicitly lists year, month, day, hour, minute and second. It avoids guessing the meaning of text such as 01/02. Adding 60 to this date adds seconds, not minutes; subtracting date values returns seconds.",
+        "Date components must form a valid calendar date, not merely six arbitrary numbers. October 31 exists; an impossible date must not silently become another date. The exercise fixes its start explicitly. Adding 60 changes time by one minute; crossing midnight also changes the day, so compare date and time together."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Convert minutes into seconds",
+      "paragraphs": [
+        "Using 15 alone would add only 15 seconds."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Конец = Начало + 15 * 60;\nРазностьСекунд = Конец - Начало;",
+        "output": "900 seconds, or 15 minutes."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "15 × 60",
+              "900 seconds",
+              "Units are converted explicitly."
+            ],
+            [
+              "09:30:00 + 900",
+              "09:45:00",
+              "Check the clock-time meaning."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Repeatability and scope",
+      "paragraphs": [
+        "A time zone, calendar transition or business duration cannot be inferred merely from matching displayed dates. This short example checks arithmetic of the selected values. International exchange later specifies time representation and meaning explicitly. Use no external services or real payments in this exercise.",
+        "Record the exact start, addition in seconds, formatting string and actual messages. This example establishes no universal time-zone or international-exchange behavior. Later function and exchange contracts will be explicit, preserving input and errors without guessing."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "Formatting changed the original number. It created a separate string; Стоимость remains numeric 12.5.",
+        "Adding 15 to a date adds 15 minutes. This arithmetic adds seconds; multiply minutes by 60."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What type does Формат(Стоимость, ...) return here?",
+      "options": [
+        "Number",
+        "String",
+        "Date"
+      ],
+      "correct": 1,
+      "feedback": "It creates a representation without changing the original number."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Начало + 15 adds…",
+      "options": [
+        "15 minutes",
+        "15 hours",
+        "15 seconds"
+      ],
+      "correct": 2,
+      "feedback": "Convert 15 minutes explicitly by multiplying by 60."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "How should ambiguous 01/02 be handled?",
+      "options": [
+        "Define or request an unambiguous format before parsing",
+        "Always treat the first component as month",
+        "Silently use today instead"
+      ],
+      "correct": 0,
+      "feedback": "Unknown representation must not become an arbitrary value."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Specify an amount/date input format that requires no locale guess.",
+      "feedback": "Separator, decimal places, units and calendar order are explicit; unknown formats are not silently accepted."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Numbers, dates and strings: separate value from presentation",
+    "task": "Specify an amount/date input format that requires no locale guess.",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
+    "externalRoute": "Designer → managed application module of your training copy",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "Стоимость = 12.5;\nПредставление = Формат(Стоимость, \"ЧДЦ=2; ЧРД=.; ЧГ=0\");\nСообщить(Представление);\nНачало = Дата(2026, 10, 31, 9, 30, 0);\nКонец = Начало + 60;\nРазностьСекунд = Конец - Начало;\nСообщить(РазностьСекунд);\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "predict",
+        "title": "Predict the result",
+        "where": "Nexus → this lesson’s worked example",
+        "action": "Identify the type of Представление and the unit of РазностьСекунд before running.",
+        "why": "An expectation makes a wrong result detectable.",
+        "expected": "Two messages: string “12.50” and number 60 seconds.",
+        "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+        "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+      },
+      {
+        "id": "prepare-source",
+        "title": "Preserve your preceding work",
+        "where": "Your infobase → Designer → configuration root → managed application module",
+        "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+        "why": "The next exercise must not destroy the preceding version.",
+        "expected": "The intended module is open and the earlier source remains available.",
+        "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+        "before": "Two messages: string “12.50” and number 60 seconds."
+      },
+      {
+        "id": "enter-code",
+        "title": "Enter this example",
+        "where": "Designer → the module text window",
+        "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+        "why": "Формат returns a string; date addition and subtraction use seconds.",
+        "expected": "The exact exercise source is entered in the intended context.",
+        "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+        "before": "The intended module is open and the earlier source remains available."
+      },
+      {
+        "id": "run-check",
+        "title": "Save, update and execute",
+        "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+        "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+        "why": "Only the installed platform executes this BSL.",
+        "expected": "Two messages: string “12.50” and number 60 seconds.",
+        "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+        "before": "The exact exercise source is entered in the intended context."
+      },
+      {
+        "id": "vary-record",
+        "title": "Change one condition and retain evidence",
+        "where": "The same module, then Enterprise mode and Nexus notes",
+        "action": "Replace Начало + 60 with Начало + 15 * 60. Execute, compare the difference and restore the original.",
+        "why": "A changed input tests understanding beyond copying the example.",
+        "expected": "The second output becomes 900; the first stays “12.50”.",
+        "troubleshooting": "Do not silently guess the meaning of 01/02 or “1,234”. Retain the original and require or define an unambiguous format before calculation.",
+        "before": "Two messages: string “12.50” and number 60 seconds."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Two messages: string “12.50” and number 60 seconds."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "The intended module is open and the earlier source remains available."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "The exact exercise source is entered in the intended context."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Two messages: string “12.50” and number 60 seconds."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "The second output becomes 900; the first stays “12.50”."
+      }
+    ],
+    "criteria": [
+      "String and seconds, not money and minutes.",
+      "900 seconds, 09:45:00.",
+      "Separator, decimal places, units and calendar order are explicit; unknown formats are not silently accepted.",
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim.",
+      "Do not silently guess the meaning of 01/02 or “1,234”. Retain the original and require or define an unambiguous format before calculation."
+    ],
+    "hint": "It created a separate string; Стоимость remains numeric 12.5.",
+    "exercises": [
+      {
+        "level": "Guided",
+        "task": "Identify the type of Представление and the unit of РазностьСекунд before running.",
+        "criteria": "String and seconds, not money and minutes."
+      },
+      {
+        "level": "Changed condition",
+        "task": "Add 15 minutes instead of 60 seconds without changing the start.",
+        "criteria": "900 seconds, 09:45:00."
+      },
+      {
+        "level": "Independent",
+        "task": "Specify an amount/date input format that requires no locale guess.",
+        "criteria": "Separator, decimal places, units and calendar order are explicit; unknown formats are not silently accepted."
+      }
+    ],
+    "sourceFile": "code/pedagogy/numbers-dates-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "variable",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p2-numbers-dates.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.a2p2.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "What type does Формат(Стоимость, ...) return here?",
+        "options": [
+          "Number",
+          "String",
+          "Date"
+        ],
+        "correct": 1,
+        "explanation": "It creates a representation without changing the original number."
+      },
+      {
+        "question": "Начало + 15 adds…",
+        "options": [
+          "15 minutes",
+          "15 hours",
+          "15 seconds"
+        ],
+        "correct": 2,
+        "explanation": "Convert 15 minutes explicitly by multiplying by 60."
+      },
+      {
+        "question": "How should ambiguous 01/02 be handled?",
+        "options": [
+          "Define or request an unambiguous format before parsing",
+          "Always treat the first component as month",
+          "Silently use today instead"
+        ],
+        "correct": 0,
+        "explanation": "Unknown representation must not become an arbitrary value."
+      }
+    ]
+  }
+}

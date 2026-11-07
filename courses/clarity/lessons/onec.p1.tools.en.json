@@ -1,0 +1,583 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p1-author-v1",
+  "id": "onec.p1.tools",
+  "courseId": "onec",
+  "moduleId": "onec.p1",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Platform architecture, infobases and development environments",
+  "locale": "en",
+  "title": "Developer tools: diagnose an error and preserve a clear change",
+  "goal": "Diagnose your own error, preserve a working version and distinguish tool purposes.",
+  "prerequisites": [
+    {
+      "text": "Distinguish saving source, updating the database configuration and execution.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "Where we begin",
+      "paragraphs": [
+        "The editor stops underlining a line, yet the calculation remains wrong. This is possible: syntax asks whether an instruction can be parsed, while the task asks whether it performs the intended operation. Separate these checks and preserve an edit so its result can be explained and repeated."
+      ]
+    },
+    {
+      "id": "theory-1",
+      "title": "A development environment is not the runtime",
+      "paragraphs": [
+        "Designer is sufficient for this module: it edits and checks a small handler and launches your learning infobase. The additional EDT environment helps with larger projects and source history, but is not required for one message. An open editor project does not prove that its configuration was applied to an infobase."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "A missing quote",
+      "paragraphs": [
+        "The opening quote has no closing partner. Restore it before the closing parenthesis."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Сообщить(\"Моя служба);",
+        "output": "The check rejects the unfinished string; execution is not claimed."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Opening quote",
+              "String begins",
+              "A closing partner is required."
+            ],
+            [
+              "Parenthesis remains inside text",
+              "Invalid structure",
+              "Correct the source line and check again."
+            ]
+          ]
+        }
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p1-syntax-diagnostic.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "46014eba5c36b358fc87d1c761fba4f4338541979d819cf6543efc79f4cabde1",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "callouts": [],
+          "caption": "Actual Designer module check: line 2, missing double quote; a subsequent diagnostic also expects a closing parenthesis. This checks syntax, rather than executing the application.",
+          "alt": "Actual Designer module check: line 2, missing double quote; a subsequent diagnostic also expects a closing parenthesis. This checks syntax, rather than executing the application.",
+          "focus": {
+            "x": 0,
+            "y": 550,
+            "width": 650,
+            "height": 95
+          }
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Make a prediction first",
+      "paragraphs": [
+        "The task is to add durations of 30 and 45 minutes. Длительность = 30 - 45; passes syntax checking. Is this correct for the task?",
+        "Answer before opening the reasoning."
+      ],
+      "reveal": {
+        "title": "Compare your prediction with the reasoning",
+        "paragraphs": [
+          "A valid expression does not encode the requirement to add. Write down 75 independently, then check the calculation and actual execution."
+        ],
+        "tables": [
+          {
+            "caption": "What changes at each step",
+            "columns": [
+              "Step",
+              "Observation",
+              "Reason"
+            ],
+            "rows": [
+              [
+                "Requirement",
+                "30 minutes followed by 45 minutes",
+                "A sum is needed"
+              ],
+              [
+                "Expression 30 - 45",
+                "The result is -15",
+                "Valid syntax, different meaning"
+              ],
+              [
+                "Expression 30 + 45",
+                "The expected result is 75",
+                "The edited program needs a new actual run"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "variation",
+      "title": "Change the condition",
+      "paragraphs": [
+        "Change the input durations. A check designed for 30 and 45 no longer describes the new case. Work out the new expectation separately before editing source and comparing the actual result."
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Highlighting, BSL LS and OneScript",
+      "paragraphs": [
+        "Highlighting helps you read source. Static analysis finds certain errors before execution. BSL Language Server is such a tool; it does not execute application forms or registers. Here the available Designer command checks syntax. OneScript implements a separate environment; running it is not the same as running a 1C application.",
+        "A diagnostic points to where parsing found a problem. A missing closing quote may be reported on the following line. Compare the edited line with a working copy and repair the unfinished construct first."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Git preserves an explainable change",
+      "paragraphs": [
+        "Preserve your working text before the experiment. A change record answers four questions: what changed, why, how it was checked, and how to return. A clearly named text file is sufficient for the first three lines; Git later adds a history of comparable versions.",
+        "Source describes a program, while .dt preserves infobase state. Keep real personal data, access parameters and licence files out of the learning history. Fictional values and the actual result are sufficient for this report."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A meaning error with valid syntax",
+      "paragraphs": [
+        "A syntax analyzer does not know the intended sum; compare the requirement and result."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Длительность = 30 - 45;",
+        "output": "-15 rather than the required sum 75."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Operator -",
+              "Subtraction",
+              "Syntactically valid."
+            ],
+            [
+              "Requirement is a sum",
+              "Expected 75",
+              "Change the operator and execute again."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "calculation-to-message",
+      "title": "From an expression to a visible message",
+      "paragraphs": [
+        "In Осмотр = 30; the name Осмотр receives 30. This is assignment: it stores a duration, rather than comparing two numbers. Ремонт receives 45. The next expression adds the stored values and assigns the result to Длительность. Сообщить(Длительность) displays the calculated number. All instructions belong inside the familiar startup handler.",
+        "First work out 75 independently. After saving, updating and launching, compare the actual message with this expectation. The independent task below uses different durations: transfer the addition and checking method instead of copying the answer 75."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Осмотр = 30;\n    Ремонт = 45;\n    Длительность = Осмотр + Ремонт;\n    Сообщить(Длительность);\nКонецПроцедуры\n",
+        "output": "75"
+      }
+    },
+    {
+      "id": "native-debugger",
+      "title": "What a stop before Сообщить shows",
+      "paragraphs": [
+        "The changed worked example uses 20 and 35 minutes. Click the Сообщить line and press F9 to set a breakpoint. F5 launches under the debugger. When stopped, the arrow marks an instruction that has not executed yet. Debug → Local variables shows Осмотр = 20, Ремонт = 35 and Длительность = 55.",
+        "This authentic capture establishes the computed value in the paused application. The message has not been displayed yet: continue execution to display it. A variable value, a visible message and your report are different observations. The independent task uses different numbers."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p1-debugger-stopped.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "7e882e060712c446d7bc51a831fae66a01d8723e8d331c0333089be4bc73a98a",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "callouts": [],
+          "caption": "The debugger is stopped before Сообщить; the arrow does not mean that instruction has executed.",
+          "alt": "The debugger is stopped before Сообщить; the arrow does not mean that instruction has executed.",
+          "focus": {
+            "x": 258,
+            "y": 132,
+            "width": 340,
+            "height": 100
+          }
+        },
+        {
+          "src": "media/tutorials/v2/p1-debugger-values.jpg",
+          "width": 599,
+          "height": 306,
+          "sha256": "fd808a3b4ca78885379f8e78ee27b4d0e83655d65744ab0537f4c60c7b9823f1",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "callouts": [],
+          "caption": "Actual local variables: Осмотр 20, Ремонт 35, Длительность 55. Calculation has completed; displaying the message is still ahead.",
+          "alt": "Actual local variables: Осмотр 20, Ремонт 35, Длительность 55. Calculation has completed; displaying the message is still ahead.",
+          "focus": {
+            "x": 5,
+            "y": 18,
+            "width": 230,
+            "height": 90
+          }
+        },
+        {
+          "src": "media/tutorials/v2/p1-actual-message-55.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "d7d04f1940fc81e27950511cea6428876ca27e0074b637253c3b8a59ffb319f0",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "callouts": [],
+          "caption": "After execution continued, the actual Enterprise client displayed 55. This observes the displayed result, separately from a debugger variable value.",
+          "alt": "After execution continued, the actual Enterprise client displayed 55. This observes the displayed result, separately from a debugger variable value.",
+          "focus": {
+            "x": 5,
+            "y": 636,
+            "width": 320,
+            "height": 75
+          }
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Diagnose from observation to hypothesis",
+      "paragraphs": [
+        "If no message appears, identify the last successfully completed operation: check, save, update, or launch. Verify the selected directory and the new message text. Change one condition and repeat the relevant check.",
+        "The disappearance of a syntax error confirms that particular check. Compare actual behaviour with an independently written expectation. A valid subtraction still gives the wrong answer when the task requires a sum."
+      ],
+      "flow": {
+        "caption": "From a symptom to a checked correction",
+        "nodes": [
+          {
+            "title": "Observation",
+            "lines": [
+              "What differed?"
+            ]
+          },
+          {
+            "title": "Check the module",
+            "lines": [
+              "Read the diagnostic"
+            ]
+          },
+          {
+            "title": "One edit",
+            "lines": [
+              "Repair the cause"
+            ]
+          },
+          {
+            "title": "Actual execution",
+            "lines": [
+              "Values and message"
+            ]
+          },
+          {
+            "title": "Compare",
+            "lines": [
+              "Prediction and fact"
+            ]
+          }
+        ],
+        "alternative": [
+          "First identify the observed symptom.",
+          "For a syntax error read the module and line; a missing quote may be reported later.",
+          "Repair one cause and check again.",
+          "After a successful check, save, update and launch separately; the debugger can stop before an instruction and show values.",
+          "Compare with an independently written expectation. Valid syntax alone does not prove the correct sum."
+        ],
+        "textLabel": "Diagram in plain text"
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "When the result differs",
+      "paragraphs": [
+        "Deleting the entire line may remove both a diagnostic and the required action. Restore the minimal needed instruction and test its meaning; an empty handler does not solve the calculation.",
+        "Syntax color means the program is correct. Highlighting, analysis and execution serve different purposes.",
+        "Git will restore every customer. Source history is not an infobase data backup."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new task for your own work",
+      "paragraphs": [
+        "A service spent 18 minutes inspecting and 27 minutes repairing. In a separate learning copy, fix an expression that currently subtracts the second duration. Display the result with Сообщить in your startup handler. Then test 40 and 25 minutes. For each case record the expectation before running, the actual result and the reason for the edit. Preserve the previous working text separately.",
+        "In Practice keep your prediction and actual observations. Viewing the example or reference preserves your work; you record the results of execution in installed 1C yourself."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "The task is to add durations of 30 and 45 minutes. Длительность = 30 - 45; passes syntax checking. Is this correct for the task?",
+      "options": [
+        "Yes, because the diagnostic disappeared",
+        "No: it computes -15 instead of the required sum 75",
+        "It is impossible to check even after execution"
+      ],
+      "correct": 1,
+      "feedback": "A valid expression does not encode the requirement to add. Write down 75 independently, then check the calculation and actual execution.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "A diagnostic points after a message line. What should be checked first?",
+      "options": [
+        "An unclosed quote on the preceding line",
+        "Switch the Nexus account",
+        "Delete the infobase"
+      ],
+      "correct": 0,
+      "feedback": "An unfinished construct can become visible on the next line.",
+      "recall": "theory-2"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Why can syntactically valid 30 - 45 be wrong?",
+      "options": [
+        "BSL prohibits subtraction",
+        "The requirement was a sum of 75",
+        "Minus always invokes JavaScript"
+      ],
+      "correct": 1,
+      "feedback": "Syntax does not replace the domain requirement.",
+      "recall": "example-2"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What does Git provide for the training program?",
+      "options": [
+        "A backup of all external customer data",
+        "1C user permissions",
+        "Source history; data backup remains separate"
+      ],
+      "correct": 2,
+      "feedback": "Source and infobase state use different preservation mechanisms.",
+      "recall": "theory-3"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Record one change: what, why, validation and return path.",
+      "feedback": "Exact edit and observed result; no secrets or data-backup claim based only on .bsl.",
+      "recall": "independent-work"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Correct your own error and repeat validation",
+    "task": "A service spent 18 minutes inspecting and 27 minutes repairing. In a separate learning copy, fix an expression that currently subtracts the second duration. Display the result with Сообщить in your startup handler. Then test 40 and 25 minutes. For each case record the expectation before running, the actual result and the reason for the edit. Preserve the previous working text separately.",
+    "environment": "Your training infobase and a preserved working source copy.",
+    "externalRoute": "Designer of your own infobase; EDT, Git and BSL LS are optional introductions",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Осмотр = 18;\n    Ремонт = 27;\n    // TODO: fix the operation and test the second case.\n    Длительность = Осмотр - Ремонт;\n    Сообщить(Длительность);\nКонецПроцедуры\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "preserve",
+        "where": "Designer → managed application module",
+        "action": "Preserve the previous working handler separately. Write expectations 45 and 65 before editing. Work only in your own learning copy.",
+        "why": "An independent expectation and a way back are needed.",
+        "expected": "The original file and two expectations are available."
+      },
+      {
+        "id": "fix",
+        "where": "The same module",
+        "action": "Compare the starter with the task. Replace subtraction with the required operation. Keep one startup handler and check syntax.",
+        "why": "Repair the operation as well as syntax.",
+        "expected": "The program computes a sum and syntax checking completes without errors."
+      },
+      {
+        "id": "run",
+        "where": "Designer → save → update → launch",
+        "action": "Apply the change to your infobase and launch it. Compare the actual message with the expectation for 18 and 27. Change the values to 40 and 25 and repeat the entire sequence.",
+        "why": "A second case tests transfer of the rule beyond one memorised number.",
+        "expected": "Two actual launches show 45 and 65."
+      },
+      {
+        "id": "record",
+        "where": "Your result record in Nexus or notes",
+        "action": "Record the initial error, correction, expectations, actual results and way back. Name syntax checking and execution separately.",
+        "why": "The edit should be explainable and reproducible.",
+        "expected": "The report invents no execution and does not claim a .bsl file preserves all data."
+      }
+    ],
+    "cases": [
+      {
+        "label": "First calculation",
+        "input": "Inspection: 18 minutes. Repair: 27 minutes.",
+        "output": "45"
+      },
+      {
+        "label": "Transfer to a new case",
+        "input": "Inspection: 40 minutes. Repair: 25 minutes.",
+        "output": "65"
+      },
+      {
+        "label": "Error in the starter",
+        "input": "Subtraction 18 - 27 instead of the sum.",
+        "output": "-9 — valid syntax, but the requirement is not met."
+      }
+    ],
+    "criteria": [
+      "For 18 and 27 the expectation is 45; for 40 and 25 it is 65.",
+      "An expression with + matches the sum requirement. A syntactically valid minus does not.",
+      "Repeat save, update and launch in your own infobase. Record actual results separately from predictions.",
+      "The change record identifies the initial error, edit, two observations and a way back. A BSL copy is not a backup of all infobase data.",
+      "Expectation is recorded before the action; the actual observation is separate. Opening a reference does not complete the task."
+    ],
+    "hint": "Deleting the entire line may remove both a diagnostic and the required action. Restore the minimal needed instruction and test its meaning; an empty handler does not solve the calculation.",
+    "exercises": [
+      {
+        "level": "Guided",
+        "task": "Remove a closing quote in a separate source copy, read the diagnostic and restore the line.",
+        "criteria": "Identify module, line and correction; preserve the main working source."
+      },
+      {
+        "level": "Changed condition",
+        "task": "Choose the tool for a syntax error, yesterday’s source comparison and an actual displayed message.",
+        "criteria": "Check/analyzer; source history; native platform execution."
+      },
+      {
+        "level": "Independent",
+        "task": "A service spent 18 minutes inspecting and 27 minutes repairing. In a separate learning copy, fix an expression that currently subtracts the second duration. Display the result with Сообщить in your startup handler. Then test 40 and 25 minutes. For each case record the expectation before running, the actual result and the reason for the edit. Preserve the previous working text separately.",
+        "criteria": "For 18 and 27 the expectation is 45; for 40 and 25 it is 65. An expression with + matches the sum requirement. A syntactically valid minus does not. Repeat save, update and launch in your own infobase. Record actual results separately from predictions. The change record identifies the initial error, edit, two observations and a way back. A BSL copy is not a backup of all infobase data."
+      }
+    ],
+    "sourceFile": null,
+    "setupGuide": true,
+    "recall": "independent-work",
+    "referenceSolution": {
+      "paragraphs": [
+        "For 18 and 27 the expectation is 45; for 40 and 25 it is 65.",
+        "An expression with + matches the sum requirement. A syntactically valid minus does not.",
+        "Repeat save, update and launch in your own infobase. Record actual results separately from predictions.",
+        "The change record identifies the initial error, edit, two observations and a way back. A BSL copy is not a backup of all infobase data."
+      ],
+      "scope": "explanatory-reference-not-native-verification",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    Осмотр = 18;\n    Ремонт = 27;\n    Длительность = Осмотр + Ремонт;\n    Сообщить(Длительность);\nКонецПроцедуры\n",
+      "language": "bsl"
+    }
+  },
+  "terms": [
+    "designer",
+    "edt",
+    "bsl-ls",
+    "bsl",
+    "module",
+    "workspace"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p1-tools.json",
+  "assessment": {
+    "contentRevision": "onec-p1-author-v1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "The task is to add durations of 30 and 45 minutes. Длительность = 30 - 45; passes syntax checking. Is this correct for the task?",
+        "options": [
+          "Yes, because the diagnostic disappeared",
+          "No: it computes -15 instead of the required sum 75",
+          "It is impossible to check even after execution"
+        ],
+        "correct": 1,
+        "explanation": "A valid expression does not encode the requirement to add. Write down 75 independently, then check the calculation and actual execution."
+      },
+      {
+        "question": "A diagnostic points after a message line. What should be checked first?",
+        "options": [
+          "An unclosed quote on the preceding line",
+          "Switch the Nexus account",
+          "Delete the infobase"
+        ],
+        "correct": 0,
+        "explanation": "An unfinished construct can become visible on the next line."
+      },
+      {
+        "question": "Why can syntactically valid 30 - 45 be wrong?",
+        "options": [
+          "BSL prohibits subtraction",
+          "The requirement was a sum of 75",
+          "Minus always invokes JavaScript"
+        ],
+        "correct": 1,
+        "explanation": "Syntax does not replace the domain requirement."
+      },
+      {
+        "question": "What does Git provide for the training program?",
+        "options": [
+          "A backup of all external customer data",
+          "1C user permissions",
+          "Source history; data backup remains separate"
+        ],
+        "correct": 2,
+        "explanation": "Source and infobase state use different preservation mechanisms."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "platform-architecture",
+      "title": "Platform architecture",
+      "author": "1C",
+      "edition": "1C:Enterprise 8",
+      "section": "Platform and application",
+      "language": "Russian",
+      "purpose": "Clarify the boundary between the platform and an application definition.",
+      "url": "https://v8.1c.ru/platforma/obzor-arkhitektury-platformy/"
+    },
+    {
+      "id": "designer",
+      "title": "Designer",
+      "author": "1C",
+      "edition": "1C:Enterprise 8",
+      "section": "Development mode",
+      "language": "Russian",
+      "purpose": "Check the purpose of the development and administration mode.",
+      "url": "https://v8.1c.ru/platforma/konfigurator/"
+    },
+    {
+      "id": "bsl-language",
+      "title": "Built-in language",
+      "author": "1C",
+      "edition": "1C:Enterprise 8",
+      "section": "Events and modules",
+      "language": "Russian",
+      "purpose": "Understand why application events invoke module code.",
+      "url": "https://v8.1c.ru/platforma/vstroennyy-yazyk/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p1.tools.en.json"
+}

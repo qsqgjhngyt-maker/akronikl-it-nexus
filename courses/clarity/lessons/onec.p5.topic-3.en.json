@@ -1,0 +1,399 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p5.topic-3",
+  "courseId": "onec",
+  "moduleId": "onec.p5",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Documents and transactional changes",
+  "locale": "en",
+  "title": "Posting and unposting: separate documents from movements",
+  "goal": "Add a teaching labor-turnover register in a copy and verify ordinary writing, posting and unposting for one own recorder.",
+  "prerequisites": [
+    {
+      "text": "onec.p4; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "The document is the recorder",
+      "paragraphs": [
+        "A movement explains which document caused an accounting fact. A service desk can track minute obligations by customer. A record contains period, dimensions, resource and recorder. A document’sMinutes field is not itself a movement. Agree on sign and meaning before implementing a handler.",
+        "Posting is denied in the starter. In a new copy add accumulation register Трудозатраты with Turnovers kind, Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource. The existing document attribute remains ДлительностьМинут. The register resource is a distinct field; no populated header attribute must be renamed."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Three states of one recorder",
+      "paragraphs": [
+        "The real query filters a single recorder using the Заявка parameter."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Write() → 0 movements\nWrite(Posting) → 1 movement, 30 minutes\nWrite(Unposting) → 0 movements, document retained",
+        "output": "The movement set changes while document identity remains."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Ordinary write",
+              "Reference α, 30 minutes",
+              "No α movements."
+            ],
+            [
+              "Posting",
+              "ОбработкаПроведения",
+              "One α row for 30."
+            ],
+            [
+              "Unposting",
+              "Automatic movement deletion",
+              "No α rows."
+            ],
+            [
+              "Document",
+              "Same reference α",
+              "Document retained."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Rebuild the movement set",
+      "paragraphs": [
+        "Build movements from current document data inPosting and control record-set writing. Reposting replaces that recorder’s effect rather than appending a duplicate. Changing 30 to 45 yields 45, not 75. Do not manually add the prior document amount to the new record set.",
+        "Allow document posting and select Трудозатраты among its register records. In ОбработкаПроведения clear this recorder’s collection, enable writing and add period from Дата, customer from Клиент and minutes from ДлительностьМинут. This clears the current document’s movement set, not the whole register. Keep the existing ПередЗаписью validation."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Reversal removes effects, not the document",
+      "paragraphs": [
+        "After reversal, the document remains while its accounting effect is removed or compensated under the model. Metadata and handlers determine behavior. Inspect recorder-filtered records and register totals, not onlyPosted. A starter stand without posting needs a new versioned template for this exercise.",
+        "The function creates an own 30-minute request. An ordinary write gives zero movements filtered by its reference. Posting gives one row and 30 minutes. Unposting with automatic movement deletion removes those rows while retaining the document and reference. Новая is not a posting criterion. Test one recorder rather than the entire infobase’s accumulated total."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Correct mechanism, incorrect value",
+      "paragraphs": [
+        "Row count and resource value are separate claims."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Документ.ДлительностьМинут = 31;",
+        "output": "One movement does not prove the expected 30 minutes."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Count",
+              "One row",
+              "Expected structure."
+            ],
+            [
+              "Resource",
+              "31 instead of 30",
+              "Semantic expectation rejects it."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Rejection must be atomic",
+      "paragraphs": [
+        "If required movement data is missing, reject before accepting effects. A negative case checks both document and movements. An unset flag with partially modified register data is not a correct rejection. Transactional checks cover every side effect, not one table alone.",
+        "The incorrect variant uses 31 minutes: it still creates a movement, but the independent 30-minute expectation rejects it. Do not adjust expected totals to follow a defect. This small teaching model does not establish statutory accounting, concurrent posting, reservation or industrial performance. Reposting is developed in the next module."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "A populated header attribute is renamed for the register. Keep ДлительностьМинут and assign it to the distinct Минуты resource.",
+        "Clearing one document set is replaced with clearing the whole register. Use this object’s Движения.Трудозатраты and verify a recorder filter.",
+        "Unposting is mistaken for deleting the request. Check posting flag, movement absence and retained document reference separately."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Трудозатраты here is",
+      "options": [
+        "A turnover register",
+        "A password",
+        "A course"
+      ],
+      "correct": 0,
+      "feedback": "Its resource measures labor over a period."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "The handler’s Минуты resource comes from",
+      "options": [
+        "Customer name",
+        "Document ДлительностьМинут",
+        "Topic ID"
+      ],
+      "correct": 1,
+      "feedback": "An explicit assignment uses the retained field."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "After unposting expect",
+      "options": [
+        "A deleted document",
+        "Every register empty",
+        "No own-recorder movements and a retained document"
+      ],
+      "correct": 2,
+      "feedback": "Unposting is not document deletion."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Specify reposting with 45 minutes and two recorders.",
+      "feedback": "Own and other movement sets checked independently without clearing the register."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "0 → one movement/30 minutes → 0 with the document retained",
+    "task": "Specify reposting with 45 minutes and two recorders.",
+    "environment": "Official installed training1C; your continuing P4 base with Клиенты/Услуги/ЗаявкаУслуги/СтатусыЗаявки. Studio optional.",
+    "externalRoute": "Own-copy Designer → server common module УчебныеДокументы → managed Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "Функция ОпытПроведенияИОтмены() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P5 — проведение\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P5 — проведение\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,2,14,0,0); Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = 30;\n    Документ.Записать(); Ссылка = Документ.Ссылка;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк, ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Регистратор = &Заявка\");\n    Запрос.УстановитьПараметр(\"Заявка\",Ссылка);\n    До = Запрос.Выполнить().Выгрузить();\n    ОбычнаяЗаписьБезДвижений = До[0].Строк = 0 И Не Ссылка.Проведен;\n    Документ.Записать(РежимЗаписиДокумента.Проведение);\n    После = Запрос.Выполнить().Выгрузить();\n    ПроведениеПроверено = Ссылка.Проведен И После[0].Строк = 1 И После[0].Минуты = 30;\n    Документ.Записать(РежимЗаписиДокумента.ОтменаПроведения);\n    ПослеОтмены = Запрос.Выполнить().Выгрузить();\n    ОтменаПроверена = Не Ссылка.Проведен И ПослеОтмены[0].Строк = 0 И Не Ссылка.Пустая();\n    Возврат Новый Структура(\"ОбычнаяЗаписьБезДвижений,ПроведениеПроверено,ОтменаПроверена,Ссылка\",ОбычнаяЗаписьБезДвижений,ПроведениеПроверено,ОтменаПроверена,Ссылка);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "copy",
+        "title": "Verify the own copy",
+        "where": "Own-copy Designer",
+        "action": "Use your continuing P4 copy, verify metadata and preserve source before adding code. For a new experiment restore a DT only into a new empty base. Do not reload a full CF over prior work.",
+        "why": "Keep earlier functions and records.",
+        "expected": "Source and experiment base distinguished.",
+        "troubleshooting": "Return to P4 preparation if required metadata is absent.",
+        "before": "Own continuing work and DT backup retained; exact base path and source modules identified."
+      },
+      {
+        "id": "register",
+        "title": "Add the turnover register",
+        "where": "Конфигуратор → Регистры накопления → Добавить",
+        "action": "Name it Трудозатраты, kind Обороты. Add dimension Клиент: СправочникСсылка.Клиенты and resource Минуты: Number(15,2). Include it in УчебнаяСлужба. Retain header ДлительностьМинут and all existing objects.",
+        "why": "Define the movement model explicitly.",
+        "expected": "Register, dimension and resource exist with the stated types.",
+        "troubleshooting": "Do not rename a populated field or duplicate an existing register.",
+        "before": "Source and experiment base distinguished."
+      },
+      {
+        "id": "posting-handler",
+        "title": "Connect posting and add its handler",
+        "where": "Конфигуратор → ЗаявкаУслуги → Движения; затем Модуль объекта",
+        "action": "Allow posting, select Трудозатраты and retain automatic deletion on unposting. Keep existing ПередЗаписью. Add this separate procedure outside it (reuse your existing equivalent instead of duplicating):\nПроцедура ОбработкаПроведения(Отказ, РежимПроведения)\n    Движения.Трудозатраты.Очистить();\n    Движения.Трудозатраты.Записывать = Истина;\n    Движение = Движения.Трудозатраты.Добавить();\n    Движение.Период = Дата;\n    Движение.Клиент = Клиент;\n    Движение.Минуты = ДлительностьМинут;\nКонецПроцедуры",
+        "why": "Produce only this document’s movement set.",
+        "expected": "One posting handler preserves validation and maps ДлительностьМинут to Минуты.",
+        "troubleshooting": "Inspect context and exact resource names; do not clear the entire register.",
+        "before": "Register, dimension and resource exist with the stated types."
+      },
+      {
+        "id": "function",
+        "title": "Append the server function",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеДокументы",
+        "action": "Create the module if absent: Server and Server call enabled; Global and Privileged disabled. Append the complete function below outside other procedures/functions. Preserve older modules.",
+        "why": "Run database operations in their server context.",
+        "expected": "Exactly one exported function definition added.",
+        "troubleshooting": "Do not paste a function definition into the startup handler.",
+        "before": "One posting handler preserves validation and maps ДлительностьМинут to Минуты."
+      },
+      {
+        "id": "caller",
+        "title": "Insert the application call",
+        "where": "Конфигуратор → корень → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Preserve the current handler, then insert only these statements inside it:\nРезультат = УчебныеДокументы.ОпытПроведенияИОтмены();\nСообщить(Результат.ОбычнаяЗаписьБезДвижений);\nСообщить(Результат.ПроведениеПроверено);\nСообщить(Результат.ОтменаПроверена);\nСообщить(Результат.Ссылка);",
+        "why": "Call the function once and print each independent claim.",
+        "expected": "Caller and function definition are in distinct locations.",
+        "troubleshooting": "Keep one startup handler; do not nest exported functions.",
+        "before": "Exactly one exported function definition added."
+      },
+      {
+        "id": "run",
+        "title": "Apply and run once",
+        "where": "Ctrl+S → F7 → 1С:Предприятие",
+        "action": "Review metadata changes, update only your experiment copy and launch once. Record every boolean and actual reference/number.",
+        "why": "Observe the real platform rather than browser highlighting.",
+        "expected": "Three True values: ordinary write 0, posting 1/30, unposting 0 with the reference intact.",
+        "troubleshooting": "Preserve module/line and specific discrepancy; never revise expectations to match a defect.",
+        "before": "Caller and function definition are in distinct locations."
+      },
+      {
+        "id": "reread",
+        "title": "Reconcile saved records",
+        "where": "Enterprise lists and own control notes",
+        "action": "The function ends unposted: its request remains in the list with no own movements. Record its number and the three intermediate assertions.",
+        "why": "Separate durable observations from a displayed message.",
+        "expected": "Actual records agree with the stated scoped assertions.",
+        "troubleshooting": "Use actual identities; list position is not a key.",
+        "before": "Three True values: ordinary write 0, posting 1/30, unposting 0 with the reference intact."
+      },
+      {
+        "id": "finish",
+        "title": "Retain the result and stop repetition",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only this startup call or restore the preserved handler. Keep the function, created own records and notes. Perform the incorrect variant only in another own copy, recording the failed assertion.",
+        "why": "Normal reopening must not recreate experiment data.",
+        "expected": "Work retained and automatic repetition stopped.",
+        "troubleshooting": "Do not clear catalogs, drop modules or alter unrelated documents.",
+        "before": "Actual records agree with the stated scoped assertions."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Source and experiment base distinguished."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Register, dimension and resource exist with the stated types."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "One posting handler preserves validation and maps ДлительностьМинут to Минуты."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Exactly one exported function definition added."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Caller and function definition are in distinct locations."
+      },
+      {
+        "label": "Observation 6",
+        "input": "",
+        "output": "Three True values: ordinary write 0, posting 1/30, unposting 0 with the reference intact."
+      },
+      {
+        "label": "Observation 7",
+        "input": "",
+        "output": "Actual records agree with the stated scoped assertions."
+      },
+      {
+        "label": "Observation 8",
+        "input": "",
+        "output": "Work retained and automatic repetition stopped."
+      }
+    ],
+    "criteria": [
+      "Header ДлительностьМинут and register Минуты distinguished.",
+      "0 → 1/30 → 0 with document and older work retained.",
+      "Own and other movement sets checked independently without clearing the register.",
+      "Own-copy provenance, platform version, exact function and actual assertions.",
+      "Actual synthetic identities and an explained semantic negative control; no real user data.",
+      "Run the second worked variant only in a separate own experiment copy; preserve the original and the observed rejection."
+    ],
+    "hint": "Keep ДлительностьМинут and assign it to the distinct Минуты resource.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Identify document, recorder, dimension and resource.",
+        "criteria": "Header ДлительностьМинут and register Минуты distinguished."
+      },
+      {
+        "level": "Applied",
+        "task": "In a new copy add the register/handler and exercise the three states.",
+        "criteria": "0 → 1/30 → 0 with document and older work retained."
+      },
+      {
+        "level": "Advanced",
+        "task": "Specify reposting with 45 minutes and two recorders.",
+        "criteria": "Own and other movement sets checked independently without clearing the register."
+      }
+    ],
+    "sourceFile": "code/pedagogy/document-posting-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "document",
+    "reference",
+    "module",
+    "attribute",
+    "register",
+    "posting",
+    "transaction",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p5-posting.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Трудозатраты here is",
+        "options": [
+          "A turnover register",
+          "A password",
+          "A course"
+        ],
+        "correct": 0,
+        "explanation": "Its resource measures labor over a period."
+      },
+      {
+        "question": "The handler’s Минуты resource comes from",
+        "options": [
+          "Customer name",
+          "Document ДлительностьМинут",
+          "Topic ID"
+        ],
+        "correct": 1,
+        "explanation": "An explicit assignment uses the retained field."
+      },
+      {
+        "question": "After unposting expect",
+        "options": [
+          "A deleted document",
+          "Every register empty",
+          "No own-recorder movements and a retained document"
+        ],
+        "correct": 2,
+        "explanation": "Unposting is not document deletion."
+      }
+    ]
+  }
+}

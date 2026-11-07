@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b1-author-v1",
+  "id": "cpp.relations-logic",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Comparisons and logic: valid data does not always permit an action",
+  "goal": "Express a precise range, separate valid data from permission to act, and explain short-circuit evaluation.",
+  "prerequisites": [
+    {
+      "text": "bool, arithmetic, and mixed signed/unsigned from the previous lessons."
+    },
+    {
+      "text": "Splitting a computation into named stages. A complete if/else or loops course is unnecessary here."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Testing a value rather than changing it",
+      "paragraphs": [
+        "score >= 0 produces bool. == compares equality and != inequality; a single = in assignment changes an object. score = 0 can be valid C++ inside a larger expression, but it is not an equality check. Inspect meaning even after a successful build.",
+        "Identify operand types first. As seen previously, int and unsigned int can change the expected meaning of a negative comparison. Our ranges use matching ints so that logic is studied without hidden mixed-sign conversions."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Two boundaries need two comparisons",
+      "paragraphs": [
+        "A score must be between 0 and 100 inclusive. In mathematics, 0 ≤ score ≤ 100 is convenient. The similar C++ expression compiles, but does not check what we intended.",
+        "Take score=120 and predict the results of 0 <= score <= 100 and score >= 0 && score <= 100. Follow the value that reaches the second comparison."
+      ],
+      "prediction": [
+        "#include <iostream>\n\nint main() {\n    int score{120};\n    int firstComparison = 0 <= score;\n    bool chained = firstComparison <= 100;\n    bool withinRange = score >= 0 && score <= 100;\n    std::cout << chained << ' ' << withinRange << '\\n';\n    return 0;\n}\n"
+      ],
+      "reveal": {
+        "title": "Compare your prediction and follow the steps",
+        "paragraphs": [
+          "C++ 0 <= score <= 100 does not express two simultaneous bounds. First 0 <= score produces bool, which is then compared with 100. For the resulting 0 or 1, that second comparison is true even when score is invalid.",
+          "Use score >= 0 && score <= 100. One comparison checks the lower bound and one the upper; both must hold. Name the result validScore when useful in the next stage. Bounds are inclusive: 0 and 100 are valid, −1 and 101 are not.",
+          "Check 0, 100 and 101 separately. They cannot share one expected answer: the first two are within the range and the third is not.",
+          "The program stores the intermediate bool in int firstComparison to make the conversion from true to 1 explicit. This is the same reason the chained comparison fails."
+        ],
+        "tables": [
+          {
+            "caption": "Follow the difficult step",
+            "columns": [
+              "Check with score=120",
+              "Intermediate value",
+              "Result"
+            ],
+            "rows": [
+              [
+                "0 <= score <= 100",
+                "0 <= 120 → true → 1; 1 <= 100",
+                "true: wrong for our task"
+              ],
+              [
+                "score >= 0 && score <= 100",
+                "true && false",
+                "false: above the upper boundary"
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int score{120};\n    int firstComparison = 0 <= score;\n    bool chained = firstComparison <= 100;\n    bool withinRange = score >= 0 && score <= 100;\n    std::cout << chained << ' ' << withinRange << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "1 0\n"
+        }
+      }
+    },
+    {
+      "id": "concept-3",
+      "title": "And, or, not: values and skipped operations",
+      "paragraphs": [
+        "&& is true only for true/true. || is false only for false/false. !true is false. A table of final values does not by itself show which operands were evaluated: built-in && skips the right operand after false, and built-in || skips it after true.",
+        "Zero converts to false and a nonzero number to true. Two is not a third logical value. Prefer domain conditions such as connected && !maintenance to unexplained numeric flags."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    bool connected{true};\n    bool maintenance{false};\n    std::cout << (connected && !maintenance) << '\\n';\n    std::cout << (connected || maintenance) << '\\n';\n    std::cout << (!connected) << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "1\n1\n0\n"
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "The guard must come before division",
+      "paragraphs": [
+        "In divisor != 0 && 12 / divisor > 1 the divisor is checked first. At zero the left side is false, so division is skipped. Reversing the operands breaks protection by attempting division first. We discuss that unsafe reversal without executing it.",
+        "For ||, divisor == 0 || 12 / divisor > 1 protects the division. At zero the first condition is already true. Its meaning differs: no division is needed or the quotient is large. Safety does not make it equivalent to the previous && expression."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int divisor{0};\n    bool largeQuotient = divisor != 0 && 12 / divisor > 1;\n    bool noDivisionNeeded = divisor == 0 || 12 / divisor > 1;\n    std::cout << largeQuotient << ' ' << noDivisionNeeded << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "0 1\n"
+      },
+      "tables": [
+        {
+          "caption": "With divisor=0 the division is skipped",
+          "columns": [
+            "Condition",
+            "Left operand",
+            "Right operand",
+            "Result"
+          ],
+          "rows": [
+            [
+              "divisor != 0 && 12 / divisor > 1",
+              "false",
+              "not evaluated",
+              "false"
+            ],
+            [
+              "divisor == 0 || 12 / divisor > 1",
+              "true",
+              "not evaluated",
+              "true"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "One symbol and two symbols are different operators",
+      "paragraphs": [
+        "Single & and | are different operators and do not provide the same short-circuit protection. They may evaluate a dangerous right side. Use && and || for these guards. Full bitwise arithmetic comes later; for now understand why deleting one symbol changes the contract.",
+        "! has high precedence: !score == 0 does not mean !(score == 0). Use explicit parentheses when negating a condition, or assign a meaningful validScore name and use !validScore."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "A valid load and permission to start",
+      "paragraphs": [
+        "The laboratory first validates loadPercent within 0…100, then permits starting when connected and load is at most 80. Load 90 is a valid percentage but starting is forbidden. Separating valid from can_start distinguishes invalid data from a legitimate policy rejection.",
+        "Test −1, 0, 80, 81, 100, 101 and a separate disconnected case. Predict both flags. The short-circuit diagram explicitly names a skipped operand so meaning does not depend on color."
+      ]
+    },
+    {
+      "id": "diagnose-missing-condition",
+      "title": "Intentional: missing && operand",
+      "paragraphs": [
+        "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+        "Supply a complete right-hand expression rather than a guessed symbol."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    bool ready = true && ;\n    std::cout << ready << '\\n';\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      },
+      "deep": {
+        "title": "Why does a truth table not show every executed operation?",
+        "text": "A truth table describes the result for two operand values. Built-in && may never evaluate the right operand when the left is false. That is what makes the divisor guard useful. This lesson concerns built-in operators on simple values, not user-defined operator overloads.",
+        "sourceId": "cpp20-expr.rel"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve a different problem",
+      "paragraphs": [
+        "Calculate valid and can_start. A valid percentage is 0…100; starting needs a connection and load at most 80. The main task starts with load 65 and an active connection. Then test load 90 separately: the percentage is valid, but starting is forbidden. Explain the two flags valid and can_start without treating them as the same condition.",
+        "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "For score=101, what is the result of score >= 0 && score <= 100?",
+      "options": [
+        "false (0)",
+        "true (1)",
+        "Compilation error"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct: the lower bound holds, but the upper bound does not; both are required.",
+        "One true comparison is insufficient for &&. 101 exceeds 100.",
+        "The expression is valid. It returns false rather than causing a build error."
+      ],
+      "recall": "concept-2",
+      "code": "#include <iostream>\n\nint main() {\n    int score{101};\n    bool withinRange = score >= 0 && score <= 100;\n    std::cout << withinRange << '\\n';\n    return 0;\n}\n",
+      "execution": {
+        "source": "#include <iostream>\n\nint main() {\n    int score{101};\n    bool withinRange = score >= 0 && score <= 100;\n    std::cout << withinRange << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "0\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int score{101};\n    bool withinRange = score >= 0 && score <= 100;\n    std::cout << withinRange << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "How do you check 0…100?",
+      "options": [
+        "0 <= x <= 100",
+        "x >= 0 && x <= 100",
+        "x >= 0 || x <= 100"
+      ],
+      "correct": 1,
+      "feedback": "Both bounds must hold.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "When does built-in && skip the right operand?",
+      "options": [
+        "The left is false",
+        "The left is true",
+        "Always"
+      ],
+      "correct": 0,
+      "feedback": "A false left operand already determines the result.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "Which safely guards the divisor?",
+      "options": [
+        "12/d > 1 && d != 0",
+        "d != 0 && 12/d > 1",
+        "d != 0 & 12/d > 1"
+      ],
+      "correct": 1,
+      "feedback": "The check must precede division and short-circuit.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "The main task starts with load 65 and an active connection. Then test load 90 separately: the percentage is valid, but starting is forbidden. Explain the two flags valid and can_start without treating them as the same condition.",
+      "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+      "recall": "concept-2"
+    }
+  ],
+  "practice": {
+    "title": "A start-permission contract",
+    "task": "Calculate valid and can_start. A valid percentage is 0…100; starting needs a connection and load at most 80. The main task starts with load 65 and an active connection. Then test load 90 separately: the percentage is valid, but starting is forbidden. Explain the two flags valid and can_start without treating them as the same condition.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    int loadPercent{65};\n    bool connected{true};\n    std::cout << \"connected=\" << connected << '\\n';\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "",
+    "returnAnchor": "concept-2",
+    "recall": "concept-2",
+    "cases": [
+      {
+        "label": "Main transfer task",
+        "input": "",
+        "output": "valid=1\ncan_start=1\n"
+      }
+    ],
+    "criteria": [
+      "No chained comparisons.",
+      "Logical operators use the correct forms.",
+      "90 is not called an invalid percentage.",
+      "Boundary cases are actually checked.",
+      "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
+    ],
+    "hint": "The main task starts with load 65 and an active connection. Then test load 90 separately: the percentage is valid, but starting is forbidden. Explain the two flags valid and can_start without treating them as the same condition.",
+    "steps": [
+      {
+        "where": "My independent work",
+        "action": "Write the two formulas separately.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My independent work",
+        "action": "Check every boundary and a disconnected case.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My independent work",
+        "action": "Predict both outputs before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My independent work",
+        "action": "Save a data-valid/start-permitted table.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Predicate",
+      "definition": "Here, a bool expression describing a property to check."
+    },
+    {
+      "term": "Logical AND",
+      "definition": "Built-in && is true when both operands are true; the right operand is skipped when the left is false."
+    },
+    {
+      "term": "Logical OR",
+      "definition": "Built-in || is true when at least one operand is true; the right operand is skipped when the left is true."
+    },
+    {
+      "term": "Negation",
+      "definition": "! reverses true and false after converting the operand to bool."
+    },
+    {
+      "term": "Short-circuit evaluation",
+      "definition": "Skipping the right operand when the left already determines a built-in logical expression’s result."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-RELATIONAL",
+    "CPP20-EQUALITY",
+    "CPP20-LOGIC",
+    "CPP20-BOOL",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.relations-logic",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-RELATIONAL",
+      "CPP20-EQUALITY",
+      "CPP20-LOGIC",
+      "CPP20-BOOL",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\relations-logic.en.json",
+  "reading": [
+    {
+      "id": "cpp20-expr.rel",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.rel]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.rel"
+    },
+    {
+      "id": "cpp20-expr.log.and",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.log.and]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.log.and"
+    },
+    {
+      "id": "cpp20-expr.log.or",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.log.or]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.log.or"
+    }
+  ],
+  "authored": true
+}

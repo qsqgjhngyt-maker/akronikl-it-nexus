@@ -850,5 +850,855 @@
       "The project reads data/tasks.txt and creates board-report.txt in the run filesystem. The web runtime does not promise to write generated output back into the personal project automatically. After verification use the normal explicit save action for result files. Existence during one run does not establish persistence after restart or on another device.",
       "A short ADR records context, alternatives, a decision and consequences. Compare an open vector plus functions with private Board state, a concrete policy with a virtual interface, and immediate mutation with candidate preparation. Explain which requirement justifies the added complexity and what you would choose for a smaller application."
     ]
+  },
+  "teachingEdition": {
+    "revision": "b5-author-v1",
+    "title": "Design, testability and refactoring",
+    "goal": "Separate parsing and domain operations, then preserve results when extracting code into multiple files.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
+      },
+      {
+        "text": "Direct prerequisites: cpp.templates-concepts, cpp.testing-diagnostics, cpp.multifile-build, cpp.files"
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Maintainability as a checkable property",
+        "paragraphs": [
+          "A task list has an input format, validity rules and a minute total. If input changes, valid and total should still work on in-memory values.",
+          "Maintainability becomes visible when a requirement changes: can a rule be changed locally while the rest remains understandable? Do not judge it solely by class count. The project has Task values, a Board owner, Policy strategies, input parsing and report output. Each represents a decision that may change independently.",
+          "Begin with concrete scenarios: a normal score equals minutes and an urgent score doubles them. Add import rejection, unique IDs and export. These requirements define test boundaries. An abstraction without a change example remains a hypothesis, so review includes a small new requirement and an assessment of the affected files."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Cohesion and dependencies",
+        "paragraphs": [
+          "High cohesion means a module's parts serve one understandable responsibility. Low coupling means changing an internal decision does not force changes across many clients. Board validates task invariants without opening files or reading cin. A test can therefore construct a candidate in memory without preparing a browser interface.",
+          "Policy reaches total as a const reference. Board neither owns it nor selects the mode; it uses its contract. main owns the concrete strategy through unique_ptr. The signature exposes dependency direction. A global singleton added for convenience would hide test inputs and couple otherwise independent runs.",
+          "Discount is passed explicitly. A price check requires neither global-state changes nor a file."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Discount as an explicit dependency",
+        "paragraphs": [
+          "Compute prices for 1000 cents under the two supplied discounts."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nstruct Discount {\n    int percent;\n    int apply(int cents) const { return cents * (100 - percent) / 100; }\n};\nint price(int cents, const Discount &policy) { return policy.apply(cents); }\nint main() {\n    std::cout << price(1000, Discount{10}) << ' '\n              << price(1000, Discount{0}) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "900 1000\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Refactoring preserves behaviour",
+        "paragraphs": [
+          "Refactoring changes code structure while preserving agreed observable behaviour. First capture the current contract in tests, then move total computation out of main into a domain function and rerun them. Changing output format and internal architecture simultaneously makes a mismatch harder to diagnose.",
+          "Do not enshrine every accidental detail of an old implementation. A contract may intentionally change, but document that separately from refactoring. The laboratory fixes line order and messages while leaving function placement flexible. This allows extracting domain code into a header and cpp file without changing results for the same inputs.",
+          "Keep inputs and outputs before extracting functions. After building the two cpp files, repeat those cases."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "A test driver without magic",
+        "paragraphs": [
+          "A separate driver constructs Board and both Policy types, checks normal and urgent totals, copy independence and replacement failures. checks increases only for a successful condition. Any failed condition prints FAIL and produces a nonzero final exit code. A printed PASS string alone is therefore not sufficient evidence of correctness.",
+          "The driver replaces main.cpp while using the same domain.cpp and report.cpp. Two main functions cannot be linked into one executable. In Nexus use a separate project copy or explicitly replace the main file after saving it. includeRoots and translationUnits state the build inputs; a tests directory is not compiled automatically.",
+          "The driver checks total on populated and empty sequences. It returns a nonzero exit on failure."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "A driver checks populated and empty inputs",
+        "paragraphs": [
+          "Connect PASS 2 to the driver's two concrete conditions."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Reveal the output and walkthrough",
+          "paragraphs": [
+            "PASS 2 is tied to two checked inputs. If either fails, the driver sets a nonzero exit."
+          ],
+          "tables": [
+            {
+              "caption": "What happens at each step",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "Why"
+              ],
+              "rows": [
+                [
+                  "Populated sequence",
+                  "{1,5}, {2,8}",
+                  "total = 13",
+                  "Minutes are summed."
+                ],
+                [
+                  "Empty sequence",
+                  "{}",
+                  "total = 0",
+                  "The initial value determines the result."
+                ],
+                [
+                  "Combine checks",
+                  "13 == 13, 0 == 0",
+                  "PASS 2, exit = 0",
+                  "Both conditions must hold."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+            "stdin": "",
+            "output": "PASS 2\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "The strong import guarantee",
+        "paragraphs": [
+          "Board::replace takes a candidate by value, validates size, ranges and unique IDs, then swaps. Controlled failure occurs before swap. On exception the original tasks remain and the candidate cleans itself up. Tests include invalid data and injected failure on valid data, because those are different rejection causes.",
+          "The guarantee concerns Board state rather than every action in main. Status output and file creation follow the import attempt. The report describes current state even after candidate rejection. This protocol exposes preservation through public observations without accessing private fields or claiming a filesystem transaction.",
+          "In the capstone Board, rejection occurs before swap. Its subsequent report must show the original task {1,10}."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Files and explicit artifacts",
+        "paragraphs": [
+          "The project reads data/tasks.txt and creates board-report.txt in the run filesystem. The web runtime does not promise to write generated output back into the personal project automatically. After verification use the normal explicit save action for result files. Existence during one run does not establish persistence after restart or on another device.",
+          "Export checking includes opening the stream, writing, closing and checking its state after close. File destruction releases the resource, while reporting success requires an explicit error check. A missing input file, an empty file and a file containing zero tasks are three different cases and should remain distinct.",
+          "board-report.txt appears in the run filesystem. After comparing its lines, explicitly save it into the project."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "An ADR and alternative review",
+        "paragraphs": [
+          "A short ADR records context, alternatives, a decision and consequences. Compare an open vector plus functions with private Board state, a concrete policy with a virtual interface, and immediate mutation with candidate preparation. Explain which requirement justifies the added complexity and what you would choose for a smaller application.",
+          "Arguments should refer to requirements and checkable properties. A pattern name or customary practice is insufficient. State limits: up to twenty tasks, integer minutes, no network or GUI, and explicitly saved exports. Neither this architecture nor its tests prove arbitrary production readiness; they provide a reproducible foundation for subsequent work.",
+          "Connect an ADR decision to a requirement. For example, Policy allows scoring changes while retaining Board's operations."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Defending the cumulative project",
+        "paragraphs": [
+          "Deliver sources, input files, actual stdout, the saved report, results from the separate driver and an ADR. A teacher or partner then chooses an unseen case within the allowed domain and a small requirement change. For example, add a scoring strategy and show which files and tests actually needed changes.",
+          "Completion should not depend on matching the reference source text. Explain the invariant, ownership, independent copy, polymorphic call, failure guarantee and template constraint. Module 6 builds on these foundations for application architecture and events. A later course-wide assessment should integrate modules rather than replace their practice with one final quiz.",
+          "Use a new valid input and explain which checks confirm behavior preservation after extracting functions."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "Implement valid and total independently of main. Extract their definitions into a separate translation unit and repeat the cases.",
+          "Separate id/minutes bounds, uniqueness and summation."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What appears in stdout after both total checks pass?",
+        "options": [
+          "PASS 2\n",
+          "FAIL",
+          "PASS 1"
+        ],
+        "correct": 0,
+        "feedback": "Both conditions are true. Stdout contains PASS 2, and return ok?0:1 yields exit 0.",
+        "code": {
+          "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+          "stdin": "",
+          "expected": "PASS 2\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "What does refactoring preserve?",
+        "options": [
+          "Agreed observable behaviour.",
+          "Every internal address.",
+          "The source line count."
+        ],
+        "correct": 0,
+        "feedback": "Refactoring changes internal structure while preserving agreed results for the same inputs. A new output format or business rule changes the contract separately; internal addresses and line counts are usually not client promises.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Why does Board avoid reading cin?",
+        "options": [
+          "Because classes cannot read cin.",
+          "So the domain can be tested independently of input.",
+          "To hide every error."
+        ],
+        "correct": 1,
+        "feedback": "Board can be tested with in-memory values without preparing an input stream. Parsing cin stays with the caller; this separates responsibilities rather than imposing a language restriction on classes.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Why does the test driver have its own main?",
+        "options": [
+          "To link two mains together.",
+          "To avoid the domain.",
+          "It replaces the application while checking shared domain code."
+        ],
+        "correct": 2,
+        "feedback": "The driver shares domain.cpp and report.cpp but supplies its own test entry point. Build it instead of the application main; two competing entry points do not form one test executable.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Is an output file saved into the project automatically?",
+        "options": [
+          "No; use the explicit artifact-save action.",
+          "Yes; without any action.",
+          "Yes; on each cout operation."
+        ],
+        "correct": 0,
+        "feedback": "A generated file initially exists only in that run's filesystem. Explicitly saving selected result files transfers them into the project; cout promises neither file persistence nor device synchronization.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Does one successful test prove every possible requirement?",
+        "options": [
+          "Yes; all future requirements.",
+          "No; conclusions are limited to checked contracts and cases.",
+          "Yes; if the code was copied."
+        ],
+        "correct": 1,
+        "feedback": "A test supports particular observations for specified inputs and a contract. New requirements may reach unchecked behaviour, requiring analysis, additional cases and an explanation of correctness.",
+        "recall": "concept-8"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Why is a successful build insufficient after extracting valid and total into cpp/header?",
+        "feedback": "Repeat valid and invalid inputs, comparing stdout and exit. Linkage alone does not confirm the previous calculations.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Laboratory: Design, testability and refactoring",
+      "task": "Read n=0…20 and n id/minutes pairs. IDs in 1…100 must be unique; minutes are 0…100. Validate the entire input and trailing tokens first. Separate valid and total from main. Success: tasks N minutes S. Invalid input or duplicate IDs: invalid. Then extract the domain into another TU without changing results.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nbool valid(const std::vector<Task> &tasks) {\n    // TODO: Check each task's bounds and ID uniqueness without reading cin.\n    return true;\n}\nint total(const std::vector<Task> &tasks) {\n    int minutes = 0;\n    // TODO: Count minutes in the supplied sequence independently of input.\n    return minutes;\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<Task> tasks;\n    for (int i = 0; i < n; ++i) {\n        Task t;\n        if (!(std::cin >> t.id >> t.minutes)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        tasks.push_back(t);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || !valid(tasks)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"tasks \" << tasks.size() << \" minutes \" << total(tasks)\n              << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "2 1 5 2 8",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "0",
+          "output": "tasks 0 minutes 0\n"
+        },
+        {
+          "label": "First substantive run",
+          "input": "2 1 5 2 8",
+          "output": "tasks 2 minutes 13\n"
+        },
+        {
+          "label": "Case 3",
+          "input": "1 100 100",
+          "output": "tasks 1 minutes 100\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "1 1 0",
+          "output": "tasks 1 minutes 0\n"
+        },
+        {
+          "label": "Input error · 5",
+          "input": "2 1 4 1 7",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 6",
+          "input": "1 0 3",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 7",
+          "input": "1 1 -1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 8",
+          "input": "1 1 101",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 9",
+          "input": "1 1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 10",
+          "input": "21",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 11",
+          "input": "0 x",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 12",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "For {1,5},{2,8}, valid is true and total is 13.",
+        "Output tasks 2 minutes 13.",
+        "Both versions give tasks 0 minutes 0 and invalid.",
+        "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
+      ],
+      "hint": "Repeat valid and invalid inputs, comparing stdout and exit. Linkage alone does not confirm the previous calculations.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Separate id/minutes bounds, uniqueness and summation.",
+          "why": "Each rule can be tested without cin.",
+          "expected": "For {1,5},{2,8}, valid is true and total is 13."
+        },
+        {
+          "where": "In my program",
+          "action": "Complete the functions and run 2 1 5 2 8.",
+          "why": "This checks pair parsing and passing the complete sequence.",
+          "expected": "Output tasks 2 minutes 13."
+        },
+        {
+          "where": "After running",
+          "action": "Compare 0 and 2 1 4 1 7 before and after extracting the domain.",
+          "why": "A duplicate ID tests the invariant, and rerunning tests preservation.",
+          "expected": "Both versions give tasks 0 minutes 0 and invalid."
+        }
+      ],
+      "modulePracticum": {
+        "referenceCode": "#include \"domain.hpp\"\n#include <iostream>\n#include <utility>\n#include <fstream>\n#include <memory>\n#include <stdexcept>\nint main(){int mode,fail;if(!(std::cin>>mode>>fail)||mode<0||mode>1||fail<0||fail>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n academy::Board board;std::unique_ptr<academy::Policy> policy;\n if(mode==0)policy=std::make_unique<academy::Normal>();else policy=std::make_unique<academy::Urgent>();\n try{\n  std::ifstream in{\"data/tasks.txt\"};int n;if(!(in>>n)||n<0||n>20)throw std::invalid_argument(\"input\");\n  std::vector<academy::Task> candidate;for(int i=0;i<n;++i){academy::Task t;if(!(in>>t.id>>t.minutes))throw std::invalid_argument(\"record\");candidate.push_back(t);}\n  in>>std::ws;if(!in.eof())throw std::invalid_argument(\"trailing\");\n  board.replace(std::move(candidate),fail==1);std::cout<<\"accepted\\n\";\n }catch(const std::exception&){std::cout<<\"rejected\\n\";}\n std::cout<<\"tasks \"<<board.tasks().size()<<\" score \"<<board.total(*policy)<<'\\n';\n std::ofstream out{\"board-report.txt\"};if(!out){std::cout<<\"export-failed\\n\";return 1;}\n academy::write_report(out,board,*policy);out.close();if(!out){std::cout<<\"export-failed\\n\";return 1;}\n}\n",
+        "referenceFiles": {
+          "include/domain.hpp": "#ifndef NEXUS_M5_DOMAIN_HPP\n#define NEXUS_M5_DOMAIN_HPP\n#include <vector>\n#include <concepts>\n#include <ostream>\nnamespace academy {\nstruct Task {int id,minutes;};\ntemplate<std::integral T> bool bounded(T n,T lo,T hi){return lo<=n&&n<=hi;}\nstruct Policy {virtual int score(const Task&)const=0;virtual ~Policy()=default;};\nstruct Normal final:Policy {int score(const Task& t)const override{return t.minutes;}};\nstruct Urgent final:Policy {int score(const Task& t)const override{return 2*t.minutes;}};\nclass Board {\n std::vector<Task> tasks_{{1,10}};\npublic:\n void replace(std::vector<Task> candidate,bool fail);\n int total(const Policy& policy)const;\n const std::vector<Task>& tasks()const{return tasks_;}\n};\nvoid write_report(std::ostream&,const Board&,const Policy&);\n}\n#endif\n",
+          "src/domain.cpp": "#include \"domain.hpp\"\n#include <stdexcept>\nnamespace academy {\nvoid Board::replace(std::vector<Task> candidate,bool fail){\n if(candidate.size()>20)throw std::invalid_argument(\"size\");\n for(std::size_t i=0;i<candidate.size();++i){const auto& t=candidate[i];\n  if(!bounded(t.id,1,100)||!bounded(t.minutes,0,100))throw std::invalid_argument(\"range\");\n  for(std::size_t j=0;j<i;++j)if(candidate[j].id==t.id)throw std::invalid_argument(\"duplicate\");\n }\n if(fail)throw std::runtime_error(\"injected\");\n tasks_.swap(candidate);\n}\nint Board::total(const Policy& policy)const{int n=0;for(const auto& t:tasks_)n+=policy.score(t);return n;}\n}\n",
+          "src/report.cpp": "#include \"domain.hpp\"\nnamespace academy {\nvoid write_report(std::ostream& out,const Board& b,const Policy& p){\n out<<\"tasks \"<<b.tasks().size()<<\" score \"<<b.total(p)<<'\\n';\n for(const auto& t:b.tasks())out<<t.id<<' '<<t.minutes<<'\\n';\n}\n}\n",
+          "data/tasks.txt": "2\n2 3\n3 4\n"
+        },
+        "metadata": {
+          "includeRoots": [
+            "include"
+          ],
+          "translationUnits": [
+            "main.cpp",
+            "src/domain.cpp",
+            "src/report.cpp"
+          ]
+        },
+        "testDriver": "#include \"domain.hpp\"\n#include <iostream>\n#include <utility>\n#include <sstream>\n#include <stdexcept>\nint main(){academy::Board b;academy::Normal normal;academy::Urgent urgent;int checks=0;\n auto check=[&](bool ok){if(ok)++checks;else std::cout<<\"FAIL\\n\";};\n check(b.total(normal)==10);check(b.total(urgent)==20);\n b.replace({{2,3},{3,4}},false);check(b.total(normal)==7);check(b.total(urgent)==14);\n academy::Board copy=b;copy.replace({},false);check(copy.total(normal)==0);check(b.total(normal)==7);\n auto reject=[&](std::vector<academy::Task> v,bool fail){auto before=b.tasks();try{b.replace(std::move(v),fail);return false;}catch(const std::exception&){if(b.tasks().size()!=before.size())return false;for(std::size_t i=0;i<before.size();++i)if(b.tasks()[i].id!=before[i].id||b.tasks()[i].minutes!=before[i].minutes)return false;return true;}};\n check(reject({{2,1},{2,2}},false));check(reject({{0,1}},false));check(reject({{1,-1}},false));check(reject({{1,2}},true));\n check(academy::bounded(0,0,100)&&!academy::bounded(101,0,100));\n std::ostringstream out;academy::write_report(out,b,normal);check(out.str()==\"tasks 2 score 7\\n2 3\\n3 4\\n\");\n std::cout<<\"PASS \"<<checks<<'\\n';return checks==12?0:1;}\n",
+        "testExpectedStdout": "PASS 12\n",
+        "cases": [
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 0 score 0\n",
+            "files": {
+              "data/tasks.txt": "0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 0 score 0\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 0 score 0\n",
+            "files": {
+              "data/tasks.txt": "0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 0 score 0\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 1 score 0\n",
+            "files": {
+              "data/tasks.txt": "1\n1 0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 0\n1 0\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 1 score 0\n",
+            "files": {
+              "data/tasks.txt": "1\n1 0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 0\n1 0\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 2 score 7\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 2 score 7\n2 3\n3 4\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 2 score 14\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 2 score 14\n2 3\n3 4\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 1 score 100\n",
+            "files": {
+              "data/tasks.txt": "1\n100 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 100\n100 100\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 1 score 200\n",
+            "files": {
+              "data/tasks.txt": "1\n100 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 200\n100 100\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 20 score 2000\n",
+            "files": {
+              "data/tasks.txt": "20\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 20 score 2000\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 20 score 4000\n",
+            "files": {
+              "data/tasks.txt": "20\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 20 score 4000\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {},
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": ""
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "x"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "-1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "21"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "2 1 3 1 4"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 0 1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 101 1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1 -1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1 101"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "0 tail"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1 x"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 1",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "1 1",
+            "stdout": "rejected\ntasks 1 score 20\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 20\n1 10\n"
+            }
+          },
+          {
+            "stdin": "2 0",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          },
+          {
+            "stdin": "0 2",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          },
+          {
+            "stdin": "",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          },
+          {
+            "stdin": "0 0 tail",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          }
+        ],
+        "title": "Module project: A maintainable application",
+        "challenge": "Create a personal multifile project with Board and Policy. The initial task is {1,10}. stdin: mode=0…1 and fail=0…1 with no trailing token; invalid stdin yields only invalid and no report. data/tasks.txt: n=0…20, then n unique id=1…100 and minutes=0…100 pairs with no trailing token. A missing/malformed file or fail=1 rejects import and preserves the initial task. Mode zero scores minutes; mode one doubles them. stdout: accepted/rejected, then tasks N score S. board-report.txt contains tasks N score S and each pair on a separate line in file order. Explicitly save the report using the result-file action. Export failure yields export-failed and exit=1, a separate contract from Board. Replace main with the separate test driver; never build both mains together.",
+        "starterCode": "#include \"domain.hpp\"\n#include <iostream>\n#include <fstream>\n#include <memory>\n#include <utility>\nint main(){\n // TODO: validate mode/fail; read data/tasks.txt; choose an academy::Policy.\n // TODO: build a candidate and invoke Board::replace inside try/catch.\n // TODO: report current state and explicitly check export close status.\n std::cout<<\"pending\\n\";\n}\n",
+        "starterExpectedStdout": "pending\n",
+        "starterFiles": {
+          "include/domain.hpp": "#ifndef NEXUS_M5_DOMAIN_HPP\n#define NEXUS_M5_DOMAIN_HPP\n#include <vector>\n#include <concepts>\n#include <ostream>\nnamespace academy {\nstruct Task {int id,minutes;};\ntemplate<std::integral T> bool bounded(T n,T lo,T hi){return lo<=n&&n<=hi;}\nstruct Policy {virtual int score(const Task&)const=0;virtual ~Policy()=default;};\nstruct Normal final:Policy {int score(const Task& t)const override{return t.minutes;}};\nstruct Urgent final:Policy {int score(const Task& t)const override{return 2*t.minutes;}};\nclass Board {\n std::vector<Task> tasks_{{1,10}};\npublic:\n void replace(std::vector<Task> candidate,bool fail);\n int total(const Policy& policy)const;\n const std::vector<Task>& tasks()const{return tasks_;}\n};\nvoid write_report(std::ostream&,const Board&,const Policy&);\n}\n#endif\n",
+          "src/domain.cpp": "#include \"domain.hpp\"\nnamespace academy {void Board::replace(std::vector<Task>,bool){/* TODO */}int Board::total(const Policy&)const{return 0;}}\n",
+          "src/report.cpp": "#include \"domain.hpp\"\nnamespace academy {void write_report(std::ostream&,const Board&,const Policy&){/* TODO */}}\n",
+          "data/tasks.txt": "2\n2 3\n3 4\n"
+        },
+        "skills": [
+          {
+            "lessonId": "cpp.oop-principles",
+            "title": "Objects, abstraction and responsibility boundaries"
+          },
+          {
+            "lessonId": "cpp.classes-objects-state-control",
+            "title": "Classes, interfaces and state"
+          },
+          {
+            "lessonId": "cpp.constructors-destructors",
+            "title": "Construction and lifetime completion"
+          },
+          {
+            "lessonId": "cpp.raii-smart-pointers",
+            "title": "RAII and smart pointers"
+          },
+          {
+            "lessonId": "cpp.value-copy-move",
+            "title": "Value semantics, copying and moving"
+          },
+          {
+            "lessonId": "cpp.composition-inheritance-polymorphism",
+            "title": "Composition, inheritance and polymorphism"
+          },
+          {
+            "lessonId": "cpp.exceptions-guarantees",
+            "title": "Exceptions and error guarantees"
+          },
+          {
+            "lessonId": "cpp.templates-concepts",
+            "title": "Templates and constrained generalization"
+          },
+          {
+            "lessonId": "cpp.design-testability-refactoring",
+            "title": "Design, testability and refactoring"
+          }
+        ],
+        "milestones": [
+          "Record the input contract and ownership diagram.",
+          "Implement domain types independently of file input.",
+          "Check invariants and independent copying.",
+          "Connect Policy and two strategies through a const interface.",
+          "Inject failure before commit and compare complete state.",
+          "Build the separate driver: expect PASS 12 and exit zero.",
+          "Run file cases and explicitly save the report.",
+          "Defend an ADR and implement a changed requirement."
+        ],
+        "rubric": [
+          {
+            "points": 2,
+            "criterion": "Explain Board/Policy invariants and responsibilities.",
+            "complete": "Fully support this criterion with source, an actual case and reasoning: Explain Board/Policy invariants and responsibilities.",
+            "partial": "Partially implemented, but an independent case or explanation is missing.",
+            "missing": "The criterion is unmet or the observed behaviour violates its contract."
+          },
+          {
+            "points": 2,
+            "criterion": "Use correct RAII, copying and polymorphic destruction.",
+            "complete": "Fully support this criterion with source, an actual case and reasoning: Use correct RAII, copying and polymorphic destruction.",
+            "partial": "Partially implemented, but an independent case or explanation is missing.",
+            "missing": "The criterion is unmet or the observed behaviour violates its contract."
+          },
+          {
+            "points": 2,
+            "criterion": "Failure before commit preserves the complete snapshot with a separate test.",
+            "complete": "Fully support this criterion with source, an actual case and reasoning: Failure before commit preserves the complete snapshot with a separate test.",
+            "partial": "Partially implemented, but an independent case or explanation is missing.",
+            "missing": "The criterion is unmet or the observed behaviour violates its contract."
+          },
+          {
+            "points": 2,
+            "criterion": "Check files, negative cases and the driver with actual runs.",
+            "complete": "Fully support this criterion with source, an actual case and reasoning: Check files, negative cases and the driver with actual runs.",
+            "partial": "Partially implemented, but an independent case or explanation is missing.",
+            "missing": "The criterion is unmet or the observed behaviour violates its contract."
+          },
+          {
+            "points": 2,
+            "criterion": "Defend the ADR, artifacts and requirement change.",
+            "complete": "Fully support this criterion with source, an actual case and reasoning: Defend the ADR, artifacts and requirement change.",
+            "partial": "Partially implemented, but an independent case or explanation is missing.",
+            "missing": "The criterion is unmet or the observed behaviour violates its contract."
+          }
+        ],
+        "artifacts": [
+          "All .cpp/.hpp sources and input files",
+          "Actual results and independent tests",
+          "Explicitly saved board-report.txt",
+          "An ADR with alternatives",
+          "A short defence of the requirement change"
+        ],
+        "completionRule": "Require all five criteria, at least 8/10 and no unresolved invariant, ownership or rejection-preservation violation. Teacher review or evidence-based self-review; automatic credit is not implemented.",
+        "label": "MODULE PROJECT",
+        "readiness": "Start after completing the listed laboratories. Attempt your own solution before comparing the reference.",
+        "requirements": [
+          "Create a personal multifile project with Board and Policy. The initial task is {1,10}. stdin: mode=0…1 and fail=0…1 with no trailing token; invalid stdin yields only invalid and no report. data/tasks.txt: n=0…20, then n unique id=1…100 and minutes=0…100 pairs with no trailing token. A missing/malformed file or fail=1 rejects import and preserves the initial task. Mode zero scores minutes; mode one doubles them. stdout: accepted/rejected, then tasks N score S. board-report.txt contains tasks N score S and each pair on a separate line in file order. Explicitly save the report using the result-file action. Export failure yields export-failed and exit=1, a separate contract from Board. Replace main with the separate test driver; never build both mains together.",
+          "Preserve your previous code in a separate project or saved copy before replacement.",
+          "Compare exit status, stdout and specified files rather than merely the absence of a red message."
+        ],
+        "walkthrough": [
+          "High cohesion means a module's parts serve one understandable responsibility. Low coupling means changing an internal decision does not force changes across many clients. Board validates task invariants without opening files or reading cin. A test can therefore construct a candidate in memory without preparing a browser interface.",
+          "A separate driver constructs Board and both Policy types, checks normal and urgent totals, copy independence and replacement failures. checks increases only for a successful condition. Any failed condition prints FAIL and produces a nonzero final exit code. A printed PASS string alone is therefore not sufficient evidence of correctness.",
+          "Board::replace takes a candidate by value, validates size, ranges and unique IDs, then swaps. Controlled failure occurs before swap. On exception the original tasks remain and the candidate cleans itself up. Tests include invalid data and injected failure on valid data, because those are different rejection causes.",
+          "The project reads data/tasks.txt and creates board-report.txt in the run filesystem. The web runtime does not promise to write generated output back into the personal project automatically. After verification use the normal explicit save action for result files. Existence during one run does not establish persistence after restart or on another device.",
+          "A short ADR records context, alternatives, a decision and consequences. Compare an open vector plus functions with private Board state, a concrete policy with a virtual interface, and immediate mutation with candidate preparation. Explain which requirement justifies the added complexity and what you would choose for a smaller application."
+        ]
+      },
+      "recall": "example-2",
+      "starterRevision": "b5-starter-v1",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "tasks 2 minutes 0\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-class",
+        "title": "C++20 [class]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[class]",
+        "language": "English",
+        "purpose": "Consult the C++20 requirements in [class] after working through the examples.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+      }
+    ],
+    "coverage": {
+      "1": "concept-2",
+      "2": "example-2",
+      "3": "concept-3",
+      "4": "concept-5",
+      "5": "concept-7"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Maintainability as a checkable property",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Cohesion and dependencies",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Refactoring preserves behaviour",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "A test driver without magic",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "The strong import guarantee",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Files and explicit artifacts",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "An ADR and alternative review",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Defending the cumulative project",
+        "anchor": "concept-8"
+      }
+    ]
   }
 }

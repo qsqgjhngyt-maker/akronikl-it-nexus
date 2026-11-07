@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p9.topic-1",
+  "courseId": "onec",
+  "moduleId": "onec.p9",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "DCS, reports and data processors",
+  "locale": "en",
+  "title": "Data set and resources",
+  "goal": "Run the actual DCS processor for two of your own requests: verify two rows totaling 75 minutes, then one filtered row of 45 minutes.",
+  "prerequisites": [
+    {
+      "text": "onec.p8; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "A schema describes data",
+      "paragraphs": [
+        "DCS means Data Composition System (СКД, система компоновки данных). It separates the description of available data, report settings and execution. Think of a report as a question: which records should it include, what should one row mean and which quantities should it total? Answer these questions before opening the designer. A resource is a value aggregated by the chosen rule; here Минуты is a duration in minutes.",
+        "The supplied complete module creates two requests belonging to your own customer, with durations of 30 and 45 minutes. It builds a DataCompositionSchema and outputs a collection containing document reference, customer and minutes. Before running it, predict two rows and a total of 75. The customer-reference filter isolates this experiment from earlier work in the infobase."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Reconcile the complete experiment",
+      "paragraphs": [
+        "Reconcile actual DCS output and provenance."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Schema → Settings → Layout composer → Processor → Value-collection output\n// Own 30/45→2/75; minutes>30→1/45",
+        "output": "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Source",
+              "Two own requests: 30 and 45 minutes",
+              "Two documents."
+            ],
+            [
+              "Compose",
+              "No threshold",
+              "2/75."
+            ],
+            [
+              "Filter",
+              "Minutes>30",
+              "Second reference/45."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Resources depend on granularity",
+      "paragraphs": [
+        "An already customer-grouped dataset can be summed again only with correct multiplicity. A bad join doubles resources before DCS. Check raw query rows before report groupings. A computed field with a nice name cannot repair lost or extra records.",
+        "Follow the pipeline in order: the schema describes the query and fields; settings select fields and filters; the layout composer prepares the execution layout; the DCS processor executes it; the output processor returns a value table. DataPath (ПутьКДанным) names the field available to the composition system. Creating a schema object alone does not execute a report."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Settings differ from the source set",
+      "paragraphs": [
+        "One schema can support multiple report variants. Users change available fields, filters and groupings without silently gaining forbidden data scope. Check permissions and dataset restrictions separately. Preserve variant and parameters so another reviewer reproduces the same question.",
+        "This experiment returns detail rows only, without an extra total row. Sum their Минуты values once: 30 + 45 = 75. If you later add grouping and report totals, distinguish detail from aggregate rows so you do not add the same minutes twice. The shorthand 2/75 below means two rows totaling 75 minutes."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A case that distinguishes the wrong solution",
+      "paragraphs": [
+        "The threshold distinguishes filter semantics."
+      ],
+      "code": {
+        "language": "text",
+        "source": "In another copy change ОтборМинут.ПравоеЗначение from 30 to 45.",
+        "output": "ОтборВерный=False: strict >45 excludes 45."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Separate copy",
+              "In another copy change ОтборМинут.ПравоеЗначение from 30 to 45.",
+              "Retain the accepted original."
+            ],
+            [
+              "Observe",
+              "ОтборВерный=False: strict >45 excludes 45.",
+              "The threshold distinguishes filter semantics."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Accept from source evidence",
+      "paragraphs": [
+        "A separate three-document example illustrates grouping: durations 30 and 45 for one customer and 15 for another give 90 minutes overall and customer totals 75 and 15. This is a different input from the two-document runnable experiment. In both cases compare actual document references as well as totals. A matching sum can conceal a missing record and an extra record of the same duration.",
+        "Recompose the same input with minutes>30: expect only the second reference/45. Changing the threshold to 45 yields no rows and distinguishes semantics despite valid syntax. Retain settings, source and both outputs."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "A displayed number is accepted without its source. Reconcile actual references, units and raw values before presentation.",
+        "An unavailable feature is described as already tested. Record the exact edition and leave unperformed checks explicitly pending.",
+        "Hash identity is mistaken for safety or authorship. Separate byte integrity, reviewed trust and learner contribution."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "A composition schema is",
+      "options": [
+        "Always the final total",
+        "A data/rules description",
+        "A license"
+      ],
+      "correct": 1,
+      "feedback": "Settings and execution produce a result."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": ">30 selects from 30/45",
+      "options": [
+        "Only 45",
+        "Both",
+        "Neither"
+      ],
+      "correct": 0,
+      "feedback": "Strict comparison excludes 30."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Detail and total rows",
+      "options": [
+        "Always sum together",
+        "Need no distinction",
+        "Must not be blindly summed together"
+      ],
+      "correct": 2,
+      "feedback": "Otherwise facts are counted twice."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Change the threshold in another copy and explain the failure.",
+      "feedback": "Negative threshold explained."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Data set and resources",
+    "task": "Change the threshold in another copy and explain the failure.",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытКомпоновки() Экспорт\n    Д = НовыйНаборРегистров();\n    Схема = Новый СхемаКомпоновкиДанных;\n    Источник = Схема.ИсточникиДанных.Добавить(); Источник.Имя = \"Основной\"; Источник.ТипИсточникаДанных = \"Local\";\n    Набор = Схема.НаборыДанных.Добавить(Тип(\"НаборДанныхЗапросСхемыКомпоновкиДанных\")); Набор.Имя = \"Заявки\"; Набор.ИсточникДанных = \"Основной\";\n    Набор.Запрос = \"ВЫБРАТЬ З.Ссылка КАК Ссылка, З.Клиент КАК Клиент, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З\";\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Клиент,Минуты\",\",\") Цикл\n        Поле = Набор.Поля.Добавить(Тип(\"ПолеНабораДанныхСхемыКомпоновкиДанных\")); Поле.ПутьКДанным = Имя; Поле.Поле = Имя; Поле.Заголовок = Имя;\n    КонецЦикла;\n    Настройки = Новый НастройкиКомпоновкиДанных;\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Минуты\",\",\") Цикл\n        Выбор = Настройки.Выбор.Элементы.Добавить(Тип(\"ВыбранноеПолеКомпоновкиДанных\")); Выбор.Поле = Новый ПолеКомпоновкиДанных(Имя); Выбор.Использование = Истина;\n    КонецЦикла;\n    Группа = Настройки.Структура.Добавить(Тип(\"ГруппировкаКомпоновкиДанных\")); Группа.Использование = Истина; Группа.Выбор.Элементы.Добавить(Тип(\"АвтоВыбранноеПолеКомпоновкиДанных\"));\n    Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Клиент\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Равно; Отбор.ПравоеЗначение = Д.Клиент; Отбор.Использование = Истина;\n    Компоновщик = Новый КомпоновщикМакетаКомпоновкиДанных;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\"));\n    Процессор = Новый ПроцессорКомпоновкиДанных; Процессор.Инициализировать(Макет);\n    Вывод = Новый ПроцессорВыводаРезультатаКомпоновкиДанныхВКоллекциюЗначений; Таблица = Вывод.Вывести(Процессор);\n    ПолныйВерный = Таблица.Количество() = 2 И Таблица.Итог(\"Минуты\") = 75;\n    ОтборМинут = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); ОтборМинут.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Минуты\"); ОтборМинут.ВидСравнения = ВидСравненияКомпоновкиДанных.Больше; ОтборМинут.ПравоеЗначение = 30; ОтборМинут.Использование = Истина;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\")); Процессор.Инициализировать(Макет); Таблица = Вывод.Вывести(Процессор);\n    Возврат Новый Структура(\"ПолныйВерный,ОтборВерный\",ПолныйВерный,Таблица.Количество() = 1 И Таблица[0].Ссылка = Д.Вторая И Таблица.Итог(\"Минуты\") = 45);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Preserve the starting state",
+        "where": "Own-copy Designer",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Keep the accepted work independent.",
+        "expected": "Separate copy opens with the earlier records.",
+        "troubleshooting": "A new list name alone does not create another database directory.",
+        "before": "Own path, prior sources and a restorable backup identified."
+      },
+      {
+        "id": "step-2",
+        "title": "Add the complete server source",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеОтчёты",
+        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+        "why": "Database access has an explicit server boundary.",
+        "expected": "Definitions are module-level; no duplicate helper.",
+        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+        "before": "Separate copy opens with the earlier records."
+      },
+      {
+        "id": "step-3",
+        "title": "Prepare and call the experiment",
+        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеОтчёты.ОпытКомпоновки();\nСообщить(Результат.ПолныйВерный);\nСообщить(Результат.ОтборВерный);",
+        "why": "Print every named result instead of accepting compilation alone.",
+        "expected": "Only the stated caller is inside the existing startup handler.",
+        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+        "before": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "id": "step-4",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Save the configuration, update the database configuration with F7 and start Enterprise with F5 once. Read both messages. ПолныйВерный=True means two own document references totaling 75 minutes; ОтборВерный=True means that minutes > 30 selected only the 45-minute request.",
+        "why": "Observe actual 1C data, not the browser diagram.",
+        "expected": "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes.",
+        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+        "before": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "id": "step-5",
+        "title": "Retain both results",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only the startup caller, retain all source and use another copy for the negative case.",
+        "why": "Preserve provenance and avoid repeating data creation at every startup.",
+        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+        "before": "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate copy opens with the earlier records."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Original retained, negative experiment isolated, automatic caller removed."
+      }
+    ],
+    "criteria": [
+      "Schema/settings/result distinguished.",
+      "2/75 and 1/45 reconciled by key.",
+      "Negative threshold explained.",
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits.",
+      "In another copy change ОтборМинут.ПравоеЗначение from 30 to 45."
+    ],
+    "hint": "Reconcile actual references, units and raw values before presentation.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Explain all five composition stages.",
+        "criteria": "Schema/settings/result distinguished."
+      },
+      {
+        "level": "Applied",
+        "task": "Run and reconcile actual rows.",
+        "criteria": "2/75 and 1/45 reconciled by key."
+      },
+      {
+        "level": "Advanced",
+        "task": "Change the threshold in another copy and explain the failure.",
+        "criteria": "Negative threshold explained."
+      }
+    ],
+    "sourceFile": "code/pedagogy/report-dcs-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p9-dcs.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "A composition schema is",
+        "options": [
+          "Always the final total",
+          "A data/rules description",
+          "A license"
+        ],
+        "correct": 1,
+        "explanation": "Settings and execution produce a result."
+      },
+      {
+        "question": ">30 selects from 30/45",
+        "options": [
+          "Only 45",
+          "Both",
+          "Neither"
+        ],
+        "correct": 0,
+        "explanation": "Strict comparison excludes 30."
+      },
+      {
+        "question": "Detail and total rows",
+        "options": [
+          "Always sum together",
+          "Need no distinction",
+          "Must not be blindly summed together"
+        ],
+        "correct": 2,
+        "explanation": "Otherwise facts are counted twice."
+      }
+    ]
+  }
+}
