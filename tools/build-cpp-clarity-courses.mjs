@@ -19,7 +19,14 @@ const section=(id,title,paragraphs,more={})=>({id,title,paragraphs,...more});
 const numberedSteps=(steps,locale,where)=>steps.map(action=>({where,action,why:'',expected:''}));
 function cppExample(x,id,locale){return section(id,x.title,x.purpose?[x.purpose]:[],{code:{language:'cpp',source:x.code,output:x.expectedStdout,stdin:x.stdin||''},steps:x.steps||[],...(x.trace?{trace:x.trace.map(t=>[t.line,t.before,t.after,t.why].map(v=>typeof v==='string'&&v.includes(' / ')&&/[А-Яа-я]/.test(v)&&/[A-Za-z]/.test(v)?v.split(' / ')[locale==='en'?1:0]:v))}:{})});}
 const cppCatalog={id:'cpp',title:{ru:'Программирование на C++',en:'C++ programming'},topics:[]};
-for(const m of cpp.sections){for(const t of cpp.lessons.filter(t=>t.sectionId===m.id).sort((a,b)=>(a.learningOrder??a.order)-(b.learningOrder??b.order))){cppCatalog.topics.push({id:t.id,title:t.title,module:m.title,moduleId:m.id});}}
+const cppLessons=new Map(cpp.lessons.map(topic=>[topic.id,topic]));
+for(const module of cpp.sections){
+ for(const id of module.lessonIds){
+  const topic=cppLessons.get(id);
+  assert.equal(topic?.sectionId,module.id,'Topic must belong to its declared module: '+id);
+  cppCatalog.topics.push({id:topic.id,title:topic.title,module:module.title,moduleId:module.id});
+ }
+}
 assert.equal(cppCatalog.topics.length,67);catalog.push(cppCatalog);
 // Место разобранных примеров задано по ходу объяснения, а не отдельным блоком после всей теории.
 const exampleAfter={

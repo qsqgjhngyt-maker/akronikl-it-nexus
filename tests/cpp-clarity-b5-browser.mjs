@@ -120,6 +120,20 @@ try{
   assert.equal(await root.locator('#stdin').inputValue(),l.practice.stdin+' ');
  }
  checks.push('Original learner code and stdin survive the workbench, reference inspection and route changes.');
+ for(const locale of ['ru','en']){
+  let root=await go(GOLD_OOP_LESSONS[0],locale,'explanation');
+  for(const [index,id] of GOLD_OOP_LESSONS.entries()){
+   root=p.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]');
+   await root.locator('[data-r3-panel="explanation"]:visible').waitFor();
+   assert.ok((await root.locator('.topic-marker').textContent()).trim().endsWith((47+index)+'/67'));
+   if(index+1<GOLD_OOP_LESSONS.length){
+    await root.locator('[data-action="tools"]').click();
+    await root.locator('.course-controls').getByRole('link',{name:locale==='ru'?'Следующая тема →':'Next topic →',exact:true}).click();
+   }
+  }
+ }
+ checks.push('Normal next-topic navigation follows all nine OOP prerequisites and markers 47–55 in RU/EN.');
+
  if(!process.argv.includes('--view-only')){
   await p.evaluate(()=>location.hash='#view=compiler');
   await p.locator('#prepareCompiler').click();

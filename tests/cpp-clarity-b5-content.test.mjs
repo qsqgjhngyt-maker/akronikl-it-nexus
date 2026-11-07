@@ -97,3 +97,14 @@ test('B05 сохраняет учебные контракты и связыва
   assert.deepEqual(execution(editions[0]),execution(editions[1]),id+' RU/EN execution');
  }
 });
+
+
+test('Навигация всех 67 тем следует lessonIds без смешения legacy order и learningOrder',async()=>{
+ const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json','utf8'));
+ const catalog=JSON.parse(await readFile('courses/clarity/courses.json','utf8')).find(c=>c.id==='cpp');
+ assert.deepEqual(catalog.topics.map(t=>t.id),curriculum.sections.flatMap(s=>s.lessonIds));
+ assert.equal(new Set(catalog.topics.map(t=>t.id)).size,67);
+ for(const section of curriculum.sections){
+  assert.deepEqual(catalog.topics.filter(t=>t.moduleId===section.id).map(t=>t.id),section.lessonIds);
+ }
+});
