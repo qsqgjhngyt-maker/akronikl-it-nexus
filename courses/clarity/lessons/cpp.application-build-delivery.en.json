@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "b6-author-v2",
+  "contentRevision": "b6-author-v3",
   "id": "cpp.application-build-delivery",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -65,16 +65,16 @@
       "id": "concept-3",
       "title": "Tests and independent extension",
       "paragraphs": [
-        "The TaskFlow starter already demonstrates adding, completing, rejection and roundtrip. Copying the finished example is not a complete independent project. The module project requires open/completed counts and an all/open view filter that preserves ids. An alternative route is an agreed equivalent feature with explained outcomes and tests.",
-        "Specify the filter contract before editing and prepare tasks with different statuses. Check that filtering does not delete model data, completing after filtering uses the correct id and saving includes every task. Run model tests separately from the GUI. Evaluation also requires tests for the extension and a defense involving a small new command."
+        "The base TaskFlow can add, complete and save tasks. The second example demonstrates Open/Done and an open-task filter. Your independent version uses Completed tasks only to show completed tasks. Counts still use the whole model.",
+        "Prepare completed alpha and open beta. With filtering enabled, alpha must be visible. Repeating complete preserves Open: 1 Done: 1. Disable filtering, complete beta and enable it again: both tasks are visible, Open: 0 Done: 2. Model tests check the core; this scenario checks id selection and presentation."
       ]
     },
     {
       "id": "concept-4",
       "title": "A toggle button and filter state",
       "paragraphs": [
-        "QPushButton supports a checkable mode: setCheckable(true) enables checking, isChecked() reads the checked state and toggled reports its change. This differs from enabled: interaction availability and checked state are separate properties. Connect toggled to refresh with this as context. Filtering changes displayed rows only, while open/done counts use the entire model. In Nexus Preview, focus the named Open tasks only control: a visible ring identifies the target, Space and Enter activate it, and another activation restores the full view. For an ordinary Qt button, Space with focus is the basic activation key; outside Nexus, Enter depends on default/autoDefault and the window type.",
-        "Check two tasks: complete the first, enable filtering and complete the remaining second task. Its id remains two even though it is now the first visible row. Open: 0 Done: 2 verifies that scenario; saved NXTF1 must still contain both tasks. Changing the filter requires no change to TaskModel or its data format."
+        "setCheckable(true) turns QPushButton into a toggle. isChecked() reads its state; toggled calls refresh with this as context. The Open tasks only example skips done tasks when displaying rows. Your Completed tasks only must skip !done tasks. The filter does not change TaskModel, and Open/Done are calculated before row selection.",
+        "Each row stores t.id in Qt::UserRole. After filtering, a row number is no longer its id: alpha may be the only visible row while keeping id 1. In Nexus, focus the named toggle and press Space. Wait for the new window state before selecting a row. For an ordinary Qt button, Enter depends on default/autoDefault and the window type."
       ]
     },
     {
@@ -185,8 +185,8 @@
       "id": "concept-7",
       "title": "Laboratory contract: input to observation",
       "paragraphs": [
-        "In a new TaskFlow project implement open/done counts and an all/open GUI filter. Filtering must preserve the model, persistent ids and all NXTF1 data. Verify persistence, Stop→Run, model tests, a Studio checkpoint and portable ZIP within Nexus. For immutable final submission open Final assessment and use its starter.",
-        "Trace the first reference scenario before running. Enter learn C++ and press Enter. One open task; the count reflects the model. Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+        "In a separate TaskFlow copy, add Open/Done counts for the whole model and a Completed tasks only toggle. The example filters open tasks; your independent version shows completed tasks. Store t.id in Qt::UserRole and save all tasks to NXTF1 regardless of filtering. Check repeated complete, explicit saving, Stop/Run, your tests, ZIP and preservation of a submitted snapshot after editing the working copy.",
+        "Trace your reference scenario before running: Add alpha and beta. Complete alpha, enable Completed tasks only and repeat complete for visible alpha. Disable the filter, complete beta, then enable it again. The first filtered view shows alpha: Open: 1 Done: 1. Repetition changes nothing. Both tasks are visible at the end: Open: 0 Done: 2."
       ]
     },
     {
@@ -201,8 +201,8 @@
       "id": "concept-9",
       "title": "Independent checking and transfer",
       "paragraphs": [
-        "Prepare ZIP, README, ADR and a restoration check. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
-        "Defend the project by adding a small new scenario. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Independently complete the final assessment control-change task and explain which files, tests and observations it affects. An additional peer or teacher requirement is optional review."
+        "In README, identify entry src/gui.cpp, the model and test files, and how to run, save taskflow.txt and restore a separate copy. Record alpha/beta, repeated complete, enabling and clearing the filter, observed counts and your test results. Check the ZIP contents by opening it as a new learning project.",
+        "In a short ADR, explain why filtering belongs in the view. Deleting hidden tasks would lose data and change id meaning. State the cases checked and remaining limits. Keep the training TaskFlow with a checkpoint; use the separate starter and contract in Final Work for an immutable final submission."
       ]
     },
     {
@@ -426,7 +426,7 @@
       "Both tasks restore; the submission retains tested sources, README and observed results.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "The file stores model data; a checkpoint is recoverable project state; submission is an exact snapshot for review. Filtering belongs to the view, so save must include hidden tasks.",
+    "hint": "First count Open/Done over the whole model. With Completed tasks only enabled, skip !task.done only while filling the list. Store t.id in UserRole. Clear the filter before completing hidden beta; Save includes both tasks regardless of visibility.",
     "steps": [
       {
         "where": "Before running",

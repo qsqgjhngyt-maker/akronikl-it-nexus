@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "b6-author-v2",
+  "contentRevision": "b6-author-v3",
   "id": "cpp.qt-graphical-adapter",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -23,8 +23,8 @@
       "title": "From the model to a real window",
       "paragraphs": [
         "So far commands came from stdin. Now text and Return come from a real QLineEdit. TaskModel still enforces the rules; Qt translates user actions into model calls and displays the result. This requires the Qt/WebAssembly target, separate from console Clang/WASI.",
-        "Qt is an additional library, not part of standard C++. It requires its own SDK and build toolchain. In Nexus select Project Studio, create a C++ application and open src/gui.cpp. Building compiles your C++ to Qt/WebAssembly and opens a separate Preview. The lesson’s console Clang/WASI editor contains no Qt and cannot run this exercise.",
-        "The TaskFlow starter includes a model, CLI, GUI, tests, CMake and target description. Create a new personal project while preserving earlier work. The laboratory changes actual src/gui.cpp; a JavaScript animation or an onClick message in a console does not substitute for execution. Build-service connectivity and source correctness are separate checks."
+        "Qt is an additional library rather than part of standard C++. In Nexus, create a new C++ application in Project Studio and open src/gui.cpp. The application builds for Qt/WebAssembly and runs in a separate Preview. Console Clang/WASI does not contain Qt: use the graphical project for this task.",
+        "TaskFlow contains a model, CLI, GUI, tests, CMake and a target description. Create a separate personal copy. In this toolchain your C++ builds on the device after Qt-runtime preparation; initially downloading the compiler and libraries requires a connection. Environment availability and source correctness are checked separately."
       ]
     },
     {
@@ -163,16 +163,16 @@
       "id": "concept-5",
       "title": "Changing your own application",
       "paragraphs": [
-        "First change the window title and successful-add message while preserving model rules. Then add a task-count indicator derived from model.tasks().size() and check it after each accepted action. Do not increment a counter merely because a button was pressed: model rejection creates no task. The changed source must actually be rebuilt.",
-        "Retain source, two different builds and an action protocol: an ordinary title, whitespace-only input, repetition, completing a selected item and rejection without selection. The next lesson checks persistence. Complete the work inside Nexus; ZIP supplies an additional portable result, while installing an external IDE is not required to finish the laboratory."
+        "In the second example, count_ displays the total Tasks count using model.tasks().size(). Now transfer that approach to another quantity: Open tasks counts only tasks with done=false. Adding alpha and beta gives 2; completing alpha leaves 1. Both tasks remain in the model.",
+        "Add a separate QLabel and recount open tasks in refresh. Completing alpha again must leave 1; completing beta must produce 0. Empty input leaves the count unchanged. Change the success message, rebuild C++ and keep a record of the source, actions and observed readings. Explicitly save taskflow.txt for Save/Stop/Run; the next lesson adds filtering and version submission."
       ]
     },
     {
       "id": "concept-6",
       "title": "Laboratory contract: input to observation",
       "paragraphs": [
-        "Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks.",
-        "Trace the first reference scenario before running. Enter learn C++ and press Enter. One open task; the count reflects the model. Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+        "In a separate base TaskFlow copy, add an Open tasks: N QLabel that counts only tasks with done=false in refresh. The example shows total Tasks; here completion must reduce Open tasks without deleting the task. Change the successful-add message. Preserve Add/Return, Complete selected, accessible name Task title and NXTF1. Run all listed scenarios, including repeated complete and Stop/Run after explicit saving.",
+        "Trace your reference scenario before running: Add alpha and beta. Complete alpha, repeat its completion, then complete beta. Open tasks: 2 → 1 → 1 → 0. Both tasks remain in the model."
       ]
     },
     {
@@ -187,8 +187,8 @@
       "id": "concept-8",
       "title": "Independent checking and transfer",
       "paragraphs": [
-        "Test keyboard interaction and empty-input errors. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
-        "Design a completed-task filter without changing ids. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Independently complete the final assessment control-change task and explain which files, tests and observations it affects. An additional peer or teacher requirement is optional review."
+        "Check the keyboard path: Task title input → text → Return → list row. Then submit three spaces. The field remains available for correction, and both task count and Open tasks stay unchanged. Record your expectation before the action and the observation afterwards.",
+        "Add two titles of your own and complete one task twice. Explain why open decreases only once and why the model size stays unchanged. In the next lesson the same done flag becomes a filter condition; here, verify the counter and data preservation."
       ]
     },
     {
@@ -402,7 +402,7 @@
       "alpha is restored; the new success message appears after an actual rebuild.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "Rejection creates no task; repeated complete creates none either. The model is the source of truth. Context this ties the connection to a live window; child QObjects belong to the window through parent.",
+    "hint": "In refresh, start open at 0 and increment it only for !task.done. Pass the result to QLabel. tasks().size() includes completed tasks; complete preserves total size while reducing open. Every update, including repeated complete, goes through the same refresh.",
     "steps": [
       {
         "where": "Before running",

@@ -430,7 +430,7 @@
     "explanation": "A local copy retains the value after pop."
   },
   "teachingEdition": {
-    "revision": "b6-author-v1",
+    "revision": "b6-author-v2",
     "title": "Event queues and dispatch",
     "goal": "Build a FIFO dispatcher and explain the order of generated events and why processing terminates.",
     "prerequisites": [
@@ -699,7 +699,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> input(n);\n    for (int &x : input) {\n        if (!(std::cin >> x) || x < 0 || x > 9) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::queue<int> q;\n    for (int x : input) {\n        q.push(x);\n    }\n    int total = 0, processed = 0;\n    std::function<void(int)> handler = [&](int x) {\n        // TODO: Add the delivered x to total.\n        if (x == 3) {\n            q.push(1);\n        }\n    };\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        if (handler) {\n            handler(event);\n        }\n        ++processed;\n    }\n    std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n"
+          "content": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> input(n);\n    for (int &x : input) {\n        if (!(std::cin >> x) || x < 0 || x > 9) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::queue<int> q;\n    // TODO: Push each input item onto the tail of q in its original order.\n    int total = 0, processed = 0;\n    std::function<void(int)> handler = [&](int x) {\n        // TODO: Add the delivered x to total.\n        if (x == 3) {\n            q.push(1);\n        }\n    };\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        if (handler) {\n            handler(event);\n        }\n        ++processed;\n    }\n    std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n"
         }
       ],
       "metadata": {},
@@ -774,11 +774,11 @@
           "expected": "24 dispatches; overflow rejects insertion without losing the three existing items."
         }
       ],
-      "starterRevision": "b6-starter-v1",
+      "starterRevision": "b6-starter-v2",
       "recall": "example-1",
       "starterObservation": {
         "case": 0,
-        "stdout": "total 0 processed 5\n",
+        "stdout": "total 0 processed 0\n",
         "exitCode": 0
       }
     },

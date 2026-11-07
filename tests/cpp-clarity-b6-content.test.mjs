@@ -28,7 +28,7 @@ test('B06 связывает полный текст, прогноз, контр
    assert.deepEqual(original,old(source(id,locale)));
    assert.deepEqual(l.extras,before.extras);
    for(const key of ['sections','selfcheck','practice','reading'])assert.deepEqual(l[key],a[key]);
-   assert.equal(a.revision,qt?'b6-author-v2':'b6-author-v1');
+   assert.equal(a.revision,qt?'b6-author-v3':id==='cpp.event-queues-dispatch'?'b6-author-v2':'b6-author-v1');
    assert.equal(l.contentRevision,clarityContentRevision(id));
    const anchors=new Set(l.sections.map(s=>s.id));
    assert.ok(before.sections.every(s=>anchors.has(s.id)));
@@ -37,14 +37,15 @@ test('B06 связывает полный текст, прогноз, контр
    assert.ok(Object.values(a.coverage).every(x=>anchors.has(x)));
    for(const [index,section] of g.sections.entries()){
     const next=l.sections.find(s=>s.id===`concept-${index+1}`);
-    assert.ok(section.paragraphs.every(text=>next.paragraphs.includes(text)));
+    if(a.adaptedSourceSections?.includes(next.id)){assert.ok(qt);assert.notDeepEqual(next.paragraphs,section.paragraphs);assert.ok(next.paragraphs.every(p=>p.length>80));}
+    else assert.ok(section.paragraphs.every(text=>next.paragraphs.includes(text)));
    }
    assert.ok(l.selfcheck.every(q=>anchors.has(q.recall)));
    for(const q of before.selfcheck.filter(q=>q.kind==='choice')){
     const {recall,...next}=l.selfcheck.find(x=>x.id===q.id);assert.deepEqual(next,q);
    }
    assert.ok(p.steps.length===3&&p.steps.every(s=>s.action&&s.why&&s.expected));
-   assert.equal(p.starterRevision,qt?'b6-starter-v2':'b6-starter-v1');
+   assert.equal(p.starterRevision,qt||id==='cpp.event-queues-dispatch'?'b6-starter-v2':'b6-starter-v1');
    assert.deepEqual(p.metadata,before.practice.metadata);
    const entry=qt?'src/gui.cpp':'main.cpp',starter=p.files.find(f=>f.path===entry)?.content;
    const allSources=p.files.map(f=>f.content).join('\n');
@@ -74,6 +75,9 @@ test('B06 связывает полный текст, прогноз, контр
     assert.equal(program.source,probe.source);assert.deepEqual(program.cases,[{stdin:probe.stdin,stdout:probe.output}]);
    }
    if(qt){
+    const contract=l.sections.find(s=>s.id===(id==='cpp.qt-graphical-adapter'?'concept-6':'concept-7'));
+    assert.equal(contract.paragraphs[0],p.task);
+    assert.deepEqual(a.adaptedSourceSections,id==='cpp.qt-graphical-adapter'?['concept-1','concept-5','concept-6','concept-8']:['concept-3','concept-4','concept-7','concept-9']);
     assert.equal(prediction.execution,undefined,'Qt must never be routed through the console predictor');
     assert.equal(p.starterObservation.kind,'qt-ui');
     const reference=programs.find(p=>p.aliases.some(a=>a.lesson===id&&a.locale===locale&&a.part==='authored-lab-reference'));
