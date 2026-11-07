@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.states-typed-events",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Event-driven applications",
   "locale": "en",
   "title": "States and typed events",
-  "goal": "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations.",
+  "goal": "Describe legal transitions and handle typed events without implicit state changes.",
   "prerequisites": [
     {
       "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "State determines permitted actions",
       "paragraphs": [
+        "Pause is legal only while running. Command P alone is insufficient: the result also depends on the current state. A state table makes that dependency testable.",
         "Two independent flags called running and paused admit four combinations, including contradictory ones. enum class State names the meaningful states: idle, running, paused and done. For each event the machine checks its current state and selects a transition. An absent transition means rejection, not an arbitrary choice of a next state.",
         "Draw the transition table: Start takes idle to running, Pause takes running to paused, Resume takes paused to running and Finish takes running to done. All other pairs are rejected. This is the laboratory specification. It supports discussing requirements before implementation: finishing while paused is deliberately forbidden here, although another product could permit it."
       ]
@@ -36,21 +37,16 @@
     },
     {
       "id": "example-1",
-      "title": "Guided model",
+      "title": "visit selects Start",
       "paragraphs": [
-        "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations."
+        "variant holds one event. decay_t removes const and reference from the parameter type; if constexpr selects the relevant branch at compile time."
       ],
       "code": {
         "language": "cpp",
-        "source": "#include <iostream>\n#include <variant>\n#include <type_traits>\nstruct Start {}; struct Finish {};\nusing Event = std::variant<Start, Finish>;\nint main() {\n  Event event = Start{};\n  std::visit([](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) std::cout << \"start\\n\";\n    else std::cout << \"finish\\n\";\n  }, event);\n}\n",
-        "output": "start\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The variant constructs Start.",
-        "visit receives Start and decay_t normalizes its type.",
-        "if constexpr selects the start message."
-      ]
+        "source": "#include <iostream>\n#include <variant>\n#include <type_traits>\nstruct Start {};\nstruct Finish {};\nusing Event = std::variant<Start, Finish>;\nint main() {\n    Event event = Start{};\n    std::visit(\n        [](const auto &item) {\n            using T = std::decay_t<decltype(item)>;\n            if constexpr (std::is_same_v<T, Start>) {\n                std::cout << \"start\\n\";\n            } else {\n                std::cout << \"finish\\n\";\n            }\n        },\n        event);\n}\n",
+        "stdin": "",
+        "output": "start\n"
+      }
     },
     {
       "id": "concept-3",
@@ -78,21 +74,57 @@
     },
     {
       "id": "example-2",
-      "title": "Boundary and extension",
+      "title": "Finish while idle",
       "paragraphs": [
-        "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations."
+        "Calling finish need not finish the job: it checks the initial state first. Predict the call result and the separate s==idle check."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State& state) {\n  if (state != State::running) return false;\n  state = State::done; return true;\n}\nint main() { State s = State::idle; std::cout << finish(s) << ' ' << (s == State::idle) << '\\n'; }\n",
-        "output": "0 1\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The initial state is idle.",
-        "finish is permitted only for running.",
-        "false and true show rejection and retained idle."
-      ]
+      "prediction": [
+        "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal output and walkthrough",
+        "paragraphs": [
+          "0 1 confirms that rejection does not move the machine to done. List the legal source state for each of S,P,R,F in the lab."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "s = idle",
+                "—",
+                "idle",
+                "Initial state."
+              ],
+              [
+                "finish(s)",
+                "idle",
+                "idle; false",
+                "state!=running returns before any assignment."
+              ],
+              [
+                "Print both bool values",
+                "false; s==idle",
+                "0 1",
+                "0 is rejection;1 confirms preservation of idle."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 1\n"
+        }
+      }
     },
     {
       "id": "concept-6",
@@ -117,9 +149,39 @@
         "The variant constructs Start. visit receives Start and decay_t normalizes its type. if constexpr selects the start message. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
         "The initial state is idle. finish is permitted only for running. false and true show rejection and retained idle. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
       ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Complete apply for four types. Keep character parsing outside: unknown X is one rejection, not a new event type.",
+        "Build a 4×4 table of legal pairs."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does finish print for initial idle?",
+      "correct": 0,
+      "feedback": "0 1 confirms that rejection does not move the machine to done. List the legal source state for each of S,P,R,F in the lab.",
+      "code": {
+        "source": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-2",
+      "options": [
+        "0 1\n",
+        "1 0\n",
+        "0 0\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State &state) {\n    if (state != State::running) {\n        return false;\n    }\n    state = State::done;\n    return true;\n}\nint main() {\n    State s = State::idle;\n    std::cout << finish(s) << ' ' << (s == State::idle) << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 1\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +192,8 @@
         "done and 0."
       ],
       "correct": 1,
-      "feedback": "S enters running, P enters paused and F from paused is forbidden. Rejection preserves paused."
+      "feedback": "S enters running, P enters paused and F from paused is forbidden. Rejection preserves paused.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +205,8 @@
         "To copy the active object to the heap."
       ],
       "correct": 0,
-      "feedback": "is_same_v compares types. Without removing qualifications, const Start& differs from Start."
+      "feedback": "is_same_v compares types. Without removing qualifications, const Start& differs from Start.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +218,8 @@
         "std::visit automatically supplies the correct transition."
       ],
       "correct": 0,
-      "feedback": "A catch-all else cannot distinguish new types. Explicit alternatives and completeness checking make extension controlled."
+      "feedback": "A catch-all else cannot distinguish new types. Explicit alternatives and completeness checking make extension controlled.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +231,8 @@
         "Ignores all whitespace within the line."
       ],
       "correct": 1,
-      "feedback": "The protocol reads the whole line rather than skipping internal characters as formatted cin does. Space is not S/P/R/F."
+      "feedback": "The protocol reads the whole line rather than skipping internal characters as formatted cin does. Space is not S/P/R/F.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +244,15 @@
         "SFS, checking the state and one rejection."
       ],
       "correct": 2,
-      "feedback": "SF reaches done and the following S must be rejected. The other traces never reach done and cannot test this prohibition."
+      "feedback": "SF reaches done and the following S must be rejected. The other traces never reach done and cannot test this prohibition.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain decay_t and is_same_v in the visitor.",
-      "feedback": "Next: Model, view and presenter. Preserve your project and experiment results."
+      "prompt": "Trace SPF. Why is F rejected after P? How can Reopen be added without the general else treating it as Finish?",
+      "feedback": "idle→running→paused; F is legal only in running. Use an explicit Finish branch, then a separate Reopen rule and tests for all pairs.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +263,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {}; struct Pause {}; struct Resume {}; struct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State& state, const Event& event) {\n  /* TODO: visit each event and apply the transition table. */ return false;\n}\nint main() {\n  std::string trace;\n  if (!std::getline(std::cin, trace) || trace.size() > 100) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  State state = State::idle; int rejected = 0;\n  for (char c : trace) {\n    bool ok = false;\n    if (c == 'S') ok = apply(state, Start{});\n    else if (c == 'P') ok = apply(state, Pause{});\n    else if (c == 'R') ok = apply(state, Resume{});\n    else if (c == 'F') ok = apply(state, Finish{});\n    if (!ok) ++rejected;\n  }\n  const char* names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n  std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected << '\\n';\n}\n"
+        "content": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {};\nstruct Pause {};\nstruct Resume {};\nstruct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State &state, const Event &event) {\n    // TODO: Visit Event and perform only a legal transition.\n    (void)state;\n    (void)event;\n    return false;\n}\nint main() {\n    std::string trace;\n    if (!std::getline(std::cin, trace) || trace.size() > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    State state = State::idle;\n    int rejected = 0;\n    for (char c : trace) {\n        bool ok = false;\n        if (c == 'S') {\n            ok = apply(state, Start{});\n        } else if (c == 'P') {\n            ok = apply(state, Pause{});\n        } else if (c == 'R') {\n            ok = apply(state, Resume{});\n        } else if (c == 'F') {\n            ok = apply(state, Finish{});\n        }\n        if (!ok) {\n            ++rejected;\n        }\n    }\n    const char *names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n    std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected\n              << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +271,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "First substantive run",
         "input": "SPRF",
         "output": "done rejected 0\n"
       },
@@ -244,64 +312,39 @@
       }
     ],
     "criteria": [
-      "The full input and output contract is satisfied.",
-      "Invariants and lifetimes are explained; rejection preserves the model.",
-      "Ordinary, empty, boundary and failure scenarios are covered.",
-      "Add an explicit Finish branch and a Reopen event type.",
-      "An independent extension and test are supplied, rather than only a reference copy.",
-      "Sources, actual observations and limits of conclusions are retained."
+      "idle/S→running; running/P→paused; paused/R→running; running/F→done.",
+      "done rejected 0.",
+      "SPF: paused rejected 1; empty line: idle rejected 0; X: idle rejected 1.",
+      "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "The adapter maps a character to a type; the visitor checks that type against the current state.",
+    "hint": "idle→running→paused; F is legal only in running. Use an explicit Finish branch, then a separate Reopen rule and tests for all pairs.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Preserve your work and create a separate project for experiments.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Build a 4×4 table of legal pairs.",
+        "why": "The same event has different outcomes in different states.",
+        "expected": "idle/S→running; running/P→paused; paused/R→running; running/F→done."
       },
       {
-        "where": "My program",
-        "action": "Open Task and Code Studio and copy the starter and listed files.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Complete the visitor and run SPRF.",
+        "why": "Assign state only in an accepted branch.",
+        "expected": "done rejected 0."
       },
       {
-        "where": "My program",
-        "action": "Implement apply without reading cin.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Before running, record the expected transitions and outcome of every case.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Execute every reference case and retain actual observations.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an explicit Finish branch and a Reopen event type.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an independent case and explain its boundary.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save sources, the protocol and an explanation of limitations.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Check SPF, an empty line and unknown X.",
+        "why": "An empty line differs from a missing line.",
+        "expected": "SPF: paused rejected 1; empty line: idle rejected 0; X: idle rejected 1."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "idle rejected 4\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -377,5 +420,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\states-typed-events.en.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\states-typed-events.en.json",
+  "reading": [
+    {
+      "id": "cpp20-enum",
+      "title": "WG21 N4861 (C++20 draft) — dcl.enum",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — dcl.enum",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.enum"
+    },
+    {
+      "id": "cpp20-variant",
+      "title": "WG21 N4861 (C++20 draft) — variant.get",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — variant.get",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/variant.get"
+    }
+  ],
+  "authored": true
 }

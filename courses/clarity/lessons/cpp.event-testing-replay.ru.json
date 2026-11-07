@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.event-testing-replay",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Событийные приложения",
   "locale": "ru",
   "title": "Тестирование событий и воспроизводимые трассы",
-  "goal": "Проверьте модель через трассы, инварианты, повтор и контролируемую мутацию реализации.",
+  "goal": "Отделите повторяемость трассы от правильности и найдите тест, обнаруживающий мутацию границы.",
   "prerequisites": [
     {
       "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "От отдельного вызова к последовательности",
       "paragraphs": [
+        "Один и тот же неверный алгоритм может дважды дать одинаковый ответ. Поэтому replay сравнивает повторения, а независимый ожидаемый результат и инварианты проверяют смысл операций.",
         "Ошибка событийного приложения может проявиться только после нескольких действий. Один вызов add ничего не говорит о последовательности add→complete→complete или import→ошибка→save. Тесту нужны начальное состояние, упорядоченная трасса, наблюдения после шагов и ожидаемый итог. Удаление лишних событий из сбойной трассы помогает найти минимальное воспроизведение.",
         "В лабораторной state начинается с нуля, каждое число — смещение, допустимый результат 0…10. Для 3, -5, 2 первая команда принимается, вторая отклоняется, третья даёт пять. Проверяйте также rejected=1. Реализация, которая только обрезает отрицательный результат до нуля, выдаст другой итог и нарушит договор сохранности при отказе."
       ]
@@ -36,21 +37,57 @@
     },
     {
       "id": "example-1",
-      "title": "Опорный разбор",
+      "title": "Две трассы 3,−5,2",
       "paragraphs": [
-        "Проверьте модель через трассы, инварианты, повтор и контролируемую мутацию реализации."
+        "Каждый replay начинает с 0. −5 отклоняется из состояния 3, затем +2 приводит к 5. Прежде чем раскрыть вывод, запишите все три состояния."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int>& trace) { int state = 0; for (int delta : trace) if (state + delta >= 0 && state + delta <= 10) state += delta; return state; }\nint main() { const std::vector<int> trace{3, -5, 2}; std::cout << replay(trace) << ' ' << replay(trace) << '\\n'; }\n",
-        "output": "5 5\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Первая трасса принимает 3, отклоняет -5, принимает 2.",
-        "Повтор создаёт новое нулевое состояние.",
-        "Оба результата равны пяти."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Открыть вывод и разбор",
+        "paragraphs": [
+          "Два результата 5 подтверждают детерминизм этой трассы. Чтобы проверить границу 10, нужен другой вход: ошибка 10→9 на этой трассе не проявится."
+        ],
+        "tables": [
+          {
+            "caption": "Что происходит по шагам",
+            "columns": [
+              "Действие",
+              "До",
+              "После",
+              "Почему"
+            ],
+            "rows": [
+              [
+                "Начать replay",
+                "—",
+                "0",
+                "Каждый прогон создаёт своё начальное состояние."
+              ],
+              [
+                "+3, -5, +2",
+                "0",
+                "3→3→5",
+                "Выход ниже 0 отклоняется без записи."
+              ],
+              [
+                "Повторить с 0",
+                "0",
+                "5; stdout:5 5",
+                "Второй прогон не продолжает состояние первого."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "5 5\n"
+        }
+      }
     },
     {
       "id": "concept-3",
@@ -59,6 +96,19 @@
         "Свойство диапазона 0≤value≤10 должно выполняться после каждого события, а не только в конце. При отказе value не меняется, rejected увеличивается ровно на один. Проверьте пустую трассу, крайние значения int и повтор. Короткое замыкание защищает сложение после проверки самого delta; это предмет для теста с UBSan и объяснения границ.",
         "Контролируемая мутация временно меняет условие верхней границы или разрешает частичное применение. Хороший тест должен обнаружить изменение и завершиться с ненулевым кодом, а не просто напечатать FAIL при успешном завершении. Не оставляйте мутацию в рабочем проекте. Во втором примере отдельно проверяется, что несовпадение действительно распознано проверяющей функцией."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "Тест обнаруживает неправильное 6",
+      "paragraphs": [
+        "Ожидание 5 задано отдельно от наблюдаемого 6. detected=true означает, что проверка умеет заметить именно эту ошибку; код 0 сообщает об успешном тесте обнаружения."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nbool contract(int observed, int expected) { return observed == expected; }\nint main() {\n    bool detected = !contract(6, 5);\n    std::cout << \"mutation detected \" << detected << '\\n';\n    return detected ? 0 : 1;\n}\n",
+        "stdin": "",
+        "output": "mutation detected 1\n"
+      }
     },
     {
       "id": "concept-4",
@@ -74,24 +124,6 @@
       "paragraphs": [
         "n=0…20 и n целых смещений. Начальное value=0; принимайте delta=-10…10 при результате 0…10. Иначе один отказ без изменения value. Дважды replay одной трассы должен совпасть; stdout содержит value, rejected и replay PASS.",
         "Разберите первый контрольный сценарий до запуска. Точный stdin: \"3 3 -5 2\". Ожидаемая строка stdout: \"value 5 rejected 1 replay PASS\\n\" Сопоставьте каждую строку алгоритма с изменением состояния; отдельно отметьте момент отказа и момент применения."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Граница и расширение",
-      "paragraphs": [
-        "Проверьте модель через трассы, инварианты, повтор и контролируемую мутацию реализации."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nbool contract(int observed, int expected) { return observed == expected; }\nint main() { bool detected = !contract(6, 5); std::cout << \"mutation detected \" << detected << '\\n'; return detected ? 0 : 1; }\n",
-        "output": "mutation detected 1\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Наблюдение шесть намеренно не равно пяти.",
-        "contract возвращает false.",
-        "Тест обнаружения мутации завершает работу успешно только при обнаружении."
       ]
     },
     {
@@ -117,9 +149,51 @@
         "n=0…20 и n целых смещений. Начальное value=0; принимайте delta=-10…10 при результате 0…10. Иначе один отказ без изменения value. Дважды replay одной трассы должен совпасть; stdout содержит value, rejected и replay PASS. Последний случай таблицы отделяет допустимую команду от повреждённого протокола. Покажите, на какой строке начинается отказ и какие поля должны остаться неизменными.",
         "Разберите контрольный случай: {\"stdin\":\"21\",\"stdout\":\"invalid\\n\"} Затем измените одну границу и сформулируйте новое ожидание без запуска. Сравните правильное решение с безопасной мутацией в копии проекта; тест должен обнаружить изменение, а не только показать сообщение об успешной сборке."
       ]
+    },
+    {
+      "id": "probe-boundary-mutation",
+      "title": "Один тест обнаруживает мутацию границы",
+      "paragraphs": [
+        "Обе функции напечатаны в исходнике; у mutant изменено только верхнее сравнение. Независимое ожидание10/0 отличает корректный replay от повторяемой ошибки0/1."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\nstruct Result {\n    int value = 0, rejected = 0;\n    bool operator==(const Result &) const = default;\n};\nResult replay(const std::vector<int> &trace) {\n    Result r;\n    for (int x : trace) {\n        if (x < -10 || x > 10 || r.value + x < 0 || r.value + x > 10) {\n            ++r.rejected;\n        } else {\n            r.value += x;\n        }\n    }\n    return r;\n}\nResult mutant(const std::vector<int> &trace) {\n    Result r;\n    for (int x : trace) {\n        if (x < -10 || x > 10 || r.value + x < 0 || r.value + x > 9) {\n            ++r.rejected;\n        } else {\n            r.value += x;\n        }\n    }\n    return r;\n}\nint main() {\n    const auto a = replay({10}), b = mutant({10});\n    std::cout << \"original \" << a.value << ' ' << a.rejected << '\\n';\n    std::cout << \"mutant \" << b.value << ' ' << b.rejected << '\\n';\n    return a.value == 10 && a.rejected == 0 && b != a ? 0 : 1;\n}\n",
+        "stdin": "",
+        "output": "original 10 0\nmutant 0 1\n"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Допишите функцию replay для входной трассы, сохранив ограниченную арифметику. Отдельно запишите ожидаемый value и rejected, затем сравните два прогона.",
+        "Вычислите 3 3 -5 2 вручную."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что напечатают два независимых replay?",
+      "correct": 0,
+      "feedback": "Два результата 5 подтверждают детерминизм этой трассы. Чтобы проверить границу 10, нужен другой вход: ошибка 10→9 на этой трассе не проявится.",
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-1",
+      "options": [
+        "5 5\n",
+        "5 10\n",
+        "0 0\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "5 5\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +204,8 @@
         "value 5 rejected 1."
       ],
       "correct": 2,
-      "feedback": "После 3 попытка получить-2 отклоняется, сохраняя 3; затем+2 даёт 5. Clamp до нуля дал бы ошибочные 2."
+      "feedback": "После 3 попытка получить-2 отклоняется, сохраняя 3; затем+2 даёт 5. Clamp до нуля дал бы ошибочные 2.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +217,8 @@
         "Корректность всех возможных трасс."
       ],
       "correct": 1,
-      "feedback": "Одна и та же ошибка воспроизводима. Проверка конкретного входа не доказывает универсальные свойства."
+      "feedback": "Одна и та же ошибка воспроизводима. Проверка конкретного входа не доказывает универсальные свойства.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +230,8 @@
         "Пустая трасса."
       ],
       "correct": 0,
-      "feedback": "Десять допустимо по исходному контракту и отклоняется мутантом. Обычные 3 и пустая трасса новую границу не достигают."
+      "feedback": "Десять допустимо по исходному контракту и отклоняется мутантом. Обычные 3 и пустая трасса новую границу не достигают.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +243,8 @@
         "Сравниваются разные начальные условия."
       ],
       "correct": 2,
-      "feedback": "Для сравнения повторяют один контракт с одинаковыми входом и pre-state. Последовательное продолжение не равно повтору."
+      "feedback": "Для сравнения повторяют один контракт с одинаковыми входом и pre-state. Последовательное продолжение не равно повтору.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +256,15 @@
         "Не требуется смотреть exit code, если строк больше одной."
       ],
       "correct": 0,
-      "feedback": "Счётчик успешных проверок не отменяет обнаруженный отказ. Oracle должен учитывать весь протокол и код завершения."
+      "feedback": "Счётчик успешных проверок не отменяет обнаруженный отказ. Oracle должен учитывать весь протокол и код завершения.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Объясните отличие replay от правильности.",
-      "feedback": "Далее: Многофайловое событийное приложение. Сохраните личный проект и результаты экспериментов."
+      "prompt": "Какой краткий тест обнаружит замену верхней границы 10 на 9? Почему две одинаковые ошибки тоже дают replay PASS?",
+      "feedback": "Одна команда+10 из 0 должна дать 10 без отказа. Оба неверных replay могут вернуть 0 одинаково: совпадение повторений не является независимым оракулом.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +275,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <vector>\nstruct Result { int value = 0, rejected = 0; bool operator==(const Result&) const = default; };\nResult replay(const std::vector<int>& trace) {\n  /* TODO: apply deltas with preservation and a rejection count. */ return {};\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> trace(n);\n  for (int& x : trace) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  const Result a = replay(trace), b = replay(trace);\n  if (!(a == b) || a.value < 0 || a.value > 10) return 1;\n  std::cout << \"value \" << a.value << \" rejected \" << a.rejected << \" replay PASS\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <vector>\nstruct Result {\n    int value = 0, rejected = 0;\n    bool operator==(const Result &) const = default;\n};\nResult replay(const std::vector<int> &trace) {\n    // TODO: Пройдите trace: проверяйте x до сложения и считайте отказы.\n    (void)trace;\n    return {};\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> trace(n);\n    for (int &x : trace) {\n        if (!(std::cin >> x)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    const Result a = replay(trace), b = replay(trace);\n    if (!(a == b) || a.value < 0 || a.value > 10) {\n        return 1;\n    }\n    std::cout << \"value \" << a.value << \" rejected \" << a.rejected\n              << \" replay PASS\\n\";\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +283,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Случай 1",
+        "label": "Первый содержательный запуск",
         "input": "3 3 -5 2",
         "output": "value 5 rejected 1 replay PASS\n"
       },
@@ -244,64 +324,39 @@
       }
     ],
     "criteria": [
-      "Соблюдён полный входной и выходной контракт.",
-      "Инварианты и время жизни объяснены, отказы не портят модель.",
-      "Есть обычный, пустой, граничный и ошибочный сценарии.",
-      "Создайте мутацию границы и убивающий её тест.",
-      "Есть самостоятельное расширение и его тест, а не только копия эталона.",
-      "Сохранены код, фактические наблюдения и пределы вывода."
+      "value 5, rejected 1; состояния 0→3→3→5.",
+      "value 5 rejected 1 replay PASS.",
+      "Оригинал:value 10 rejected 0; мутант не совпадает с ожиданием.",
+      "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
     ],
-    "hint": "Не запускайте второй replay поверх состояния первого.",
+    "hint": "Одна команда+10 из 0 должна дать 10 без отказа. Оба неверных replay могут вернуть 0 одинаково: совпадение повторений не является независимым оракулом.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Сохраните свою работу; создайте отдельный проект для экспериментов.",
-        "why": "",
-        "expected": ""
+        "where": "До запуска",
+        "action": "Вычислите 3 3 -5 2 вручную.",
+        "why": "Ожидание должно появиться до запуска программы.",
+        "expected": "value 5, rejected 1; состояния 0→3→3→5."
       },
       {
-        "where": "Моя программа",
-        "action": "Откройте «Задание и Code Studio»; перенесите заготовку и указанные файлы.",
-        "why": "",
-        "expected": ""
+        "where": "В моей программе",
+        "action": "Добавьте проверки границ до сложения и повтор с начального 0.",
+        "why": "Слишком большое x не должно попасть в потенциально опасную сумму.",
+        "expected": "value 5 rejected 1 replay PASS."
       },
       {
-        "where": "Моя программа",
-        "action": "Проверьте replay и инвариант после каждого события.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "До запуска запишите ожидаемые переходы и результат каждого случая.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните все контрольные случаи и сохраните фактические результаты.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Создайте мутацию границы и убивающий её тест.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Добавьте независимый случай и объясните проверяемую границу.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходники, протокол и объяснение ограничений.",
-        "why": "",
-        "expected": ""
+        "where": "После запуска",
+        "action": "Создайте мутацию 10→9 и убейте её входом 1 10.",
+        "why": "Проверяется смысл границы, а не только совпадение прогонов.",
+        "expected": "Оригинал:value 10 rejected 0; мутант не совпадает с ожиданием."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-1",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "value 0 rejected 0 replay PASS\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -377,5 +432,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\event-testing-replay.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\event-testing-replay.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-assert",
+      "title": "WG21 N4861 (C++20 draft) — cassert.syn",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — cassert.syn",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/cassert.syn"
+    },
+    {
+      "id": "cpp20-vector",
+      "title": "WG21 N4861 (C++20 draft) — vector",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — vector",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
+    }
+  ],
+  "authored": true
 }

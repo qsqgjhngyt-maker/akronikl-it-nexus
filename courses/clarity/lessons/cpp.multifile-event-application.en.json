@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.multifile-event-application",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Event-driven applications",
   "locale": "en",
   "title": "A multi-file event-driven application",
-  "goal": "Assemble a planner core from an interface, implementation, adapter and separate test driver.",
+  "goal": "Build an event core from two translation units and test repeated task completion.",
   "prerequisites": [
     {
       "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
@@ -22,9 +22,23 @@
       "id": "concept-1",
       "title": "Files follow decision boundaries",
       "paragraphs": [
+        "As the core grows, main reads commands, model.hpp declares the interface, and model.cpp defines Board rules. Compiling main alone does not prove that the model implementation was linked.",
         "include/model.hpp declares Board, src/model.cpp implements its rules and main.cpp translates input into commands and output. Both cpp files need the header, while ordinary function definitions belong in the implementation. pragma once prevents repeated header inclusion within one translation unit; it does not repair repeated definitions across multiple translation units.",
         "A zero command adds an unfinished task and a positive number completes an existing task. Here an identifier equals its position plus one because deletion is absent. State that teaching restriction explicitly. TaskFlow uses persistent ids: if deletion were added, treating a moving position as identity could select the wrong task."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "A command carries amount 4",
+      "paragraphs": [
+        "A small Command separates a request description from update. The lab uses integers as transport, while Board operations remain separate from input."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Command {\n    int amount;\n};\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+        "stdin": "",
+        "output": "7\n"
+      }
     },
     {
       "id": "concept-2",
@@ -43,22 +57,58 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Guided model",
+      "id": "example-2",
+      "title": "Repeated complete does not undo completion",
       "paragraphs": [
-        "Assemble a planner core from an interface, implementation, adapter and separate test driver."
+        "Assigning done=true is idempotent. A second call preserves the achieved state; toggle would have a different contract."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
-        "output": "7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Command stores a delta.",
-        "update receives its data explicitly.",
-        "Three plus four yields seven without a global dependency."
-      ]
+      "prediction": [
+        "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal output and walkthrough",
+        "paragraphs": [
+          "done 1 confirms the state after two calls. In Board, repeating complete for an existing id succeeds without increasing the completed count again."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Create Task",
+                "—",
+                "done=false",
+                "The task starts open."
+              ],
+              [
+                "First complete",
+                "false",
+                "true",
+                "The operation sets a target state."
+              ],
+              [
+                "Second complete",
+                "true",
+                "true",
+                "The state does not toggle back."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}\n",
+          "stdin": "",
+          "output": "done 1\n"
+        }
+      }
     },
     {
       "id": "concept-4",
@@ -74,24 +124,6 @@
       "paragraphs": [
         "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid.",
         "Trace the first reference scenario before running. Exact stdin: \"4 0 0 1 1\". Expected stdout: \"tasks 2 done 1 rejected 0\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Boundary and extension",
-      "paragraphs": [
-        "Assemble a planner core from an interface, implementation, adapter and separate test driver."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nstruct Task { bool done = false; void complete() { done = true; } };\nint main() { Task task; task.complete(); task.complete(); std::cout << \"done \" << task.done << '\\n'; }\n",
-        "output": "done 1\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The first complete sets true.",
-        "The second leaves true.",
-        "Counting state must not count two completed tasks."
       ]
     },
     {
@@ -117,9 +149,39 @@
         "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid. The last reference case distinguishes a permitted command from a malformed protocol. Identify where rejection starts and which fields must remain unchanged.",
         "Analyze this reference case: {\"stdin\":\"0 x\",\"stdout\":\"invalid\\n\"} Then change one boundary and state the new expectation before running. Compare the correct solution with a safe mutation in a project copy; the test must detect the behavioural change rather than merely report a successful build."
       ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Complete Board::apply in src/model.cpp. Build main.cpp with src/model.cpp and includeRoots=include; use a separate test main instead of two mains in one build.",
+        "Name the roles of main.cpp, model.hpp and model.cpp."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the task print after two complete calls?",
+      "correct": 0,
+      "feedback": "done 1 confirms the state after two calls. In Board, repeating complete for an existing id succeeds without increasing the completed count again.",
+      "code": {
+        "source": "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-2",
+      "options": [
+        "done 1\n",
+        "done 0\n",
+        "done 2\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "done 1\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +192,8 @@
         "tasks 2 done 1 rejected 0."
       ],
       "correct": 2,
-      "feedback": "Repeated complete succeeds idempotently. done counts distinct completed tasks rather than successful complete calls."
+      "feedback": "Repeated complete succeeds idempotently. done counts distinct completed tasks rather than successful complete calls.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +205,8 @@
         "Yes: the header is processed once for the entire program."
       ],
       "correct": 1,
-      "feedback": "Once-per-TU inclusion does not remove processing in another TU. An ordinary definition belongs in the implementation."
+      "feedback": "Once-per-TU inclusion does not remove processing in another TU. An ordinary definition belongs in the implementation.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +218,8 @@
         "There is no error: a header declaration automatically supplies an implementation."
       ],
       "correct": 0,
-      "feedback": "The declaration permits compilation of a call, but the program still needs its definition. A VFS file is not automatically a build input."
+      "feedback": "The declaration permits compilation of a call, but the program still needs its definition. A VFS file is not automatically a build input.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +231,8 @@
         "After every command an id must equal the current task count."
       ],
       "correct": 0,
-      "feedback": "Identity must survive representation and position changes. Deletion needs an explicit stable id and a separate issuance policy."
+      "feedback": "Identity must survive representation and position changes. Deletion needs an explicit stable id and a separate issuance policy.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +244,15 @@
         "The first task is silently removed for the new one."
       ],
       "correct": 0,
-      "feedback": "Domain capacity differs from the container ability to allocate memory. Rejection must not alter existing tasks."
+      "feedback": "Domain capacity differs from the container ability to allocate memory. Rejection must not alter existing tasks.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain repeated complete commands.",
-      "feedback": "Next: A real Qt graphical adapter. Preserve your project and experiment results."
+      "prompt": "For 0,0,1,1 show the tasks and done count. How does a missing model.cpp differ from a rejected command?",
+      "feedback": "Two tasks, the first completed, done 1, rejected 0. A missing definition fails linking before execution; a domain rejection occurs in a running program.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,15 +263,15 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Board board; int rejected = 0;\n  for (int command : commands) if (!board.apply(command)) ++rejected;\n  std::cout << \"tasks \" << board.count() << \" done \" << board.done() << \" rejected \" << rejected << '\\n';\n}\n"
+        "content": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> commands(n);\n    for (int &x : commands) {\n        if (!(std::cin >> x)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Board board;\n    int rejected = 0;\n    for (int command : commands) {\n        if (!board.apply(command)) {\n            ++rejected;\n        }\n    }\n    std::cout << \"tasks \" << board.count() << \" done \" << board.done()\n              << \" rejected \" << rejected << '\\n';\n}\n"
       },
       {
         "path": "include/model.hpp",
-        "content": "#pragma once\n#include <vector>\nclass Board {\n  std::vector<bool> done_;\npublic:\n  bool apply(int command);\n  int count() const;\n  int done() const;\n};\n"
+        "content": "#pragma once\n#include <vector>\nclass Board {\n    std::vector<bool> done_;\n\n  public:\n    bool apply(int command);\n    int count() const;\n    int done() const;\n};\n"
       },
       {
         "path": "src/model.cpp",
-        "content": "#include \"model.hpp\"\n#include <algorithm>\nbool Board::apply(int command) {\n  /* TODO: bounded add and idempotent completion. */ return false;\n}\nint Board::count() const { return int(done_.size()); }\nint Board::done() const { return int(std::count(done_.begin(), done_.end(), true)); }\n"
+        "content": "#include \"model.hpp\"\n#include <algorithm>\nbool Board::apply(int command) {\n    // TODO: Add a task for0 or complete an existing id; capacity8.\n    (void)command;\n    return false;\n}\nint Board::count() const { return int(done_.size()); }\nint Board::done() const {\n    return int(std::count(done_.begin(), done_.end(), true));\n}\n"
       }
     ],
     "metadata": {
@@ -219,7 +287,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "First substantive run",
         "input": "4 0 0 1 1",
         "output": "tasks 2 done 1 rejected 0\n"
       },
@@ -260,64 +328,39 @@
       }
     ],
     "criteria": [
-      "The full input and output contract is satisfied.",
-      "Invariants and lifetimes are explained; rejection preserves the model.",
-      "Ordinary, empty, boundary and failure scenarios are covered.",
-      "Create a separate test driver.",
-      "An independent extension and test are supplied, rather than only a reference copy.",
-      "Sources, actual observations and limits of conclusions are retained."
+      "Two TUs: main.cpp and src/model.cpp; the header is found through include.",
+      "4 0 0 1 1 → tasks 2 done 1 rejected 0.",
+      "The ninth addition is rejected; the original eight tasks remain.",
+      "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "Adding a VFS file is insufficient: inspect which TUs reach the compiler.",
+    "hint": "Two tasks, the first completed, done 1, rejected 0. A missing definition fails linking before execution; a domain rejection occurs in a running program.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Preserve your work and create a separate project for experiments.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Name the roles of main.cpp, model.hpp and model.cpp.",
+        "why": "A declaration does not replace a definition at link time.",
+        "expected": "Two TUs: main.cpp and src/model.cpp; the header is found through include."
       },
       {
-        "where": "My program",
-        "action": "Open Task and Code Studio and copy the starter and listed files.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Implement add 0, complete by id and capacity 8.",
+        "why": "An existing id completes the same task on repetition.",
+        "expected": "4 0 0 1 1 → tasks 2 done 1 rejected 0."
       },
       {
-        "where": "My program",
-        "action": "Build the laboratory from two translation units.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Before running, record the expected transitions and outcome of every case.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Execute every reference case and retain actual observations.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Create a separate test driver.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an independent case and explain its boundary.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save sources, the protocol and an explanation of limitations.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Check nine additions and a missing id; use a separate driver.",
+        "why": "Capacity and repetition are tested independently of transport.",
+        "expected": "The ninth addition is rejected; the original eight tasks remain."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "tasks 0 done 0 rejected 4\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -395,5 +438,38 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\multifile-event-application.en.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\multifile-event-application.en.json",
+  "reading": [
+    {
+      "id": "cpp20-tu",
+      "title": "WG21 N4861 (C++20 draft) — lex.separate",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — lex.separate",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.separate"
+    },
+    {
+      "id": "cpp20-odr",
+      "title": "WG21 N4861 (C++20 draft) — basic.def.odr",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — basic.def.odr",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.def.odr"
+    },
+    {
+      "id": "cpp20-vector",
+      "title": "WG21 N4861 (C++20 draft) — vector",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — vector",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
+    }
+  ],
+  "authored": true
 }

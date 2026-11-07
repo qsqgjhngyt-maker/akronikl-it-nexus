@@ -156,7 +156,7 @@ try{
    }
   }
   // Неизменённый сосед и принятый образец проверяются в той же установленной оболочке.
-  await go('cpp.visual-event-model','ru');assert.equal(await p.locator('[data-authored="true"]').count(),0);
+  await go('cpp.visual-event-model','ru');assert.equal(await p.locator('[data-authored="true"]').count(),1);
   await go('cpp.data-types','en');assert.equal(await p.locator('.authored-section').count(),9);
   await go(authoredIds[0],'ru','practice');assert.equal(await p.locator('#editor').inputValue(),'// '+block+' '+authoredIds[0]+'\nint main(){}\n');
   await p.evaluate(()=>location.hash='#view=compiler');await p.locator('#prepareCompiler').click();await p.waitForFunction(()=>/полностью проверен и готов/.test(document.querySelector('#runtimeStatus')?.textContent||''),{},{timeout:300000});

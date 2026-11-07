@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.model-view-presenter",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Событийные приложения",
   "locale": "ru",
   "title": "Модель, представление и presenter",
-  "goal": "Отделите правила склада от ввода и отображения, затем проверьте presenter с тестовым представлением.",
+  "goal": "Разделите изменение модели, показ значения и обработку команды, проверяя их без окна.",
   "prerequisites": [
     {
       "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
@@ -22,9 +22,64 @@
       "id": "concept-1",
       "title": "Границы ответственности",
       "paragraphs": [
+        "Склад может проверять остаток без экрана. Представление умеет показать число, а Presenter связывает поступившую команду с моделью и обновлением экрана. Это позволит позже заменить fake настоящими виджетами Qt.",
         "Модель Stock отвечает за количество товара и диапазон 0…20. Представление показывает число. Presenter связывает пользовательскую команду с моделью и обновлением представления. Такая граница позволяет менять кнопки на консоль или тестовую запись, сохраняя правило склада. Класс сам по себе не обеспечивает хорошую архитектуру: важно, какие решения ему разрешено принимать.",
         "В лабораторной начальный запас равен двум. Команды +5, -3, +20 дают четыре и один отказ. Модель не печатает сообщение и не читает cin. Presenter после каждого действия показывает действительное количество, включая отказ. Это предотвращает ситуацию, когда интерфейс уже показывает введённое число, хотя модель отклонила изменение."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Нельзя отгрузить 3 из остатка 2",
+      "paragraphs": [
+        "change сначала проверяет новое значение. В примере приращение небольшое; лабораторная дополнительно ограничивает delta до сложения, чтобы очень большое число не вызвало переполнение."
+      ],
+      "prediction": [
+        "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Открыть вывод и разбор",
+        "paragraphs": [
+          "Отказ оставляет 2. В лабораторной Presenter всё равно показывает актуальный остаток после каждой команды, включая отклонённую."
+        ],
+        "tables": [
+          {
+            "caption": "Что происходит по шагам",
+            "columns": [
+              "Действие",
+              "До",
+              "После",
+              "Почему"
+            ],
+            "rows": [
+              [
+                "Создать Stock",
+                "—",
+                "quantity=2",
+                "Поле инициализировано."
+              ],
+              [
+                "change(-3)",
+                "quantity=2",
+                "quantity=2; false",
+                "2−3 ниже 0: операция выходит до записи."
+              ],
+              [
+                "Печать результата и остатка",
+                "false,2",
+                "0 2",
+                "Оба наблюдения нужны для проверки отказа."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 2\n"
+        }
+      }
     },
     {
       "id": "concept-2",
@@ -43,22 +98,17 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Опорный разбор",
+      "id": "example-2",
+      "title": "Fake запоминает показанное 8",
       "paragraphs": [
-        "Отделите правила склада от ввода и отображения, затем проверьте presenter с тестовым представлением."
+        "last — наблюдение за последним show. Чтобы проверить каждое обновление, расширьте fake журналом: одно итоговое число не доказывает число вызовов."
       ],
       "code": {
         "language": "cpp",
-        "source": "#include <iostream>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) { if (quantity_ + delta < 0 || quantity_ + delta > 20) return false; quantity_ += delta; return true; }\n  int quantity() const { return quantity_; }\n};\nint main() { Stock m; std::cout << m.change(-3) << ' ' << m.quantity() << '\\n'; }\n",
-        "output": "0 2\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Stock создаёт два товара.",
-        "-3 нарушило бы нижнюю границу.",
-        "false и два показывают сохранённый инвариант."
-      ]
+        "source": "#include <iostream>\nstruct View {\n    int last = -1;\n    void show(int value) { last = value; }\n};\nvoid present(View &view, int value) { view.show(value); }\nint main() {\n    View fake;\n    present(fake, 8);\n    std::cout << \"shown \" << fake.last << '\\n';\n}\n",
+        "stdin": "",
+        "output": "shown 8\n"
+      }
     },
     {
       "id": "concept-4",
@@ -74,24 +124,6 @@
       "paragraphs": [
         "Добавление графического интерфейса должно затронуть адаптер и соединение команд, но не границу запаса. Добавление нескольких складов меняет предметную модель. Разделите эти изменения в плане работы. Если замена цвета кнопки требует менять правила Stock, зависимость направлена неудачно и стоит вернуться к контрактам классов.",
         "Напишите короткий ADR: почему здесь конкретный View, кто владеет объектами, какой тест проверяет отказ и чего fake не доказывает. Затем предложите независимый финансовый пример, где деньги хранятся целыми минимальными единицами. Сохраните разделение парсинга, предметного решения и представления, не копируя границы склада в другую область без обоснования."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Граница и расширение",
-      "paragraphs": [
-        "Отделите правила склада от ввода и отображения, затем проверьте presenter с тестовым представлением."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nstruct View { int last = -1; void show(int value) { last = value; } };\nvoid present(View& view, int value) { view.show(value); }\nint main() { View fake; present(fake, 8); std::cout << \"shown \" << fake.last << '\\n'; }\n",
-        "output": "shown 8\n",
-        "stdin": ""
-      },
-      "steps": [
-        "fake.last начинается с -1.",
-        "present вызывает show(8).",
-        "Проверяется последнее показанное значение без GUI."
       ]
     },
     {
@@ -117,9 +149,39 @@
         "Подключите текстовый адаптер без cin в Stock. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. Начните со спецификации и входных границ; готовая функция из примера служит опорой, но не определяет требования другой предметной области. Сформулируйте собственное ожидание до выполнения, чтобы не подгонять тест под случайный вывод.",
         "Спроектируйте финансовую модель с теми же границами ответственности. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. В отчёте выделите принятые решения, отвергнутую альтернативу, проверенные сценарии и оставшиеся ограничения. Самостоятельно выполните контрольное изменение из итоговой работы и объясните, какие файлы, тесты и результаты оно затронуло. Дополнительное изменение от напарника или преподавателя — необязательная форма ревью."
       ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Допишите Stock::change и Presenter::onChange. Сохраните зависимости через ссылки и обеспечьте, чтобы model и view жили дольше Presenter.",
+        "Проследите 3 5 -3 20 от начального остатка 2."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какие два значения выдаёт Stock после change(-3)?",
+      "correct": 0,
+      "feedback": "Отказ оставляет 2. В лабораторной Presenter всё равно показывает актуальный остаток после каждой команды, включая отклонённую.",
+      "code": {
+        "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-1",
+      "options": [
+        "0 2\n",
+        "1 -1\n",
+        "0 -1\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 2\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +192,8 @@
         "Модель 4, View 24, rejected 1."
       ],
       "correct": 1,
-      "feedback": "Первые две команды дают 7 и 4. Последняя отклонена, Presenter показывает фактические 4, а не предложенные 24."
+      "feedback": "Первые две команды дают 7 и 4. Последняя отклонена, Presenter показывает фактические 4, а не предложенные 24.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +205,8 @@
         "Отказ в конце условия отменяет уже случившееся переполнение."
       ],
       "correct": 0,
-      "feedback": "Отказ после UB уже не обеспечивает безопасность. Короткое замыкание должно исключить опасное вычисление."
+      "feedback": "Отказ после UB уже не обеспечивает безопасность. Короткое замыкание должно исключить опасное вычисление.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +218,8 @@
         "Локальные объекты разрушаются в обратном порядке создания."
       ],
       "correct": 2,
-      "feedback": "Presenter разрушается первым; зависимости ещё существуют. После выхода владельцев из scope хранение Presenter было бы другим, небезопасным контрактом."
+      "feedback": "Presenter разрушается первым; зависимости ещё существуют. После выхода владельцев из scope хранение Presenter было бы другим, небезопасным контрактом.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +231,8 @@
         "Последнее переданное значение."
       ],
       "correct": 1,
-      "feedback": "История вызовов теряется при перезаписи last. Для проверки количества и порядка нужна отдельная запись каждого обращения."
+      "feedback": "История вызовов теряется при перезаписи last. Для проверки количества и порядка нужна отдельная запись каждого обращения.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +244,15 @@
         "Что каждая модель обязана самостоятельно выбирать устройство ввода."
       ],
       "correct": 1,
-      "feedback": "Кнопка должна сформировать команду для Presenter. Модель не обязана знать устройство ввода и не должна зависеть от GUI ради этого изменения."
+      "feedback": "Кнопка должна сформировать команду для Presenter. Модель не обязана знать устройство ввода и не должна зависеть от GUI ради этого изменения.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Проследите время жизни трёх объектов.",
-      "feedback": "Далее: Валидация команд и сохранность состояния. Сохраните личный проект и результаты экспериментов."
+      "prompt": "Для 5,−3,20 перечислите все вызовы show, включая создание Presenter. Почему last недостаточно для этой проверки?",
+      "feedback": "show получает 2,7,4,4; последний запрос отклонён. last хранит только 4 и не отличит отсутствие промежуточных вызовов.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +263,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <vector>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) {\n  /* TODO: validate delta before arithmetic, then commit. */ return false;\n}\n  int quantity() const { return quantity_; }\n};\nstruct View { int last = -1; void show(int value) { last = value; } };\nclass Presenter {\n  Stock& model_; View& view_;\npublic:\n  Presenter(Stock& m, View& v) : model_(m), view_(v) { view_.show(model_.quantity()); }\n  bool onChange(int delta) { bool ok = model_.change(delta); view_.show(model_.quantity()); return ok; }\n};\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Stock model; View view; Presenter presenter(model, view); int rejected = 0;\n  for (int x : commands) if (!presenter.onChange(x)) ++rejected;\n  std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n"
+        "content": "#include <iostream>\n#include <vector>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        // TODO: Проверьте delta до сложения; измените quantity_ только при\n        // успехе.\n        (void)delta;\n        return false;\n    }\n    int quantity() const { return quantity_; }\n};\nstruct View {\n    int last = -1;\n    void show(int value) { last = value; }\n};\nclass Presenter {\n    Stock &model_;\n    View &view_;\n\n  public:\n    Presenter(Stock &m, View &v) : model_(m), view_(v) {\n        view_.show(model_.quantity());\n    }\n    bool onChange(int delta) {\n        bool ok = model_.change(delta);\n        view_.show(model_.quantity());\n        return ok;\n    }\n};\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> commands(n);\n    for (int &x : commands) {\n        if (!(std::cin >> x)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Stock model;\n    View view;\n    Presenter presenter(model, view);\n    int rejected = 0;\n    for (int x : commands) {\n        if (!presenter.onChange(x)) {\n            ++rejected;\n        }\n    }\n    std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +271,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Случай 1",
+        "label": "Первый содержательный запуск",
         "input": "3 5 -3 20",
         "output": "stock 4 rejected 1\n"
       },
@@ -244,64 +312,39 @@
       }
     ],
     "criteria": [
-      "Соблюдён полный входной и выходной контракт.",
-      "Инварианты и время жизни объяснены, отказы не портят модель.",
-      "Есть обычный, пустой, граничный и ошибочный сценарии.",
-      "Добавьте fake с журналом обновлений.",
-      "Есть самостоятельное расширение и его тест, а не только копия эталона.",
-      "Сохранены код, фактические наблюдения и пределы вывода."
+      "Остатки 7,4,4; отказ один.",
+      "stock 4 rejected 1.",
+      "Журнал 2,7,4,4; INT_MAX оставляет stock 2 и даёт один отказ.",
+      "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
     ],
-    "hint": "Проверка диапазона delta должна коротко замкнуть условие до потенциально опасного сложения.",
+    "hint": "show получает 2,7,4,4; последний запрос отклонён. last хранит только 4 и не отличит отсутствие промежуточных вызовов.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Сохраните свою работу; создайте отдельный проект для экспериментов.",
-        "why": "",
-        "expected": ""
+        "where": "До запуска",
+        "action": "Проследите 3 5 -3 20 от начального остатка 2.",
+        "why": "Решение принимает модель, Presenter передаёт её текущее состояние.",
+        "expected": "Остатки 7,4,4; отказ один."
       },
       {
-        "where": "Моя программа",
-        "action": "Откройте «Задание и Code Studio»; перенесите заготовку и указанные файлы.",
-        "why": "",
-        "expected": ""
+        "where": "В моей программе",
+        "action": "Проверьте delta до арифметики и покажите модель после команды.",
+        "why": "INT_MAX нельзя сначала прибавить и лишь потом проверять.",
+        "expected": "stock 4 rejected 1."
       },
       {
-        "where": "Моя программа",
-        "action": "Допишите change и onChange.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "До запуска запишите ожидаемые переходы и результат каждого случая.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните все контрольные случаи и сохраните фактические результаты.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Добавьте fake с журналом обновлений.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Добавьте независимый случай и объясните проверяемую границу.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходники, протокол и объяснение ограничений.",
-        "why": "",
-        "expected": ""
+        "where": "После запуска",
+        "action": "Добавьте журнал show и тест INT_MAX.",
+        "why": "Журнал проверяет взаимодействие, отдельный тест — границы.",
+        "expected": "Журнал 2,7,4,4; INT_MAX оставляет stock 2 и даёт один отказ."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-1",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "stock 2 rejected 3\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -377,5 +420,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\model-view-presenter.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\model-view-presenter.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-class",
+      "title": "WG21 N4861 (C++20 draft) — class",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — class",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+    },
+    {
+      "id": "cpp-guidelines",
+      "title": "C++ Core Guidelines",
+      "author": "Bjarne Stroustrup, Herb Sutter et al.",
+      "edition": "C++ Core Guidelines",
+      "section": "C++ Core Guidelines",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+    }
+  ],
+  "authored": true
 }

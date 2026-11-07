@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.event-queues-dispatch",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Event-driven applications",
   "locale": "en",
   "title": "Event queues and dispatch",
-  "goal": "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch.",
+  "goal": "Build a FIFO dispatcher and explain the order of generated events and why processing terminates.",
   "prerequisites": [
     {
       "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Why a queue is needed",
       "paragraphs": [
+        "An event can arrive while another is being handled. A queue separates arrival from processing: collect the input, then take the oldest item. Later this boundary will help keep a window responsive.",
         "A handler can generate another action: adding a task may require refreshing a list. Immediately invoking another handler increases stack depth and can expose partially updated state. A queue stores the new event until a later dispatch step. This changes when processing occurs, so ordering must be specified as a contract rather than treated as an implementation detail.",
         "For input 3, 2, 3, the laboratory first enqueues all three numbers. Each three appends a one to the back. Processing therefore visits 3, 2, 3, 1, 1: total ten and five calls. Recursive dispatch would process a one immediately after the first three. Equal final totals do not prove equal behaviour; an event log can distinguish the implementations."
       ]
@@ -36,21 +37,57 @@
     },
     {
       "id": "example-1",
-      "title": "Guided model",
+      "title": "2 and 5 through a FIFO queue",
       "paragraphs": [
-        "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch."
+        "front reads the first item; pop removes it. Copy the event first: a reference to the removed item cannot safely be passed to the handler."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <queue>\nint main() {\n  std::queue<int> q; q.push(2); q.push(5);\n  while (!q.empty()) { int event = q.front(); q.pop(); std::cout << event << '\\n'; }\n}\n",
-        "output": "2\n5\n",
-        "stdin": ""
-      },
-      "steps": [
-        "push places two before five.",
-        "front is copied and pop removes the element.",
-        "The empty queue ends the loop after two iterations."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal output and walkthrough",
+        "paragraphs": [
+          "The output has two lines:2 and 5. A total of 7 alone would not establish which item was processed first."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "push(2), push(5)",
+                "[]",
+                "[2,5]",
+                "Insertion happens at the tail."
+              ],
+              [
+                "front; pop; print",
+                "[2,5]",
+                "[5], stdout:2",
+                "The copied 2 remains available after removal."
+              ],
+              [
+                "Next iteration",
+                "[5]",
+                "[], stdout:5",
+                "FIFO preserves the order 2,5."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}\n",
+          "stdin": "",
+          "output": "2\n5\n"
+        }
+      }
     },
     {
       "id": "concept-3",
@@ -59,6 +96,19 @@
         "std::function<void(int)> stores a callable object such as a function or compatible lambda. void specifies no returned value and int specifies one event argument. Capturing [&total] accesses the original variable rather than copying it. total must outlive the callback. Here both belong to main and dispatch completes before the function returns.",
         "An empty std::function contains no handler. The if(handler) condition checks whether a callable exists; it does not execute it. handler(event) is a separate invocation. Skipping an absent handler is this example’s policy, while another application might treat it as a diagnostic error. Do not invoke an empty callback or silently discard events without specifying the expected behaviour."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "An empty callback is not called",
+      "paragraphs": [
+        "The first call changes total to 7. Assigning {} empties std::function; if(handler) prevents a call with 100 on the empty wrapper."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <functional>\nint main() {\n    int total = 0;\n    std::function<void(int)> handler = [&total](int x) { total += x; };\n    if (handler) {\n        handler(7);\n    }\n    handler = {};\n    if (handler) {\n        handler(100);\n    }\n    std::cout << \"total \" << total << '\\n';\n}\n",
+        "stdin": "",
+        "output": "total 7\n"
+      }
     },
     {
       "id": "concept-4",
@@ -74,24 +124,6 @@
       "paragraphs": [
         "Input contains at most twelve numbers in 0…9. Only a three generates a one, and a one generates nothing. Each original event therefore causes at most one extra invocation, giving a maximum of twenty-four. This proves termination for the specified rule; it is not a general property of every event-driven system.",
         "Replacing the generated one with another three prevents the queue from emptying. Predict that outcome before experimenting and propose a safe processing limit and overflow message. Real applications distinguish queue capacity, the budget for one dispatch step and rejection policy. A single timeout that kills the application and loses unfinished work does not replace those separate decisions."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Boundary and extension",
-      "paragraphs": [
-        "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <functional>\nint main() {\n  int total = 0;\n  std::function<void(int)> handler = [&total](int x) { total += x; };\n  if (handler) handler(7);\n  handler = {};\n  if (handler) handler(100);\n  std::cout << \"total \" << total << '\\n';\n}\n",
-        "output": "total 7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The lambda captures total by reference.",
-        "The first invocation adds seven.",
-        "After handler={} the check is false and no call occurs."
       ]
     },
     {
@@ -117,9 +149,51 @@
         "push places two before five. front is copied and pop removes the element. The empty queue ends the loop after two iterations. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
         "The lambda captures total by reference. The first invocation adds seven. After handler={} the check is false and no call occurs. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
       ]
+    },
+    {
+      "id": "probe-fifo-log",
+      "title": "Check order as well as the sum",
+      "paragraphs": [
+        "The log is placed after front/pop and before the callback. It shows where generated1s arrive; this is a separate executable probe using the lab algorithm."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> input(n);\n    for (int &x : input) {\n        if (!(std::cin >> x) || x < 0 || x > 9) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::queue<int> q;\n    for (int x : input) {\n        q.push(x);\n    }\n    int total = 0, processed = 0;\n    std::function<void(int)> handler = [&](int x) {\n        total += x;\n        if (x == 3) {\n            q.push(1);\n        }\n    };\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << \"event \" << event << '\\n';\n        if (handler) {\n            handler(event);\n        }\n        ++processed;\n    }\n    std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
+        "stdin": "3 3 2 3",
+        "output": "event 3\nevent 2\nevent 3\nevent 1\nevent 1\ntotal 10 processed 5\n"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Your queue receives stdin data. Complete insertion and the handler so each 3 generates exactly one 1; write an upper bound on the number of dispatches.",
+        "Write the queue after every step for 3 3 2 3."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "In which order does the program print the queue items?",
+      "correct": 0,
+      "feedback": "The output has two lines:2 and 5. A total of 7 alone would not establish which item was processed first.",
+      "code": {
+        "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-1",
+      "options": [
+        "2\n5\n",
+        "5\n2\n",
+        "7\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}\n",
+        "stdin": "",
+        "expected": "2\n5\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +204,8 @@
         "1,1,2,3,3."
       ],
       "correct": 0,
-      "feedback": "Generated ones follow events already waiting. The second option is immediate recursion; the third sorts values."
+      "feedback": "Generated ones follow events already waiting. The second option is immediate recursion; the third sorts values.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +217,8 @@
         "Because pop returns a copy of the handler."
       ],
       "correct": 0,
-      "feedback": "pop returns nothing. The callback may still enqueue; removing the current event does not forbid later insertion."
+      "feedback": "pop returns nothing. The callback may still enqueue; removing the current event does not forbid later insertion.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +230,8 @@
         "The queue may never become empty."
       ],
       "correct": 2,
-      "feedback": "Each dispatch removes one three and adds another. FIFO establishes order but does not establish termination."
+      "feedback": "Each dispatch removes one three and adds another. FIFO establishes order but does not establish termination.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +243,8 @@
         "Only the character count of the total."
       ],
       "correct": 1,
-      "feedback": "An equal commutative sum may conceal reordering. The log checks information lost by the total."
+      "feedback": "An equal commutative sum may conceal reordering. The log checks information lost by the total.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +256,15 @@
         "Success because a handler will eventually free space."
       ],
       "correct": 1,
-      "feedback": "Bounded memory requires a specified overflow policy. Silent removal changes command semantics and is not the specified success."
+      "feedback": "Bounded memory requires a specified overflow policy. Silent removal changes command semantics and is not the specified success.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain the difference between front and pop.",
-      "feedback": "Next: States and typed events. Preserve your project and experiment results."
+      "prompt": "Why does 3,2,3 become 3,2,3,1,1? Does total 10 prove FIFO order?",
+      "feedback": "Each 3 appends 1 at the tail; the queued 2 stays ahead of the new ones. Total 10 does not distinguish another permutation: record the processing order.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +275,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> input(n);\n  for (int& x : input) if (!(std::cin >> x) || x < 0 || x > 9) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  std::queue<int> q;\n  for (int x : input) q.push(x);\n  int total = 0, processed = 0;\n  std::function<void(int)> handler = [&](int x) {\n  /* TODO: add value; enqueue a deferred one for event three. */\n};\n  while (!q.empty()) {\n    int event = q.front(); q.pop();\n    if (handler) handler(event);\n    ++processed;\n  }\n  std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n"
+        "content": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> input(n);\n    for (int &x : input) {\n        if (!(std::cin >> x) || x < 0 || x > 9) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::queue<int> q;\n    for (int x : input) {\n        q.push(x);\n    }\n    int total = 0, processed = 0;\n    std::function<void(int)> handler = [&](int x) {\n        // TODO: Add the delivered x to total.\n        if (x == 3) {\n            q.push(1);\n        }\n    };\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        if (handler) {\n            handler(event);\n        }\n        ++processed;\n    }\n    std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +283,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "First substantive run",
         "input": "3 3 2 3",
         "output": "total 10 processed 5\n"
       },
@@ -244,64 +324,39 @@
       }
     ],
     "criteria": [
-      "The full input and output contract is satisfied.",
-      "Invariants and lifetimes are explained; rejection preserves the model.",
-      "Ordinary, empty, boundary and failure scenarios are covered.",
-      "Add an event log and verify FIFO.",
-      "An independent extension and test are supplied, rather than only a reference copy.",
-      "Sources, actual observations and limits of conclusions are retained."
+      "Order 3,2,3,1,1; five dispatches.",
+      "total 10 processed 5.",
+      "24 dispatches; overflow rejects insertion without losing the three existing items.",
+      "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "The callback may enqueue events. Remove the current item before calling it rather than retaining a reference.",
+    "hint": "Each 3 appends 1 at the tail; the queued 2 stays ahead of the new ones. Total 10 does not distinguish another permutation: record the processing order.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Preserve your work and create a separate project for experiments.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Write the queue after every step for 3 3 2 3.",
+        "why": "Generated events go behind those already waiting.",
+        "expected": "Order 3,2,3,1,1; five dispatches."
       },
       {
-        "where": "My program",
-        "action": "Open Task and Code Studio and copy the starter and listed files.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Fill q, update total in the callback and complete the loop.",
+        "why": "Deliver the copied event after pop.",
+        "expected": "total 10 processed 5."
       },
       {
-        "where": "My program",
-        "action": "Complete the queue and callback in the starter.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Before running, record the expected transitions and outcome of every case.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Execute every reference case and retain actual observations.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an event log and verify FIFO.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an independent case and explain its boundary.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save sources, the protocol and an explanation of limitations.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Check twelve 3s and add a log; design enqueue with capacity 3.",
+        "why": "Each original 3 generates one 1 that generates nothing.",
+        "expected": "24 dispatches; overflow rejects insertion without losing the three existing items."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-1",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "total 0 processed 5\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -377,5 +432,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\event-queues-dispatch.en.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\event-queues-dispatch.en.json",
+  "reading": [
+    {
+      "id": "cpp20-adapters",
+      "title": "WG21 N4861 (C++20 draft) — container.adaptors",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — container.adaptors",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/container.adaptors"
+    },
+    {
+      "id": "cpp20-callable",
+      "title": "WG21 N4861 — function wrapper",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 — function wrapper",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/func.wrap.func"
+    }
+  ],
+  "authored": true
 }

@@ -429,5 +429,446 @@
     ],
     "correctIndex": 0,
     "explanation": "Владение на время вызова создаётся успешным lock."
+  },
+  "teachingEdition": {
+    "revision": "b6-author-v1",
+    "title": "Время жизни callbacks и RAII-подписки",
+    "goal": "Разделите владение получателем и подпиской и безопасно завершайте каждое время жизни.",
+    "prerequisites": [
+      {
+        "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
+      },
+      {
+        "text": "Перед этим занятием изучите связанные темы ниже."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Два независимых времени жизни",
+        "paragraphs": [
+          "Окно может закрыться раньше источника событий. Захваченный сырой this тогда опасен. В учебной модели callback наблюдает получателя через weak_ptr, а отдельный объект Subscription отвечает за удаление записи из источника.",
+          "Источник событий и получатель могут исчезнуть в разное время. Захват сырого this не продлевает жизнь объекта; callback, сохранённый источником, способен пережить получателя. shared_ptr в захвате продлевает владение, но иногда создаёт цикл. До выбора указателя нарисуйте граф: кто владеет источником, получателем и объектом подписки.",
+          "В лабораторной main владеет SignalState и получателем int через shared_ptr. Callback хранит weak_ptr получателя, а Subscription — weak_ptr источника. Поэтому подписка не обязана удерживать источник, а callback не удерживает получателя. Уничтожение каждого владельца можно проверить отдельно; отсутствие аварии само по себе недостаточно без проверки числа вызовов."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "weak_ptr::lock и локальное владение",
+        "paragraphs": [
+          "lock возвращает shared_ptr, если объект ещё существует, иначе пустой указатель. Конструкция if(auto value=weak.lock()) создаёт локального владельца на время тела if. В этом блоке объект не исчезнет из-за удаления последнего внешнего shared_ptr. Отдельная проверка expired перед обращением по сырому адресу не даёт такого же контракта владения.",
+          "Режим 1 удаляет получателя после первого emit. Второй emit находит callback, но lock возвращает пустое значение, поэтому обращения к уничтоженному int нет. Итог печатает -1 как явно выбранный признак отсутствия получателя. Это не сохранённое значение модели и не доказательство доставки события: событие намеренно пропущено по политике подписки."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Наблюдатель после удаления владельца",
+        "paragraphs": [
+          "lock временно создаёт shared_ptr только к живому объекту. После первой строки временный value уничтожается, а owner.reset убирает последнего владельца."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <memory>\nint main() {\n    auto owner = std::make_shared<int>(7);\n    std::weak_ptr<int> observer = owner;\n    if (auto value = observer.lock()) {\n        std::cout << *value << '\\n';\n    }\n    owner.reset();\n    std::cout << \"expired \" << observer.expired() << '\\n';\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Открыть вывод и разбор",
+          "paragraphs": [
+            "Две строки 7 и expired 1 проверяют оба момента жизни. У подписки отдельный срок: удалённый получатель может оставить безопасный, но бесполезный callback до удаления Subscription."
+          ],
+          "tables": [
+            {
+              "caption": "Что происходит по шагам",
+              "columns": [
+                "Действие",
+                "До",
+                "После",
+                "Почему"
+              ],
+              "rows": [
+                [
+                  "owner и observer",
+                  "—",
+                  "owner→7; observer⇢7",
+                  "weak_ptr не владеет ресурсом."
+                ],
+                [
+                  "observer.lock()",
+                  "ресурс жив",
+                  "stdout:7",
+                  "Локальное владение действует до конца if."
+                ],
+                [
+                  "owner.reset()",
+                  "один владелец",
+                  "ресурс разрушен",
+                  "После if других shared_ptr нет."
+                ],
+                [
+                  "observer.expired()",
+                  "ресурс отсутствует",
+                  "expired 1",
+                  "Наблюдатель не удержал 7 в живых."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <memory>\nint main() {\n    auto owner = std::make_shared<int>(7);\n    std::weak_ptr<int> observer = owner;\n    if (auto value = observer.lock()) {\n        std::cout << *value << '\\n';\n    }\n    owner.reset();\n    std::cout << \"expired \" << observer.expired() << '\\n';\n}\n",
+            "stdin": "",
+            "output": "7\nexpired 1\n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Подписка как ресурс",
+        "paragraphs": [
+          "Регистрация возвращает идентификатор. RAII-объект связывает его с scope и в деструкторе удаляет обработчик, если источник ещё существует. Копирование Subscription запрещено: две независимые копии могли бы претендовать на один ресурс. Перемещение в этой первой версии также не предоставлено; для move-only расширения потребуется передавать идентификатор и обезвреживать прежний объект.",
+          "Порядок объявления важен: получатель и источник живут вне внутреннего блока, подписка — внутри. После закрытия блока третий emit не вызывает обработчик. Режим 2 заранее очищает handlers; повторный erase отсутствующего идентификатора безопасен. Деструктор не должен выбрасывать исключение из-за обычного факта, что подписка уже была снята."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Подписка существует внутри области",
+        "paragraphs": [
+          "Конструктор увеличивает active, деструктор уменьшает. Выход из внутренних скобок показывает 0 без ручного вызова cleanup."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nstruct Subscription {\n    int &count;\n    explicit Subscription(int &n) : count(n) { ++count; }\n    ~Subscription() { --count; }\n    Subscription(const Subscription &) = delete;\n};\nint main() {\n    int active = 0;\n    {\n        Subscription s(active);\n        std::cout << active << '\\n';\n    }\n    std::cout << active << '\\n';\n}\n",
+          "stdin": "",
+          "output": "1\n0\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Обход при изменении списка",
+        "paragraphs": [
+          "emit сначала копирует идентификаторы, затем для каждого заново ищет актуальный обработчик. Перед вызовом std::function копируется локально. Если callback снимает собственную подписку, вызываемый объект продолжает жить в локальной копии. Удалённый другой подписчик не вызывается, а новый, добавленный в середине emit, не попадает в уже снятый список.",
+          "Это конкретная семантика одной однопоточной операции, а не потокобезопасный signal. Здесь нет mutex и конкурентных записей в map. Вложенный emit тоже требует отдельного решения: очередь, запрет или явно поддержанная рекурсия. Не объявляйте решение защищённым от всех видов повторного входа только на основании копии списка идентификаторов."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Проверки разрушения",
+        "paragraphs": [
+          "Проверьте нормальный scope, исчезнувшего получателя, предварительную отписку и источник, уничтоженный раньше Subscription. В каждом случае сформулируйте ожидаемые вызовы и размер handlers. Добавьте self-unsubscribe в отдельной версии: после первого вызова обработчик снимает себя и не вызывается повторно. Передайте необходимые владения явно, не возвращая ссылку на локальный объект.",
+          "Для Qt связь connect с context-объектом помогает управлять сроком жизни соединения, но не отменяет анализа захватов. Позже GUI будет владеть дочерними виджетами и моделью окна. Сопоставьте две модели владения: стандартные RAII-подписки и контекстные Qt-соединения; смешивание необоснованных delete, родительского владения и shared_ptr создаёт новые риски."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Контракт лабораторной: от входа к наблюдению",
+        "paragraphs": [
+          "Введите mode 0, 1 или 2 без хвоста. Подпишитесь, вызовите emit. В mode 1 уничтожьте получателя; в mode 2 удалите handlers. Вызовите emit снова, выйдите из scope подписки и вызовите третий emit. Выведите значение получателя (-1 при отсутствии) и число подписок.",
+          "Разберите первый контрольный сценарий до запуска. Точный stdin: \"0\". Ожидаемая строка stdout: \"value 2 subscriptions 0\\n\" Сопоставьте каждую строку алгоритма с изменением состояния; отдельно отметьте момент отказа и момент применения."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Чтение работающего примера",
+        "paragraphs": [
+          "make_shared создаёт владельца числа семь. lock создаёт локального владельца для чтения. После reset слабая ссылка становится expired. Сначала выпишите данные, владельцев и наблюдаемый результат. Затем измените ровно одно исходное условие и предскажите, какая часть результата изменится. Такой разбор связывает синтаксис с контрактом, вместо запоминания готового текста.",
+          "Конструктор увеличивает число активных подписок. Внутри scope наблюдается один. Деструктор при выходе уменьшает его до нуля. Сравните второй пример с первым: какая новая граница появилась и какой тест отличит корректную реализацию от внешне похожей ошибки? Сохраните оба исходника, прогноз и фактический результат, чтобы объяснение можно было воспроизвести."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Независимая проверка и перенос",
+        "paragraphs": [
+          "Добавьте безопасный перенос Subscription. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. Начните со спецификации и входных границ; готовая функция из примера служит опорой, но не определяет требования другой предметной области. Сформулируйте собственное ожидание до выполнения, чтобы не подгонять тест под случайный вывод.",
+          "Спроектируйте подписку экрана уведомлений, который можно закрыть раньше источника. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. В отчёте выделите принятые решения, отвергнутую альтернативу, проверенные сценарии и оставшиеся ограничения. Самостоятельно выполните контрольное изменение из итоговой работы и объясните, какие файлы, тесты и результаты оно затронуло. Дополнительное изменение от напарника или преподавателя — необязательная форма ревью."
+        ]
+      },
+      {
+        "id": "probe-unsubscribe",
+        "title": "Callback удаляет себя и следующего",
+        "paragraphs": [
+          "Первый callback удаляет обе записи во время emit. Локальная копия handler завершает вызов, повторный find пропускает b. Затем источник уничтожается раньше Subscription: пустой lock не разыменовывается."
+        ],
+        "code": {
+          "source": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState {\n    int next = 1;\n    std::map<int, std::function<void()>> handlers;\n};\nclass Subscription {\n    std::weak_ptr<SignalState> state_;\n    int id_;\n\n  public:\n    Subscription(std::shared_ptr<SignalState> state, int id)\n        : state_(state), id_(id) {}\n    Subscription(const Subscription &) = delete;\n    Subscription &operator=(const Subscription &) = delete;\n    ~Subscription() {\n        if (auto s = state_.lock()) {\n            s->handlers.erase(id_);\n        }\n    }\n};\nvoid emit(const std::shared_ptr<SignalState> &s) {\n    std::vector<int> ids;\n    for (const auto &[id, handler] : s->handlers) {\n        ids.push_back(id);\n    }\n    for (int id : ids) {\n        auto it = s->handlers.find(id);\n        if (it != s->handlers.end()) {\n            auto handler = it->second;\n            if (handler) {\n                handler();\n            }\n        }\n    }\n}\nint main() {\n    auto s = std::make_shared<SignalState>();\n    int called = 0;\n    const int a = s->next++, b = s->next++;\n    s->handlers.emplace(a, [&] {\n        s->handlers.erase(a);\n        s->handlers.erase(b);\n        ++called;\n    });\n    s->handlers.emplace(b, [&] { called += 100; });\n    emit(s);\n    emit(s);\n    std::cout << \"calls \" << called << \" subscriptions \"\n              << s->handlers.size() << '\\n';\n    auto other = std::make_shared<SignalState>();\n    auto token = std::make_unique<Subscription>(other, 1);\n    other.reset();\n    token.reset();\n    std::cout << \"expired source cleanup safe\\n\";\n}\n",
+          "stdin": "",
+          "output": "calls 1 subscriptions 0\nexpired source cleanup safe\n"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь ваша задача",
+        "paragraphs": [
+          "Допишите очистку Subscription и безопасный callback. Снимок id определяет порядок, повторный find пропускает обработчик, уже удалённый другим callback.",
+          "Нарисуйте signal→handler⇢receiver и Subscription⇢signal."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Что программа напечатает до и после owner.reset()?",
+        "correct": 0,
+        "feedback": "Две строки 7 и expired 1 проверяют оба момента жизни. У подписки отдельный срок: удалённый получатель может оставить безопасный, но бесполезный callback до удаления Subscription.",
+        "code": {
+          "source": "#include <iostream>\n#include <memory>\nint main() {\n    auto owner = std::make_shared<int>(7);\n    std::weak_ptr<int> observer = owner;\n    if (auto value = observer.lock()) {\n        std::cout << *value << '\\n';\n    }\n    owner.reset();\n    std::cout << \"expired \" << observer.expired() << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "recall": "example-1",
+        "options": [
+          "7\nexpired 1\n",
+          "7\nexpired 0\n",
+          "expired 1\n"
+        ],
+        "execution": {
+          "source": "#include <iostream>\n#include <memory>\nint main() {\n    auto owner = std::make_shared<int>(7);\n    std::weak_ptr<int> observer = owner;\n    if (auto value = observer.lock()) {\n        std::cout << *value << '\\n';\n    }\n    owner.reset();\n    std::cout << \"expired \" << observer.expired() << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "7\nexpired 1\n"
+        }
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "В mode 1 receiver уничтожен после первого emit. Что делает второй callback?",
+        "options": [
+          "Слабая ссылка удерживает старый int живым.",
+          "lock возвращает пусто; обращение к int пропускается.",
+          "weak_ptr заново создаёт int с нулём."
+        ],
+        "correct": 1,
+        "feedback": "weak_ptr не владеет receiver и не восстанавливает его. Успешный lock требует существующего сильного владельца.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Зачем emit копирует найденный std::function перед вызовом?",
+        "options": [
+          "Чтобы новые подписчики вошли в уже снятый snapshot id.",
+          "Callback может удалить себя из map; локальная копия сохраняет callable на время вызова.",
+          "Чтобы все callbacks стали thread-safe."
+        ],
+        "correct": 1,
+        "feedback": "Снимок id и локальная копия решают разные задачи: обход и жизнь callable. Ни один из них не добавляет синхронизацию потоков.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "CallbackA удаляет ещё не вызванный B из handlers. Что делает этот emit со snapshot id?",
+        "options": [
+          "При поиске B не найдёт его и пропустит вызов.",
+          "Всё равно вызовет B по старому итератору.",
+          "Обязательно остановит все последующие callbacks."
+        ],
+        "correct": 0,
+        "feedback": "Snapshot хранит id, а не обязательство вызвать удалённый callback. Повторный find проверяет актуальную подписку.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Почему деструктор Subscription сначала делает state_.lock()?",
+        "options": [
+          "Источник мог разрушиться раньше подписки.",
+          "Чтобы создать новый источник при пустом weak_ptr.",
+          "Чтобы запретить удаление id, если receiver жив."
+        ],
+        "correct": 0,
+        "feedback": "Жизнь source и receiver независима. Слабый source позволяет безопасный no-op при его отсутствии.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Пользовательский деструктор уже определён. Можно ли считать Subscription безопасно перемещаемой без отдельного решения?",
+        "options": [
+          "Да: деструктор автоматически генерирует нужный move.",
+          "Нет: нужно явно определить перенос права unsubscribe и обезвредить источник.",
+          "Да: любая побитовая копия автоматически передаёт право."
+        ],
+        "correct": 1,
+        "feedback": "Наличие деструктора не проектирует move-семантику. Два активных id-владельца могут отключить живую подписку при разрушении moved-from.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Сравните mode 0,1,2. Почему копирование handler перед вызовом важно для self-unsubscribe?",
+        "feedback": "mode 0: value 2; mode 1: value−1; mode 2: value 1; после области subscriptions 0. Копия std::function живёт независимо от удаляемой записи map.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Лабораторная: Время жизни callbacks и RAII-подписки",
+      "task": "Введите mode 0, 1 или 2 без хвоста. Подпишитесь, вызовите emit. В mode 1 уничтожьте получателя; в mode 2 удалите handlers. Вызовите emit снова, выйдите из scope подписки и вызовите третий emit. Выведите значение получателя (-1 при отсутствии) и число подписок.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState {\n    int next = 1;\n    std::map<int, std::function<void()>> handlers;\n};\nclass Subscription {\n    std::weak_ptr<SignalState> state_;\n    int id_;\n\n  public:\n    Subscription(std::shared_ptr<SignalState> state, int id)\n        : state_(state), id_(id) {}\n    Subscription(const Subscription &) = delete;\n    Subscription &operator=(const Subscription &) = delete;\n    ~Subscription() {\n        // TODO: Удалите id_ из живого SignalState через state_.lock().\n    }\n};\nvoid emit(const std::shared_ptr<SignalState> &s) {\n    std::vector<int> ids;\n    for (const auto &[id, handler] : s->handlers) {\n        ids.push_back(id);\n    }\n    for (int id : ids) {\n        auto it = s->handlers.find(id);\n        if (it != s->handlers.end()) {\n            auto handler = it->second;\n            if (handler) {\n                handler();\n            }\n        }\n    }\n}\nint main() {\n    int mode;\n    if (!(std::cin >> mode) || mode < 0 || mode > 2) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    auto signal = std::make_shared<SignalState>();\n    auto receiver = std::make_shared<int>(0);\n    std::weak_ptr<int> weak = receiver;\n    {\n        int id = signal->next++;\n        signal->handlers.emplace(\n            id, [weak] { // TODO: Временно получите живого receiver и\n                         // увеличьте его значение.\n            });\n        Subscription subscription(signal, id);\n        emit(signal);\n        if (mode == 1) {\n            receiver.reset();\n        }\n        if (mode == 2) {\n            signal->handlers.clear();\n        }\n        emit(signal);\n    }\n    emit(signal);\n    std::cout << \"value \" << (receiver ? *receiver : -1)\n              << \" subscriptions \" << signal->handlers.size() << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "0",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Первый содержательный запуск",
+          "input": "0",
+          "output": "value 2 subscriptions 0\n"
+        },
+        {
+          "label": "Случай 2",
+          "input": "1",
+          "output": "value -1 subscriptions 0\n"
+        },
+        {
+          "label": "Случай 3",
+          "input": "2",
+          "output": "value 1 subscriptions 0\n"
+        },
+        {
+          "label": "Случай 4",
+          "input": "-1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Случай 5",
+          "input": "3",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Случай 6",
+          "input": "",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Случай 7",
+          "input": "x",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Случай 8",
+          "input": "0 x",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "receiver может исчезнуть до signal без висячего доступа.",
+        "value 2 subscriptions 0.",
+        "Получатель не вызывается после разрушения; удалённая подписка не остаётся в map.",
+        "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
+      ],
+      "hint": "mode 0: value 2; mode 1: value−1; mode 2: value 1; после области subscriptions 0. Копия std::function живёт независимо от удаляемой записи map.",
+      "steps": [
+        {
+          "where": "До запуска",
+          "action": "Нарисуйте signal→handler⇢receiver и Subscription⇢signal.",
+          "why": "Стрелки владения и наблюдения имеют разные последствия.",
+          "expected": "receiver может исчезнуть до signal без висячего доступа."
+        },
+        {
+          "where": "В моей программе",
+          "action": "Допишите weak.lock и удаление id в деструкторе; запустите mode 0.",
+          "why": "Третий emit происходит после разрушения подписки.",
+          "expected": "value 2 subscriptions 0."
+        },
+        {
+          "where": "После запуска",
+          "action": "Проверьте mode 1/2, self-unsubscribe и удаление следующего id.",
+          "why": "Обход не должен хранить итератор через произвольный callback.",
+          "expected": "Получатель не вызывается после разрушения; удалённая подписка не остаётся в map."
+        }
+      ],
+      "starterRevision": "b6-starter-v1",
+      "recall": "example-1",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "value 0 subscriptions 1\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-weak",
+        "title": "WG21 N4861 (C++20 draft) — util.smartptr.weak",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — util.smartptr.weak",
+        "language": "English",
+        "purpose": "Сверьте правило с первоисточником после работы с примером.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/util.smartptr.weak"
+      },
+      {
+        "id": "cpp20-callable",
+        "title": "WG21 N4861 — function wrapper",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 — function wrapper",
+        "language": "English",
+        "purpose": "Сверьте правило с первоисточником после работы с примером.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/func.wrap.func"
+      },
+      {
+        "id": "cpp20-dtor",
+        "title": "WG21 N4861 (C++20 draft) — class.dtor",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — class.dtor",
+        "language": "English",
+        "purpose": "Сверьте правило с первоисточником после работы с примером.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/class.dtor"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "example-1",
+      "3": "independent-work",
+      "4": "concept-4",
+      "5": "concept-8"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Два независимых времени жизни",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "weak_ptr::lock и локальное владение",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Подписка как ресурс",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Обход при изменении списка",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Проверки разрушения",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Контракт лабораторной: от входа к наблюдению",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Чтение работающего примера",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Независимая проверка и перенос",
+        "anchor": "concept-8"
+      }
+    ],
+    "verificationCases": [
+      {
+        "id": "unsubscribe",
+        "source": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState {\n    int next = 1;\n    std::map<int, std::function<void()>> handlers;\n};\nclass Subscription {\n    std::weak_ptr<SignalState> state_;\n    int id_;\n\n  public:\n    Subscription(std::shared_ptr<SignalState> state, int id)\n        : state_(state), id_(id) {}\n    Subscription(const Subscription &) = delete;\n    Subscription &operator=(const Subscription &) = delete;\n    ~Subscription() {\n        if (auto s = state_.lock()) {\n            s->handlers.erase(id_);\n        }\n    }\n};\nvoid emit(const std::shared_ptr<SignalState> &s) {\n    std::vector<int> ids;\n    for (const auto &[id, handler] : s->handlers) {\n        ids.push_back(id);\n    }\n    for (int id : ids) {\n        auto it = s->handlers.find(id);\n        if (it != s->handlers.end()) {\n            auto handler = it->second;\n            if (handler) {\n                handler();\n            }\n        }\n    }\n}\nint main() {\n    auto s = std::make_shared<SignalState>();\n    int called = 0;\n    const int a = s->next++, b = s->next++;\n    s->handlers.emplace(a, [&] {\n        s->handlers.erase(a);\n        s->handlers.erase(b);\n        ++called;\n    });\n    s->handlers.emplace(b, [&] { called += 100; });\n    emit(s);\n    emit(s);\n    std::cout << \"calls \" << called << \" subscriptions \"\n              << s->handlers.size() << '\\n';\n    auto other = std::make_shared<SignalState>();\n    auto token = std::make_unique<Subscription>(other, 1);\n    other.reset();\n    token.reset();\n    std::cout << \"expired source cleanup safe\\n\";\n}\n",
+        "stdin": "",
+        "output": "calls 1 subscriptions 0\nexpired source cleanup safe\n"
+      }
+    ]
   }
 }

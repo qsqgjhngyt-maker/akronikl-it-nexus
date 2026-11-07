@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.validated-user-commands",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Event-driven applications",
   "locale": "en",
   "title": "Command validation and state preservation",
-  "goal": "Parse a numeric field completely, explain failure and commit only after every check succeeds.",
+  "goal": "Accept only a fully validated string and preserve the previous value on every error.",
   "prerequisites": [
     {
       "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Text is not yet a number",
       "paragraphs": [
+        "An input field returns text. String 12x begins with a number but is not wholly numeric. Parse into a local candidate and assign only after every check so an error cannot affect the model.",
         "An input field yields text while the model expects a constrained value. The string 12x has a numeric prefix but does not satisfy a contract requiring one complete integer. Silently applying twelve is incorrect. Each laboratory line is a separate command setting a number in 0…100; a rejected line preserves the previous value.",
         "First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases."
       ]
@@ -36,21 +37,57 @@
     },
     {
       "id": "example-1",
-      "title": "Guided model",
+      "title": "12x does not replace the previous 17",
       "paragraphs": [
-        "Parse a numeric field completely, explain failure and commit only after every check succeeds."
+        "from_chars can successfully parse prefix 12: ec is clear, but ptr points at x. Checking the end pointer detects the suffix before result changes."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string& text, int& result) {\n  int candidate = 0;\n  const auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size()) return false;\n  result = candidate; return true;\n}\nint main() { int value = 17; std::cout << parse(\"12x\", value) << ' ' << value << '\\n'; }\n",
-        "output": "0 17\n",
-        "stdin": ""
-      },
-      "steps": [
-        "candidate receives numeric prefix twelve.",
-        "ptr points to x rather than the end.",
-        "The function rejects input and result remains seventeen."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string &text, int &result) {\n    int candidate = 0;\n    const auto [ptr, ec] =\n        std::from_chars(text.data(), text.data() + text.size(), candidate);\n    if (ec != std::errc{} || ptr != text.data() + text.size()) {\n        return false;\n    }\n    result = candidate;\n    return true;\n}\nint main() {\n    int value = 17;\n    std::cout << parse(\"12x\", value) << ' ' << value << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal output and walkthrough",
+        "paragraphs": [
+          "0 17 means rejection and a preserved value. In the lab also check length 1–32 and range 0–100. The contract permits neither spaces nor a leading plus."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Before parse",
+                "value=17",
+                "candidate=0",
+                "The temporary is not the model."
+              ],
+              [
+                "from_chars(\"12x\")",
+                "candidate=0",
+                "candidate=12, ptr→x",
+                "A valid prefix is not the complete string."
+              ],
+              [
+                "ptr!=end",
+                "value=17",
+                "false, value=17",
+                "The early return skips assignment to result."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string &text, int &result) {\n    int candidate = 0;\n    const auto [ptr, ec] =\n        std::from_chars(text.data(), text.data() + text.size(), candidate);\n    if (ec != std::errc{} || ptr != text.data() + text.size()) {\n        return false;\n    }\n    result = candidate;\n    return true;\n}\nint main() {\n    int value = 17;\n    std::cout << parse(\"12x\", value) << ' ' << value << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 17\n"
+        }
+      }
     },
     {
       "id": "concept-3",
@@ -69,29 +106,24 @@
       ]
     },
     {
+      "id": "example-2",
+      "title": "Overflow preserves 17",
+      "paragraphs": [
+        "The number does not fit int. ec reports result_out_of_range, and 17 remains; do not turn this failure into a supposedly parsed 0."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <charconv>\n#include <string>\nint main() {\n    const std::string text = \"999999999999999999999\";\n    int value = 17;\n    auto result =\n        std::from_chars(text.data(), text.data() + text.size(), value);\n    std::cout << (result.ec == std::errc::result_out_of_range) << ' '\n              << value << '\\n';\n}\n",
+        "stdin": "",
+        "output": "1 17\n"
+      }
+    },
+    {
       "id": "concept-5",
       "title": "Boundary and independent checks",
       "paragraphs": [
         "Reference cases include zero, one hundred, -1, 101, an empty line, spaces, a plus and an oversized number. Add a failure after a successful command to test preservation of already changed state. Testing only initial seventeen can miss an implementation that wrongly resets to seventeen whenever parsing fails.",
         "For transfer, parse an amount in integer minor currency units or a duration in minutes. Do not introduce double merely for input-field convenience. Set a length bound and range, specify syntax, separate representation overflow from domain rejection and justify why calculations after validation fit the chosen type."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Boundary and extension",
-      "paragraphs": [
-        "Parse a numeric field completely, explain failure and commit only after every check succeeds."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <charconv>\n#include <string>\nint main() {\n  const std::string text = \"999999999999999999999\"; int value = 17;\n  auto result = std::from_chars(text.data(), text.data() + text.size(), value);\n  std::cout << (result.ec == std::errc::result_out_of_range) << ' ' << value << '\\n';\n}\n",
-        "output": "1 17\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The number does not fit in int.",
-        "ec reports result_out_of_range.",
-        "The destination value remains seventeen."
       ]
     },
     {
@@ -117,9 +149,39 @@
         "Design input for an integer amount in minor currency units. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
         "Find a test that detects resetting to seventeen on failure. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Independently complete the final assessment control-change task and explain which files, tests and observations it affects. An additional peer or teacher requirement is optional review."
       ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Your update handles lines one by one. Prepare a candidate, preserve value on rejection, and explain the separate line-count limit.",
+        "Trace lines 12,12x,100."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does parse(\"12x\", value) print when value=17?",
+      "correct": 0,
+      "feedback": "0 17 means rejection and a preserved value. In the lab also check length 1–32 and range 0–100. The contract permits neither spaces nor a leading plus.",
+      "code": {
+        "source": "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string &text, int &result) {\n    int candidate = 0;\n    const auto [ptr, ec] =\n        std::from_chars(text.data(), text.data() + text.size(), candidate);\n    if (ec != std::errc{} || ptr != text.data() + text.size()) {\n        return false;\n    }\n    result = candidate;\n    return true;\n}\nint main() {\n    int value = 17;\n    std::cout << parse(\"12x\", value) << ' ' << value << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-1",
+      "options": [
+        "0 17\n",
+        "1 12\n",
+        "0 12\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string &text, int &result) {\n    int candidate = 0;\n    const auto [ptr, ec] =\n        std::from_chars(text.data(), text.data() + text.size(), candidate);\n    if (ec != std::errc{} || ptr != text.data() + text.size()) {\n        return false;\n    }\n    result = candidate;\n    return true;\n}\nint main() {\n    int value = 17;\n    std::cout << parse(\"12x\", value) << ' ' << value << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 17\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +192,8 @@
         "candidate=12, successful ec, ptr at x: the string was not fully consumed."
       ],
       "correct": 2,
-      "feedback": "The prefix 12 converts successfully but x remains unread. A successful ec does not certify full consumption."
+      "feedback": "The prefix 12 converts successfully but x remains unread. A successful ec does not certify full consumption.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +205,8 @@
         "value 12 rejected 1."
       ],
       "correct": 2,
-      "feedback": "The second line is rejected while retaining the first successful value. Restoring 17 would be reset rather than preservation."
+      "feedback": "The second line is rejected while retaining the first successful value. Restoring 17 would be reset rather than preservation.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +218,8 @@
         "Both always mean a malformed session with invalid."
       ],
       "correct": 0,
-      "feedback": "getline distinguishes EOF before any line from a zero-length line. An empty command is not numeric 0."
+      "feedback": "getline distinguishes EOF before any line from a zero-length line. An empty command is not numeric 0.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +231,8 @@
         "Because 2 is outside 0…100."
       ],
       "correct": 1,
-      "feedback": "Conversion grammar and model bounds are separate conditions. A positive sign is outside this parser syntax."
+      "feedback": "Conversion grammar and model bounds are separate conditions. A positive sign is outside this parser syntax.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +244,15 @@
         "Submit 100 and check only for no crash."
       ],
       "correct": 0,
-      "feedback": "Conversion overflow must reject the command and retain 42. Zero is a valid domain value, making substitution with 0 especially easy to miss."
+      "feedback": "Conversion overflow must reject the command and retain 42. Zero is a valid domain value, making substitution with 0 especially easy to miss.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Compare no lines with an empty line.",
-      "feedback": "Next: Callback lifetime and RAII subscriptions. Preserve your project and experiment results."
+      "prompt": "Why does empty stdin yield no rejections, while one empty line yields one? Where is update’s commit?",
+      "feedback": "With no line, getline never calls update. An empty line calls update with text.empty(). The commit is value=candidate after checking ec, ptr and bounds.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +263,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <charconv>\n#include <string>\nbool update(int& value, const std::string& text) {\n  /* TODO: full from_chars parse into a candidate, then commit. */ return false;\n}\nint main() {\n  int value = 17, rejected = 0, count = 0;\n  std::string line;\n  while (std::getline(std::cin, line)) {\n    if (++count > 8) { std::cout << \"invalid\\n\"; return 0; }\n    if (!update(value, line)) ++rejected;\n  }\n  std::cout << \"value \" << value << \" rejected \" << rejected << '\\n';\n}\n"
+        "content": "#include <iostream>\n#include <charconv>\n#include <string>\nbool update(int &value, const std::string &text) {\n    // TODO: Check length, ec, ptr and candidate range before committing.\n    (void)value;\n    (void)text;\n    return false;\n}\nint main() {\n    int value = 17, rejected = 0, count = 0;\n    std::string line;\n    while (std::getline(std::cin, line)) {\n        if (++count > 8) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        if (!update(value, line)) {\n            ++rejected;\n        }\n    }\n    std::cout << \"value \" << value << \" rejected \" << rejected << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +271,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "First substantive run",
         "input": "12\n12x\n100",
         "output": "value 100 rejected 1\n"
       },
@@ -244,64 +312,39 @@
       }
     ],
     "criteria": [
-      "The full input and output contract is satisfied.",
-      "Invariants and lifetimes are explained; rejection preserves the model.",
-      "Ordinary, empty, boundary and failure scenarios are covered.",
-      "Return distinct error enum values.",
-      "An independent extension and test are supplied, rather than only a reference copy.",
-      "Sources, actual observations and limits of conclusions are retained."
+      "value:17→12→12→100; rejected=1.",
+      "value 100 rejected 1.",
+      "A rejected line preserves value; a ninth line produces invalid.",
+      "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "The single assignment to value belongs after all checks.",
+    "hint": "With no line, getline never calls update. An empty line calls update with text.empty(). The commit is value=candidate after checking ec, ptr and bounds.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Preserve your work and create a separate project for experiments.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Trace lines 12,12x,100.",
+        "why": "One invalid line does not undo earlier accepted lines.",
+        "expected": "value:17→12→12→100; rejected=1."
       },
       {
-        "where": "My program",
-        "action": "Open Task and Code Studio and copy the starter and listed files.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Complete update using from_chars and one commit.",
+        "why": "Check both the error code and complete consumption.",
+        "expected": "value 100 rejected 1."
       },
       {
-        "where": "My program",
-        "action": "Implement update using a candidate.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Before running, record the expected transitions and outcome of every case.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Execute every reference case and retain actual observations.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Return distinct error enum values.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an independent case and explain its boundary.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save sources, the protocol and an explanation of limitations.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Test an empty line, +2, spaces, overflow and nine lines.",
+        "why": "The eight-line limit applies to the whole input.",
+        "expected": "A rejected line preserves value; a ninth line produces invalid."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-1",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "value 17 rejected 3\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -377,5 +420,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\validated-user-commands.en.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\validated-user-commands.en.json",
+  "reading": [
+    {
+      "id": "cpp20-charconv",
+      "title": "WG21 N4861 — from_chars",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 — from_chars",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/charconv.from.chars"
+    },
+    {
+      "id": "cpp20-stream-state",
+      "title": "WG21 N4861 (C++20 draft) — stream state",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — stream state",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
+    }
+  ],
+  "authored": true
 }

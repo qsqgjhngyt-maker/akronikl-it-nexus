@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.event-testing-replay",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Event-driven applications",
   "locale": "en",
   "title": "Event testing and reproducible traces",
-  "goal": "Check a model through traces, invariants, replay and a controlled implementation mutation.",
+  "goal": "Separate trace repeatability from correctness and find a test that detects a boundary mutation.",
   "prerequisites": [
     {
       "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "From a call to a sequence",
       "paragraphs": [
+        "The same faulty algorithm can return the same answer twice. Replay therefore compares repetitions, while independent expected results and invariants check what the operations mean.",
         "An event-driven defect may require several actions. One add call says little about add→complete→complete or import→failure→save. A test needs initial state, an ordered trace, observations after steps and an expected outcome. Removing unnecessary events from a failing trace helps find a minimal reproduction.",
         "The laboratory starts at zero; each number is a delta and accepted results stay in 0…10. For 3, -5, 2, the first command succeeds, the second is rejected and the third yields five. Also check rejected=1. An implementation that merely clamps negative results to zero produces another outcome and violates preservation on rejection."
       ]
@@ -36,21 +37,57 @@
     },
     {
       "id": "example-1",
-      "title": "Guided model",
+      "title": "Two replays of 3,−5,2",
       "paragraphs": [
-        "Check a model through traces, invariants, replay and a controlled implementation mutation."
+        "Each replay starts from 0. −5 is rejected at state 3, then +2 reaches 5. Write all three states before revealing the output."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int>& trace) { int state = 0; for (int delta : trace) if (state + delta >= 0 && state + delta <= 10) state += delta; return state; }\nint main() { const std::vector<int> trace{3, -5, 2}; std::cout << replay(trace) << ' ' << replay(trace) << '\\n'; }\n",
-        "output": "5 5\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The trace accepts three, rejects minus five and accepts two.",
-        "The replay creates fresh zero state.",
-        "Both results equal five."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal output and walkthrough",
+        "paragraphs": [
+          "Two results of 5 establish determinism for this trace. A different input is needed for bound 10: changing 10 to 9 is invisible on this trace."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Start replay",
+                "—",
+                "0",
+                "Each run creates its own initial state."
+              ],
+              [
+                "+3, -5, +2",
+                "0",
+                "3→3→5",
+                "A transition below 0 is rejected without assignment."
+              ],
+              [
+                "Repeat from 0",
+                "0",
+                "5; stdout:5 5",
+                "The second run does not continue the first run’s state."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "5 5\n"
+        }
+      }
     },
     {
       "id": "concept-3",
@@ -59,6 +96,19 @@
         "The range property 0≤value≤10 should hold after each event, not only at the end. A rejection preserves value and increases rejected exactly once. Test an empty trace, extreme int values and repetition. Short-circuiting protects addition after validating delta itself; justify the bounds and check the native build with UBSan.",
         "A controlled mutation temporarily changes the upper-bound condition or permits partial application. A useful test detects it and exits nonzero rather than merely printing FAIL while succeeding. Restore the correct project afterwards. The second example separately checks that the comparison function actually recognizes a deliberately mismatched observation."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "A test detects incorrect 6",
+      "paragraphs": [
+        "Expected 5 is independent of observed 6. detected=true means the check can detect this particular fault; exit 0 reports that the detection test succeeded."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nbool contract(int observed, int expected) { return observed == expected; }\nint main() {\n    bool detected = !contract(6, 5);\n    std::cout << \"mutation detected \" << detected << '\\n';\n    return detected ? 0 : 1;\n}\n",
+        "stdin": "",
+        "output": "mutation detected 1\n"
+      }
     },
     {
       "id": "concept-4",
@@ -74,24 +124,6 @@
       "paragraphs": [
         "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS.",
         "Trace the first reference scenario before running. Exact stdin: \"3 3 -5 2\". Expected stdout: \"value 5 rejected 1 replay PASS\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Boundary and extension",
-      "paragraphs": [
-        "Check a model through traces, invariants, replay and a controlled implementation mutation."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nbool contract(int observed, int expected) { return observed == expected; }\nint main() { bool detected = !contract(6, 5); std::cout << \"mutation detected \" << detected << '\\n'; return detected ? 0 : 1; }\n",
-        "output": "mutation detected 1\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Observed six deliberately differs from expected five.",
-        "contract returns false.",
-        "The mutation-detection test succeeds only when the mismatch is detected."
       ]
     },
     {
@@ -117,9 +149,51 @@
         "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. The last reference case distinguishes a permitted command from a malformed protocol. Identify where rejection starts and which fields must remain unchanged.",
         "Analyze this reference case: {\"stdin\":\"21\",\"stdout\":\"invalid\\n\"} Then change one boundary and state the new expectation before running. Compare the correct solution with a safe mutation in a project copy; the test must detect the behavioural change rather than merely report a successful build."
       ]
+    },
+    {
+      "id": "probe-boundary-mutation",
+      "title": "One test detects a boundary mutation",
+      "paragraphs": [
+        "Both functions appear in the source; mutant changes only the upper comparison. Independent expectation10/0 distinguishes correct replay from a repeatable error0/1."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\nstruct Result {\n    int value = 0, rejected = 0;\n    bool operator==(const Result &) const = default;\n};\nResult replay(const std::vector<int> &trace) {\n    Result r;\n    for (int x : trace) {\n        if (x < -10 || x > 10 || r.value + x < 0 || r.value + x > 10) {\n            ++r.rejected;\n        } else {\n            r.value += x;\n        }\n    }\n    return r;\n}\nResult mutant(const std::vector<int> &trace) {\n    Result r;\n    for (int x : trace) {\n        if (x < -10 || x > 10 || r.value + x < 0 || r.value + x > 9) {\n            ++r.rejected;\n        } else {\n            r.value += x;\n        }\n    }\n    return r;\n}\nint main() {\n    const auto a = replay({10}), b = mutant({10});\n    std::cout << \"original \" << a.value << ' ' << a.rejected << '\\n';\n    std::cout << \"mutant \" << b.value << ' ' << b.rejected << '\\n';\n    return a.value == 10 && a.rejected == 0 && b != a ? 0 : 1;\n}\n",
+        "stdin": "",
+        "output": "original 10 0\nmutant 0 1\n"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Complete replay for an input trace while retaining bounded arithmetic. Independently predict value and rejected, then compare the two runs.",
+        "Calculate 3 3 -5 2 manually."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What do two independent replays print?",
+      "correct": 0,
+      "feedback": "Two results of 5 establish determinism for this trace. A different input is needed for bound 10: changing 10 to 9 is invisible on this trace.",
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-1",
+      "options": [
+        "5 5\n",
+        "5 10\n",
+        "0 0\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "5 5\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +204,8 @@
         "value 5 rejected 1."
       ],
       "correct": 2,
-      "feedback": "After 3, an attempted-2 is rejected while retaining 3; then+2 yields 5. Clamping to zero would incorrectly yield 2."
+      "feedback": "After 3, an attempted-2 is rejected while retaining 3; then+2 yields 5. Clamping to zero would incorrectly yield 2.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +217,8 @@
         "Correctness of all possible traces."
       ],
       "correct": 1,
-      "feedback": "The same error can be reproducible. One input check does not prove universal properties."
+      "feedback": "The same error can be reproducible. One input check does not prove universal properties.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +230,8 @@
         "An empty trace."
       ],
       "correct": 0,
-      "feedback": "Ten is valid under the original contract and rejected by the mutant. Ordinary 3 and the empty trace do not reach the changed bound."
+      "feedback": "Ten is valid under the original contract and rejected by the mutant. Ordinary 3 and the empty trace do not reach the changed bound.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +243,8 @@
         "The initial conditions differ."
       ],
       "correct": 2,
-      "feedback": "Replay comparison repeats one contract with the same input and pre-state. Continuing a run is not replaying it."
+      "feedback": "Replay comparison repeats one contract with the same input and pre-state. Continuing a run is not replaying it.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +256,15 @@
         "Exit code is irrelevant when there is more than one line."
       ],
       "correct": 0,
-      "feedback": "A count of successful checks does not cancel a detected failure. The oracle must consider the complete protocol and exit code."
+      "feedback": "A count of successful checks does not cancel a detected failure. The oracle must consider the complete protocol and exit code.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain how replay differs from correctness.",
-      "feedback": "Next: A multi-file event-driven application. Preserve your project and experiment results."
+      "prompt": "Which short test detects changing the upper bound 10 to 9? Why can two identical errors still give replay PASS?",
+      "feedback": "A single+10 from 0 must yield 10 with no rejection. Both faulty replays may return 0 identically: agreement is not an independent oracle.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +275,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <vector>\nstruct Result { int value = 0, rejected = 0; bool operator==(const Result&) const = default; };\nResult replay(const std::vector<int>& trace) {\n  /* TODO: apply deltas with preservation and a rejection count. */ return {};\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> trace(n);\n  for (int& x : trace) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  const Result a = replay(trace), b = replay(trace);\n  if (!(a == b) || a.value < 0 || a.value > 10) return 1;\n  std::cout << \"value \" << a.value << \" rejected \" << a.rejected << \" replay PASS\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <vector>\nstruct Result {\n    int value = 0, rejected = 0;\n    bool operator==(const Result &) const = default;\n};\nResult replay(const std::vector<int> &trace) {\n    // TODO: Traverse trace: check x before addition and count rejections.\n    (void)trace;\n    return {};\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> trace(n);\n    for (int &x : trace) {\n        if (!(std::cin >> x)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    const Result a = replay(trace), b = replay(trace);\n    if (!(a == b) || a.value < 0 || a.value > 10) {\n        return 1;\n    }\n    std::cout << \"value \" << a.value << \" rejected \" << a.rejected\n              << \" replay PASS\\n\";\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +283,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "First substantive run",
         "input": "3 3 -5 2",
         "output": "value 5 rejected 1 replay PASS\n"
       },
@@ -244,64 +324,39 @@
       }
     ],
     "criteria": [
-      "The full input and output contract is satisfied.",
-      "Invariants and lifetimes are explained; rejection preserves the model.",
-      "Ordinary, empty, boundary and failure scenarios are covered.",
-      "Mutate a boundary and design a test that detects it.",
-      "An independent extension and test are supplied, rather than only a reference copy.",
-      "Sources, actual observations and limits of conclusions are retained."
+      "value 5, rejected 1; states 0→3→3→5.",
+      "value 5 rejected 1 replay PASS.",
+      "Original:value 10 rejected 0; the mutant differs from the expectation.",
+      "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "Do not run the second replay on top of the first one's state.",
+    "hint": "A single+10 from 0 must yield 10 with no rejection. Both faulty replays may return 0 identically: agreement is not an independent oracle.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Preserve your work and create a separate project for experiments.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Calculate 3 3 -5 2 manually.",
+        "why": "The expectation must exist before execution.",
+        "expected": "value 5, rejected 1; states 0→3→3→5."
       },
       {
-        "where": "My program",
-        "action": "Open Task and Code Studio and copy the starter and listed files.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Add bounds checks before addition and replay from initial 0.",
+        "why": "An excessively large x must not enter a potentially unsafe addition.",
+        "expected": "value 5 rejected 1 replay PASS."
       },
       {
-        "where": "My program",
-        "action": "Check replay and the invariant after each event.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Before running, record the expected transitions and outcome of every case.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Execute every reference case and retain actual observations.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Mutate a boundary and design a test that detects it.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an independent case and explain its boundary.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save sources, the protocol and an explanation of limitations.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Create mutation 10→9 and kill it with input 1 10.",
+        "why": "This checks the meaning of the bound, not just agreement between runs.",
+        "expected": "Original:value 10 rejected 0; the mutant differs from the expectation."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-1",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "value 0 rejected 0 replay PASS\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -377,5 +432,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\event-testing-replay.en.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\event-testing-replay.en.json",
+  "reading": [
+    {
+      "id": "cpp20-assert",
+      "title": "WG21 N4861 (C++20 draft) — cassert.syn",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — cassert.syn",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/cassert.syn"
+    },
+    {
+      "id": "cpp20-vector",
+      "title": "WG21 N4861 (C++20 draft) — vector",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — vector",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
+    }
+  ],
+  "authored": true
 }

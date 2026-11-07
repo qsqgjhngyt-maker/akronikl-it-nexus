@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.event-queues-dispatch",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Событийные приложения",
   "locale": "ru",
   "title": "Очереди событий и диспетчеризация",
-  "goal": "Организуйте FIFO-диспетчер и отложенные callbacks без рекурсивной обработки.",
+  "goal": "Организуйте FIFO-диспетчер и объясните порядок новых событий и завершение обработки.",
   "prerequisites": [
     {
       "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Зачем нужна очередь",
       "paragraphs": [
+        "Событие может появиться, пока выполняется другое. Очередь отделяет момент появления от обработки: сначала накопим вход, затем будем брать самый старый элемент. Позже эта граница поможет управлять отзывчивостью окна.",
         "Обработчик может породить новое действие: после добавления задачи нужно обновить список. Немедленный вызов следующего обработчика увеличивает глубину стека и допускает наблюдение незавершённого изменения. Очередь хранит событие до следующего оборота диспетчера. Это меняет время обработки, поэтому порядок нужно описать как контракт, а не считать технической подробностью.",
         "Для входных 3, 2, 3 лабораторная сначала ставит все три числа в очередь. Каждая тройка добавляет единицу в хвост. Обрабатываются 3, 2, 3, 1, 1: сумма десять, пять вызовов. Рекурсивный вызов обработал бы единицу сразу после первой тройки. Равная итоговая сумма не доказывает равенство поведения: журнал событий различит реализации."
       ]
@@ -36,21 +37,57 @@
     },
     {
       "id": "example-1",
-      "title": "Опорный разбор",
+      "title": "2 и 5 проходят очередь FIFO",
       "paragraphs": [
-        "Организуйте FIFO-диспетчер и отложенные callbacks без рекурсивной обработки."
+        "front читает первый элемент, pop удаляет его. Сначала скопируйте событие: ссылка на удалённый элемент больше не годится для вызова обработчика."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <queue>\nint main() {\n  std::queue<int> q; q.push(2); q.push(5);\n  while (!q.empty()) { int event = q.front(); q.pop(); std::cout << event << '\\n'; }\n}\n",
-        "output": "2\n5\n",
-        "stdin": ""
-      },
-      "steps": [
-        "push ставит 2 перед 5.",
-        "front копируется, pop удаляет элемент.",
-        "Пустота завершает цикл после двух вызовов."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Открыть вывод и разбор",
+        "paragraphs": [
+          "Получаются две строки 2 и 5. Совпадение суммы 7 само по себе не показало бы, какой элемент обработан первым."
+        ],
+        "tables": [
+          {
+            "caption": "Что происходит по шагам",
+            "columns": [
+              "Действие",
+              "До",
+              "После",
+              "Почему"
+            ],
+            "rows": [
+              [
+                "push(2), push(5)",
+                "[]",
+                "[2,5]",
+                "Вставка происходит в конец."
+              ],
+              [
+                "front; pop; печать",
+                "[2,5]",
+                "[5], stdout:2",
+                "Скопированное 2 остаётся доступным после удаления."
+              ],
+              [
+                "Следующая итерация",
+                "[5]",
+                "[], stdout:5",
+                "FIFO сохраняет порядок 2,5."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}\n",
+          "stdin": "",
+          "output": "2\n5\n"
+        }
+      }
     },
     {
       "id": "concept-3",
@@ -59,6 +96,19 @@
         "Тип std::function<void(int)> хранит вызываемый объект: функцию или совместимую lambda. void означает отсутствие возвращаемого значения, int — один аргумент события. Захват [&total] обращается к исходной переменной, а не к её копии. Объект total обязан жить дольше callback. Здесь оба находятся в main, и очередь опустошается до выхода из функции.",
         "Пустая std::function не содержит обработчика. Условие if(handler) проверяет наличие вызываемого объекта; оно не запускает функцию. Вызов handler(event) выполняется отдельно. Пропуск отсутствующего обработчика — выбранная политика примера, но в другом приложении это может быть диагностической ошибкой. Не вызывайте пустой callback и не скрывайте ошибку без объяснения ожидаемого поведения."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "Пустой callback не вызывается",
+      "paragraphs": [
+        "Первый вызов меняет total на 7. Присваивание {} очищает std::function; проверка if(handler) не допускает вызов пустого объекта с 100."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <functional>\nint main() {\n    int total = 0;\n    std::function<void(int)> handler = [&total](int x) { total += x; };\n    if (handler) {\n        handler(7);\n    }\n    handler = {};\n    if (handler) {\n        handler(100);\n    }\n    std::cout << \"total \" << total << '\\n';\n}\n",
+        "stdin": "",
+        "output": "total 7\n"
+      }
     },
     {
       "id": "concept-4",
@@ -74,24 +124,6 @@
       "paragraphs": [
         "В лабораторной вход содержит не более двенадцати чисел 0…9. Только тройка добавляет единицу, а единица не создаёт событий. Поэтому каждый входной элемент даёт не более одного дополнительного вызова: максимум двадцать четыре. Это доказательство завершения для конкретного правила, а не свойство любых событийных систем.",
         "Если заменить порождаемую единицу на тройку, очередь никогда не опустеет. Сначала предскажите такой результат, затем предложите безопасный предел обработки и сообщение о переполнении. Для настоящих приложений различают вместимость очереди, бюджет одного шага и политику отказа. Их нельзя заменить одним таймаутом, который убивает всё приложение и теряет незавершённую работу."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Граница и расширение",
-      "paragraphs": [
-        "Организуйте FIFO-диспетчер и отложенные callbacks без рекурсивной обработки."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <functional>\nint main() {\n  int total = 0;\n  std::function<void(int)> handler = [&total](int x) { total += x; };\n  if (handler) handler(7);\n  handler = {};\n  if (handler) handler(100);\n  std::cout << \"total \" << total << '\\n';\n}\n",
-        "output": "total 7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Lambda захватывает total по ссылке.",
-        "Первый вызов прибавляет семь.",
-        "После handler={} проверка false и вызова нет."
       ]
     },
     {
@@ -117,9 +149,51 @@
         "push ставит 2 перед 5. front копируется, pop удаляет элемент. Пустота завершает цикл после двух вызовов. Сначала выпишите данные, владельцев и наблюдаемый результат. Затем измените ровно одно исходное условие и предскажите, какая часть результата изменится. Такой разбор связывает синтаксис с контрактом, вместо запоминания готового текста.",
         "Lambda захватывает total по ссылке. Первый вызов прибавляет семь. После handler={} проверка false и вызова нет. Сравните второй пример с первым: какая новая граница появилась и какой тест отличит корректную реализацию от внешне похожей ошибки? Сохраните оба исходника, прогноз и фактический результат, чтобы объяснение можно было воспроизвести."
       ]
+    },
+    {
+      "id": "probe-fifo-log",
+      "title": "Убедимся в порядке, а не только в сумме",
+      "paragraphs": [
+        "Журнал добавлен после front/pop перед callback. Он показывает, куда попали новые1; это отдельная проверяемая программа с тем же алгоритмом лабораторной."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> input(n);\n    for (int &x : input) {\n        if (!(std::cin >> x) || x < 0 || x > 9) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::queue<int> q;\n    for (int x : input) {\n        q.push(x);\n    }\n    int total = 0, processed = 0;\n    std::function<void(int)> handler = [&](int x) {\n        total += x;\n        if (x == 3) {\n            q.push(1);\n        }\n    };\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << \"event \" << event << '\\n';\n        if (handler) {\n            handler(event);\n        }\n        ++processed;\n    }\n    std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
+        "stdin": "3 3 2 3",
+        "output": "event 3\nevent 2\nevent 3\nevent 1\nevent 1\ntotal 10 processed 5\n"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Самостоятельная очередь получает данные из stdin. Допишите заполнение и обработчик так, чтобы 3 порождала ровно одну 1; запишите верхнюю границу числа обработок.",
+        "Выпишите очередь после каждого шага для 3 3 2 3."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "В каком порядке программа напечатает элементы очереди?",
+      "correct": 0,
+      "feedback": "Получаются две строки 2 и 5. Совпадение суммы 7 само по себе не показало бы, какой элемент обработан первым.",
+      "code": {
+        "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-1",
+      "options": [
+        "2\n5\n",
+        "5\n2\n",
+        "7\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}\n",
+        "stdin": "",
+        "expected": "2\n5\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +204,8 @@
         "1,1,2,3,3."
       ],
       "correct": 0,
-      "feedback": "Порождённые единицы следуют после уже ожидающих событий. Второй вариант соответствует немедленной рекурсии, третий — сортировке."
+      "feedback": "Порождённые единицы следуют после уже ожидающих событий. Второй вариант соответствует немедленной рекурсии, третий — сортировке.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +217,8 @@
         "Потому что pop возвращает копию обработчика."
       ],
       "correct": 0,
-      "feedback": "pop ничего не возвращает. Callback всё ещё может enqueue; удаление текущего события не запрещает последующее добавление."
+      "feedback": "pop ничего не возвращает. Callback всё ещё может enqueue; удаление текущего события не запрещает последующее добавление.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +230,8 @@
         "Очередь может никогда не опустеть."
       ],
       "correct": 2,
-      "feedback": "Каждая обработка удаляет одну тройку и добавляет новую. FIFO задаёт порядок, но само по себе не доказывает конечность."
+      "feedback": "Каждая обработка удаляет одну тройку и добавляет новую. FIFO задаёт порядок, но само по себе не доказывает конечность.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +243,8 @@
         "Только число символов в итоговой сумме."
       ],
       "correct": 1,
-      "feedback": "Одинаковая коммутативная сумма может скрывать перестановку. Журнал проверяет наблюдение, которое сумма теряет."
+      "feedback": "Одинаковая коммутативная сумма может скрывать перестановку. Журнал проверяет наблюдение, которое сумма теряет.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +256,15 @@
         "Успех, потому что обработчик когда-нибудь освободит место."
       ],
       "correct": 1,
-      "feedback": "Ограничение памяти требует договорённости о переполнении. Молчаливое удаление меняет семантику команд и не является заявленным успехом."
+      "feedback": "Ограничение памяти требует договорённости о переполнении. Молчаливое удаление меняет семантику команд и не является заявленным успехом.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Объясните разницу front и pop.",
-      "feedback": "Далее: Состояния и типизированные события. Сохраните личный проект и результаты экспериментов."
+      "prompt": "Почему трасса 3,2,3 превращается в 3,2,3,1,1? Доказывает ли сумма 10 соблюдение FIFO?",
+      "feedback": "Каждая 3 добавляет 1 в конец; уже стоящая 2 остаётся раньше новых единиц. Сумма 10 не отличает другую перестановку: нужен журнал порядка.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +275,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> input(n);\n  for (int& x : input) if (!(std::cin >> x) || x < 0 || x > 9) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  std::queue<int> q;\n  for (int x : input) q.push(x);\n  int total = 0, processed = 0;\n  std::function<void(int)> handler = [&](int x) {\n  /* TODO: add value; enqueue a deferred one for event three. */\n};\n  while (!q.empty()) {\n    int event = q.front(); q.pop();\n    if (handler) handler(event);\n    ++processed;\n  }\n  std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n"
+        "content": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> input(n);\n    for (int &x : input) {\n        if (!(std::cin >> x) || x < 0 || x > 9) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::queue<int> q;\n    for (int x : input) {\n        q.push(x);\n    }\n    int total = 0, processed = 0;\n    std::function<void(int)> handler = [&](int x) {\n        // TODO: Прибавьте доставленное x к total.\n        if (x == 3) {\n            q.push(1);\n        }\n    };\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        if (handler) {\n            handler(event);\n        }\n        ++processed;\n    }\n    std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +283,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Случай 1",
+        "label": "Первый содержательный запуск",
         "input": "3 3 2 3",
         "output": "total 10 processed 5\n"
       },
@@ -244,64 +324,39 @@
       }
     ],
     "criteria": [
-      "Соблюдён полный входной и выходной контракт.",
-      "Инварианты и время жизни объяснены, отказы не портят модель.",
-      "Есть обычный, пустой, граничный и ошибочный сценарии.",
-      "Добавьте журнал событий и проверьте FIFO.",
-      "Есть самостоятельное расширение и его тест, а не только копия эталона.",
-      "Сохранены код, фактические наблюдения и пределы вывода."
+      "Порядок 3,2,3,1,1; всего 5 обработок.",
+      "total 10 processed 5.",
+      "24 обработки; переполнение отклоняется без потери прежних трёх элементов.",
+      "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
     ],
-    "hint": "Callback может добавлять в очередь. Удаляйте текущий элемент до callback, чтобы не держать ссылку на него.",
+    "hint": "Каждая 3 добавляет 1 в конец; уже стоящая 2 остаётся раньше новых единиц. Сумма 10 не отличает другую перестановку: нужен журнал порядка.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Сохраните свою работу; создайте отдельный проект для экспериментов.",
-        "why": "",
-        "expected": ""
+        "where": "До запуска",
+        "action": "Выпишите очередь после каждого шага для 3 3 2 3.",
+        "why": "Порождаемое событие идёт после уже ожидающих.",
+        "expected": "Порядок 3,2,3,1,1; всего 5 обработок."
       },
       {
-        "where": "Моя программа",
-        "action": "Откройте «Задание и Code Studio»; перенесите заготовку и указанные файлы.",
-        "why": "",
-        "expected": ""
+        "where": "В моей программе",
+        "action": "Заполните q, измените total в callback, допишите цикл.",
+        "why": "Доставьте скопированное событие после pop.",
+        "expected": "total 10 processed 5."
       },
       {
-        "where": "Моя программа",
-        "action": "Допишите очередь и callback в заготовке.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "До запуска запишите ожидаемые переходы и результат каждого случая.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните все контрольные случаи и сохраните фактические результаты.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Добавьте журнал событий и проверьте FIFO.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Добавьте независимый случай и объясните проверяемую границу.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходники, протокол и объяснение ограничений.",
-        "why": "",
-        "expected": ""
+        "where": "После запуска",
+        "action": "Проверьте 12 троек и добавьте журнал; спроектируйте enqueue с лимитом 3.",
+        "why": "Каждая исходная 3 порождает одну непорождающую 1.",
+        "expected": "24 обработки; переполнение отклоняется без потери прежних трёх элементов."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-1",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "total 0 processed 5\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -377,5 +432,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\event-queues-dispatch.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\event-queues-dispatch.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-adapters",
+      "title": "WG21 N4861 (C++20 draft) — container.adaptors",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — container.adaptors",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/container.adaptors"
+    },
+    {
+      "id": "cpp20-callable",
+      "title": "WG21 N4861 — function wrapper",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 — function wrapper",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/func.wrap.func"
+    }
+  ],
+  "authored": true
 }

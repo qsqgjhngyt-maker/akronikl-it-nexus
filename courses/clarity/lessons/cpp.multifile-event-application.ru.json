@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.multifile-event-application",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Событийные приложения",
   "locale": "ru",
   "title": "Многофайловое событийное приложение",
-  "goal": "Соберите ядро планировщика из интерфейса, реализации, адаптера и отдельного тестового драйвера.",
+  "goal": "Соберите событийное ядро из двух единиц трансляции и проверьте повторное завершение задачи.",
   "prerequisites": [
     {
       "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
@@ -22,9 +22,23 @@
       "id": "concept-1",
       "title": "Файлы следуют границам решений",
       "paragraphs": [
+        "Когда ядро выросло, main должен читать команды, model.hpp — объявлять интерфейс, а model.cpp — определять правила Board. Успешная сборка одного main не доказывает, что реализация модели подключена.",
         "include/model.hpp объявляет Board; src/model.cpp реализует правила; main.cpp переводит вход в команды и печатает результат. Заголовок нужен обоим cpp, но определения обычных функций хранятся в реализации. pragma once предотвращает повторное включение заголовка в одну translation unit; оно не исправляет повторное определение функции в нескольких единицах трансляции.",
         "Нулевой command добавляет незавершённую задачу, положительный номер завершает существующую задачу. Идентификатор здесь совпадает с позицией плюс один, потому что удаления нет. Это учебное ограничение, которое надо явно назвать. В TaskFlow используются устойчивые id: при добавлении удаления перенос позиции в идентификатор создавал бы ошибки выбора."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Команда переносит величину 4",
+      "paragraphs": [
+        "Небольшой Command отделяет описание запроса от update. В лабораторной список целых заменяет транспорт, но операция Board остаётся отдельно от чтения."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Command {\n    int amount;\n};\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+        "stdin": "",
+        "output": "7\n"
+      }
     },
     {
       "id": "concept-2",
@@ -43,22 +57,58 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Опорный разбор",
+      "id": "example-2",
+      "title": "Повторный complete не отменяет завершение",
       "paragraphs": [
-        "Соберите ядро планировщика из интерфейса, реализации, адаптера и отдельного тестового драйвера."
+        "Присваивание done=true идемпотентно. Второй вызов повторяет достигнутое состояние; toggle дал бы другой контракт."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
-        "output": "7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Command хранит величину изменения.",
-        "update получает данные явно.",
-        "Три плюс четыре даёт семь без глобальной зависимости."
-      ]
+      "prediction": [
+        "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Открыть вывод и разбор",
+        "paragraphs": [
+          "done 1 подтверждает состояние после двух вызовов. В Board повтор complete существующего id принят, но число завершённых не растёт второй раз."
+        ],
+        "tables": [
+          {
+            "caption": "Что происходит по шагам",
+            "columns": [
+              "Действие",
+              "До",
+              "После",
+              "Почему"
+            ],
+            "rows": [
+              [
+                "Создать Task",
+                "—",
+                "done=false",
+                "Начальная задача открыта."
+              ],
+              [
+                "Первый complete",
+                "false",
+                "true",
+                "Операция задаёт целевое состояние."
+              ],
+              [
+                "Второй complete",
+                "true",
+                "true",
+                "Состояние не переключается назад."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}\n",
+          "stdin": "",
+          "output": "done 1\n"
+        }
+      }
     },
     {
       "id": "concept-4",
@@ -74,24 +124,6 @@
       "paragraphs": [
         "n=0…12 и n целых команд. 0 добавляет задачу, максимум восемь. Положительное число завершает существующий id=позиция+1. Повтор завершения принят без повторного увеличения done. Иная команда отклоняется. Неполный или лишний ввод: invalid.",
         "Разберите первый контрольный сценарий до запуска. Точный stdin: \"4 0 0 1 1\". Ожидаемая строка stdout: \"tasks 2 done 1 rejected 0\\n\" Сопоставьте каждую строку алгоритма с изменением состояния; отдельно отметьте момент отказа и момент применения."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Граница и расширение",
-      "paragraphs": [
-        "Соберите ядро планировщика из интерфейса, реализации, адаптера и отдельного тестового драйвера."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nstruct Task { bool done = false; void complete() { done = true; } };\nint main() { Task task; task.complete(); task.complete(); std::cout << \"done \" << task.done << '\\n'; }\n",
-        "output": "done 1\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Первая complete устанавливает true.",
-        "Вторая оставляет true.",
-        "Подсчёт состояния не должен считать два завершения."
       ]
     },
     {
@@ -117,9 +149,39 @@
         "n=0…12 и n целых команд. 0 добавляет задачу, максимум восемь. Положительное число завершает существующий id=позиция+1. Повтор завершения принят без повторного увеличения done. Иная команда отклоняется. Неполный или лишний ввод: invalid. Последний случай таблицы отделяет допустимую команду от повреждённого протокола. Покажите, на какой строке начинается отказ и какие поля должны остаться неизменными.",
         "Разберите контрольный случай: {\"stdin\":\"0 x\",\"stdout\":\"invalid\\n\"} Затем измените одну границу и сформулируйте новое ожидание без запуска. Сравните правильное решение с безопасной мутацией в копии проекта; тест должен обнаружить изменение, а не только показать сообщение об успешной сборке."
       ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Допишите Board::apply в src/model.cpp. Соберите main.cpp вместе с src/model.cpp и includeRoots=include; подготовьте отдельный тестовый main, а не два main в одной сборке.",
+        "Назовите роли main.cpp, model.hpp и model.cpp."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что напечатает задача после двух complete?",
+      "correct": 0,
+      "feedback": "done 1 подтверждает состояние после двух вызовов. В Board повтор complete существующего id принят, но число завершённых не растёт второй раз.",
+      "code": {
+        "source": "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-2",
+      "options": [
+        "done 1\n",
+        "done 0\n",
+        "done 2\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "done 1\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +192,8 @@
         "tasks 2 done 1 rejected 0."
       ],
       "correct": 2,
-      "feedback": "Повтор complete успешен и идемпотентен. done считает разные завершённые задачи, а не число успешных complete."
+      "feedback": "Повтор complete успешен и идемпотентен. done считает разные завершённые задачи, а не число успешных complete.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +205,8 @@
         "Да: header выполняется только один раз на всю программу."
       ],
       "correct": 1,
-      "feedback": "Однократное включение внутри TU не отменяет отдельную компиляцию другого TU. Обычное определение размещают в реализации."
+      "feedback": "Однократное включение внутри TU не отменяет отдельную компиляцию другого TU. Обычное определение размещают в реализации.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +218,8 @@
         "Ошибки не будет: объявление в header автоматически создаёт реализацию."
       ],
       "correct": 0,
-      "feedback": "Объявление позволяет скомпилировать вызов, но конечной программе требуется определение. Наличие файла в VFS не включает его автоматически в сборку."
+      "feedback": "Объявление позволяет скомпилировать вызов, но конечной программе требуется определение. Наличие файла в VFS не включает его автоматически в сборку.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +231,8 @@
         "После каждой команды id обязательно должен равняться текущему числу задач."
       ],
       "correct": 0,
-      "feedback": "Идентичность переживает изменение представления и позиции. Для удаления нужен явный стабильный id и отдельная политика его выдачи."
+      "feedback": "Идентичность переживает изменение представления и позиции. Для удаления нужен явный стабильный id и отдельная политика его выдачи.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +244,15 @@
         "Первая задача молча удаляется ради новой."
       ],
       "correct": 0,
-      "feedback": "Предметный capacity не равен физической способности контейнера выделить память. Отказ не должен менять уже принятые задачи."
+      "feedback": "Предметный capacity не равен физической способности контейнера выделить память. Отказ не должен менять уже принятые задачи.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Объясните повтор complete.",
-      "feedback": "Далее: Настоящий графический адаптер Qt. Сохраните личный проект и результаты экспериментов."
+      "prompt": "Для 0,0,1,1 покажите задачи и done. Чем ошибка отсутствующего model.cpp отличается от отказа команды?",
+      "feedback": "Две задачи, завершена первая, done 1, rejected 0. Отсутствие определения ломает связывание до запуска; доменный отказ происходит в работающей программе.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,15 +263,15 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Board board; int rejected = 0;\n  for (int command : commands) if (!board.apply(command)) ++rejected;\n  std::cout << \"tasks \" << board.count() << \" done \" << board.done() << \" rejected \" << rejected << '\\n';\n}\n"
+        "content": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> commands(n);\n    for (int &x : commands) {\n        if (!(std::cin >> x)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Board board;\n    int rejected = 0;\n    for (int command : commands) {\n        if (!board.apply(command)) {\n            ++rejected;\n        }\n    }\n    std::cout << \"tasks \" << board.count() << \" done \" << board.done()\n              << \" rejected \" << rejected << '\\n';\n}\n"
       },
       {
         "path": "include/model.hpp",
-        "content": "#pragma once\n#include <vector>\nclass Board {\n  std::vector<bool> done_;\npublic:\n  bool apply(int command);\n  int count() const;\n  int done() const;\n};\n"
+        "content": "#pragma once\n#include <vector>\nclass Board {\n    std::vector<bool> done_;\n\n  public:\n    bool apply(int command);\n    int count() const;\n    int done() const;\n};\n"
       },
       {
         "path": "src/model.cpp",
-        "content": "#include \"model.hpp\"\n#include <algorithm>\nbool Board::apply(int command) {\n  /* TODO: bounded add and idempotent completion. */ return false;\n}\nint Board::count() const { return int(done_.size()); }\nint Board::done() const { return int(std::count(done_.begin(), done_.end(), true)); }\n"
+        "content": "#include \"model.hpp\"\n#include <algorithm>\nbool Board::apply(int command) {\n    // TODO: Добавьте задачу при0 или завершите существующий id; предел8.\n    (void)command;\n    return false;\n}\nint Board::count() const { return int(done_.size()); }\nint Board::done() const {\n    return int(std::count(done_.begin(), done_.end(), true));\n}\n"
       }
     ],
     "metadata": {
@@ -219,7 +287,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Случай 1",
+        "label": "Первый содержательный запуск",
         "input": "4 0 0 1 1",
         "output": "tasks 2 done 1 rejected 0\n"
       },
@@ -260,64 +328,39 @@
       }
     ],
     "criteria": [
-      "Соблюдён полный входной и выходной контракт.",
-      "Инварианты и время жизни объяснены, отказы не портят модель.",
-      "Есть обычный, пустой, граничный и ошибочный сценарии.",
-      "Создайте отдельный тестовый драйвер.",
-      "Есть самостоятельное расширение и его тест, а не только копия эталона.",
-      "Сохранены код, фактические наблюдения и пределы вывода."
+      "Две TU: main.cpp и src/model.cpp; заголовок подключается через include.",
+      "4 0 0 1 1 → tasks 2 done 1 rejected 0.",
+      "Девятое добавление отклонено; прежние восемь задач сохранены.",
+      "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
     ],
-    "hint": "Добавить файл в VFS недостаточно: проверьте, какие TU переданы компилятору.",
+    "hint": "Две задачи, завершена первая, done 1, rejected 0. Отсутствие определения ломает связывание до запуска; доменный отказ происходит в работающей программе.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Сохраните свою работу; создайте отдельный проект для экспериментов.",
-        "why": "",
-        "expected": ""
+        "where": "До запуска",
+        "action": "Назовите роли main.cpp, model.hpp и model.cpp.",
+        "why": "Объявление не заменяет определение при связывании.",
+        "expected": "Две TU: main.cpp и src/model.cpp; заголовок подключается через include."
       },
       {
-        "where": "Моя программа",
-        "action": "Откройте «Задание и Code Studio»; перенесите заготовку и указанные файлы.",
-        "why": "",
-        "expected": ""
+        "where": "В моей программе",
+        "action": "Реализуйте add 0, complete по id и предел 8.",
+        "why": "Существующий id завершает ту же задачу и при повторе.",
+        "expected": "4 0 0 1 1 → tasks 2 done 1 rejected 0."
       },
       {
-        "where": "Моя программа",
-        "action": "Соберите лабораторную из двух TU.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "До запуска запишите ожидаемые переходы и результат каждого случая.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните все контрольные случаи и сохраните фактические результаты.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Создайте отдельный тестовый драйвер.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Добавьте независимый случай и объясните проверяемую границу.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходники, протокол и объяснение ограничений.",
-        "why": "",
-        "expected": ""
+        "where": "После запуска",
+        "action": "Проверьте 9 добавлений и отсутствующий id; подключите отдельный драйвер.",
+        "why": "Предел и повтор проверяются независимо от транспорта.",
+        "expected": "Девятое добавление отклонено; прежние восемь задач сохранены."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "tasks 0 done 0 rejected 4\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -395,5 +438,38 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\multifile-event-application.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\multifile-event-application.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-tu",
+      "title": "WG21 N4861 (C++20 draft) — lex.separate",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — lex.separate",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.separate"
+    },
+    {
+      "id": "cpp20-odr",
+      "title": "WG21 N4861 (C++20 draft) — basic.def.odr",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — basic.def.odr",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.def.odr"
+    },
+    {
+      "id": "cpp20-vector",
+      "title": "WG21 N4861 (C++20 draft) — vector",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — vector",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
+    }
+  ],
+  "authored": true
 }

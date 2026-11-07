@@ -43,14 +43,15 @@ function programBundle(bundle){
  const metadata=bundle?.metadata;
  const compilation=metadata?.translationUnits?.length?`<p class="program-build">${say('Компилируются','Translation units')}: ${esc(metadata.translationUnits.join(', '))}.
   ${metadata.includeRoots?.length?`${say('Каталоги заголовков','Include roots')}: ${esc(metadata.includeRoots.join(', '))}.`:''}</p>`:'';
- return bundle?programFiles(bundle.files,say('Входные файлы','Input files'))+compilation:'';
+ const qtTarget=metadata?.target==='qt-wasm'?`<p class="program-build">Qt/WebAssembly · ${say('входной файл','entry file')}: ${esc(metadata.entryFile||'src/gui.cpp')}. ${say('Полный набор откройте в отдельной копии Project Studio. Консольный Clang/WASI не содержит Qt.','Open the complete bundle in a separate Project Studio copy. Console Clang/WASI does not contain Qt.')}</p>`:'';
+ return bundle?programFiles(bundle.files,say('Входные файлы','Input files'))+compilation+qtTarget:'';
 }
 function code(source,output,stdin='',label=w.source,bundle){
  const hasOutput=output!==undefined;
  return `<div class="example-layout"${hasOutput?'':' data-example-single'}>
   <div><div class="example-label">${label}</div><pre><code>${esc(source)}</code></pre>
   ${stdin?`<p>${say('Ввод примера','Example input')}</p><pre>\n${esc(stdin)}</pre>`:''}</div>
-  ${hasOutput?`<div class="example-output"><div class="example-label">${w.output}</div><pre data-expected-output>\n${esc(output)}</pre></div>`:''}
+  ${hasOutput?`<div class="example-output"><div class="example-label">${bundle?.metadata?.target==='qt-wasm'?say('Технический журнал при запуске','Diagnostic log on startup'):w.output}</div><pre data-expected-output>\n${esc(output)}</pre></div>`:''}
  </div>${programBundle(bundle)}${programFiles(bundle?.outputFiles,say('Ожидаемые файлы результата','Expected output files'))}`;
 }
 function questionCode(example){
@@ -101,7 +102,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  const neighbor=(t,label)=>t?`<a href="${url(t.id,'explanation')}">${label}</a>`:'';
  function selfcheck(){return `<h1>${w.selfcheck}</h1><p>${esc(lesson.goal)}</p>${lesson.selfcheck.map(q=>{const a=d.answers[q.id];return `<form class="question" data-question="${q.id}"><fieldset><legend>${esc(q.prompt)}</legend>${questionCode(q.code)}${q.kind==='free'?`<textarea data-answer="${q.id}" aria-label="${esc(q.prompt)}" ${adapter?'':'disabled'}>${esc(a?.value||'')}</textarea>`:q.options.map((v,i)=>`<label class="option"><input type="radio" name="${q.id}" value="${i}" data-answer="${q.id}" ${a?.value===i?'checked':''} ${adapter?'':'disabled'}><span>${esc(v)}</span></label>`).join('')}<button class="btn" ${adapter?'':'disabled'}>${q.kind==='free'?w.free:w.check}</button></fieldset><div data-feedback="${q.id}" role="status"></div>${q.recall?`<button type="button" class="btn" data-recall="${esc(q.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}</form>`;}).join('')}<div data-course-checkpoint></div><a class="btn" href="${url(topicId,'practice')}">${w.practice} →</a>`;}
  function practiceCases(p){
-  if(reported)return p.cases.map(c=>`<h3>${esc(c.label)}</h3><pre>${esc(c.input)}</pre>${c.output!==undefined?`<pre data-expected-output>${esc(c.output)}</pre>`:''}${c.table?table(c.table):''}`).join('');
+  if(reported&&!qt)return p.cases.map(c=>`<h3>${esc(c.label)}</h3><pre>${esc(c.input)}</pre>${c.output!==undefined?`<pre data-expected-output>${esc(c.output)}</pre>`:''}${c.table?table(c.table):''}`).join('');
   if(!p.cases.length)return '';
   return `<ol class="practice-cases">${p.cases.map(c=>{
    const values=c.output?.trim().split(/\s+/);
@@ -111,8 +112,8 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    return `<li class="practice-case">
     <h3>${esc(c.label)}</h3>
     <dl class="practice-case-io">
-     <div><dt>${say('Ввод в программу','Program input')}</dt><dd>${c.input?`<pre>\n${esc(c.input)}</pre>`:`<p>${say('Без ввода','No input')}</p>`}</dd></div>
-     ${c.output!==undefined?`<div><dt>${w.output}</dt><dd><pre data-expected-output>\n${esc(c.output)}</pre></dd></div>`:''}
+     <div><dt>${qt?say('Действия в окне','Actions in the window'):say('Ввод в программу','Program input')}</dt><dd>${c.input?`<pre>\n${esc(c.input)}</pre>`:`<p>${say('Без ввода','No input')}</p>`}</dd></div>
+     ${c.output!==undefined?`<div><dt>${qt?say('Ожидаемое наблюдение','Expected observation'):w.output}</dt><dd><pre data-expected-output>\n${esc(c.output)}</pre></dd></div>`:''}
     </dl>
     ${programFiles(c.files,say('Входные файлы для проверки','Input files for this case'))}
     ${programFiles(c.outputFiles,say('Ожидаемые файлы результата','Expected output files'))}
@@ -135,7 +136,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  function starterDisclosure(p){
   const files=Object.fromEntries(p.files.map(({path,content})=>[path,content]));
   const result=p.starterObservation;
-  const preview=result?`<div data-starter-observation>
+  const preview=result?.kind==='qt-ui'?`<div data-starter-observation><p><strong>${say('Первый запуск заготовки Qt','First run of the Qt starter')}</strong></p><p>${esc(result.description)}</p></div>`:result?`<div data-starter-observation>
    <p><strong>${say('Первый запуск заготовки','First run of the starter')}</strong></p>
    <p>${esc(p.cases[result.case].label)}. ${say('Вывод до выполнения TODO','Output before completing the TODOs')}.</p>
    ${result.stdout===''?'<p>'+say('Заготовка пока ничего не печатает.','The starter produces no output yet.')+'</p>':''}
@@ -180,12 +181,12 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   ${p.exercises?`<section class="practice-card"><h2>${say('От разбора к самостоятельному действию','From the example to independent work')}</h2><ol>${p.exercises.map(x=>`<li><p>${esc(x.task)}</p><details><summary>${w.criteria}</summary><p>${esc(x.criteria)}</p></details></li>`).join('')}</ol></section>`:''}
   ${canCreate?`<h2>${w.draft}</h2><p>${w.draftNote}</p><button class="btn" data-r3-create ${adapter?'':'disabled'} ${currentWork?'hidden':''}>${say('Создать свою работу в Studio','Create my Studio work')}</button>`:''}
   ${reported?'':workspaceCallout(p)}
-  ${qt?`<p>${say('Откройте Project Studio в соседней вкладке и создайте новое приложение C++. Перенесите заготовку в отдельный проект; сохранённая работа останется на месте. Эта страница хранит условие и место чтения.','Open Project Studio in another tab and create a new C++ application. Copy the starter into a separate project; your saved work remains intact. This page retains the task and reading position.')}</p><a class="btn" href="./#view=project-studio" target="_blank" rel="noopener">Project Studio ↗</a><details><summary>${say('Файлы заготовки','Starter files')}</summary>${p.files.map(f=>`<h3>${esc(f.path)}</h3><pre><code>${esc(f.content)}</code></pre>`).join('')}</details>`:'<div data-r3-editor class="sandbox-block"></div>'}
+  ${qt?`<p>${say('Откройте Project Studio в соседней вкладке и создайте новое приложение C++. Перенесите заготовку в отдельный проект; сохранённая работа останется на месте. Эта страница хранит условие и место чтения.','Open Project Studio in another tab and create a new C++ application. Copy the starter into a separate project; your saved work remains intact. This page retains the task and reading position.')}</p><a class="btn" href="./#view=project-studio" target="_blank" rel="noopener">Project Studio ↗</a>${lesson.authored?'':`<details><summary>${say('Файлы заготовки','Starter files')}</summary>${p.files.map(f=>`<h3>${esc(f.path)}</h3><pre><code>${esc(f.content)}</code></pre>`).join('')}</details>`}`:'<div data-r3-editor class="sandbox-block"></div>'}
   <div class="work-actions">${p.recall?`<button type="button" class="btn" data-recall="${esc(p.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}<a href="${url(topicId,'explanation',locale,p.returnAnchor)}">${w.example}</a><button class="btn" data-r3-export ${currentWork?'':'hidden'}>${say('Скачать мою работу','Download my work')}</button></div>
   ${reported?`<label>${w.reported}<textarea data-r3-report ${adapter?'':'disabled'}>${esc(d.reportDraft)}</textarea></label><button class="btn" data-r3-record ${adapter?'':'disabled'}>${say('Сохранить самоотчёт','Save self-report')}</button>`:''}
   <p data-r3-result role="status"></p><details data-r3-snapshot hidden><summary>${w.snapshot}</summary><pre></pre></details>
   ${practiceChecks(p)}
-  ${reported?'':starterDisclosure(p)}
+  ${external?'':starterDisclosure(p)}
   ${external?'':referenceDisclosure()}
   ${external?'':practiceSteps({...p,steps:p.steps?.map(s=>({...s,action:s.action.replace('после подключения пилота','').replace('after pilot integration','').replace('once the pilot is connected','').replace(/\s+([.,])/g,'$1')}))})}
   <div data-course-progress></div>`;

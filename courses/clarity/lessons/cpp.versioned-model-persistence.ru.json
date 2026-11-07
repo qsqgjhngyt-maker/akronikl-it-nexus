@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.versioned-model-persistence",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Событийные приложения",
   "locale": "ru",
   "title": "Сохранение модели и версия формата",
-  "goal": "Реализуйте проверяемый roundtrip и загрузку через candidate с сохранением прежней модели при отказе.",
+  "goal": "Загружайте EV1 через проверяемого кандидата, сохраняя модель при повреждённом вводе.",
   "prerequisites": [
     {
       "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
@@ -22,9 +22,23 @@
       "id": "concept-1",
       "title": "Формат является интерфейсом",
       "paragraphs": [
+        "Сохранённый файл может быть старым или оборванным. Если менять рабочую модель по мере чтения, отказ оставит смесь старых и новых данных. Соберём candidate отдельно и заменим модель только после проверки последнего байта формата.",
         "Сохранённые данные могут пережить версию программы. Нужен явный признак формата и описание полей. Учебный EV1 содержит число элементов и значения 0…100. Будущий EV2 нельзя читать как EV1 по догадке: одинаковые числа могут иметь иной смысл. Неизвестная версия отклоняется до изменения модели, а миграция должна быть отдельным проверяемым алгоритмом.",
         "Для EV1 3 1 2 3 количество равно трём; EV1 2 1 неполон, а EV1 0 extra содержит посторонние данные. Пробельное оформление между токенами свободно, но лишние токены запрещены. Предел восемь ограничивает память и учебные сценарии. Если продукту потребуется больше данных, пересмотрите лимит и тесты явно."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Строка проходит через потоки",
+      "paragraphs": [
+        "ostringstream создаёт байты, istringstream читает их. Это короткий пример механизма; полный лабораторный формат дополнительно содержит count перед элементами."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <sstream>\nint main() {\n    std::ostringstream out;\n    out << \"EV1 \" << 7;\n    std::istringstream in(out.str());\n    std::string version;\n    int value = 0;\n    in >> version >> value;\n    std::cout << version << ' ' << value << '\\n';\n}\n",
+        "stdin": "",
+        "output": "EV1 7\n"
+      }
     },
     {
       "id": "concept-2",
@@ -35,22 +49,58 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Опорный разбор",
+      "id": "example-2",
+      "title": "Кандидат 1,−2 не заменяет 9",
       "paragraphs": [
-        "Реализуйте проверяемый roundtrip и загрузку через candidate с сохранением прежней модели при отказе."
+        "Проверяется весь кандидат. Предскажите и bool результата, и первый элемент рабочей модели после обнаружения−2."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <sstream>\nint main() { std::ostringstream out; out << \"EV1 \" << 7; std::istringstream in(out.str()); std::string version; int value = 0; in >> version >> value; std::cout << version << ' ' << value << '\\n'; }\n",
-        "output": "EV1 7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "ostringstream формирует EV1 и число семь.",
-        "istringstream читает эти байты обратно.",
-        "Совпадение проверяет конкретный простой roundtrip."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <vector>\nbool replace(std::vector<int> &values, std::vector<int> candidate) {\n    for (int x : candidate) {\n        if (x < 0) {\n            return false;\n        }\n    }\n    values.swap(candidate);\n    return true;\n}\nint main() {\n    std::vector<int> values{9};\n    std::cout << replace(values, {1, -2}) << ' ' << values[0] << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Открыть вывод и разбор",
+        "paragraphs": [
+          "0 9 подтверждает сильную гарантию этого отказа: прежняя модель сохранена. В load нельзя поставить swap раньше проверки хвоста."
+        ],
+        "tables": [
+          {
+            "caption": "Что происходит по шагам",
+            "columns": [
+              "Действие",
+              "До",
+              "После",
+              "Почему"
+            ],
+            "rows": [
+              [
+                "Создать values",
+                "—",
+                "[9]",
+                "Рабочая модель уже содержит данные."
+              ],
+              [
+                "replace(values,{1,-2})",
+                "values=[9]",
+                "candidate=[1,-2]",
+                "Новые элементы находятся в другом vector."
+              ],
+              [
+                "Проверить -2",
+                "candidate=[1,-2]",
+                "false; values=[9]",
+                "return выполняется до swap."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\nbool replace(std::vector<int> &values, std::vector<int> candidate) {\n    for (int x : candidate) {\n        if (x < 0) {\n            return false;\n        }\n    }\n    values.swap(candidate);\n    return true;\n}\nint main() {\n    std::vector<int> values{9};\n    std::cout << replace(values, {1, -2}) << ' ' << values[0] << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 9\n"
+        }
+      }
     },
     {
       "id": "concept-3",
@@ -77,24 +127,6 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "Граница и расширение",
-      "paragraphs": [
-        "Реализуйте проверяемый roundtrip и загрузку через candidate с сохранением прежней модели при отказе."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\nbool replace(std::vector<int>& values, std::vector<int> candidate) { for (int x : candidate) if (x < 0) return false; values.swap(candidate); return true; }\nint main() { std::vector<int> values{9}; std::cout << replace(values, {1, -2}) << ' ' << values[0] << '\\n'; }\n",
-        "output": "0 9\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Исходный вектор содержит девять.",
-        "Кандидат 1,-2 отклоняется до swap.",
-        "false и девять показывают сохранность."
-      ]
-    },
-    {
       "id": "concept-6",
       "title": "Контракт лабораторной: от входа к наблюдению",
       "paragraphs": [
@@ -117,9 +149,51 @@
         "Предложите спецификацию и тесты EV0→EV1. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. Начните со спецификации и входных границ; готовая функция из примера служит опорой, но не определяет требования другой предметной области. Сформулируйте собственное ожидание до выполнения, чтобы не подгонять тест под случайный вывод.",
         "Разделите память процесса, сохранённый артефакт и экспорт устройства. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. В отчёте выделите принятые решения, отвергнутую альтернативу, проверенные сценарии и оставшиеся ограничения. Самостоятельно выполните контрольное изменение из итоговой работы и объясните, какие файлы, тесты и результаты оно затронуло. Дополнительное изменение от напарника или преподавателя — необязательная форма ревью."
       ]
+    },
+    {
+      "id": "probe-load-after-success",
+      "title": "Повреждение после успешной загрузки",
+      "paragraphs": [
+        "Сравнивается весь vector с before, не только первый элемент99 из начального примера. Оборванный второй файл обязан сохранить последнюю принятую модель{1,2}."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream &in, std::vector<int> &model) {\n    std::string version;\n    int count;\n    if (!(in >> version >> count) || version != \"EV1\" || count < 0 ||\n        count > 8) {\n        return false;\n    }\n    std::vector<int> candidate;\n    for (int i = 0; i < count; ++i) {\n        int x;\n        if (!(in >> x) || x < 0 || x > 100) {\n            return false;\n        }\n        candidate.push_back(x);\n    }\n    in >> std::ws;\n    if (!in.eof()) {\n        return false;\n    }\n    model.swap(candidate);\n    return true;\n}\nvoid save(std::ostream &out, const std::vector<int> &values) {\n    out << \"EV1 \" << values.size();\n    for (int x : values) {\n        out << ' ' << x;\n    }\n    out << '\\n';\n}\nint main() {\n    std::vector<int> model{99};\n    std::istringstream good(\"EV1 2 1 2\");\n    if (!load(good, model)) {\n        return 1;\n    }\n    const auto before = model;\n    std::istringstream bad(\"EV1 2 7\");\n    const bool rejected = !load(bad, model);\n    std::cout << \"rejected preserved \" << (rejected && model == before)\n              << '\\n';\n    save(std::cout, model);\n}\n",
+        "stdin": "",
+        "output": "rejected preserved 1\nEV1 2 1 2\n"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Допишите загрузку и каноническое сохранение EV1. Roundtrip проверяет согласованность пары, а отдельные повреждённые входы проверяют отказ и сохранение прежней модели.",
+        "Запишите грамматику: EV1 count, затем ровно count значений 0…100."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что останется в values после отклонения кандидата?",
+      "correct": 0,
+      "feedback": "0 9 подтверждает сильную гарантию этого отказа: прежняя модель сохранена. В load нельзя поставить swap раньше проверки хвоста.",
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\nbool replace(std::vector<int> &values, std::vector<int> candidate) {\n    for (int x : candidate) {\n        if (x < 0) {\n            return false;\n        }\n    }\n    values.swap(candidate);\n    return true;\n}\nint main() {\n    std::vector<int> values{9};\n    std::cout << replace(values, {1, -2}) << ' ' << values[0] << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-2",
+      "options": [
+        "0 9\n",
+        "0 1\n",
+        "1 1\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\n#include <vector>\nbool replace(std::vector<int> &values, std::vector<int> candidate) {\n    for (int x : candidate) {\n        if (x < 0) {\n            return false;\n        }\n    }\n    values.swap(candidate);\n    return true;\n}\nint main() {\n    std::vector<int> values{9};\n    std::cout << replace(values, {1, -2}) << ' ' << values[0] << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 9\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +204,8 @@
         "Отклонить запись и оставить{99}."
       ],
       "correct": 2,
-      "feedback": "Объявлены два значения, получено одно. Неполная candidate не может быть committed."
+      "feedback": "Объявлены два значения, получено одно. Неполная candidate не может быть committed.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -142,7 +217,8 @@
         "Слово extra считается нулевым значением."
       ],
       "correct": 0,
-      "feedback": "count 0 допустим, но не отменяет правило полного входа. Whitespace не является дополнительным полем записи."
+      "feedback": "count 0 допустим, но не отменяет правило полного входа. Whitespace не является дополнительным полем записи.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +230,8 @@
         "Сохранить, загрузить в другую модель и сравнить значения."
       ],
       "correct": 2,
-      "feedback": "Roundtrip должен пройти оба преобразования. Совпадение повторных печатей не проверяет десериализацию."
+      "feedback": "Roundtrip должен пройти оба преобразования. Совпадение повторных печатей не проверяет десериализацию.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -166,7 +243,8 @@
         "Да, если первым значением является 0."
       ],
       "correct": 1,
-      "feedback": "Одинаковые поля могут иметь другой смысл в новой версии. Похожий синтаксис не доказывает совместимость семантики."
+      "feedback": "Одинаковые поля могут иметь другой смысл в новой версии. Похожий синтаксис не доказывает совместимость семантики.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -178,13 +256,15 @@
         "Только сохранить{99} без чтения."
       ],
       "correct": 0,
-      "feedback": "Первый тест различает текущее и стартовое состояние. Из{99} оба алгоритма могли бы дать одинаковую видимость успеха."
+      "feedback": "Первый тест различает текущее и стартовое состояние. Из{99} оба алгоритма могли бы дать одинаковую видимость успеха.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Объясните точку swap и сохранность 99.",
-      "feedback": "Далее: Тестирование событий и воспроизводимые трассы. Сохраните личный проект и результаты экспериментов."
+      "prompt": "Где commit у load? Почему EV1 0 extra должно сохранить 99, хотя count уже прочитан?",
+      "feedback": "Commit — model.swap(candidate) после проверки EOF. Нулевое количество не разрешает хвост extra; до commit model остаётся{99}.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,7 +275,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream& in, std::vector<int>& model) {\n  /* TODO: validate the whole candidate before swap. */ return false;\n}\nvoid save(std::ostream& out, const std::vector<int>& values) { out << \"EV1 \" << values.size(); for (int x : values) out << ' ' << x; out << '\\n'; }\nint main() {\n  std::vector<int> model{99};\n  if (!load(std::cin, model)) { std::cout << \"rejected \" << model[0] << '\\n'; return 0; }\n  std::ostringstream bytes; save(bytes, model); std::istringstream input(bytes.str()); std::vector<int> copy;\n  if (!load(input, copy) || copy != model) return 1;\n  std::cout << bytes.str();\n}\n"
+        "content": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream &in, std::vector<int> &model) {\n    // TODO: Разберите EV1 в candidate и замените model только после\n    // проверки хвоста.\n    (void)in;\n    (void)model;\n    return false;\n}\nvoid save(std::ostream &out, const std::vector<int> &values) {\n    out << \"EV1 \" << values.size();\n    for (int x : values) {\n        out << ' ' << x;\n    }\n    out << '\\n';\n}\nint main() {\n    std::vector<int> model{99};\n    if (!load(std::cin, model)) {\n        std::cout << \"rejected \" << model[0] << '\\n';\n        return 0;\n    }\n    std::ostringstream bytes;\n    save(bytes, model);\n    std::istringstream input(bytes.str());\n    std::vector<int> copy;\n    if (!load(input, copy) || copy != model) {\n        return 1;\n    }\n    std::cout << bytes.str();\n}\n"
       }
     ],
     "metadata": {},
@@ -203,7 +283,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Случай 1",
+        "label": "Первый содержательный запуск",
         "input": "EV1 3 1 2 3",
         "output": "EV1 3 1 2 3\n"
       },
@@ -244,64 +324,39 @@
       }
     ],
     "criteria": [
-      "Соблюдён полный входной и выходной контракт.",
-      "Инварианты и время жизни объяснены, отказы не портят модель.",
-      "Есть обычный, пустой, граничный и ошибочный сценарии.",
-      "Проверьте отказ после ранее успешной загрузки.",
-      "Есть самостоятельное расширение и его тест, а не только копия эталона.",
-      "Сохранены код, фактические наблюдения и пределы вывода."
+      "EV1 3 1 2 3 допустим; EV1 2 1 оборван.",
+      "Первый вход сохраняется как EV1 3 1 2 3; отказ печатает rejected 99.",
+      "При отказе совпадает весь vector до/после; roundtrip сохраняет значения и количество.",
+      "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
     ],
-    "hint": "Не ограничивайтесь сравнением строк: загрузите сохранённый текст в другую модель и сравните значения.",
+    "hint": "Commit — model.swap(candidate) после проверки EOF. Нулевое количество не разрешает хвост extra; до commit model остаётся{99}.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Сохраните свою работу; создайте отдельный проект для экспериментов.",
-        "why": "",
-        "expected": ""
+        "where": "До запуска",
+        "action": "Запишите грамматику: EV1 count, затем ровно count значений 0…100.",
+        "why": "Версия и число элементов являются частью контракта.",
+        "expected": "EV1 3 1 2 3 допустим; EV1 2 1 оборван."
       },
       {
-        "where": "Моя программа",
-        "action": "Откройте «Задание и Code Studio»; перенесите заготовку и указанные файлы.",
-        "why": "",
-        "expected": ""
+        "where": "В моей программе",
+        "action": "Проверьте всё в candidate и выполните один swap.",
+        "why": "Частично разобранный файл не меняет рабочие данные.",
+        "expected": "Первый вход сохраняется как EV1 3 1 2 3; отказ печатает rejected 99."
       },
       {
-        "where": "Моя программа",
-        "action": "Реализуйте load и save.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "До запуска запишите ожидаемые переходы и результат каждого случая.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните все контрольные случаи и сохраните фактические результаты.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Проверьте отказ после ранее успешной загрузки.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Добавьте независимый случай и объясните проверяемую границу.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходники, протокол и объяснение ограничений.",
-        "why": "",
-        "expected": ""
+        "where": "После запуска",
+        "action": "После успешной загрузки попытайтесь загрузить повреждённый файл.",
+        "why": "Нужно сохранить именно последнюю принятую модель.",
+        "expected": "При отказе совпадает весь vector до/после; roundtrip сохраняет значения и количество."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "rejected 99\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -379,5 +434,38 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\versioned-model-persistence.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\versioned-model-persistence.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-file",
+      "title": "WG21 N4861 (C++20 draft) — fstreams",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — fstreams",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/fstreams"
+    },
+    {
+      "id": "cpp20-stream-state",
+      "title": "WG21 N4861 (C++20 draft) — stream state",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — stream state",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
+    },
+    {
+      "id": "cpp20-except",
+      "title": "WG21 N4861 (C++20 draft) — except",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — except",
+      "language": "English",
+      "purpose": "Сверьте правило с первоисточником после работы с примером.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/except"
+    }
+  ],
+  "authored": true
 }

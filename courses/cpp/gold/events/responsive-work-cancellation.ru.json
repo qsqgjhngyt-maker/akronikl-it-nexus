@@ -423,5 +423,430 @@
     ],
     "correctIndex": 0,
     "explanation": "Бюджет ограничен независимо от общего размера."
+  },
+  "teachingEdition": {
+    "revision": "b6-author-v1",
+    "title": "Отзывчивость, порции работы и отмена",
+    "goal": "Разбейте работу на ограниченные шаги и объясните отмену без публикации неполного результата.",
+    "prerequisites": [
+      {
+        "text": "Module 1–5: функции, STL, владение, тесты и сборка из нескольких файлов."
+      },
+      {
+        "text": "Перед этим занятием изучите связанные темы ниже."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Почему длинный обработчик мешает",
+        "paragraphs": [
+          "Пока callback считает весь большой набор, очередь не может перейти к следующей команде. Сохраним прогресс в Job и обработаем за один вызов не более трёх элементов. Между такими вызовами диспетчер сможет принять отмену.",
+          "В однопоточном приложении обработчик, занявший цикл событий, не даёт выполнить следующую пользовательскую команду. Быстрый средний случай не гарантирует отзывчивость на большом входе. Разделите операцию на порции, после каждой возвращая управление планировщику. Важно ограничить не только число вызовов, но и объём работы внутри одного вызова.",
+          "Учебный Job суммирует числа от 1 до n. Один step обрабатывает не более трёх чисел, сохраняя done и candidate. Драйвер немедленно вызывает следующий step для воспроизводимого теста; реальный GUI должен запланировать следующий шаг и вернуться в цикл. Сам по себе while из лабораторной не доказывает отзывчивость настоящего интерфейса."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Состояние пошаговой задачи",
+        "paragraphs": [
+          "size задаёт объём, done — число обработанных элементов, candidate — накопленный черновой результат. Инвариант 0≤done≤size проверяется рассуждением о step. Бюджет уменьшается при каждой итерации, а done растёт только до size. Поэтому каждый вызов ограничен тремя элементами, даже если общая задача требует много вызовов.",
+          "При n=8 первый step получает сумму шести для чисел 1…3, второй — двадцать один для 1…6, третий — тридцать шесть. Пользовательский результат остаётся нулём, пока задача не finished. Это выбранная политика атомарного применения. Интерфейс может отдельно показывать прогресс done, не выдавая черновую сумму за завершённый расчёт."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Два такта по три элемента",
+        "paragraphs": [
+          "Бюджет создаётся заново на каждом такте, а done живёт между тактами. Здесь показаны только два шага задачи размера 8."
+        ],
+        "prediction": [
+          "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Открыть вывод и разбор",
+          "paragraphs": [
+            "done 3 и done 6 — прогресс, а не два независимых результата. Третий шаг дошёл бы до 8, обработав только оставшиеся два элемента."
+          ],
+          "tables": [
+            {
+              "caption": "Что происходит по шагам",
+              "columns": [
+                "Действие",
+                "До",
+                "После",
+                "Почему"
+              ],
+              "rows": [
+                [
+                  "Начало",
+                  "—",
+                  "done=0",
+                  "Всего требуется 8 элементов."
+                ],
+                [
+                  "tick 0: budget 3",
+                  "done=0",
+                  "done=3",
+                  "Три итерации расходуют бюджет."
+                ],
+                [
+                  "tick 1: budget 3",
+                  "done=3",
+                  "done=6",
+                  "Новый бюджет продолжает прежний прогресс."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}\n",
+            "stdin": "",
+            "output": "done 3\ndone 6\n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Точная семантика отмены",
+        "paragraphs": [
+          "cancelAt обозначает номер шага, перед которым пользователь требует отмену; -1 означает отсутствие запроса. Нумерация начинается с нуля. Если задача уже завершилась, более поздняя отмена не превращает успех в отказ. Для пустой задачи n=0 результат готов сразу, поэтому cancelAt=0 не создаёт отмену несуществующей работы.",
+          "После отмены step ничего не делает, finished остаётся false для незавершённой задачи, а result возвращает ноль. Прогресс сохраняется для объяснения, но candidate не применяется. В более сложной модели нужна явно определённая точка фиксации. Нельзя обещать автоматический откат уже отправленного письма, сетевого запроса или внешней записи только потому, что есть флаг cancelled."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Ограниченная очередь и backpressure",
+        "paragraphs": [
+          "Если события приходят быстрее обработки, даже короткие callbacks могут накопить неограниченную очередь. Второй пример принимает три элемента и отказывает двум следующим. Отказ должен быть видим вызывающему коду. Молчаливое удаление команды пользователя недопустимо без описанной политики, особенно если команда меняет учебную работу или состояние проекта.",
+          "Обновления отображения иногда можно объединять: десять запросов «показать текущее число» сводятся к одному. Десять команд «добавить товар» обычно объединять таким способом нельзя. Различайте событие намерения и сигнал обновления. Для лабораторного расширения выберите лимит, единицу бюджета и политику переполнения, затем измерьте максимальное число сохранённых событий."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Очередь вмещает три события",
+        "paragraphs": [
+          "Из пяти попыток первые три приняты, следующие две отклонены. Отказ не удаляет прежнее событие и не маскирует потерю счётчиком успехов."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> events;\n    int rejected = 0;\n    for (int i = 0; i < 5; ++i) {\n        if (events.size() == 3) {\n            ++rejected;\n        } else {\n            events.push(i);\n        }\n    }\n    std::cout << events.size() << ' ' << rejected << '\\n';\n}\n",
+          "stdin": "",
+          "output": "3 2\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Кооперация не означает потоки",
+        "paragraphs": [
+          "В этом уроке нет std::thread, параллельного суммирования и общего конкурентного доступа. Работа разделена во времени в одном потоке. Console WASI и графический Qt target имеют разные возможности; добавление thread-заголовка не делает недоступный механизм поддержанным. Выбирайте алгоритм, совместимый с указанной средой, и проверяйте её диагностику без переписывания исходника среды.",
+          "Для проверки выполните отмену до первого шага, после одного, после завершения, пустую и максимальную задачи. Добавьте большой самостоятельный сценарий и объясните арифметическую границу: при n≤100 сумма не больше 5050. Исполнение одного теста не подтверждает стабильные задержки на всех телефонах; физическая приёмка и измерение времени остаются отдельными."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Контракт лабораторной: от входа к наблюдению",
+        "paragraphs": [
+          "Введите n=0…100 и cancelAt=-1…40. Один step обрабатывает до трёх чисел 1…n. -1 не отменяет; иначе отмена запрашивается перед шагом с индексом cancelAt. Завершённую задачу поздняя отмена не меняет. Незавершённый результат не применяется.",
+          "Разберите первый контрольный сценарий до запуска. Точный stdin: \"8 -1\". Ожидаемая строка stdout: \"done processed 8 result 36\\n\" Сопоставьте каждую строку алгоритма с изменением состояния; отдельно отметьте момент отказа и момент применения."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Чтение работающего примера",
+        "paragraphs": [
+          "Каждый tick начинает с бюджета три. Первый обрабатывает три элемента, второй ещё три. Работа 8 ещё не закончена: done равно 6. Сначала выпишите данные, владельцев и наблюдаемый результат. Затем измените ровно одно исходное условие и предскажите, какая часть результата изменится. Такой разбор связывает синтаксис с контрактом, вместо запоминания готового текста.",
+          "Вместимость очереди равна трём. Четвёртое и пятое поступления отклоняются. Наблюдаемы размер три и два отказа. Сравните второй пример с первым: какая новая граница появилась и какой тест отличит корректную реализацию от внешне похожей ошибки? Сохраните оба исходника, прогноз и фактический результат, чтобы объяснение можно было воспроизвести."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Независимая проверка и перенос",
+        "paragraphs": [
+          "Спроектируйте политику переполнения очереди. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. Начните со спецификации и входных границ; готовая функция из примера служит опорой, но не определяет требования другой предметной области. Сформулируйте собственное ожидание до выполнения, чтобы не подгонять тест под случайный вывод.",
+          "Предложите GUI-планирование порций без бесконечного while в callback. Сохраните проверяемый результат и независимую трассу. Объясните выбранный контракт и предъявите независимый пример. В отчёте выделите принятые решения, отвергнутую альтернативу, проверенные сценарии и оставшиеся ограничения. Самостоятельно выполните контрольное изменение из итоговой работы и объясните, какие файлы, тесты и результаты оно затронуло. Дополнительное изменение от напарника или преподавателя — необязательная форма ревью."
+        ]
+      },
+      {
+        "id": "probe-cancel-twice",
+        "title": "Повторная отмена и шаг после неё",
+        "paragraphs": [
+          "Первая строка: cancelled, done, result. Вторая: finished, cancelled, result для пустой задачи. Проверьте, что отмена не превращает уже завершённую пустую задачу в отменённую."
+        ],
+        "code": {
+          "source": "#include <iostream>\nclass Job {\n    int size_, done_ = 0, candidate_ = 0;\n    bool cancelled_ = false;\n\n  public:\n    explicit Job(int n) : size_(n) {}\n    void cancel() {\n        if (done_ < size_) {\n            cancelled_ = true;\n        }\n    }\n    void step() {\n        if (cancelled_) {\n            return;\n        }\n        int budget = 3;\n        while (budget-- > 0 && done_ < size_) {\n            ++done_;\n            candidate_ += done_;\n        }\n    }\n    bool finished() const { return done_ == size_; }\n    bool cancelled() const { return cancelled_; }\n    int done() const { return done_; }\n    int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n    Job job(8);\n    job.step();\n    job.cancel();\n    job.cancel();\n    job.step();\n    std::cout << job.cancelled() << ' ' << job.done() << ' ' << job.result()\n              << '\\n';\n    Job empty(0);\n    empty.cancel();\n    empty.step();\n    std::cout << empty.finished() << ' ' << empty.cancelled() << ' '\n              << empty.result() << '\\n';\n}\n",
+          "stdin": "",
+          "output": "1 3 0\n1 0 0\n"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь ваша задача",
+        "paragraphs": [
+          "Допишите шаг с бюджетом 3 и отмену. Разделите наблюдаемые processed и result: частичный прогресс полезен для диагностики, результат доступен только по завершении.",
+          "Рассчитайте три шага n=8 без отмены."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Какой прогресс напечатают два показанных такта?",
+        "correct": 0,
+        "feedback": "done 3 и done 6 — прогресс, а не два независимых результата. Третий шаг дошёл бы до 8, обработав только оставшиеся два элемента.",
+        "code": {
+          "source": "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}\n",
+          "stdin": ""
+        },
+        "recall": "example-1",
+        "options": [
+          "done 3\ndone 6\n",
+          "done 3\ndone 3\n",
+          "done 3\ndone 8\n"
+        ],
+        "execution": {
+          "source": "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}\n",
+          "stdin": "",
+          "expected": "done 3\ndone 6\n"
+        }
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "При n=8 и cancelAt=1 какой результат после одного разрешённого step?",
+        "options": [
+          "done, processed 8, result 36.",
+          "cancelled, processed 3, result 0.",
+          "cancelled, processed 3, result 6."
+        ],
+        "correct": 1,
+        "feedback": "Первая порция считает 1…3, затем отмена запрещает commit. candidate 6 не является завершённым result.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Почему n=0/cancelAt=0 даёт done, а не cancelled?",
+        "options": [
+          "cancelAt=0 всегда означает игнорировать отмену.",
+          "Пустая задача обязана выполнить три фиктивных операции.",
+          "finished истинно ещё до входа в цикл проверки отмены."
+        ],
+        "correct": 2,
+        "feedback": "Поздняя отмена не переопределяет уже завершённый результат. Для n=8 та же команда до первого step действительно отменяет работу.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Консольный while вызывает bounded step подряд до завершения. Что он доказывает о GUI?",
+        "options": [
+          "Отзывчивость любого телефона доказана бюджетом 3.",
+          "Наличие второго потока гарантировано функцией step.",
+          "Сам по себе ничего: GUI должен возвращаться в event loop между порциями."
+        ],
+        "correct": 2,
+        "feedback": "Ограниченный шаг полезен, но busy loop всё ещё удерживает обработчик. Нужны планирование и отдельное измерение настоящего интерфейса.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "После finished вызывают cancel, затем step. Какой контракт выбран?",
+        "options": [
+          "Завершённый результат сохраняется.",
+          "Завершённая сумма обязательно сбрасывается в 0.",
+          "done увеличивается ещё на 3 без проверки size."
+        ],
+        "correct": 0,
+        "feedback": "Контракт запрещает превращать успех в поздний отказ и выходить за size. Отменять можно только незавершённую работу.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Что уменьшает память очереди, не меняя смысл десяти одинаковых запросов перерисовать текущее состояние?",
+        "options": [
+          "Объединить refresh по явно заданной политике.",
+          "Так же объединить десять команд add в одну.",
+          "Удалить произвольные пользовательские команды без отказа."
+        ],
+        "correct": 0,
+        "feedback": "Refresh может быть идемпотентным наблюдением текущего состояния. Add меняет модель при каждом принятом запросе и не имеет того же свойства.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Почему 8 1 даёт processed 3 и result 0, а 0 0 считается завершённой задачей?",
+        "feedback": "После первого шага отмена блокирует дальнейшую работу. candidate=6 не публикуется до finished. Пустая задача уже finished до проверки отмены.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Лабораторная: Отзывчивость, порции работы и отмена",
+      "task": "Введите n=0…100 и cancelAt=-1…40. Один step обрабатывает до трёх чисел 1…n. -1 не отменяет; иначе отмена запрашивается перед шагом с индексом cancelAt. Завершённую задачу поздняя отмена не меняет. Незавершённый результат не применяется.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nclass Job {\n    int size_, done_ = 0, candidate_ = 0;\n    bool cancelled_ = false;\n\n  public:\n    explicit Job(int n) : size_(n) {}\n    void cancel() {\n        if (done_ < size_) {\n            cancelled_ = true;\n        }\n    }\n    void step() {\n        // TODO: Обрабатывайте не более трёх элементов и накапливайте\n        // candidate_.\n        if (cancelled_) {\n            return;\n        }\n        if (done_ < size_) {\n            ++done_;\n            candidate_ += done_;\n        }\n    }\n    bool finished() const { return done_ == size_; }\n    bool cancelled() const { return cancelled_; }\n    int done() const { return done_; }\n    int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n    int n, cancelAt;\n    if (!(std::cin >> n >> cancelAt) || n < 0 || n > 100 || cancelAt < -1 ||\n        cancelAt > 40) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Job job(n);\n    int tick = 0;\n    while (!job.finished() && !job.cancelled()) {\n        if (tick == cancelAt) {\n            job.cancel();\n        }\n        if (!job.cancelled()) {\n            job.step();\n            ++tick;\n        }\n    }\n    std::cout << (job.cancelled() ? \"cancelled\" : \"done\") << \" processed \"\n              << job.done() << \" result \" << job.result() << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "8 1",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Случай 1",
+          "input": "8 -1",
+          "output": "done processed 8 result 36\n"
+        },
+        {
+          "label": "Первый содержательный запуск",
+          "input": "8 1",
+          "output": "cancelled processed 3 result 0\n"
+        },
+        {
+          "label": "Случай 3",
+          "input": "8 0",
+          "output": "cancelled processed 0 result 0\n"
+        },
+        {
+          "label": "Случай 4",
+          "input": "0 0",
+          "output": "done processed 0 result 0\n"
+        },
+        {
+          "label": "Случай 5",
+          "input": "3 1",
+          "output": "done processed 3 result 6\n"
+        },
+        {
+          "label": "Случай 6",
+          "input": "100 -1",
+          "output": "done processed 100 result 5050\n"
+        },
+        {
+          "label": "Случай 7",
+          "input": "101 -1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Случай 8",
+          "input": "8 -2",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "done 3,6,8; итоговая сумма 36.",
+        "done processed 8 result 36; cancelled processed 3 result 0.",
+        "После отмены done неизменно; пустая задача done processed 0 result 0.",
+        "Добавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска."
+      ],
+      "hint": "После первого шага отмена блокирует дальнейшую работу. candidate=6 не публикуется до finished. Пустая задача уже finished до проверки отмены.",
+      "steps": [
+        {
+          "where": "До запуска",
+          "action": "Рассчитайте три шага n=8 без отмены.",
+          "why": "Бюджет — максимум, последний шаг короче.",
+          "expected": "done 3,6,8; итоговая сумма 36."
+        },
+        {
+          "where": "В моей программе",
+          "action": "Реализуйте step; сравните 8 -1 и 8 1.",
+          "why": "Отмена проверяется между тактами, commit зависит от finished.",
+          "expected": "done processed 8 result 36; cancelled processed 3 result 0."
+        },
+        {
+          "where": "После запуска",
+          "action": "Повторите cancel и вызовите step после него; проверьте 0 0.",
+          "why": "Повторная отмена не должна продвигать задачу.",
+          "expected": "После отмены done неизменно; пустая задача done processed 0 result 0."
+        }
+      ],
+      "starterRevision": "b6-starter-v1",
+      "recall": "example-1",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "cancelled processed 1 result 0\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-adapters",
+        "title": "WG21 N4861 (C++20 draft) — container.adaptors",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — container.adaptors",
+        "language": "English",
+        "purpose": "Сверьте правило с первоисточником после работы с примером.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/container.adaptors"
+      },
+      {
+        "id": "cpp20-functions",
+        "title": "WG21 N4861 (C++20 draft) — dcl.fct.def",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — dcl.fct.def",
+        "language": "English",
+        "purpose": "Сверьте правило с первоисточником после работы с примером.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
+      }
+    ],
+    "coverage": {
+      "1": "example-1",
+      "2": "concept-3",
+      "3": "independent-work",
+      "4": "concept-3",
+      "5": "example-2"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Почему длинный обработчик мешает",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Состояние пошаговой задачи",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Точная семантика отмены",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Ограниченная очередь и backpressure",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Кооперация не означает потоки",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Контракт лабораторной: от входа к наблюдению",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Чтение работающего примера",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Независимая проверка и перенос",
+        "anchor": "concept-8"
+      }
+    ],
+    "verificationCases": [
+      {
+        "id": "cancel-twice",
+        "source": "#include <iostream>\nclass Job {\n    int size_, done_ = 0, candidate_ = 0;\n    bool cancelled_ = false;\n\n  public:\n    explicit Job(int n) : size_(n) {}\n    void cancel() {\n        if (done_ < size_) {\n            cancelled_ = true;\n        }\n    }\n    void step() {\n        if (cancelled_) {\n            return;\n        }\n        int budget = 3;\n        while (budget-- > 0 && done_ < size_) {\n            ++done_;\n            candidate_ += done_;\n        }\n    }\n    bool finished() const { return done_ == size_; }\n    bool cancelled() const { return cancelled_; }\n    int done() const { return done_; }\n    int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n    Job job(8);\n    job.step();\n    job.cancel();\n    job.cancel();\n    job.step();\n    std::cout << job.cancelled() << ' ' << job.done() << ' ' << job.result()\n              << '\\n';\n    Job empty(0);\n    empty.cancel();\n    empty.step();\n    std::cout << empty.finished() << ' ' << empty.cancelled() << ' '\n              << empty.result() << '\\n';\n}\n",
+        "stdin": "",
+        "output": "1 3 0\n1 0 0\n"
+      }
+    ]
   }
 }

@@ -423,5 +423,430 @@
     ],
     "correctIndex": 0,
     "explanation": "The budget is bounded independently of total work."
+  },
+  "teachingEdition": {
+    "revision": "b6-author-v1",
+    "title": "Responsive work, bounded steps and cancellation",
+    "goal": "Split work into bounded steps and explain cancellation without publishing a partial result.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
+      },
+      {
+        "text": "Study the linked prerequisite topics below before this lesson."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Why a long handler blocks interaction",
+        "paragraphs": [
+          "While a callback processes a whole large input, the queue cannot advance to the next command. Keep progress in Job and handle at most three items per call. Between calls the dispatcher can accept cancellation.",
+          "In a single-threaded application, a handler occupying the event loop prevents the next user command from running. A fast average case does not guarantee responsiveness on larger input. Divide the operation into portions and return control to a scheduler between them. Bound both the number of calls and the work performed inside each call.",
+          "The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "State of an incremental job",
+        "paragraphs": [
+          "size specifies total work, done counts processed items and candidate stores a provisional result. Reason about step to establish 0≤done≤size. The local budget decreases on every iteration and done grows only up to size. Each call therefore handles at most three items even when the complete job requires many calls.",
+          "For n=8, the first step accumulates six from 1…3, the second twenty-one from 1…6 and the third thirty-six. The committed result remains zero until finished. This is a deliberate atomic-commit policy. An interface can separately display done as progress without presenting the provisional sum as a completed calculation."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Two ticks of three items",
+        "paragraphs": [
+          "The budget is recreated each tick, while done survives between ticks. This example shows only two steps of a size 8 job."
+        ],
+        "prediction": [
+          "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Reveal output and walkthrough",
+          "paragraphs": [
+            "done 3 and done 6 are progress, not independent results. A third step would reach 8 by processing only the two remaining items."
+          ],
+          "tables": [
+            {
+              "caption": "What happens at each step",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "Why"
+              ],
+              "rows": [
+                [
+                  "Start",
+                  "—",
+                  "done=0",
+                  "Eight items are required."
+                ],
+                [
+                  "tick 0: budget 3",
+                  "done=0",
+                  "done=3",
+                  "Three iterations consume the budget."
+                ],
+                [
+                  "tick 1: budget 3",
+                  "done=3",
+                  "done=6",
+                  "A new budget continues prior progress."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}\n",
+            "stdin": "",
+            "output": "done 3\ndone 6\n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Precise cancellation semantics",
+        "paragraphs": [
+          "cancelAt is the step index before which cancellation is requested; -1 means no request. Indexing begins at zero. Once a job has completed, later cancellation does not convert success into rejection. With n=0 the result is ready immediately, so cancelAt=0 does not cancel work that never needed to run.",
+          "After cancellation, step does nothing, an incomplete job remains unfinished and result returns zero. Progress is retained for explanation while the candidate is not committed. A richer model needs an explicit commit point. A cancellation flag does not automatically undo an email already sent, a network request or an external write."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Bounded queues and backpressure",
+        "paragraphs": [
+          "If events arrive faster than they are handled, even short callbacks can accumulate an unbounded queue. The second example admits three items and rejects the next two. The caller must be able to observe rejection. Silently dropping a user command is unacceptable without an explicit policy, particularly when it changes coursework or project state.",
+          "Display refresh requests can sometimes be coalesced: ten requests to show the current number become one. Ten commands to add stock generally cannot be merged that way. Distinguish user intention from a refresh notification. For the extension, choose a capacity, a budget unit and an overflow policy, then measure the largest retained queue size."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "A queue holds three events",
+        "paragraphs": [
+          "Of five attempts the first three succeed and the last two are rejected. Rejection neither removes an old event nor hides loss in a success count."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> events;\n    int rejected = 0;\n    for (int i = 0; i < 5; ++i) {\n        if (events.size() == 3) {\n            ++rejected;\n        } else {\n            events.push(i);\n        }\n    }\n    std::cout << events.size() << ' ' << rejected << '\\n';\n}\n",
+          "stdin": "",
+          "output": "3 2\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Cooperation is not threading",
+        "paragraphs": [
+          "This lesson uses no std::thread, parallel summation or concurrent shared mutation. Work is divided over time on one thread. Console WASI and graphical Qt targets have different capabilities; including a thread header does not make an unavailable mechanism supported. Choose an algorithm compatible with the stated environment and inspect its diagnostics without rewriting learner source behind the scenes.",
+          "Test cancellation before the first step, after one step and after completion, plus empty and maximum-size jobs. Add an independent case and justify the arithmetic bound: n≤100 yields a sum at most 5050. One run does not establish consistent latency on every phone; physical acceptance and timing measurements remain separate checks."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Laboratory contract: input to observation",
+        "paragraphs": [
+          "Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed.",
+          "Trace the first reference scenario before running. Exact stdin: \"8 -1\". Expected stdout: \"done processed 8 result 36\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Reading a working example",
+        "paragraphs": [
+          "Each tick begins with a budget of three. The first processes three items and the second three more. Work of size eight is unfinished: done equals six. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+          "Queue capacity is three. The fourth and fifth arrivals are rejected. Size three and two rejections are observable. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Independent checking and transfer",
+        "paragraphs": [
+          "Design a queue-overflow policy. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+          "Propose GUI scheduling of work portions without a busy while inside a callback. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Independently complete the final assessment control-change task and explain which files, tests and observations it affects. An additional peer or teacher requirement is optional review."
+        ]
+      },
+      {
+        "id": "probe-cancel-twice",
+        "title": "Repeated cancellation and a step afterwards",
+        "paragraphs": [
+          "First line: cancelled, done, result. Second: finished, cancelled, result for the empty job. Check that cancellation does not turn an already finished empty job into a cancelled one."
+        ],
+        "code": {
+          "source": "#include <iostream>\nclass Job {\n    int size_, done_ = 0, candidate_ = 0;\n    bool cancelled_ = false;\n\n  public:\n    explicit Job(int n) : size_(n) {}\n    void cancel() {\n        if (done_ < size_) {\n            cancelled_ = true;\n        }\n    }\n    void step() {\n        if (cancelled_) {\n            return;\n        }\n        int budget = 3;\n        while (budget-- > 0 && done_ < size_) {\n            ++done_;\n            candidate_ += done_;\n        }\n    }\n    bool finished() const { return done_ == size_; }\n    bool cancelled() const { return cancelled_; }\n    int done() const { return done_; }\n    int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n    Job job(8);\n    job.step();\n    job.cancel();\n    job.cancel();\n    job.step();\n    std::cout << job.cancelled() << ' ' << job.done() << ' ' << job.result()\n              << '\\n';\n    Job empty(0);\n    empty.cancel();\n    empty.step();\n    std::cout << empty.finished() << ' ' << empty.cancelled() << ' '\n              << empty.result() << '\\n';\n}\n",
+          "stdin": "",
+          "output": "1 3 0\n1 0 0\n"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "Complete a budget 3 step and cancellation. Separate processed from result: partial progress helps diagnosis, while a result is available only on completion.",
+          "Calculate three steps for n=8 without cancellation."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What progress do the two shown ticks print?",
+        "correct": 0,
+        "feedback": "done 3 and done 6 are progress, not independent results. A third step would reach 8 by processing only the two remaining items.",
+        "code": {
+          "source": "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}\n",
+          "stdin": ""
+        },
+        "recall": "example-1",
+        "options": [
+          "done 3\ndone 6\n",
+          "done 3\ndone 3\n",
+          "done 3\ndone 8\n"
+        ],
+        "execution": {
+          "source": "#include <iostream>\nint main() {\n    int done = 0;\n    for (int tick = 0; tick < 2; ++tick) {\n        int budget = 3;\n        while (budget-- > 0 && done < 8) {\n            ++done;\n        }\n        std::cout << \"done \" << done << '\\n';\n    }\n}\n",
+          "stdin": "",
+          "expected": "done 3\ndone 6\n"
+        }
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "For n=8 and cancelAt=1, what is the result after one permitted step?",
+        "options": [
+          "done, processed 8, result 36.",
+          "cancelled, processed 3, result 0.",
+          "cancelled, processed 3, result 6."
+        ],
+        "correct": 1,
+        "feedback": "The first portion processes 1…3, then cancellation prevents commit. Candidate 6 is not a completed result.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Why does n=0/cancelAt=0 yield done rather than cancelled?",
+        "options": [
+          "cancelAt=0 always means ignore cancellation.",
+          "An empty job must execute three dummy operations.",
+          "finished is true before entering the cancellation-check loop."
+        ],
+        "correct": 2,
+        "feedback": "Late cancellation does not replace an already completed result. For n=8 the same request before step zero does cancel work.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "A console while calls bounded steps consecutively until completion. What does it establish about GUI responsiveness?",
+        "options": [
+          "Budget 3 proves responsiveness on every phone.",
+          "A second thread is guaranteed by the step function.",
+          "Nothing by itself: GUI must return to its event loop between portions."
+        ],
+        "correct": 2,
+        "feedback": "A bounded step is useful, but a busy loop still occupies the handler. Scheduling and separate real-interface measurements are needed.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "After finished, cancel then step are called. What contract is selected?",
+        "options": [
+          "The completed result is retained.",
+          "The completed sum is necessarily reset to 0.",
+          "done increases by 3 without checking size."
+        ],
+        "correct": 0,
+        "feedback": "The contract prevents changing success into late rejection or exceeding size. Only unfinished work can be cancelled.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "What can reduce queue memory without changing the meaning of ten requests to redraw the current state?",
+        "options": [
+          "Coalesce refreshes under an explicit policy.",
+          "Also merge ten add commands into one.",
+          "Remove arbitrary user commands without rejection."
+        ],
+        "correct": 0,
+        "feedback": "Refresh can be an idempotent observation of current state. Each accepted add changes the model and does not share that property.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Why does 8 1 yield processed 3 and result 0, while 0 0 is considered complete?",
+        "feedback": "After one step cancellation blocks further work. candidate=6 is not published before finished. An empty job is already finished before cancellation is checked.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Laboratory: Responsive work, bounded steps and cancellation",
+      "task": "Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nclass Job {\n    int size_, done_ = 0, candidate_ = 0;\n    bool cancelled_ = false;\n\n  public:\n    explicit Job(int n) : size_(n) {}\n    void cancel() {\n        if (done_ < size_) {\n            cancelled_ = true;\n        }\n    }\n    void step() {\n        // TODO: Process at most three items and accumulate candidate_.\n        if (cancelled_) {\n            return;\n        }\n        if (done_ < size_) {\n            ++done_;\n            candidate_ += done_;\n        }\n    }\n    bool finished() const { return done_ == size_; }\n    bool cancelled() const { return cancelled_; }\n    int done() const { return done_; }\n    int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n    int n, cancelAt;\n    if (!(std::cin >> n >> cancelAt) || n < 0 || n > 100 || cancelAt < -1 ||\n        cancelAt > 40) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Job job(n);\n    int tick = 0;\n    while (!job.finished() && !job.cancelled()) {\n        if (tick == cancelAt) {\n            job.cancel();\n        }\n        if (!job.cancelled()) {\n            job.step();\n            ++tick;\n        }\n    }\n    std::cout << (job.cancelled() ? \"cancelled\" : \"done\") << \" processed \"\n              << job.done() << \" result \" << job.result() << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "8 1",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "8 -1",
+          "output": "done processed 8 result 36\n"
+        },
+        {
+          "label": "First substantive run",
+          "input": "8 1",
+          "output": "cancelled processed 3 result 0\n"
+        },
+        {
+          "label": "Case 3",
+          "input": "8 0",
+          "output": "cancelled processed 0 result 0\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "0 0",
+          "output": "done processed 0 result 0\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "3 1",
+          "output": "done processed 3 result 6\n"
+        },
+        {
+          "label": "Case 6",
+          "input": "100 -1",
+          "output": "done processed 100 result 5050\n"
+        },
+        {
+          "label": "Case 7",
+          "input": "101 -1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 8",
+          "input": "8 -2",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "done 3,6,8; final sum 36.",
+        "done processed 8 result 36; cancelled processed 3 result 0.",
+        "done stays unchanged after cancellation; empty job: done processed 0 result 0.",
+        "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
+      ],
+      "hint": "After one step cancellation blocks further work. candidate=6 is not published before finished. An empty job is already finished before cancellation is checked.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Calculate three steps for n=8 without cancellation.",
+          "why": "The budget is an upper bound; the final step is shorter.",
+          "expected": "done 3,6,8; final sum 36."
+        },
+        {
+          "where": "In my program",
+          "action": "Implement step; compare 8 -1 and 8 1.",
+          "why": "Cancellation is checked between ticks; commit depends on finished.",
+          "expected": "done processed 8 result 36; cancelled processed 3 result 0."
+        },
+        {
+          "where": "After running",
+          "action": "Repeat cancel and call step afterwards; check 0 0.",
+          "why": "Repeated cancellation must not advance the job.",
+          "expected": "done stays unchanged after cancellation; empty job: done processed 0 result 0."
+        }
+      ],
+      "starterRevision": "b6-starter-v1",
+      "recall": "example-1",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "cancelled processed 1 result 0\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-adapters",
+        "title": "WG21 N4861 (C++20 draft) — container.adaptors",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — container.adaptors",
+        "language": "English",
+        "purpose": "Consult the primary source after working through the example.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/container.adaptors"
+      },
+      {
+        "id": "cpp20-functions",
+        "title": "WG21 N4861 (C++20 draft) — dcl.fct.def",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "WG21 N4861 (C++20 draft) — dcl.fct.def",
+        "language": "English",
+        "purpose": "Consult the primary source after working through the example.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
+      }
+    ],
+    "coverage": {
+      "1": "example-1",
+      "2": "concept-3",
+      "3": "independent-work",
+      "4": "concept-3",
+      "5": "example-2"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Why a long handler blocks interaction",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "State of an incremental job",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Precise cancellation semantics",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Bounded queues and backpressure",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Cooperation is not threading",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Laboratory contract: input to observation",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Reading a working example",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Independent checking and transfer",
+        "anchor": "concept-8"
+      }
+    ],
+    "verificationCases": [
+      {
+        "id": "cancel-twice",
+        "source": "#include <iostream>\nclass Job {\n    int size_, done_ = 0, candidate_ = 0;\n    bool cancelled_ = false;\n\n  public:\n    explicit Job(int n) : size_(n) {}\n    void cancel() {\n        if (done_ < size_) {\n            cancelled_ = true;\n        }\n    }\n    void step() {\n        if (cancelled_) {\n            return;\n        }\n        int budget = 3;\n        while (budget-- > 0 && done_ < size_) {\n            ++done_;\n            candidate_ += done_;\n        }\n    }\n    bool finished() const { return done_ == size_; }\n    bool cancelled() const { return cancelled_; }\n    int done() const { return done_; }\n    int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n    Job job(8);\n    job.step();\n    job.cancel();\n    job.cancel();\n    job.step();\n    std::cout << job.cancelled() << ' ' << job.done() << ' ' << job.result()\n              << '\\n';\n    Job empty(0);\n    empty.cancel();\n    empty.step();\n    std::cout << empty.finished() << ' ' << empty.cancelled() << ' '\n              << empty.result() << '\\n';\n}\n",
+        "stdin": "",
+        "output": "1 3 0\n1 0 0\n"
+      }
+    ]
   }
 }

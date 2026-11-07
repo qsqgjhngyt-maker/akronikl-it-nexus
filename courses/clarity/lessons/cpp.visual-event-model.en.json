@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b6-author-v1",
   "id": "cpp.visual-event-model",
   "courseId": "cpp",
   "moduleId": "cpp.section.visual-programming",
@@ -8,7 +8,7 @@
   "module": "Event-driven applications",
   "locale": "en",
   "title": "Events, handlers and the application loop",
-  "goal": "Build an event-driven counter model and explain every state transition.",
+  "goal": "Connect an event to a state change and distinguish handler rejection from malformed input.",
   "prerequisites": [
     {
       "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
@@ -22,9 +22,23 @@
       "id": "concept-1",
       "title": "From a sequence to events",
       "paragraphs": [
+        "In an ordinary calculation, main chooses the next step. Here, incoming commands choose the order. Imagine an occupied-seat counter: +1 takes a seat, −1 releases one, and 0 resets the reading. The handler must preserve its bounds for every next command.",
         "A console exercise often receives all input and immediately computes an answer. An application must also respond when a user decides to add a task, edit a field or cancel an action. An event reports something that happened; its handler decides what that occurrence means for the model. Event order becomes part of the input, so rearranging the same actions can change the result.",
         "Consider a counter constrained to zero through ten. Event 1 increments it, -1 decrements it and 0 resets it. The trace 1, 0, 1 ends at one, whereas 1, 1, 0 ends at zero. This is event-driven logic even without a window. A graphical adapter can later translate button presses into these same commands without changing the counter rule."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "One change: 4 + 3",
+      "paragraphs": [
+        "calculate returns a new value. Assignment in main makes it the current state; the call itself does not update model."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint calculate(int value, int delta) { return value + delta; }\nint main() {\n    int model = 4;\n    model = calculate(model, 3);\n    std::cout << \"value \" << model << '\\n';\n}\n",
+        "stdin": "",
+        "output": "value 7\n"
+      }
     },
     {
       "id": "concept-2",
@@ -32,24 +46,6 @@
       "paragraphs": [
         "Before writing a handler, specify the state, the accepted events and the observable result. Model stores value and the rejection count; dispatch takes a model reference and an event value. The reference permits mutation of that particular model. A separate result would be useful for displaying an error; the laboratory includes the rejection statistic in state so that its behaviour can be checked directly.",
         "The contract distinguishes a rejected command from a malformed input protocol. Decrementing a zero counter is a known event that the model refuses. A missing number after the declared event count is a formatting error affecting the whole trace. Combining these cases makes feedback ambiguous and prevents reliable tests that deliberately expect different kinds of rejection."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Guided model",
-      "paragraphs": [
-        "Build an event-driven counter model and explain every state transition."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nint calculate(int value, int delta) { return value + delta; }\nint main() {\n  int model = 4;\n  model = calculate(model, 3);\n  std::cout << \"value \" << model << '\\n';\n}\n",
-        "output": "value 7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "calculate receives four and three without external state.",
-        "Seven is returned and the handler stores it in model.",
-        "stdout value 7 connects model and observation."
       ]
     },
     {
@@ -69,6 +65,60 @@
       ]
     },
     {
+      "id": "example-2",
+      "title": "Trying to add 2 to 9",
+      "paragraphs": [
+        "We need the operation result as well as the state. Read apply and predict both output fields: whether the request was accepted and which value remains."
+      ],
+      "prediction": [
+        "#include <iostream>\nbool apply(int &value, int delta) {\n    if (value + delta < 0 || value + delta > 10) {\n        return false;\n    }\n    value += delta;\n    return true;\n}\nint main() {\n    int value = 9;\n    bool accepted = apply(value, 2);\n    std::cout << accepted << ' ' << value << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal output and walkthrough",
+        "paragraphs": [
+          "Output 0 9 establishes two facts: rejection and preservation of 9. false alone would not prove that the value was preserved."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Create value",
+                "—",
+                "9",
+                "The initial state is valid."
+              ],
+              [
+                "apply(value, 2)",
+                "9",
+                "9",
+                "11 exceeds the limit 10: return false runs before assignment."
+              ],
+              [
+                "Print accepted and value",
+                "accepted = false",
+                "0 9",
+                "bool prints as 0; the second number proves state preservation."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nbool apply(int &value, int delta) {\n    if (value + delta < 0 || value + delta > 10) {\n        return false;\n    }\n    value += delta;\n    return true;\n}\nint main() {\n    int value = 9;\n    bool accepted = apply(value, 2);\n    std::cout << accepted << ' ' << value << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 9\n"
+        }
+      }
+    },
+    {
       "id": "concept-5",
       "title": "The loop and a finite teaching trace",
       "paragraphs": [
@@ -82,24 +132,6 @@
       "paragraphs": [
         "Repeating an event is not always harmless. Two increments change the counter twice, whereas two resets have the same final effect as one reset. An operation with that property is idempotent with respect to the chosen state. This does not make every repeated request safe: a log, rejection counter or external delivery can be a separate observable effect requiring its own contract.",
         "In a task planner, marking an item completed can usually be repeated without changing its final status. Toggling completion twice restores the original status. Choose commands according to user intention rather than button implementation convenience. In the transfer exercise, specify both versions and provide a trace that lets a reviewer distinguish their behaviour."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Boundary and extension",
-      "paragraphs": [
-        "Build an event-driven counter model and explain every state transition."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nbool apply(int& value, int delta) {\n  if (value + delta < 0 || value + delta > 10) return false;\n  value += delta; return true;\n}\nint main() {\n  int value = 9;\n  bool accepted = apply(value, 2);\n  std::cout << accepted << ' ' << value << '\\n';\n}\n",
-        "output": "0 9\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The 9+2>10 check is true.",
-        "The early return leaves the referenced value unchanged.",
-        "false prints as zero and the retained value as nine."
       ]
     },
     {
@@ -133,9 +165,39 @@
         "calculate receives four and three without external state. Seven is returned and the handler stores it in model. stdout value 7 connects model and observation. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
         "The 9+2>10 check is true. The early return leaves the referenced value unchanged. false prints as zero and the retained value as nine. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
       ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "The lab has several events, and the model also holds rejected. Write the state after every event, then complete dispatch while keeping the existing input validation.",
+        "Trace 4 1 1 -1 1."
+      ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does apply(value, 2) print when value starts at 9?",
+      "correct": 0,
+      "feedback": "Output 0 9 establishes two facts: rejection and preservation of 9. false alone would not prove that the value was preserved.",
+      "code": {
+        "source": "#include <iostream>\nbool apply(int &value, int delta) {\n    if (value + delta < 0 || value + delta > 10) {\n        return false;\n    }\n    value += delta;\n    return true;\n}\nint main() {\n    int value = 9;\n    bool accepted = apply(value, 2);\n    std::cout << accepted << ' ' << value << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-2",
+      "options": [
+        "0 9\n",
+        "1 11\n",
+        "0 11\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\nbool apply(int &value, int delta) {\n    if (value + delta < 0 || value + delta > 10) {\n        return false;\n    }\n    value += delta;\n    return true;\n}\nint main() {\n    int value = 9;\n    bool accepted = apply(value, 2);\n    std::cout << accepted << ' ' << value << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 9\n"
+      }
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -146,7 +208,8 @@
         "value 0, rejected 1."
       ],
       "correct": 2,
-      "feedback": "Increment yields 1, reset yields 0, and the final decrement is rejected without mutation. Reset does not remove the lower bound."
+      "feedback": "Increment yields 1, reset yields 0, and the final decrement is rejected without mutation. Reset does not remove the lower bound.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -158,7 +221,8 @@
         "Compare the state after one and two repetitions of each command."
       ],
       "correct": 2,
-      "feedback": "Idempotence concerns repetition and the chosen observable state. One invocation cannot test the repetition property."
+      "feedback": "Idempotence concerns repetition and the chosen observable state. One invocation cannot test the repetition property.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -170,7 +234,8 @@
         "value becomes 7 without rejection."
       ],
       "correct": 1,
-      "feedback": "An unknown event is rejected exactly once. It neither assigns 7 nor represents two independent rejections."
+      "feedback": "An unknown event is rejected exactly once. It neither assigns 7 nor represents two independent rejections.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -182,7 +247,8 @@
         "Not in this driver: validate the whole format first and report invalid."
       ],
       "correct": 2,
-      "feedback": "The laboratory transport validates the entire finite trace before dispatch. Formatting failure differs from refusal of a correctly transported command."
+      "feedback": "The laboratory transport validates the entire finite trace before dispatch. Formatting failure differs from refusal of a correctly transported command.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -194,13 +260,15 @@
         "One increment from zero, checking only value."
       ],
       "correct": 1,
-      "feedback": "Checking both values distinguishes correct rejection from missing statistics. A successful increment never exercises rejection."
+      "feedback": "Checking both values distinguishes correct rejection from missing statistics. A successful increment never exercises rejection.",
+      "recall": "concept-5"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain both outputs of the second example.",
-      "feedback": "Next: Event queues and dispatch. Preserve your project and experiment results."
+      "prompt": "Trace 1,0,−1 from 0. How does the last rejection differ from input token x?",
+      "feedback": "States 1,0,0; one rejection. −1 is a parsed command forbidden at 0. x breaks the whole trace format and produces invalid.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -211,7 +279,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <vector>\nstruct Model { int value = 0, rejected = 0; };\nvoid dispatch(Model& m, int event) {\n  /* TODO: validate event, preserve bounds and count rejection. */\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> events(n);\n  for (int& e : events) if (!(std::cin >> e)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Model model;\n  for (int e : events) dispatch(model, e);\n  std::cout << \"value \" << model.value << \" rejected \" << model.rejected << '\\n';\n}\n"
+        "content": "#include <iostream>\n#include <vector>\nstruct Model {\n    int value = 0, rejected = 0;\n};\nvoid dispatch(Model &m, int event) {\n    // TODO: Handle all three commands and preserve the value bounds.\n    ++m.rejected;\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> events(n);\n    for (int &e : events) {\n        if (!(std::cin >> e)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Model model;\n    for (int e : events) {\n        dispatch(model, e);\n    }\n    std::cout << \"value \" << model.value << \" rejected \" << model.rejected\n              << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -219,7 +287,7 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "First substantive run",
         "input": "4 1 1 -1 1",
         "output": "value 2 rejected 0\n"
       },
@@ -260,64 +328,39 @@
       }
     ],
     "criteria": [
-      "The full input and output contract is satisfied.",
-      "Invariants and lifetimes are explained; rejection preserves the model.",
-      "Ordinary, empty, boundary and failure scenarios are covered.",
-      "Change the maximum to twenty and update the tests.",
-      "An independent extension and test are supplied, rather than only a reference copy.",
-      "Sources, actual observations and limits of conclusions are retained."
+      "value:0→1→2→1→2; rejected=0.",
+      "value 2 rejected 0.",
+      "First input: value 0 rejected 2; second: invalid. Update the boundary test with the rule.",
+      "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "Separate reset, permitted increment/decrement and rejection; do not mutate value before checking its bound.",
+    "hint": "States 1,0,0; one rejection. −1 is a parsed command forbidden at 0. x breaks the whole trace format and produces invalid.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Preserve your work and create a separate project for experiments.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Trace 4 1 1 -1 1.",
+        "why": "n specifies exactly four events.",
+        "expected": "value:0→1→2→1→2; rejected=0."
       },
       {
-        "where": "My program",
-        "action": "Open Task and Code Studio and copy the starter and listed files.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Implement reset, bounded +1/−1 and rejection counting.",
+        "why": "Rejection increments rejected and preserves value.",
+        "expected": "value 2 rejected 0."
       },
       {
-        "where": "My program",
-        "action": "Implement dispatch according to the laboratory contract.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Before running, record the expected transitions and outcome of every case.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Execute every reference case and retain actual observations.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Change the maximum to twenty and update the tests.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add an independent case and explain its boundary.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save sources, the protocol and an explanation of limitations.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Compare 2 -1 2 and 0 x, then change the limit to 20.",
+        "why": "Domain bounds and syntax are checked at different levels.",
+        "expected": "First input: value 0 rejected 2; second: invalid. Update the boundary test with the rule."
       }
-    ]
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "value 0 rejected 4\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -391,5 +434,18 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\events\\visual-event-model.en.json"
+  "sourcePath": "courses\\cpp\\gold\\events\\visual-event-model.en.json",
+  "reading": [
+    {
+      "id": "cpp20-functions",
+      "title": "WG21 N4861 (C++20 draft) — dcl.fct.def",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — dcl.fct.def",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
+    }
+  ],
+  "authored": true
 }
