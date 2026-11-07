@@ -63,7 +63,12 @@ try{
   for(const q of source.selfcheck.filter(q=>q.kind==='choice'))await root.locator('[data-answer="'+q.id+'"][value="'+q.correct+'"]').check();
   await root.getByRole('button',{name:locale==='ru'?'Сохранить попытку самопроверки':'Save self-check attempt',exact:true}).click();await saved(root);
   const stored=await p.evaluate(async prefix=>{const m=await import(prefix+'/courses/onec-education/account-progress.mjs');return JSON.parse(m.createOnecAccountStorage().getItem('akronikl:it-nexus:onec-candidate:v1:onec'));},prefix);
-  assert.equal(stored.lessons[id].attempts.at(-1).grade.correct,4);assert.equal(stored.lessons[id].completed,undefined);
+  assert.equal(stored.lessons[id].attempts.at(-1).grade.correct,4);assert.equal(stored.lessons[id].completed,locale==='ru'?undefined:true);
+  await stage(root,'practice');await root.locator('[data-course-progress] input[type="checkbox"]').check();
+  await root.getByRole('button',{name:locale==='ru'?'Отметить выполненным по самоотчёту':'Mark complete by self-report',exact:true}).click();
+  await root.locator('[data-course-progress]').getByText(locale==='ru'?/Сохранённая отметка прохождения есть/:/A saved completion mark exists/).waitFor();
+  await p.evaluate(async({prefix,locale})=>{controller.dispose();location.hash='#course=onec&locale='+locale;const host=document.createElement('main');host.id='app';document.querySelector('#app').replaceWith(host);const m=await import(prefix+'/courses/onec-education/integration.mjs');controller=m.mountOnecIntegration(host,{locale});await controller.ready;},{prefix,locale});
+  const count=Number((await p.locator('[data-progress]').textContent()).split('/')[0]);assert.equal(count,ids.indexOf(id)+1,'Overview counts explicit completion without losing previous topics');
   checks.push({id,locale,stages:3,widths:[1366,390,320],images,recallCaret:'PASS',ownWorkPreserved:'PASS',assessment:'4/4 explicit; no automatic completion'});await p.close();
  }
  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);

@@ -6,9 +6,18 @@ import {execFileSync} from 'node:child_process';
 import {gradeQuiz} from '../courses/onec-education/model.mjs';
 import {lessonFiguresMarkup} from '../courses/onec-education/lesson-media.mjs';
 import {learningFlowMarkup} from '../core/clarity-visuals.mjs';
+import {curriculumForClarityProgress} from '../core/clarity-course-progress.mjs';
+import {progressFor} from '../courses/onec-education/model.mjs';
 const base='c72e65ab3cd65f4032d0446d3b6ac7e7acce42b5',slugs=['architecture','infobase','lifecycle','tools'];
 const git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{maxBuffer:64e6});
 const json=async p=>JSON.parse(await readFile(p)),hash=b=>createHash('sha256').update(b).digest('hex');
+test('P1: счётчик принимает явную отметку новой редакции, сохраняя прежние отметки и не принимая неизвестные версии',async()=>{
+ const c=await json('courses/onec/curriculum.json'),id='onec.p1.architecture',old=c.modules[0].topics[0].contentRevision,revision='onec-p1-author-v1';
+ for(const [entry,done]of [[{completed:true,completionRevision:old},1],[{completed:true,completionRevision:revision},1],[{completed:true,completionRevision:'unknown'},0],[{completed:false,completionRevision:revision},0],[{completed:true,completionRevision:old,completionHistory:[{contentRevision:revision,kind:'self-reported'}]},1]]){
+  const state={lessons:{[id]:entry}},before=JSON.stringify([c,state]);
+  assert.equal(progressFor(curriculumForClarityProgress(c,state),state).done,done);assert.equal(JSON.stringify([c,state]),before,'No stored or original revision is rewritten');
+ }
+});
 test('P1 сохраняет принятые C++, R3, оба исходных курса 1С и меняет только восемь производных уроков',()=>{
  for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'');
  const changed=git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort();
