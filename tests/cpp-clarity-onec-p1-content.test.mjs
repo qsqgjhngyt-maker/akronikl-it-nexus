@@ -18,10 +18,14 @@ test('P1: счётчик принимает явную отметку новой
   assert.equal(progressFor(curriculumForClarityProgress(c,state),state).done,done);assert.equal(JSON.stringify([c,state]),before,'No stored or original revision is rewritten');
  }
 });
-test('P1 сохраняет принятые C++, R3, оба исходных курса 1С и меняет только восемь производных уроков',()=>{
+test('Принятая пара P1 и оба исходных курса сохраняются при отдельной новой редакции P2',()=>{
  for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'');
  const changed=git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort();
- assert.deepEqual(changed,slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/lessons/onec.p1.${s}.${l}.json`)).sort());
+ const p1=slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/lessons/onec.p1.${s}.${l}.json`));
+ const p2Types=['en','ru'].map(l=>`courses/clarity/lessons/onec.p2.topic-2.${l}.json`);
+ assert.deepEqual(changed,[...p1,...p2Types].sort());
+ const acceptedP1=[...p1,...slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/authoring/onec.p1.${s}.${l}.json`))];
+ assert.equal(git('diff','--name-only','704c23616f1d8536416fb90a9b46502e1b0f1831','--',...acceptedP1).toString().trim(),'','Accepted P1 remains byte-identical');
 });
 test('P1 содержит связное объяснение, свой прогноз, перенос, эталон и точное оценивание четырёх вопросов',async()=>{
  for(const slug of slugs)for(const locale of ['ru','en']){
