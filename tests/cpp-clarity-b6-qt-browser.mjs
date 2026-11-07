@@ -31,7 +31,13 @@ try{
  await p.evaluate(async prefix=>{const{patchLesson,courseWorkToken,loadState}=await import(prefix+'/core/storage.js'),{createProject}=await import(prefix+'/project-studio/project-store.js');const c=await(await fetch(prefix+'/courses/cpp/curriculum.json')).json();const{withCourseStateWriter}=await import(prefix+'/core/storage.js');await withCourseStateWriter(()=>{for(const l of c.lessons.slice(0,55))patchLesson(l.id,{completed:true,code:'// SYNTHETIC PRESERVED '+l.id,quiz:1,stdin:'17'},{expectedWorkToken:courseWorkToken(loadState(),'lesson',l.id)});});const{withProjectWriter}=await import(prefix+'/project-studio/project-writer.js');await withProjectWriter(()=>{createProject({id:'synthetic-preserved-before-m6',title:'SYNTHETIC preserved',files:[{path:'main.cpp',content:'// original',languageId:'cpp'}]})})},prefix);
  before=await p.evaluate(async prefix=>(await import(prefix+'/core/storage.js')).loadState().courses,prefix);
  const compilerRequests=[];p.on('request',r=>{if(new URL(r.url()).pathname.endsWith('.wasm'))compilerRequests.push(new URL(r.url()).pathname)});
- for(const id of ['cpp.qt-graphical-adapter','cpp.application-build-delivery']){await p.evaluate(id=>location.hash='#course=cpp&lesson='+id+'&stage=practice&locale=en',id);await p.locator('[data-r3-topic="'+id+'"] [data-r3-panel="practice"]:visible').waitFor();assert.equal(await p.locator('#editor').count(),0);const a=p.locator('a[href="./#view=project-studio"]');assert.equal(await a.getAttribute('href'),'./#view=project-studio');assert.equal(await a.getAttribute('target'),'_blank');}
+ for(const id of ['cpp.qt-graphical-adapter','cpp.application-build-delivery']){
+  await p.evaluate(id=>location.hash='#course=cpp&lesson='+id+'&stage=practice&locale=en',id);
+  await p.locator('[data-r3-topic="'+id+'"] [data-r3-panel="practice"]:visible').waitFor();
+  // Видимость панели ещё не подтверждает сохранение места. Дожидаемся штатного ACK перед уходом.
+  await p.locator('[data-r3-topic="'+id+'"] [data-r3-save][data-state="saved"]').waitFor();
+  assert.equal(await p.locator('#editor').count(),0);const a=p.locator('a[href="./#view=project-studio"]');assert.equal(await a.getAttribute('href'),'./#view=project-studio');assert.equal(await a.getAttribute('target'),'_blank');
+ }
  assert.equal(compilerRequests.length,0,'Чтение Qt урока не скачивает компилятор');
  const popupPromise=f.context.waitForEvent('page');await p.locator('a[href="./#view=project-studio"]').click();const popup=await popupPromise;await popup.locator('.ps-hero').waitFor();await popup.waitForTimeout(500);assert.equal(await popup.locator('[data-startup-intro],[data-startup-cover]').count(),0);await popup.close();
  const start=Number(process.env.NEXUS_M6_GUI_START_INDEX||0),end=Number(process.env.NEXUS_M6_GUI_END_INDEX||unique.size);assert.ok(Number.isInteger(start)&&start>=0&&start<end&&end<=unique.size);
