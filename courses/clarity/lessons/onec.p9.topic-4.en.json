@@ -1,23 +1,40 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p9-topic-4-author-v1",
   "id": "onec.p9.topic-4",
   "courseId": "onec",
   "moduleId": "onec.p9",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "DCS, reports and data processors",
   "locale": "en",
-  "title": "Print forms and training-version limits",
+  "title": "75 on screen: a data snapshot and the data itself are different things",
   "goal": "Prepare a readable report and reconcile its facts while respecting edition limits.",
   "prerequisites": [
     {
-      "text": "onec.p8; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P8. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A spreadsheet document shows 75 minutes. It looks presentable, but are the original 30 and 45 preserved? How do you distinguish a legitimate zero from an empty cell? Check values separately from their presentation.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Your copy and separate files",
+      "paragraphs": [
+        "Continue your own P8 copy. Close Enterprise, save a DT backup and restore it into a new empty infobase; verify the actual path. Preserve prior work, records and the handler. Do not load a full CF over your work.",
+        "УчебныеОтчёты common module: Server and Server call enabled; Client, Global and Privileged disabled. Данные.bsl contains helpers and the function; Приложение.bsl contains the separate caller. Add only missing definitions and keep one copy of each helper.",
+        "НовыйНаборРегистров creates new training records owned by this experiment. Preserve the previous handler first. Remove only the added startup call after one run, so reopening does not create another set. Compare your own references rather than the screenshot’s UUIDs."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "Presentation is not the source of truth",
       "paragraphs": [
         "A print form presents selected data state; it does not replace source documents or modify them for formatting. State generation time, number, customer, units and total. Later source changes do not automatically update an older exported snapshot.",
@@ -25,46 +42,59 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Reconcile the complete experiment",
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
       "paragraphs": [
-        "Data/presentation checks and edition constraints are separate."
+        "УчебныеОтчёты common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "Source 30+45=75 minutes → report → screen/available standard preview\nCheck membership,units,75,long names,zero/missing.",
-        "output": "Readable output matches source facts; print availability stated honestly."
+        "language": "bsl",
+        "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТабличныйСнимокОпыта(Данные) Экспорт\n    Док = Новый ТабличныйДокумент;\n    Док.Область(\"R1C1\").Текст = \"Ключ заявки\"; Док.Область(\"R1C2\").Текст = \"Минуты\";\n    Док.Область(\"R2C1\").Текст = Строка(Данные.Первая.УникальныйИдентификатор());\n    Док.Область(\"R3C1\").Текст = Строка(Данные.Вторая.УникальныйИдентификатор());\n    Док.Область(\"R2C2\").СодержитЗначение = Истина; Док.Область(\"R2C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R2C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R2C2\").Значение = Данные.Первая.ДлительностьМинут;\n    Док.Область(\"R3C2\").СодержитЗначение = Истина; Док.Область(\"R3C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R3C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R3C2\").Значение = Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R4C1\").Текст = \"Итого, минуты\"; Док.Область(\"R4C2\").СодержитЗначение = Истина; Док.Область(\"R4C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R4C2\").Формат = \"ЧДЦ=0; ЧН=0\";\n    Док.Область(\"R4C2\").Значение = Данные.Первая.ДлительностьМинут + Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R1C1:R4C1\").ШиринаКолонки = 46; Док.Область(\"R1C2:R4C2\").ШиринаКолонки = 15;\n    Возврат Док;\nКонецФункции\n\nФункция ОпытСнимкаОсновной() Экспорт\n    Д = НовыйНаборРегистров(); Док = ТабличныйСнимокОпыта(Д);\n    Возврат Новый Структура(\"Итог,ПерваяСохранена,ВтораяСохранена,КлючПодписан,ТабДок\",Док.Область(\"R4C2\").Значение,Д.Первая.ДлительностьМинут = 30,Д.Вторая.ДлительностьМинут = 45,Док.Область(\"R2C1\").Текст = Строка(Д.Первая.УникальныйИдентификатор()),Док);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The function builds a snapshot of two own requests and returns that same spreadsheet document with its checks. The client displays actual references, 30, 45, and a 75-minute total. Subsequent reference reads retain the original minutes. Display is not claimed as printing or export.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытСнимкаОсновной();\n    Сообщить(\"Итого, минуты: \" + Строка(Р.Итог));\n    Сообщить(\"Первая запись сохранена: \" + Строка(Р.ПерваяСохранена));\n    Сообщить(\"Вторая запись сохранена: \" + Строка(Р.ВтораяСохранена));\n    Сообщить(\"Ключ подписан: \" + Строка(Р.КлючПодписан));\n    Р.ТабДок.Показать(\"Свой учебный снимок: 30 + 45 = 75 минут\");\nКонецПроцедуры\n",
+        "output": "Итого, минуты: 75\nПервая запись сохранена: Да\nВторая запись сохранена: Да\nКлюч подписан: Да",
+        "files": {
+          "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТабличныйСнимокОпыта(Данные) Экспорт\n    Док = Новый ТабличныйДокумент;\n    Док.Область(\"R1C1\").Текст = \"Ключ заявки\"; Док.Область(\"R1C2\").Текст = \"Минуты\";\n    Док.Область(\"R2C1\").Текст = Строка(Данные.Первая.УникальныйИдентификатор());\n    Док.Область(\"R3C1\").Текст = Строка(Данные.Вторая.УникальныйИдентификатор());\n    Док.Область(\"R2C2\").СодержитЗначение = Истина; Док.Область(\"R2C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R2C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R2C2\").Значение = Данные.Первая.ДлительностьМинут;\n    Док.Область(\"R3C2\").СодержитЗначение = Истина; Док.Область(\"R3C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R3C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R3C2\").Значение = Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R4C1\").Текст = \"Итого, минуты\"; Док.Область(\"R4C2\").СодержитЗначение = Истина; Док.Область(\"R4C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R4C2\").Формат = \"ЧДЦ=0; ЧН=0\";\n    Док.Область(\"R4C2\").Значение = Данные.Первая.ДлительностьМинут + Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R1C1:R4C1\").ШиринаКолонки = 46; Док.Область(\"R1C2:R4C2\").ШиринаКолонки = 15;\n    Возврат Док;\nКонецФункции\n\nФункция ОпытСнимкаОсновной() Экспорт\n    Д = НовыйНаборРегистров(); Док = ТабличныйСнимокОпыта(Д);\n    Возврат Новый Структура(\"Итог,ПерваяСохранена,ВтораяСохранена,КлючПодписан,ТабДок\",Док.Область(\"R4C2\").Значение,Д.Первая.ДлительностьМинут = 30,Д.Вторая.ДлительностьМинут = 45,Док.Область(\"R2C1\").Текст = Строка(Д.Первая.УникальныйИдентификатор()),Док);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытСнимкаОсновной();\n    Сообщить(\"Итого, минуты: \" + Строка(Р.Итог));\n    Сообщить(\"Первая запись сохранена: \" + Строка(Р.ПерваяСохранена));\n    Сообщить(\"Вторая запись сохранена: \" + Строка(Р.ВтораяСохранена));\n    Сообщить(\"Ключ подписан: \" + Строка(Р.КлючПодписан));\n    Р.ТабДок.Показать(\"Свой учебный снимок: 30 + 45 = 75 минут\");\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Step",
+            "Observation and meaning"
           ],
           "rows": [
             [
               "Facts",
-              "Two references 30/45",
-              "75 minutes."
+              "Two references 30/45 — 75 minutes."
             ],
             [
               "Presentation",
-              "Headings/units",
-              "Readable report."
+              "Headings/units — Readable report."
             ],
             [
               "Check",
-              "Reread/edition",
-              "Data unchanged; limits explicit."
+              "Reread/edition — Data unchanged; limits explicit."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Number and formatting differ",
       "paragraphs": [
         "Displaying 600.00 does not turn text into a number or define rounding. Compute under the contract before formatting for locale. Test long names, line wrapping and zero totals. A visually empty cell must not stand for a legitimate zero without an explicit rule.",
@@ -72,7 +102,21 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "After building a snapshot without saving the source requests, what should remain in the infobase?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "30 and 45. A spreadsheet document is a separate presentation of read data. The 75 total is not a command to update each source document."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Edition controls availability",
       "paragraphs": [
         "Training edition restricts runtime spreadsheet-document printing/saving. Check the exact build and official terms rather than promising every client an export. Use another permitted original reconciliation protocol where needed. Do not bypass limits with patches or call a screenshot a proven document export.",
@@ -80,41 +124,59 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "A case that distinguishes the wrong solution",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "Attractive output can conceal a source defect."
+        "The snapshot saves no source document. The worked client displays the same object checked by the function. New 20/0 data distinguish zero from blank in the independent task. Printing and export remain separate, unverified actions.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "Treat rounded display text as independent proof of source arithmetic.",
-        "output": "Rejected: source numbers and rounding rules are needed."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Separate copy",
-              "Treat rounded display text as independent proof of source arithmetic.",
-              "Retain the accepted original."
-            ],
-            [
-              "Observe",
-              "Rejected: source numbers and rounding rules are needed.",
-              "Attractive output can conceal a source defect."
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Source",
+            "lines": [
+              "30 / 45"
             ]
-          ]
-        }
+          },
+          {
+            "title": "Snapshot",
+            "lines": [
+              "75 minutes"
+            ]
+          },
+          {
+            "title": "Display",
+            "lines": [
+              "same keys"
+            ]
+          },
+          {
+            "title": "Reread",
+            "lines": [
+              "30 / 45"
+            ]
+          }
+        ],
+        "alternative": [
+          "Source: 30 / 45",
+          "Snapshot: 75 minutes",
+          "Display: same keys",
+          "Reread: 30 / 45"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "A zero formatted as blank can be mistaken for missing data. Text “0” can also be mistaken for a numeric value. The new task checks the cell’s numeric value, its displayed text, and a genuinely empty neighbouring cell separately.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Test by rereading output",
       "paragraphs": [
         "In a permitted environment, generate, save by a supported route and reopen. Reconcile identities, units and totals, not merely file existence. If unavailable, explain clearly and preserve source data. Native generation, physical printing and export require distinct evidence.",
@@ -122,16 +184,59 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "A displayed number is accepted without its source. Reconcile actual references, units and raw values before presentation.",
-        "An unavailable feature is described as already tested. Record the exact edition and leave unperformed checks explicitly pending.",
-        "Hash identity is mistaken for safety or authorship. Separate byte integrity, reviewed trust and learner contribution."
+        "Create a spreadsheet snapshot for new own requests of 20 and 0 minutes. Check total 20, numeric zero in the second request’s row, visible text 0, and an empty cell in the following row. Reread the sources: 20 and 0 must remain. Do not parse formatted text back into calculations or print the document for this task.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеОтчёты common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot.",
+        "The application receives ТабДок from the function result and displays that exact object. The image shows the same 30/45 set and total 75. Display was observed; print and export commands were not executed."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p9-printing-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "088df51dc8e86a95f2f5d12fb6a53569aba615fdb5654384527a89fb37dc1cdd",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "caption": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Distinguish generating a snapshot, displaying it, actual printing, and exporting. Establishing one does not establish the others."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "After building a snapshot without saving the source requests, what should remain in the infobase?",
+      "options": [
+        "The original 30 and 45",
+        "Both requests become 75",
+        "Documents turn into report rows"
+      ],
+      "correct": 0,
+      "feedback": "30 and 45. A spreadsheet document is a separate presentation of read data. The 75 total is not a command to update each source document.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -142,7 +247,8 @@
         "A certificate"
       ],
       "correct": 1,
-      "feedback": "The infobase facts remain the source."
+      "feedback": "The infobase facts remain the source.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -154,7 +260,8 @@
         "Change the total"
       ],
       "correct": 0,
-      "feedback": "Use permitted on-screen inspection."
+      "feedback": "Use permitted on-screen inspection.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -166,130 +273,104 @@
         "The calculation contract"
       ],
       "correct": 2,
-      "feedback": "Formatting does not replace arithmetic."
+      "feedback": "Formatting does not replace arithmetic.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Why does visible text 0 not establish a numeric zero?",
+      "options": [
+        "Text and numeric type are different properties",
+        "Every cell is always numeric",
+        "Blank and zero are always identical"
+      ],
+      "correct": 0,
+      "feedback": "Distinguish generating a snapshot, displaying it, actual printing, and exporting. Establishing one does not establish the others.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Test a long name/missing value and record print availability.",
-      "feedback": "Limits respected."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Print forms and training-version limits",
-    "task": "Test a long name/missing value and record print availability.",
-    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
-    "externalRoute": "Installed official 1C: Designer and Enterprise",
-    "files": [],
-    "returnAnchor": "example-1",
-    "steps": [
+    "title": "75 on screen: a data snapshot and the data itself are different things",
+    "task": "Create a spreadsheet snapshot for new own requests of 20 and 0 minutes. Check total 20, numeric zero in the second request’s row, visible text 0, and an empty cell in the following row. Reread the sources: 20 and 0 must remain. Do not parse formatted text back into calculations or print the document for this task.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеОтчёты",
+    "setupGuide": true,
+    "files": [
       {
-        "id": "step-1",
-        "title": "Identify an own copy",
-        "where": "Конфигуратор / Предприятие",
-        "action": "Preserve earlier work/DT and use only your synthetic requests.",
-        "why": "Retain the accepted source.",
-        "expected": "Own path and references recorded.",
-        "troubleshooting": "Do not substitute another learner’s data.",
-        "before": "Own path, prior sources and a restorable backup identified."
+        "path": "Данные.bsl",
+        "content": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТабличныйСнимокОпыта(Данные) Экспорт\n    Док = Новый ТабличныйДокумент;\n    Док.Область(\"R1C1\").Текст = \"Ключ заявки\"; Док.Область(\"R1C2\").Текст = \"Минуты\";\n    Док.Область(\"R2C1\").Текст = Строка(Данные.Первая.УникальныйИдентификатор());\n    Док.Область(\"R3C1\").Текст = Строка(Данные.Вторая.УникальныйИдентификатор());\n    Док.Область(\"R2C2\").СодержитЗначение = Истина; Док.Область(\"R2C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R2C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R2C2\").Значение = Данные.Первая.ДлительностьМинут;\n    Док.Область(\"R3C2\").СодержитЗначение = Истина; Док.Область(\"R3C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R3C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R3C2\").Значение = Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R4C1\").Текст = \"Итого, минуты\"; Док.Область(\"R4C2\").СодержитЗначение = Истина; Док.Область(\"R4C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R4C2\").Формат = \"ЧДЦ=0; ЧН=0\";\n    Док.Область(\"R4C2\").Значение = Данные.Первая.ДлительностьМинут + Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R1C1:R4C1\").ШиринаКолонки = 46; Док.Область(\"R1C2:R4C2\").ШиринаКолонки = 15;\n    Возврат Док;\nКонецФункции\n\nФункция ОпытНуляВСнимке() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
       },
       {
-        "id": "step-2",
-        "title": "Inspect the exact object",
-        "where": "Предприятие → Отчёты → ЗаявкиПоКлиентам",
-        "action": "Label the own 30/45 set with customer key, period and minutes. A spreadsheet document displays results but does not become the accounting source. Do not parse formatted/rounded text back into subsequent calculations.",
-        "why": "Define the evidence boundary.",
-        "expected": "The input and intended output are explicit.",
-        "troubleshooting": "A filename/presentation alone establishes neither identity nor trust.",
-        "before": "Own path and references recorded."
-      },
-      {
-        "id": "step-3",
-        "title": "Perform the admitted action",
-        "where": "Предприятие → Сформировать → стандартный просмотр",
-        "action": "Open the own report and Generate. If the official edition permits Print/Save, use standard preview and a separate result file. Training editions may restrict this: record unavailability and reconcile on screen without bypassing limits.",
-        "why": "Observe only permitted operations.",
-        "expected": "Readable output matches source facts; print availability stated honestly.",
-        "troubleshooting": "Keep unavailable commands and denied admission visible in the protocol.",
-        "before": "The input and intended output are explicit."
-      },
-      {
-        "id": "step-4",
-        "title": "Check the adverse case",
-        "where": "Протокол своей работы",
-        "action": "Treat rounded display text as independent proof of source arithmetic.",
-        "why": "Avoid a misleading success claim.",
-        "expected": "Rejected: source numbers and rounding rules are needed.",
-        "troubleshooting": "An intentional NOT RUN is not failed execution or a native PASS.",
-        "before": "Readable output matches source facts; print availability stated honestly."
-      },
-      {
-        "id": "step-5",
-        "title": "Retain and explain",
-        "where": "Собственная папка результатов",
-        "action": "Reread requests and confirm report viewing changed no durations. Retain only synthetic screenshots and command availability with version. Missing print support neither validates a wrong total nor makes Sandbox mandatory.",
-        "why": "Make the decision reproducible.",
-        "expected": "Source/evidence and untested limits retained.",
-        "troubleshooting": "Export only original/synthetic material.",
-        "before": "Rejected: source numbers and rounding rules are needed."
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытНуляВСнимке();\n    Сообщить(\"Итого, минуты: \" + Строка(Р.Итог));\n    Сообщить(\"Ноль — число: \" + Строка(Р.НольЧислом));\n    Сообщить(\"Ноль виден как 0: \" + Строка(Р.НольПодписан));\n    Сообщить(\"Пустая ячейка отдельно: \" + Строка(Р.ПустоОтдельно));\n    Сообщить(\"Источник сохранён: \" + Строка(Р.ИсточникСохранён));\nКонецПроцедуры\n"
       }
     ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТабличныйСнимокОпыта(Данные) Экспорт\n    Док = Новый ТабличныйДокумент;\n    Док.Область(\"R1C1\").Текст = \"Ключ заявки\"; Док.Область(\"R1C2\").Текст = \"Минуты\";\n    Док.Область(\"R2C1\").Текст = Строка(Данные.Первая.УникальныйИдентификатор());\n    Док.Область(\"R3C1\").Текст = Строка(Данные.Вторая.УникальныйИдентификатор());\n    Док.Область(\"R2C2\").СодержитЗначение = Истина; Док.Область(\"R2C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R2C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R2C2\").Значение = Данные.Первая.ДлительностьМинут;\n    Док.Область(\"R3C2\").СодержитЗначение = Истина; Док.Область(\"R3C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R3C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R3C2\").Значение = Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R4C1\").Текст = \"Итого, минуты\"; Док.Область(\"R4C2\").СодержитЗначение = Истина; Док.Область(\"R4C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R4C2\").Формат = \"ЧДЦ=0; ЧН=0\";\n    Док.Область(\"R4C2\").Значение = Данные.Первая.ДлительностьМинут + Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R1C1:R4C1\").ШиринаКолонки = 46; Док.Область(\"R1C2:R4C2\").ШиринаКолонки = 15;\n    Возврат Док;\nКонецФункции\n\nФункция ОпытНуляВСнимке() Экспорт\n    Д = НовыйНаборРегистров(20,0); Док = ТабличныйСнимокОпыта(Д);\n    Возврат Новый Структура(\"Итог,НольЧислом,НольПодписан,ПустоОтдельно,ИсточникСохранён\",Док.Область(\"R4C2\").Значение,Док.Область(\"R3C2\").Значение = 0,Док.Область(\"R3C2\").Текст = \"0\",Док.Область(\"R5C2\").Текст = \"\",Д.Первая.ДлительностьМинут = 20 И Д.Вторая.ДлительностьМинут = 0);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТабличныйСнимокОпыта(Данные) Экспорт\n    Док = Новый ТабличныйДокумент;\n    Док.Область(\"R1C1\").Текст = \"Ключ заявки\"; Док.Область(\"R1C2\").Текст = \"Минуты\";\n    Док.Область(\"R2C1\").Текст = Строка(Данные.Первая.УникальныйИдентификатор());\n    Док.Область(\"R3C1\").Текст = Строка(Данные.Вторая.УникальныйИдентификатор());\n    Док.Область(\"R2C2\").СодержитЗначение = Истина; Док.Область(\"R2C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R2C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R2C2\").Значение = Данные.Первая.ДлительностьМинут;\n    Док.Область(\"R3C2\").СодержитЗначение = Истина; Док.Область(\"R3C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R3C2\").Формат = \"ЧДЦ=0; ЧН=0\"; Док.Область(\"R3C2\").Значение = Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R4C1\").Текст = \"Итого, минуты\"; Док.Область(\"R4C2\").СодержитЗначение = Истина; Док.Область(\"R4C2\").ТипЗначения = Новый ОписаниеТипов(\"Число\"); Док.Область(\"R4C2\").Формат = \"ЧДЦ=0; ЧН=0\";\n    Док.Область(\"R4C2\").Значение = Данные.Первая.ДлительностьМинут + Данные.Вторая.ДлительностьМинут;\n    Док.Область(\"R1C1:R4C1\").ШиринаКолонки = 46; Док.Область(\"R1C2:R4C2\").ШиринаКолонки = 15;\n    Возврат Док;\nКонецФункции\n\nФункция ОпытНуляВСнимке() Экспорт\n    Д = НовыйНаборРегистров(20,0); Док = ТабличныйСнимокОпыта(Д);\n    Возврат Новый Структура(\"Итог,НольЧислом,НольПодписан,ПустоОтдельно,ИсточникСохранён\",Док.Область(\"R4C2\").Значение,Док.Область(\"R3C2\").Значение = 0,Док.Область(\"R3C2\").Текст = \"0\",Док.Область(\"R5C2\").Текст = \"\",Д.Первая.ДлительностьМинут = 20 И Д.Вторая.ДлительностьМинут = 0);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытНуляВСнимке();\n    Сообщить(\"Итого, минуты: \" + Строка(Р.Итог));\n    Сообщить(\"Ноль — число: \" + Строка(Р.НольЧислом));\n    Сообщить(\"Ноль виден как 0: \" + Строка(Р.НольПодписан));\n    Сообщить(\"Пустая ячейка отдельно: \" + Строка(Р.ПустоОтдельно));\n    Сообщить(\"Источник сохранён: \" + Строка(Р.ИсточникСохранён));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Own path and references recorded."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "The input and intended output are explicit."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Readable output matches source facts; print availability stated honestly."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "Rejected: source numbers and rounding rules are needed."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Source/evidence and untested limits retained."
+        "label": "New independent task",
+        "input": "20 and 0 minutes; a numeric cell, explicit zero formatting, and a separate empty cell.",
+        "output": "Итого, минуты: 20\nНоль — число: Да\nНоль виден как 0: Да\nПустая ячейка отдельно: Да\nИсточник сохранён: Да"
       }
     ],
     "criteria": [
-      "Units/provenance explicit.",
-      "Facts and display agree.",
-      "Limits respected.",
-      "Exact own source and version; actual keys, observations and expected versus actual table.",
-      "Original and changed-copy results, failed attempts and untested environment limits.",
-      "Treat rounded display text as independent proof of source arithmetic."
+      "Expect labelled values 20, Да, Да, Да, Да; zero and blank have separate checks.",
+      "Specify numeric type and zero presentation separately; preserve source values 20/0 after generation.",
+      "Distinguish generating a snapshot, displaying it, actual printing, and exporting. Establishing one does not establish the others."
     ],
-    "hint": "Reconcile actual references, units and raw values before presentation.",
-    "exercises": [
+    "hint": "The snapshot saves no source document. The worked client displays the same object checked by the function. New 20/0 data distinguish zero from blank in the independent task. Printing and export remain separate, unverified actions.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Label required output metadata.",
-        "criteria": "Units/provenance explicit."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Generate and reconcile source versus display.",
-        "criteria": "Facts and display agree."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Preserve earlier work/DT and use only your synthetic requests.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
       },
       {
-        "level": "Advanced",
-        "task": "Test a long name/missing value and record print availability.",
-        "criteria": "Limits respected."
+        "where": "Общие → Общие модули → УчебныеОтчёты",
+        "action": "УчебныеОтчёты common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": null,
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -299,12 +380,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p9-printing.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p9-topic-4-author-v1",
     "quiz": [
+      {
+        "question": "After building a snapshot without saving the source requests, what should remain in the infobase?",
+        "options": [
+          "The original 30 and 45",
+          "Both requests become 75",
+          "Documents turn into report rows"
+        ],
+        "correct": 0,
+        "explanation": "30 and 45. A spreadsheet document is a separate presentation of read data. The 75 total is not a command to update each source document."
+      },
       {
         "question": "A spreadsheet document is",
         "options": [
@@ -334,7 +421,31 @@
         ],
         "correct": 2,
         "explanation": "Formatting does not replace arithmetic."
+      },
+      {
+        "question": "Why does visible text 0 not establish a numeric zero?",
+        "options": [
+          "Text and numeric type are different properties",
+          "Every cell is always numeric",
+          "Blank and zero are always identical"
+        ],
+        "correct": 0,
+        "explanation": "Distinguish generating a snapshot, displaying it, actual printing, and exporting. Establishing one does not establish the others."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p9.topic-4.en.json"
 }
