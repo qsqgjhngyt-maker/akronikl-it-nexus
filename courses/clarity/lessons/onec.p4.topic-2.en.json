@@ -1,23 +1,31 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p4-topic-2-author-v1",
   "id": "onec.p4.topic-2",
   "courseId": "onec",
   "moduleId": "onec.p4",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Metadata design",
   "locale": "en",
-  "title": "A request reference survives a customer rename",
+  "title": "A request stores a relation: what survives a rename",
   "goal": "Write a request with references, rename its customer and reread the same document to verify relationship and minutes.",
   "prerequisites": [
     {
-      "text": "onec.p3; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P3. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A request must identify which customer ordered the service. Their name changes today. Check whether the request needs rewriting to show the new name and what must stay unchanged.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "A reference is not an edit buffer",
       "paragraphs": [
         "A reference identifies an item; obtaining its object provides editable state. Changing an object field in memory does not prove persistence. Two objects may reflect different read times. Do not save a stale object after another change without an agreed conflict strategy.",
@@ -25,21 +33,38 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Document data and reference presentation",
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
       "paragraphs": [
-        "The complete function below runs in a server common module, not in the browser."
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "Заявка.Клиент = Клиент.Ссылка;\nЗаявка.ДлительностьМинут = 30;\nЗаявка.Записать();\nКлиент.Наименование = \"Учебная связь — после\";\nКлиент.Записать();",
-        "output": "The reread request retains the same reference and 30 minutes, while the customer’s current name changes."
+        "language": "bsl",
+        "source": "Функция ОпытСвязаннойЗаявки() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебная связь — до\";\n    Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная проверка ссылки\";\n    Услуга.ТарифЗаЧас = 600;\n    Услуга.Записать();\n    Заявка = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Заявка.Дата = Дата(2026, 11, 2, 10, 0, 0);\n    Заявка.Клиент = Клиент.Ссылка;\n    Заявка.Услуга = Услуга.Ссылка;\n    Заявка.ДлительностьМинут = 30;\n    Заявка.Статус = Перечисления.СтатусыЗаявки.Новая;\n    Заявка.Комментарий = \"Собственная учебная проверка связи\";\n    Заявка.Записать();\n    СсылкаКлиента = Клиент.Ссылка;\n    Клиент.Наименование = \"Учебная связь — после\";\n    Клиент.Записать();\n    Повторно = Заявка.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"СвязьСохранена,МинутыСохранены,ТекущееИмя\",\n        Повторно.Клиент = СсылкаКлиента, Повторно.ДлительностьМинут = 30,\n        Повторно.Клиент.Наименование);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The document stores customer and service references rather than copied captions. After renaming the customer, reread the same document: its reference and 30 minutes should remain, while the customer name comes from the related record.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСвязаннойЗаявки();\n    Сообщить(\"Клиент тот же: \" + Строка(Результат.СвязьСохранена));\n    Сообщить(\"30 минут сохранены: \" + Строка(Результат.МинутыСохранены));\n    Сообщить(\"Новое имя клиента: \" + Строка(Результат.ТекущееИмя));\nКонецПроцедуры\n",
+        "output": "Клиент тот же: Да\n30 минут сохранены: Да\nНовое имя клиента: Учебная связь — после",
+        "files": {
+          "Данные.bsl": "Функция ОпытСвязаннойЗаявки() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебная связь — до\";\n    Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная проверка ссылки\";\n    Услуга.ТарифЗаЧас = 600;\n    Услуга.Записать();\n    Заявка = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Заявка.Дата = Дата(2026, 11, 2, 10, 0, 0);\n    Заявка.Клиент = Клиент.Ссылка;\n    Заявка.Услуга = Услуга.Ссылка;\n    Заявка.ДлительностьМинут = 30;\n    Заявка.Статус = Перечисления.СтатусыЗаявки.Новая;\n    Заявка.Комментарий = \"Собственная учебная проверка связи\";\n    Заявка.Записать();\n    СсылкаКлиента = Клиент.Ссылка;\n    Клиент.Наименование = \"Учебная связь — после\";\n    Клиент.Записать();\n    Повторно = Заявка.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"СвязьСохранена,МинутыСохранены,ТекущееИмя\",\n        Повторно.Клиент = СсылкаКлиента, Повторно.ДлительностьМинут = 30,\n        Повторно.Клиент.Наименование);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСвязаннойЗаявки();\n    Сообщить(\"Клиент тот же: \" + Строка(Результат.СвязьСохранена));\n    Сообщить(\"30 минут сохранены: \" + Строка(Результат.МинутыСохранены));\n    Сообщить(\"Новое имя клиента: \" + Строка(Результат.ТекущееИмя));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
+            "Action",
             "Observation",
             "Reason"
           ],
@@ -69,7 +94,7 @@
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "An empty reference is not an unknown string",
       "paragraphs": [
         "A typed empty reference differs fromUndefined and an empty-name string. Existence checks follow the API and business rule. FindByCode does not create an absent item. Handle absence beforeGetObject so diagnostics identify the missing customer rather than a later incidental error.",
@@ -77,7 +102,21 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "The customer is renamed without replacing the request’s reference. Which name will a fresh read through the customer reference return?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "The new name. The relation still points to that customer record; it is not the old name copied into the document. A historical caption as of a date requires a separate design."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Attribute reads have a cost",
       "paragraphs": [
         "Reference access looks simple, but mass traversal can cause many calls. An object suits one card; reports across many rows often need a query selecting required fields. Do not infer performance from code appearance: count calls and measure equal datasets first. P7 examines queries in detail.",
@@ -85,41 +124,59 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "Correct relationship, incorrect other field",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "The compilable variant was executed separately and detected by an assertion."
+        "The arrows preserve the request’s relation to α while the related record’s caption changes. In the independent task you will replace the service relation explicitly, which requires assignment and saving the document.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "In a separate incorrect copy: Заявка.ДлительностьМинут = 31;",
-        "output": "The reference claim passes and the 30-minute expectation fails."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Reference",
-              "Same identity",
-              "Not proof of every field."
-            ],
-            [
-              "Minutes",
-              "31 instead of 30",
-              "A semantic discrepancy is detected."
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Request",
+            "lines": [
+              "Client α"
             ]
-          ]
-        }
+          },
+          {
+            "title": "New name",
+            "lines": [
+              "Client α"
+            ]
+          },
+          {
+            "title": "Fresh read",
+            "lines": [
+              "Заявка"
+            ]
+          },
+          {
+            "title": "Relation",
+            "lines": [
+              "Client α"
+            ]
+          }
+        ],
+        "alternative": [
+          "Request: Client α",
+          "New name: Client α",
+          "Fresh read: Заявка",
+          "Relation: Client α"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Looking up by name instead of keeping the reference can pick another customer with that name. Compare freshly read document references with the specific references you preserved; matching names do not replace that check.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Persistence needs a fresh read",
       "paragraphs": [
         "Find an item, change its name through the object, write it and obtain a fresh object. Compare identity and value. Test an absent code without implicit creation. Preserve before/after snapshots and verify a linked request still references the same customer.",
@@ -127,16 +184,58 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "Name text is mistaken for a stored customer reference. Select an existing item and verify its reference and actual code.",
-        "A current linked name is treated as a dated snapshot. Specify historical text requirements and storage separately.",
-        "A correct reference is treated as verification of the whole request. Reread and independently compare all other required fields."
+        "Create a new 45-minute request for a new training customer and service A, then save it. Replace the service on that same document with new service B and save again. Rename B and reread the request: show the same document and customer, B instead of A, preserved 45 minutes, and B’s new name.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p4-reference-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "1859ed75cfe1dc289c055889be898c476de32e779c42fc6cd9f99ece3837bc93",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Distinguish a rename from replacing a relation; preserve previous training records."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "The customer is renamed without replacing the request’s reference. Which name will a fresh read through the customer reference return?",
+      "options": [
+        "The same customer’s new name",
+        "Always the old name",
+        "The first customer in the list"
+      ],
+      "correct": 0,
+      "feedback": "The new name. The relation still points to that customer record; it is not the old name copied into the document. A historical caption as of a date requires a separate design.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -147,7 +246,8 @@
         "Turned into a course number"
       ],
       "correct": 0,
-      "feedback": "The relationship uses item identity."
+      "feedback": "The relationship uses item identity.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -159,7 +259,8 @@
         "Nexus test text"
       ],
       "correct": 1,
-      "feedback": "Historical snapshots require design."
+      "feedback": "Historical snapshots require design.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -171,150 +272,104 @@
         "Still need an independent check"
       ],
       "correct": 2,
-      "feedback": "Fields require separate claims."
+      "feedback": "Fields require separate claims.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Are renaming a service and assigning another reference to Услуга the same operation?",
+      "options": [
+        "No: the name and relation change through different actions",
+        "Yes: only the caption matters",
+        "Yes: both delete the request"
+      ],
+      "correct": 0,
+      "feedback": "Distinguish a rename from replacing a relation; preserve previous training records.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Investigate 31 instead of 30 in a copy and design historical presentation if required.",
-      "feedback": "Duration error is detected independently; history needs an explicit field/rule."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Reread a related request after renaming",
-    "task": "Investigate 31 instead of 30 in a copy and design historical presentation if required.",
-    "environment": "Official installed training1C; your copy has Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки. Actual BSL execution, optional Studio.",
-    "externalRoute": "Same experiment-base Designer → УчебныеДанные common module → managed Enterprise",
+    "title": "A request stores a relation: what survives a rename",
+    "task": "Create a new 45-minute request for a new training customer and service A, then save it. Replace the service on that same document with new service B and save again. Rename B and reread the request: show the same document and customer, B instead of A, preserved 45 minutes, and B’s new name.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "Функция ОпытСвязаннойЗаявки() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебная связь — до\";\n    Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная проверка ссылки\";\n    Услуга.ТарифЗаЧас = 600;\n    Услуга.Записать();\n    Заявка = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Заявка.Дата = Дата(2026, 11, 2, 10, 0, 0);\n    Заявка.Клиент = Клиент.Ссылка;\n    Заявка.Услуга = Услуга.Ссылка;\n    Заявка.ДлительностьМинут = 30;\n    Заявка.Статус = Перечисления.СтатусыЗаявки.Новая;\n    Заявка.Комментарий = \"Собственная учебная проверка связи\";\n    Заявка.Записать();\n    СсылкаКлиента = Клиент.Ссылка;\n    Клиент.Наименование = \"Учебная связь — после\";\n    Клиент.Записать();\n    Повторно = Заявка.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"СвязьСохранена,МинутыСохранены,ТекущееИмя\",\n        Повторно.Клиент = СсылкаКлиента, Повторно.ДлительностьМинут = 30,\n        Повторно.Клиент.Наименование);\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "Функция ОпытДругойУслуги() Экспорт\n    // TODO: implement the independent task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытДругойУслуги();\n    Сообщить(\"Заявка та же: \" + Строка(Результат.ТаЖеЗаявка));\n    Сообщить(\"Клиент тот же: \" + Строка(Результат.КлиентТотЖе));\n    Сообщить(\"Выбрана другая услуга: \" + Строка(Результат.УслугаЗаменена));\n    Сообщить(\"45 минут сохранены: \" + Строка(Результат.МинутыСохранены));\n    Сообщить(\"Имя выбранной услуги: \" + Строка(Результат.ИмяУслуги));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "copy",
-        "title": "Verify the continuing copy",
-        "where": "Copy Designer",
-        "action": "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
-        "why": "Preserve prior functions and records.",
-        "expected": "Correct copy and module identified.",
-        "troubleshooting": "Return to the preceding preparation route if the metadata is absent.",
-        "before": "The previous P4 experiment base and provenance are retained; УчебныеДанные has server/server-call enabled without global or privileged mode."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытДругойУслуги() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный клиент для 45 минут\";\n    Клиент.Записать();\n    Первая = Справочники.Услуги.СоздатьЭлемент();\n    Первая.Наименование = \"Учебная услуга А\";\n    Первая.ТарифЗаЧас = 600;\n    Первая.Записать();\n    Вторая = Справочники.Услуги.СоздатьЭлемент();\n    Вторая.Наименование = \"Учебная услуга Б\";\n    Вторая.ТарифЗаЧас = 900;\n    Вторая.Записать();\n    Заявка = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Заявка.Дата = Дата(2026, 11, 8, 10, 0, 0);\n    Заявка.Клиент = Клиент.Ссылка;\n    Заявка.Услуга = Первая.Ссылка;\n    Заявка.ДлительностьМинут = 45;\n    Заявка.Статус = Перечисления.СтатусыЗаявки.ВРаботе;\n    Заявка.Комментарий = \"Отдельный учебный опыт замены ссылки\";\n    Заявка.Записать();\n    СсылкаЗаявки = Заявка.Ссылка;\n    Заявка.Услуга = Вторая.Ссылка;\n    Заявка.Записать();\n    Вторая.Наименование = \"Учебная услуга Б — новое имя\";\n    Вторая.Записать();\n    Повторно = СсылкаЗаявки.ПолучитьОбъект();\n    Возврат Новый Структура(\"ТаЖеЗаявка,КлиентТотЖе,УслугаЗаменена,МинутыСохранены,ИмяУслуги\",\n        Повторно.Ссылка = СсылкаЗаявки, Повторно.Клиент = Клиент.Ссылка,\n        Повторно.Услуга = Вторая.Ссылка И Повторно.Услуга <> Первая.Ссылка,\n        Повторно.ДлительностьМинут = 45, Повторно.Услуга.Наименование);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытДругойУслуги() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный клиент для 45 минут\";\n    Клиент.Записать();\n    Первая = Справочники.Услуги.СоздатьЭлемент();\n    Первая.Наименование = \"Учебная услуга А\";\n    Первая.ТарифЗаЧас = 600;\n    Первая.Записать();\n    Вторая = Справочники.Услуги.СоздатьЭлемент();\n    Вторая.Наименование = \"Учебная услуга Б\";\n    Вторая.ТарифЗаЧас = 900;\n    Вторая.Записать();\n    Заявка = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Заявка.Дата = Дата(2026, 11, 8, 10, 0, 0);\n    Заявка.Клиент = Клиент.Ссылка;\n    Заявка.Услуга = Первая.Ссылка;\n    Заявка.ДлительностьМинут = 45;\n    Заявка.Статус = Перечисления.СтатусыЗаявки.ВРаботе;\n    Заявка.Комментарий = \"Отдельный учебный опыт замены ссылки\";\n    Заявка.Записать();\n    СсылкаЗаявки = Заявка.Ссылка;\n    Заявка.Услуга = Вторая.Ссылка;\n    Заявка.Записать();\n    Вторая.Наименование = \"Учебная услуга Б — новое имя\";\n    Вторая.Записать();\n    Повторно = СсылкаЗаявки.ПолучитьОбъект();\n    Возврат Новый Структура(\"ТаЖеЗаявка,КлиентТотЖе,УслугаЗаменена,МинутыСохранены,ИмяУслуги\",\n        Повторно.Ссылка = СсылкаЗаявки, Повторно.Клиент = Клиент.Ссылка,\n        Повторно.Услуга = Вторая.Ссылка И Повторно.Услуга <> Первая.Ссылка,\n        Повторно.ДлительностьМинут = 45, Повторно.Услуга.Наименование);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытДругойУслуги();\n    Сообщить(\"Заявка та же: \" + Строка(Результат.ТаЖеЗаявка));\n    Сообщить(\"Клиент тот же: \" + Строка(Результат.КлиентТотЖе));\n    Сообщить(\"Выбрана другая услуга: \" + Строка(Результат.УслугаЗаменена));\n    Сообщить(\"45 минут сохранены: \" + Строка(Результат.МинутыСохранены));\n    Сообщить(\"Имя выбранной услуги: \" + Строка(Результат.ИмяУслуги));\nКонецПроцедуры\n"
       },
-      {
-        "id": "function",
-        "title": "Append the function",
-        "where": "Общие → Общие модули → УчебныеДанные",
-        "action": "Append the complete source below outside existing procedures/functions. Reuse an existing identical function from your earlier attempt rather than defining it twice.",
-        "why": "Keep definitions at common-module scope.",
-        "expected": "One new exported function; previous work intact.",
-        "troubleshooting": "Check module name, export and server context instead of enabling privilege.",
-        "before": "Correct copy and module identified."
-      },
-      {
-        "id": "caller",
-        "title": "Add only the client call",
-        "where": "Root → application module → startup handler",
-        "action": "Inside the existing handler insert these statements, retaining other code separately:\nРезультат = УчебныеДанные.ОпытСвязаннойЗаявки();\nСообщить(Результат.СвязьСохранена);\nСообщить(Результат.МинутыСохранены);\nСообщить(Результат.ТекущееИмя);",
-        "why": "Call the server function from the managed application.",
-        "expected": "The handler calls the function, not its definition.",
-        "troubleshooting": "Do not nest a function definition or add a second startup handler.",
-        "before": "One new exported function; previous work intact."
-      },
-      {
-        "id": "run",
-        "title": "Run and record actual results",
-        "where": "Ctrl+S → F7 → 1С:Предприятие",
-        "action": "Save, update the copy, launch once and compare every returned field with the prediction. Record actual codes/numbers for any created items.",
-        "why": "Separate predicted behavior from platform observation.",
-        "expected": "True, True and Учебная связь — после. A separate synthetic 30-minute request is available.",
-        "troubleshooting": "Preserve the specific module/line and discrepancy; do not alter expectations to obtain PASS.",
-        "before": "The handler calls the function, not its definition."
-      },
-      {
-        "id": "reconcile",
-        "title": "Inspect the actual objects",
-        "where": "Enterprise lists and your control notes",
-        "action": "Reopen your newly created test item/document by its actual code/number and compare the claimed fields. Preserve all older records.",
-        "why": "A message alone does not cover unrelated data.",
-        "expected": "Claims and concrete records agree within the experiment scope.",
-        "troubleshooting": "Use identities rather than fixed row positions or equal names.",
-        "before": "True, True and Учебная связь — после. A separate synthetic 30-minute request is available."
-      },
-      {
-        "id": "finish",
-        "title": "Retain the work and stop startup repetition",
-        "where": "Designer after closing Enterprise",
-        "action": "Remove only this experiment call from startup or restore the saved handler. Retain the function, results and previous work; save and update the copy.",
-        "why": "Ordinary reopening must not repeatedly create demonstration data.",
-        "expected": "Observation retained and automatic repetition stopped.",
-        "troubleshooting": "Do not remove whole modules or clear other records.",
-        "before": "Claims and concrete records agree within the experiment scope."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Correct copy and module identified."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "One new exported function; previous work intact."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "The handler calls the function, not its definition."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "True, True and Учебная связь — после. A separate synthetic 30-minute request is available."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Claims and concrete records agree within the experiment scope."
-      },
-      {
-        "label": "Observation 6",
-        "input": "",
-        "output": "Observation retained and automatic repetition stopped."
+        "label": "New independent task",
+        "input": "New request: 45 minutes, ВРаботе status. Service A is replaced by B; B is then renamed.",
+        "output": "Заявка та же: Да\nКлиент тот же: Да\nВыбрана другая услуга: Да\n45 минут сохранены: Да\nИмя выбранной услуги: Учебная услуга Б — новое имя"
       }
     ],
     "criteria": [
-      "Three properties separated without promising historical names.",
-      "Relationship and 30 minutes retained, new name observed; prior work intact.",
-      "Duration error is detected independently; history needs an explicit field/rule.",
-      "Platform version, own-copy provenance, exact function and observed results.",
-      "Actual synthetic identities/fields and the explained negative control; no real data.",
-      "Investigate the stated compilable incorrect variant only in another own experimental copy; preserve the original."
+      "The request and customer references stay the same; the service reference changes explicitly.",
+      "Check 45 minutes and the new name after rereading the document.",
+      "Distinguish a rename from replacing a relation; preserve previous training records."
     ],
-    "hint": "Select an existing item and verify its reference and actual code.",
-    "exercises": [
+    "hint": "The arrows preserve the request’s relation to α while the related record’s caption changes. In the independent task you will replace the service relation explicitly, which requires assignment and saving the document.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Predict reference, duration and presentation after renaming.",
-        "criteria": "Three properties separated without promising historical names."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Run the function, reopen your request by its actual number and inspect its customer.",
-        "criteria": "Relationship and 30 minutes retained, new name observed; prior work intact."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
       },
       {
-        "level": "Advanced",
-        "task": "Investigate 31 instead of 30 in a copy and design historical presentation if required.",
-        "criteria": "Duration error is detected independently; history needs an explicit field/rule."
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/metadata-reference-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "catalog",
@@ -327,12 +382,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p4-references.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p4-topic-2-author-v1",
     "quiz": [
+      {
+        "question": "The customer is renamed without replacing the request’s reference. Which name will a fresh read through the customer reference return?",
+        "options": [
+          "The same customer’s new name",
+          "Always the old name",
+          "The first customer in the list"
+        ],
+        "correct": 0,
+        "explanation": "The new name. The relation still points to that customer record; it is not the old name copied into the document. A historical caption as of a date requires a separate design."
+      },
       {
         "question": "Renaming the same customer leaves the request reference",
         "options": [
@@ -362,7 +423,31 @@
         ],
         "correct": 2,
         "explanation": "Fields require separate claims."
+      },
+      {
+        "question": "Are renaming a service and assigning another reference to Услуга the same operation?",
+        "options": [
+          "No: the name and relation change through different actions",
+          "Yes: only the caption matters",
+          "Yes: both delete the request"
+        ],
+        "correct": 0,
+        "explanation": "Distinguish a rename from replacing a relation; preserve previous training records."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p4.topic-2.en.json"
 }

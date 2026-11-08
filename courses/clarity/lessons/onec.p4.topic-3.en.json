@@ -1,45 +1,70 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p4-topic-3-author-v1",
   "id": "onec.p4.topic-3",
   "courseId": "onec",
   "moduleId": "onec.p4",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Metadata design",
   "locale": "en",
-  "title": "Attribute types and enumeration values are different levels",
+  "title": "Field types and values: why “42” and 42 fit differently",
   "goal": "Read actual metadata types and distinguish the Новая enumeration value from identically named text.",
   "prerequisites": [
     {
-      "text": "onec.p3; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P3. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
-      "title": "Enumerations define finite values",
+      "id": "orientation",
+      "title": "The question we are checking",
       "paragraphs": [
-        "New, InProgress andClosed are developer-defined states changed through configuration, so an enumeration suits them. User-maintained services suit a catalog. Do not choose enumeration merely because today’s list is short; consider who changes it and how.",
-        "The function reads document attributes and two type descriptions. СодержитТип checks permitted customer-reference and numeric types. ТипЗнч separately examines the actual Новая value as ПеречислениеСсылка.СтатусыЗаявки. The string \"Новая\" remains text despite a familiar caption."
+        "Two values can look identical on screen while metadata permits particular types. Separate the description of allowed values from an actual value and check the difference without changing the schema.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
     },
     {
-      "id": "example-1",
-      "title": "Field description versus actual value",
+      "id": "concept-0",
+      "title": "Enumerations define finite values",
       "paragraphs": [
-        "СодержитТип inspects a field description; ТипЗнч inspects an actual value."
+        "New, InProgress andClosed are developer-defined states changed through configuration, so an enumeration suits them. User-maintained services suit a catalog. Do not choose enumeration merely because today’s list is short; consider who changes it and how.",
+        "The function reads document attributes and two type descriptions. СодержитТип checks permitted customer-reference and numeric types. ТипЗнч separately examines the type of the actual Новая value as an enumeration reference for request statuses. The string \"Новая\" remains text despite a familiar caption."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "ТипКлиента.СодержитТип(Тип(\"СправочникСсылка.Клиенты\"));\nТипМинут.СодержитТип(Тип(\"Число\"));\nТипЗнч(Перечисления.СтатусыЗаявки.Новая);",
-        "output": "Customer reference, numeric minutes and a typed status value are distinguished."
+        "language": "bsl",
+        "source": "Функция ОпытТиповМетаданных() Экспорт\n    Поля = Метаданные.Документы.ЗаявкаУслуги.Реквизиты;\n    ТипКлиента = Поля.Клиент.Тип;\n    ТипМинут = Поля.ДлительностьМинут.Тип;\n    Статус = Перечисления.СтатусыЗаявки.Новая;\n    Возврат Новый Структура(\"КлиентСсылка,МинутыЧисло,СтатусПеречисление,СтрокаНеСтатус\",\n        ТипКлиента.СодержитТип(Тип(\"СправочникСсылка.Клиенты\")),\n        ТипМинут.СодержитТип(Тип(\"Число\")),\n        ТипЗнч(Статус) = Тип(\"ПеречислениеСсылка.СтатусыЗаявки\"),\n        ТипЗнч(\"Новая\") <> ТипЗнч(Статус));\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The worked example reads real document attribute types and the type of an enumeration value. The string “Новая” does not become an enumeration value through matching spelling. Type checks do not replace range constraints or business rules.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытТиповМетаданных();\n    Сообщить(\"Тип клиента — ссылка: \" + Строка(Результат.КлиентСсылка));\n    Сообщить(\"Тип минут — число: \" + Строка(Результат.МинутыЧисло));\n    Сообщить(\"Статус — перечисление: \" + Строка(Результат.СтатусПеречисление));\n    Сообщить(\"Строка — другой тип: \" + Строка(Результат.СтрокаНеСтатус));\nКонецПроцедуры\n",
+        "output": "Тип клиента — ссылка: Да\nТип минут — число: Да\nСтатус — перечисление: Да\nСтрока — другой тип: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытТиповМетаданных() Экспорт\n    Поля = Метаданные.Документы.ЗаявкаУслуги.Реквизиты;\n    ТипКлиента = Поля.Клиент.Тип;\n    ТипМинут = Поля.ДлительностьМинут.Тип;\n    Статус = Перечисления.СтатусыЗаявки.Новая;\n    Возврат Новый Структура(\"КлиентСсылка,МинутыЧисло,СтатусПеречисление,СтрокаНеСтатус\",\n        ТипКлиента.СодержитТип(Тип(\"СправочникСсылка.Клиенты\")),\n        ТипМинут.СодержитТип(Тип(\"Число\")),\n        ТипЗнч(Статус) = Тип(\"ПеречислениеСсылка.СтатусыЗаявки\"),\n        ТипЗнч(\"Новая\") <> ТипЗнч(Статус));\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытТиповМетаданных();\n    Сообщить(\"Тип клиента — ссылка: \" + Строка(Результат.КлиентСсылка));\n    Сообщить(\"Тип минут — число: \" + Строка(Результат.МинутыЧисло));\n    Сообщить(\"Статус — перечисление: \" + Строка(Результат.СтатусПеречисление));\n    Сообщить(\"Строка — другой тип: \" + Строка(Результат.СтрокаНеСтатус));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
+            "Action",
             "Observation",
             "Reason"
           ],
@@ -69,7 +94,7 @@
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "An empty value needs meaning",
       "paragraphs": [
         "A new request may default toNew; an older missing status may need handling. Never silently treat empty asClosed. Distinguish absence, an allowed enumeration value and a similar-looking string. Strong typing helps, but transition correctness remains an application rule.",
@@ -77,7 +102,21 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "The string “Новая” is spelled like the Новая enumeration value. Do their types match?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. Metadata describes the field, while an actual value has its own type. Matching presentation does not convert one into the other. Choose the proper enumeration value before assigning it to the attribute."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Transitions form a directed graph",
       "paragraphs": [
         "New → InProgress andInProgress → Closed may be allowed; Closed → New may require a special command. Enforce the allowed-pair table centrally, not only through button availability. Adding a state requires updating transitions, filters, reports and tests or the new value may be mishandled.",
@@ -85,41 +124,59 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "Incorrect expected type",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "The incorrect assertion was executed natively without schema changes."
+        "The new task goes from the Комментарий type description to the input value’s type. Number and string look similar but give different answers. Neither the field nor the inputs are rewritten.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "In a separate incorrect copy: ТипМинут.СодержитТип(Тип(\"Строка\"))",
-        "output": "The numeric-field claim fails despite valid syntax."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Metadata",
-              "Minutes are numeric",
-              "Structure unchanged."
-            ],
-            [
-              "Wrong expectation",
-              "String requested",
-              "The claim is false."
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Attribute",
+            "lines": [
+              "type"
             ]
-          ]
-        }
+          },
+          {
+            "title": "Value",
+            "lines": [
+              "42 / «42»"
+            ]
+          },
+          {
+            "title": "Compare",
+            "lines": [
+              "Number / String"
+            ]
+          },
+          {
+            "title": "Result",
+            "lines": [
+              "No / Yes"
+            ]
+          }
+        ],
+        "alternative": [
+          "Attribute: type",
+          "Value: 42 / «42»",
+          "Compare: Number / String",
+          "Result: No / Yes"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Comparing only Строка(Значение) can confuse different types. Check membership with the attribute’s type description and the value’s actual type. Validate the content separately: a valid type alone does not prove valid data.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Compatibility checks old data",
       "paragraphs": [
         "After changing enumeration values, check existing documents and saved report settings. Renaming an element technically differs from relabeling its synonym. Do not delete an in-use value for cosmetic reasons. Preserve prior references and test an invalid transition without a write.",
@@ -127,16 +184,58 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "The text \"Новая\" is treated as an enumeration value. Use Перечисления.СтатусыЗаявки.Новая and compare types explicitly.",
-        "A valid type is treated as sufficient domain validation. Test ranges and state transitions separately.",
-        "A referenced enumeration value is deleted to change its caption. Review presentation and migration separately while preserving references."
+        "Write a function that reads the document’s Комментарий attribute type and checks whether it includes the supplied value’s type. Compare the number 42 with the string “42”. Show both results and the preserved original string. Do not alter metadata to obtain a desired answer or write these probe values to documents.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Read metadata in your training copy and compare every labelled assertion with your prediction. These functions create no records and change no attribute types; remove only the added startup call after the experiment."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p4-types-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "5209af61d9ee6e3ade6f7e563c7ce4d06f58f3281189ec1f3b795dd52b9ab570",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain metadata, a value’s type, and business validity as separate matters."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "The string “Новая” is spelled like the Новая enumeration value. Do their types match?",
+      "options": [
+        "No: string and enumeration reference differ",
+        "Yes: spelling determines type",
+        "Yes: any text is a status"
+      ],
+      "correct": 0,
+      "feedback": "No. Metadata describes the field, while an actual value has its own type. Matching presentation does not convert one into the other. Choose the proper enumeration value before assigning it to the attribute.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -147,7 +246,8 @@
         "List sorting"
       ],
       "correct": 0,
-      "feedback": "They are metadata."
+      "feedback": "They are metadata.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -159,7 +259,8 @@
         "Always Undefined"
       ],
       "correct": 1,
-      "feedback": "Equal captions do not replace types."
+      "feedback": "Equal captions do not replace types.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -171,150 +272,104 @@
         "No, a separate rule is needed"
       ],
       "correct": 2,
-      "feedback": "Type and domain validation differ."
+      "feedback": "Type and domain validation differ.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "A value’s type is allowed by an attribute. Does that establish useful and valid content for the business task?",
+      "options": [
+        "No: content needs a separate contract",
+        "Yes: allowed types validate everything",
+        "Yes: printing the value is enough"
+      ],
+      "correct": 0,
+      "feedback": "Explain metadata, a value’s type, and business validity as separate matters.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Draw allowed transitions among three synthetic states and specify independent forbidden-transition tests.",
-      "feedback": "The graph is justified; its execution is not claimed by this type-inspection experiment."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Inspect types without data changes",
-    "task": "Draw allowed transitions among three synthetic states and specify independent forbidden-transition tests.",
-    "environment": "Official installed training1C; your copy has Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки. Actual BSL execution, optional Studio.",
-    "externalRoute": "Same experiment-base Designer → УчебныеДанные common module → managed Enterprise",
+    "title": "Field types and values: why “42” and 42 fit differently",
+    "task": "Write a function that reads the document’s Комментарий attribute type and checks whether it includes the supplied value’s type. Compare the number 42 with the string “42”. Show both results and the preserved original string. Do not alter metadata to obtain a desired answer or write these probe values to documents.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "Функция ОпытТиповМетаданных() Экспорт\n    Поля = Метаданные.Документы.ЗаявкаУслуги.Реквизиты;\n    ТипКлиента = Поля.Клиент.Тип;\n    ТипМинут = Поля.ДлительностьМинут.Тип;\n    Статус = Перечисления.СтатусыЗаявки.Новая;\n    Возврат Новый Структура(\"КлиентСсылка,МинутыЧисло,СтатусПеречисление,СтрокаНеСтатус\",\n        ТипКлиента.СодержитТип(Тип(\"СправочникСсылка.Клиенты\")),\n        ТипМинут.СодержитТип(Тип(\"Число\")),\n        ТипЗнч(Статус) = Тип(\"ПеречислениеСсылка.СтатусыЗаявки\"),\n        ТипЗнч(\"Новая\") <> ТипЗнч(Статус));\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "Функция ПодходитКомментарий(Знач Значение) Экспорт\n    // TODO: implement the independent task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n\nФункция ОпытКомментария() Экспорт\n    Возврат Новый Структура(\"ЧислоПодходит,СтрокаПодходит,ИсходнаяСтрока\",\n        ПодходитКомментарий(42), ПодходитКомментарий(\"42\"), \"42\");\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытКомментария();\n    Сообщить(\"Число 42 подходит: \" + Строка(Результат.ЧислоПодходит));\n    Сообщить(\"Строка 42 подходит: \" + Строка(Результат.СтрокаПодходит));\n    Сообщить(\"Исходная строка: \" + Строка(Результат.ИсходнаяСтрока));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "copy",
-        "title": "Verify the continuing copy",
-        "where": "Copy Designer",
-        "action": "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
-        "why": "Preserve prior functions and records.",
-        "expected": "Correct copy and module identified.",
-        "troubleshooting": "Return to the preceding preparation route if the metadata is absent.",
-        "before": "The previous P4 experiment base and provenance are retained; УчебныеДанные has server/server-call enabled without global or privileged mode."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ПодходитКомментарий(Знач Значение) Экспорт\n    ТипРеквизита = Метаданные.Документы.ЗаявкаУслуги.Реквизиты.Комментарий.Тип;\n    Возврат ТипРеквизита.СодержитТип(ТипЗнч(Значение));\nКонецФункции\n\nФункция ОпытКомментария() Экспорт\n    Возврат Новый Структура(\"ЧислоПодходит,СтрокаПодходит,ИсходнаяСтрока\",\n        ПодходитКомментарий(42), ПодходитКомментарий(\"42\"), \"42\");\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ПодходитКомментарий(Знач Значение) Экспорт\n    ТипРеквизита = Метаданные.Документы.ЗаявкаУслуги.Реквизиты.Комментарий.Тип;\n    Возврат ТипРеквизита.СодержитТип(ТипЗнч(Значение));\nКонецФункции\n\nФункция ОпытКомментария() Экспорт\n    Возврат Новый Структура(\"ЧислоПодходит,СтрокаПодходит,ИсходнаяСтрока\",\n        ПодходитКомментарий(42), ПодходитКомментарий(\"42\"), \"42\");\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытКомментария();\n    Сообщить(\"Число 42 подходит: \" + Строка(Результат.ЧислоПодходит));\n    Сообщить(\"Строка 42 подходит: \" + Строка(Результат.СтрокаПодходит));\n    Сообщить(\"Исходная строка: \" + Строка(Результат.ИсходнаяСтрока));\nКонецПроцедуры\n"
       },
-      {
-        "id": "function",
-        "title": "Append the function",
-        "where": "Общие → Общие модули → УчебныеДанные",
-        "action": "Append the complete source below outside existing procedures/functions. Reuse an existing identical function from your earlier attempt rather than defining it twice.",
-        "why": "Keep definitions at common-module scope.",
-        "expected": "One new exported function; previous work intact.",
-        "troubleshooting": "Check module name, export and server context instead of enabling privilege.",
-        "before": "Correct copy and module identified."
-      },
-      {
-        "id": "caller",
-        "title": "Add only the client call",
-        "where": "Root → application module → startup handler",
-        "action": "Inside the existing handler insert these statements, retaining other code separately:\nРезультат = УчебныеДанные.ОпытТиповМетаданных();\nСообщить(Результат.КлиентСсылка);\nСообщить(Результат.МинутыЧисло);\nСообщить(Результат.СтатусПеречисление);\nСообщить(Результат.СтрокаНеСтатус);",
-        "why": "Call the server function from the managed application.",
-        "expected": "The handler calls the function, not its definition.",
-        "troubleshooting": "Do not nest a function definition or add a second startup handler.",
-        "before": "One new exported function; previous work intact."
-      },
-      {
-        "id": "run",
-        "title": "Run and record actual results",
-        "where": "Ctrl+S → F7 → 1С:Предприятие",
-        "action": "Save, update the copy, launch once and compare every returned field with the prediction. Record actual codes/numbers for any created items.",
-        "why": "Separate predicted behavior from platform observation.",
-        "expected": "Four true claims. No application records are created or changed.",
-        "troubleshooting": "Preserve the specific module/line and discrepancy; do not alter expectations to obtain PASS.",
-        "before": "The handler calls the function, not its definition."
-      },
-      {
-        "id": "reconcile",
-        "title": "Inspect the actual objects",
-        "where": "Enterprise lists and your control notes",
-        "action": "Compare the four type observations with Designer properties; verify existing application records remain unchanged.",
-        "why": "A message alone does not cover unrelated data.",
-        "expected": "Claims and concrete records agree within the experiment scope.",
-        "troubleshooting": "Use identities rather than fixed row positions or equal names.",
-        "before": "Four true claims. No application records are created or changed."
-      },
-      {
-        "id": "finish",
-        "title": "Retain the work and stop startup repetition",
-        "where": "Designer after closing Enterprise",
-        "action": "Remove only this experiment call from startup or restore the saved handler. Retain the function, results and previous work; save and update the copy.",
-        "why": "Ordinary reopening must not repeatedly create demonstration data.",
-        "expected": "Observation retained and automatic repetition stopped.",
-        "troubleshooting": "Do not remove whole modules or clear other records.",
-        "before": "Claims and concrete records agree within the experiment scope."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Correct copy and module identified."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "One new exported function; previous work intact."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "The handler calls the function, not its definition."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "Four true claims. No application records are created or changed."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Claims and concrete records agree within the experiment scope."
-      },
-      {
-        "label": "Observation 6",
-        "input": "",
-        "output": "Observation retained and automatic repetition stopped."
+        "label": "New independent task",
+        "input": "For the same Комментарий attribute, supply the number 42 and then the string “42”.",
+        "output": "Число 42 подходит: Нет\nСтрока 42 подходит: Да\nИсходная строка: 42"
       }
     ],
     "criteria": [
-      "Number is not proof of 0..1440; a status type does not define a transition graph.",
-      "Names/types agree and application records remain unchanged.",
-      "The graph is justified; its execution is not claimed by this type-inspection experiment.",
-      "Platform version, own-copy provenance, exact function and observed results.",
-      "Actual synthetic identities/fields and the explained negative control; no real data.",
-      "Investigate the stated compilable incorrect variant only in another own experimental copy; preserve the original."
+      "The number gives Нет and the string Да; this tests type membership, not implicit conversion during writing.",
+      "Display the original string 42 last; the checks do not modify attributes or values.",
+      "Explain metadata, a value’s type, and business validity as separate matters."
     ],
-    "hint": "Use Перечисления.СтатусыЗаявки.Новая and compare types explicitly.",
-    "exercises": [
+    "hint": "The new task goes from the Комментарий type description to the input value’s type. Number and string look similar but give different answers. Neither the field nor the inputs are rewritten.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Separate field description, value type and business range.",
-        "criteria": "Number is not proof of 0..1440; a status type does not define a transition graph."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Inspect Designer properties and obtain the function’s four results.",
-        "criteria": "Names/types agree and application records remain unchanged."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
       },
       {
-        "level": "Advanced",
-        "task": "Draw allowed transitions among three synthetic states and specify independent forbidden-transition tests.",
-        "criteria": "The graph is justified; its execution is not claimed by this type-inspection experiment."
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "The function only reads type descriptions and checks inputs; it does not write database data.",
+        "expected": "Both type-membership results and the original string are recorded; metadata and records remain unchanged."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/metadata-types-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "catalog",
@@ -327,12 +382,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p4-enums.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p4-topic-3-author-v1",
     "quiz": [
+      {
+        "question": "The string “Новая” is spelled like the Новая enumeration value. Do their types match?",
+        "options": [
+          "No: string and enumeration reference differ",
+          "Yes: spelling determines type",
+          "Yes: any text is a status"
+        ],
+        "correct": 0,
+        "explanation": "No. Metadata describes the field, while an actual value has its own type. Matching presentation does not convert one into the other. Choose the proper enumeration value before assigning it to the attribute."
+      },
       {
         "question": "Who defines enumeration values?",
         "options": [
@@ -362,7 +423,31 @@
         ],
         "correct": 2,
         "explanation": "Type and domain validation differ."
+      },
+      {
+        "question": "A value’s type is allowed by an attribute. Does that establish useful and valid content for the business task?",
+        "options": [
+          "No: content needs a separate contract",
+          "Yes: allowed types validate everything",
+          "Yes: printing the value is enough"
+        ],
+        "correct": 0,
+        "explanation": "Explain metadata, a value’s type, and business validity as separate matters."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p4.topic-3.en.json"
 }
