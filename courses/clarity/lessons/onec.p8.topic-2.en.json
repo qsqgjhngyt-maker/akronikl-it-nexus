@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p8-2-author-v1",
   "id": "onec.p8.topic-2",
   "courseId": "onec",
   "moduleId": "onec.p8",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Managed forms and contexts",
   "locale": "en",
-  "title": "Client and server",
+  "title": "The client sends minutes; the server checks the contract",
   "goal": "Pass 90 as an explicit number and return 1.5 hours with server-side validation.",
   "prerequisites": [
     {
@@ -17,7 +17,14 @@
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "A question before observation",
+      "paragraphs": [
+        "A field may look valid while a direct call bypasses its interface checks. The server therefore receives a number and independently validates it before dividing by 60."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "Clients handle interaction",
       "paragraphs": [
         "Button handling, focus and dialogs belong to UI. Infobase access and reliable rules belong in an available server context. Thick and thin clients differ; local success does not prove a distributed design. Specify the target client and permitted operations before implementation.",
@@ -25,44 +32,67 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Reconcile the complete experiment",
-      "paragraphs": [],
+      "id": "platform-contract",
+      "title": "Continue your own form",
+      "paragraphs": [
+        "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work.",
+        "In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "In the form editor create the command ПоказатьСервер, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link ПроверитьДвеРаботы similarly for the independent task.",
+        "Worked setup: open your own saved 30-minute request. For buffer/directive observations set 77 without saving; the callback command sets 90 and version 2 itself. The server experiment explicitly supplies 90, 1441, and the string “90”."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "Methods for the worked experiment",
+      "paragraphs": [
+        "Only methods needed for this experiment are shown. If a previous topic already added a method, retain its single definition. The course retains the original complete module."
+      ],
       "code": {
-        "language": "text",
-        "source": "ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));",
-        "output": "90 → 1.5;1441 and string\"90\" rejected; document unchanged."
+        "language": "bsl",
+        "source": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура ПроверитьЧасы(Команда) Экспорт\n    ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The client command and its actual output",
+      "paragraphs": [
+        "ЧасыНаСервере first distinguishes numbers from strings, then checks 0…1440. The number 90 gives 1.5 hours. The string “90” and the number 1441 are rejected for different reasons. No path saves the request."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "&НаКлиенте\nПроцедура ПоказатьСервер(Команда) Экспорт\n    Сообщить(\"Часы: \" + Строка(ЧасыНаСервере(90)));\n    Отказ = Ложь;\n    Попытка ЧасыНаСервере(1441); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Диапазон отклонён: \" + Строка(Отказ));\n    Отказ = Ложь;\n    Попытка ЧасыНаСервере(\"90\"); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Строка отклонена: \" + Строка(Отказ));\nКонецПроцедуры\n",
+        "output": "Часы: 1,5\nДиапазон отклонён: Да\nСтрока отклонена: Да",
+        "files": {
+          "Форма.bsl": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура ПроверитьЧасы(Команда) Экспорт\n    ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n",
+          "Команда.bsl": "&НаКлиенте\nПроцедура ПоказатьСервер(Команда) Экспорт\n    Сообщить(\"Часы: \" + Строка(ЧасыНаСервере(90)));\n    Отказ = Ложь;\n    Попытка ЧасыНаСервере(1441); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Диапазон отклонён: \" + Строка(Отказ));\n    Отказ = Ложь;\n    Попытка ЧасыНаСервере(\"90\"); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Строка отклонена: \" + Строка(Отказ));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "From action to observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Action",
+            "Observation and reason"
           ],
           "rows": [
             [
               "Client",
-              "Field 90",
-              "Number,not document."
+              "Field 90 — Number,not document."
             ],
             [
               "Server",
-              "Type/range",
-              "Validate first."
+              "Type/range — Validate first."
             ],
             [
               "Return",
-              "90/60=1.5",
-              "No write."
+              "90/60=1.5 — No write."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "The boundary carries a contract",
       "paragraphs": [
         "Do not send every customer to obtain one total. A server method receives minimal typed inputs and returns required data. The client cannot provide trusted permission or price decisions; the server checks its own conditions. Test serialization and parameter types separately from arithmetic correctness.",
@@ -70,7 +100,15 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Predict before running",
+      "paragraphs": [
+        "What happens to the string “90” passed directly?"
+      ],
+      "reveal": "A type refusal. An explicit argument is not trusted merely because a client method supplied it. Displayed message text and the returned value’s type are different things."
+    },
+    {
+      "id": "concept-2",
       "title": "A file infobase is not a network",
       "paragraphs": [
         "File mode can teach client/server directives but does not fully reproduce network latency, clusters or parallel sessions. Separate compilation-context PASS from distributed LIVE. Counting source lines or one local process is not measured network-call reduction.",
@@ -78,41 +116,57 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "A case that distinguishes the wrong solution",
+      "id": "trace",
+      "title": "Follow the source and action boundary",
       "paragraphs": [
-        "A client hint does not replace the trusted-boundary check."
+        "This is the worked single-argument contract. The new task validates two arguments and additionally their sum."
       ],
-      "code": {
-        "language": "text",
-        "source": "Call ЧасыНаСервере(1441) directly, bypassing the UI field.",
-        "output": "Server range rejection; persisted 30 retained."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Separate copy",
-              "Call ЧасыНаСервере(1441) directly, bypassing the UI field.",
-              "Retain the accepted original."
-            ],
-            [
-              "Observe",
-              "Server range rejection; persisted 30 retained.",
-              "A client hint does not replace the trusted-boundary check."
+      "flow": {
+        "kind": "sequence",
+        "caption": "This is the worked single-argument contract. The new task validates two arguments and additionally their sum.",
+        "nodes": [
+          {
+            "title": "Input",
+            "lines": [
+              "90"
             ]
-          ]
-        }
+          },
+          {
+            "title": "Type",
+            "lines": [
+              "Number"
+            ]
+          },
+          {
+            "title": "Range",
+            "lines": [
+              "0…1440"
+            ]
+          },
+          {
+            "title": "Result",
+            "lines": [
+              "1,5"
+            ]
+          }
+        ],
+        "alternative": [
+          "Input: 90",
+          "Type: Number",
+          "Range: 0…1440",
+          "Result: 1,5"
+        ]
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "The mistake this experiment distinguishes",
+      "paragraphs": [
+        "Putting the only check in the field handler lets a direct call with 1441 bypass it. Enforcing the constraint inside the server function covers its callers within this training contract."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "An availability matrix checks context",
       "paragraphs": [
         "For each method, list caller, parameters and returned data. Test an allowed call and an unavailable operation in the wrong context. Count calls for an ordinary action. Do not fix context errors by enabling every capability indiscriminately; reduce dependencies to what is necessary.",
@@ -120,16 +174,59 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "A new independent task",
       "paragraphs": [
-        "Form data is assumed to already be persisted. Read the actual saved reference independently before accepting persistence.",
-        "A no-context function reaches into the form object. Pass the minimal explicit input or deliberately choose the correct context.",
-        "Direct continuation tests are reported as physical dialog clicks. Record native branch coverage and actual UI interaction separately."
+        "Write the context-free server function ЧасыДвухРабот with two explicit arguments. Each must be a number in 0…1440, and their sum must also fit 0…1440. Return total hours as a number. Expect 2.75 for 120 and 45; reject the total for 1000 and 500. Do not save a document.",
+        "Preserve your prediction and code before viewing the reference. The worked example does not solve this new task. Viewing its files does not replace your work."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The actual training 1C window",
+      "paragraphs": [
+        "The yellow area is the installed 1C interface; the Nexus lesson remains matte. A command driver calls the same managed form, without a real account or other infobases."
+      ],
+      "figures": [
+        {
+          "height": 753,
+          "src": "media/tutorials/v2/p8-server-main-output.jpg",
+          "sha256": "b703df6d811f84d11041c7e5389c41e33147ea7ca378ee3af4445eb429e4727f",
+          "sourcePngSha256": "20d8c0c08dd2c19c14d1843f497e31909963c9ba717baea9faea19b136fb4491",
+          "width": 1438,
+          "id": "server-main",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "alt": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "caption": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What was established and what you explain",
+      "paragraphs": [
+        "A local file infobase establishes the chosen branches and contexts, not network latency, clustering, all permissions, or learner understanding. Record direct callbacks and physical dialog interaction separately.",
+        "Explain why checking each addend does not replace checking the total."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What happens to the string “90” passed directly?",
+      "options": [
+        "A type refusal before division",
+        "It automatically becomes 1.5",
+        "90 minutes are saved"
+      ],
+      "correct": 0,
+      "feedback": "A type refusal. An explicit argument is not trusted merely because a client method supplied it. Displayed message text and the returned value’s type are different things.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -140,7 +237,8 @@
         "A password"
       ],
       "correct": 1,
-      "feedback": "Use the minimal explicit input."
+      "feedback": "Use the minimal explicit input.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -152,7 +250,8 @@
         "Necessarily type"
       ],
       "correct": 0,
-      "feedback": "It is a number outside the contract."
+      "feedback": "It is a number outside the contract.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -164,135 +263,104 @@
         "This local call"
       ],
       "correct": 2,
-      "feedback": "Network deployment is separate."
+      "feedback": "Network deployment is separate.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Why can two valid durations still be refused?",
+      "options": [
+        "Their total breaks another constraint",
+        "The client changed colour",
+        "Servers cannot add numbers"
+      ],
+      "correct": 0,
+      "feedback": "Explain why checking each addend does not replace checking the total.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Compare string\"90\" with number 90 and explain both failures.",
-      "feedback": "Type and range distinguished."
+      "prompt": "Explain your new task: where did each value come from, which action was permitted, and what establishes preservation?",
+      "feedback": "This answer is not graded automatically. Compare it with your own observations.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Client and server",
-    "task": "Compare string\"90\" with number 90 and explain both failures.",
-    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
-    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "title": "The client sends minutes; the server checks the contract",
+    "task": "Write the context-free server function ЧасыДвухРабот with two explicit arguments. Each must be a number in 0…1440, and their sum must also fit 0…1440. Return total hours as a number. Expect 2.75 for 120 and 45; reject the total for 1000 and 500. Do not save a document.",
+    "environment": "Installed 1C 8.3 and a separate own infobase. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Managed УчебнаяФормаЗаявки module",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "// P8: модуль существующей управляемой УчебнаяФормаЗаявки.\n// Добавьте реквизит формы ИтогОпыта: Строка(120), ВерсияЗапроса: Число(10,0).\n&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура ПроверитьЧасы(Команда) Экспорт\n    ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура УчебноеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    Оповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Проверить часы без записи документа?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеПодтверждения(Ответ,Снимок) Экспорт\n    Если Ответ <> КодВозвратаДиалога.Да Тогда ИтогОпыта = \"Отменено\"; Возврат; КонецЕсли;\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    ИтогОпыта = Строка(ЧасыНаСервере(Снимок.Минуты));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n"
+        "path": "Форма.bsl",
+        "content": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура ПроверитьЧасы(Команда) Экспорт\n    ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервереБезКонтекста\nФункция ЧасыДвухРабот(ПервыеМинуты,ВторыеМинуты) Экспорт\n    // TODO: implement the new task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Команда.bsl",
+        "content": "&НаКлиенте\nПроцедура ПроверитьДвеРаботы(Команда) Экспорт\n    Сообщить(\"Часы: \" + Строка(ЧасыДвухРабот(120,45)));\n    Отказ = Ложь;\n    Попытка ЧасыДвухРабот(1000,500); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Сумма отклонена: \" + Строка(Отказ));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "step-1",
-        "title": "Preserve and select an own request",
-        "where": "Конфигуратор своей отдельной копии",
-        "action": "Retain a DT and the earlier form module. Identify an own saved 30-minute request and record its actual reference.",
-        "why": "Protect prior work.",
-        "expected": "The original and own copy are distinct.",
-        "troubleshooting": "Inspect the database path and reference; display names may coincide.",
-        "before": "Own path, prior sources and a restorable backup identified."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура ПроверитьЧасы(Команда) Экспорт\n    ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервереБезКонтекста\nФункция ЧасыДвухРабот(ПервыеМинуты,ВторыеМинуты) Экспорт\n    ЧасыНаСервере(ПервыеМинуты);\n    ЧасыНаСервере(ВторыеМинуты);\n    Возврат ЧасыНаСервере(ПервыеМинуты + ВторыеМинуты);\nКонецФункции\n",
+      "files": {
+        "Форма.bsl": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура ПроверитьЧасы(Команда) Экспорт\n    ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервереБезКонтекста\nФункция ЧасыДвухРабот(ПервыеМинуты,ВторыеМинуты) Экспорт\n    ЧасыНаСервере(ПервыеМинуты);\n    ЧасыНаСервере(ВторыеМинуты);\n    Возврат ЧасыНаСервере(ПервыеМинуты + ВторыеМинуты);\nКонецФункции\n",
+        "Команда.bsl": "&НаКлиенте\nПроцедура ПроверитьДвеРаботы(Команда) Экспорт\n    Сообщить(\"Часы: \" + Строка(ЧасыДвухРабот(120,45)));\n    Отказ = Ложь;\n    Попытка ЧасыДвухРабот(1000,500); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Сумма отклонена: \" + Строка(Отказ));\nКонецПроцедуры\n"
       },
-      {
-        "id": "step-2",
-        "title": "Open the managed form module",
-        "where": "Документы → ЗаявкаУслуги → Формы → УчебнаяФормаЗаявки → Модуль",
-        "action": "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String 120 and ВерсияЗапроса:Number 10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
-        "why": "The form owns UI state while the document schema stays intact.",
-        "expected": "Methods and two form attributes exist.",
-        "troubleshooting": "Do not add these attributes to the document metadata or paste form code into a common module.",
-        "before": "The original and own copy are distinct."
-      },
-      {
-        "id": "step-3",
-        "title": "Bind commands",
-        "where": "Редактор формы → Команды → собственные команды",
-        "action": "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
-        "why": "Make code reachable through explicit UI actions.",
-        "expected": "Commands show the intended actions without automatic startup.",
-        "troubleshooting": "If an action generator creates an empty duplicate, merge only its body into the existing matching handler.",
-        "before": "Methods and two form attributes exist."
-      },
-      {
-        "id": "step-4",
-        "title": "Check contexts and run",
-        "where": "Ctrl+S → Конфигурация → Проверка конфигурации → F7 → Предприятие",
-        "action": "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
-        "why": "Compilation and observed behaviour are independent checks.",
-        "expected": "90 → 1.5;1441 and string\"90\" rejected; document unchanged.",
-        "troubleshooting": "Record the method/line; distinguish a context error from a missing command binding.",
-        "before": "Commands show the intended actions without automatic startup."
-      },
-      {
-        "id": "step-5",
-        "title": "Record cancellation and retain work",
-        "where": "Предприятие → закрытие формы без записи",
-        "action": "Call ЧасыНаСервере(1441) directly, bypassing the UI field. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check.",
-        "why": "Separate adverse cases from accepted work.",
-        "expected": "Server range rejection; persisted 30 retained.",
-        "troubleshooting": "Reopen the actual reference to check persisted state.",
-        "before": "90 → 1.5;1441 and string\"90\" rejected; document unchanged."
-      }
-    ],
+      "paragraphs": [
+        "Append both files to the form module, retaining one copy of each earlier method. This is the independent solution, not the worked example. Opening the reference does not modify your code."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "The original and own copy are distinct."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Methods and two form attributes exist."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Commands show the intended actions without automatic startup."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "90 → 1.5;1441 and string\"90\" rejected; document unchanged."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Server range rejection; persisted 30 retained."
+        "label": "New task: input and result",
+        "input": "120 and 45; separately 1000 and 500.",
+        "output": "Часы: 2,75\nСумма отклонена: Да"
       }
     ],
     "criteria": [
-      "Explicit call contract.",
-      "Both bounds checked.",
-      "Type and range distinguished.",
-      "Exact own source and version; actual keys, observations and expected versus actual table.",
-      "Original and changed-copy results, failed attempts and untested environment limits.",
-      "Call ЧасыНаСервере(1441) directly, bypassing the UI field."
+      "120 + 45 = 165 minutes; the numeric result is 2.75.",
+      "1000 and 500 each fit individually, but their total of 1500 is rejected by the server.",
+      "Explain why checking each addend does not replace checking the total."
     ],
-    "hint": "Read the actual saved reference independently before accepting persistence.",
-    "exercises": [
+    "hint": "This is the worked single-argument contract. The new task validates two arguments and additionally their sum.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Annotate argument/result direction and type.",
-        "criteria": "Explicit call contract."
+        "where": "Nexus → Practice",
+        "action": "Before running, record inputs, expected value sources, and one refusal.",
+        "why": "Keep the prediction independent of the supplied output.",
+        "expected": "An own prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Test 90, 0, 1440 and 1441.",
-        "criteria": "Both bounds checked."
+        "where": "Own copy → Designer → form",
+        "action": "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work. In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "why": "Preserve work and choose the correct module type.",
+        "expected": "Prior definitions are preserved; new attributes belong to the form."
       },
       {
-        "level": "Advanced",
-        "task": "Compare string\"90\" with number 90 and explain both failures.",
-        "criteria": "Type and range distinguished."
+        "where": "Form module and commands",
+        "action": "In the form editor create the command ПоказатьСервер, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link ПроверитьДвеРаботы similarly for the independent task.",
+        "why": "Both files belong to the form; no startup handler is required.",
+        "expected": "The command points to its single intended procedure."
+      },
+      {
+        "where": "Save → F7 → Enterprise",
+        "action": "Write the context-free server function ЧасыДвухРабот with two explicit arguments. Each must be a number in 0…1440, and their sum must also fit 0…1440. Return total hours as a number. Expect 2.75 for 120 and 45; reject the total for 1000 and 500. Do not save a document.",
+        "why": "The new task checks independent transfer of the idea.",
+        "expected": "Часы: 2,75\nСумма отклонена: Да"
+      },
+      {
+        "where": "Own source and self-report",
+        "action": "Save your source and expected/actual observations. Explain a changed or initially mismatching case. Close without saving wherever the contract requires it.",
+        "why": "A run and understanding are different facts.",
+        "expected": "Source, observations, and explanation are recorded; earlier work is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/form-context-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -302,12 +370,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p8-client-server.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p8-2-author-v1",
     "quiz": [
+      {
+        "question": "What happens to the string “90” passed directly?",
+        "options": [
+          "A type refusal before division",
+          "It automatically becomes 1.5",
+          "90 minutes are saved"
+        ],
+        "correct": 0,
+        "explanation": "A type refusal. An explicit argument is not trusted merely because a client method supplied it. Displayed message text and the returned value’s type are different things."
+      },
       {
         "question": "Client passes",
         "options": [
@@ -337,7 +411,31 @@
         ],
         "correct": 2,
         "explanation": "Network deployment is separate."
+      },
+      {
+        "question": "Why can two valid durations still be refused?",
+        "options": [
+          "Their total breaks another constraint",
+          "The client changed colour",
+          "Servers cannot add numbers"
+        ],
+        "correct": 0,
+        "explanation": "Explain why checking each addend does not replace checking the total."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-forms-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Managed forms and client/server contexts",
+      "language": "English",
+      "purpose": "Optional reading after your attempt; the lesson explains its required route.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p8.topic-2.en.json"
 }

@@ -32,7 +32,40 @@ concurrency:
   group: cpp-clarity-01-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  ci_profile:
+    name: Выбрать BASIC или FULL по фактическому diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      profile: ${{ steps.choose.outputs.profile }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Закрытый по умолчанию выбор профиля
+        id: choose
+        run: |
+          if ! node tools/classify-cpp-clarity-ci.mjs --output ci-profile.json; then
+            echo 'profile=FULL' >> "$GITHUB_OUTPUT"
+            echo 'migration=false' >> "$GITHUB_OUTPUT"
+            echo '{"profile":"FULL","reason":"CLASSIFIER_EXECUTION_ERROR"}' > ci-profile.json
+          fi
+      - name: Три адресные проверки однократной миграции
+        if: steps.choose.outputs.migration == 'true'
+        run: node --test tests/cpp-clarity-ci-profile.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpp-clarity-ci-profile-${{ github.sha }}
+          path: ci-profile.json
+          if-no-files-found: error
   onec-p1:
+    needs: ci_profile
+    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
     name: 1С P1/P2 — уроки, наглядность, работа и offline
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -54,7 +87,7 @@ jobs:
           npm ci --prefix tools/qa-browser-driver
           node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
           node tests/cpp-clarity-onec-p2-negative-controls.mjs
-          node --test tests/cpp-clarity-onec-p1-content.test.mjs tests/cpp-clarity-onec-p2-types-content.test.mjs tests/cpp-clarity-onec-p2-conditions-content.test.mjs tests/cpp-clarity-onec-p2-module-content.test.mjs tests/cpp-clarity-onec-p3-module-content.test.mjs tests/cpp-clarity-onec-p4-module-content.test.mjs tests/cpp-clarity-onec-p5-module-content.test.mjs tests/cpp-clarity-onec-p6-module-content.test.mjs tests/cpp-clarity-onec-p7-module-content.test.mjs
+          node --test tests/cpp-clarity-onec-p1-content.test.mjs tests/cpp-clarity-onec-p2-types-content.test.mjs tests/cpp-clarity-onec-p2-conditions-content.test.mjs tests/cpp-clarity-onec-p2-module-content.test.mjs tests/cpp-clarity-onec-p3-module-content.test.mjs tests/cpp-clarity-onec-p4-module-content.test.mjs tests/cpp-clarity-onec-p5-module-content.test.mjs tests/cpp-clarity-onec-p6-module-content.test.mjs tests/cpp-clarity-onec-p7-module-content.test.mjs tests/cpp-clarity-onec-p8-module-content.test.mjs
           node tools/build-cpp-clarity-candidate.mjs
       - name: Проверить восемь редакций, настоящие изображения, редактор и холодный offline
         run: node tests/cpp-clarity-onec-p1-browser.mjs
@@ -74,6 +107,8 @@ jobs:
         run: node tests/cpp-clarity-onec-p6-module-browser.mjs
       - name: Основные проверки полного модуля P7 RU и EN
         run: node tests/cpp-clarity-onec-p7-module-browser.mjs
+      - name: Основные проверки полного модуля P8 RU и EN
+        run: node tests/cpp-clarity-onec-p8-module-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -82,6 +117,8 @@ jobs:
           retention-days: 30
           if-no-files-found: error
   candidate:
+    needs: ci_profile
+    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -102,6 +139,8 @@ jobs:
           npm ci --prefix server-access --ignore-scripts
           npm ci --prefix tools/qa-browser-driver
           node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Зафиксировать FULL профиль и причину
+        run: node tools/classify-cpp-clarity-ci.mjs --record-full --output cpp-clarity-evidence/CI_PROFILE.json
       - name: Обязательный технический gate кандидата
         run: |
           set -euo pipefail
@@ -194,6 +233,8 @@ jobs:
           retention-days: 30
           if-no-files-found: error
   structured:
+    needs: ci_profile
+    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
     name: B03 — структурное программирование
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -236,6 +277,8 @@ jobs:
           if-no-files-found: error
 
   classic:
+    needs: ci_profile
+    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
     name: B04 — классические задачи
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -277,6 +320,8 @@ jobs:
           if-no-files-found: error
 
   oop:
+    needs: ci_profile
+    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
     name: B05 — объектно-ориентированное программирование
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -318,6 +363,8 @@ jobs:
           if-no-files-found: error
 
   events:
+    needs: ci_profile
+    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
     name: B06 — события, реальные C++20 и Clang/WASI
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -358,6 +405,8 @@ jobs:
           if-no-files-found: error
 
   events-qt:
+    needs: ci_profile
+    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
     name: B06 — настоящие Qt, фильтр, данные и переносимость
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -396,5 +445,42 @@ jobs:
         with:
           name: cpp-clarity-b6-qt-${{ github.sha }}
           path: cpp-clarity-b6-qt-evidence/
+          retention-days: 30
+          if-no-files-found: error
+
+  module_basic:
+    name: 1С — MODULE BASIC, без повторной компиляции C++
+    needs: ci_profile
+    if: needs.ci_profile.result == 'success' && needs.ci_profile.outputs.profile == 'BASIC'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXUS_CLARITY_EVIDENCE: ${{ github.workspace }}/cpp-clarity-basic-evidence
+      NEXUS_FRONTEND_DIR: ${{ github.workspace }}/cpp-clarity-basic-frontend
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Подготовить только зависимости основного просмотра
+        run: |
+          npm ci --prefix server-access --ignore-scripts
+          npm ci --prefix tools/qa-browser-driver
+          node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Новый модуль, сохранность своей работы и короткий offline
+        run: node tools/check-cpp-clarity-basic.mjs
+      - name: Точный source snapshot BASIC, без выпускного PASS
+        if: always()
+        run: python3 tools/package-cpp-clarity-basic-source.py
+      - name: BASIC evidence без merge, deployment и Release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-clarity-01-${{ github.sha }}
+          path: cpp-clarity-basic-evidence/
           retention-days: 30
           if-no-files-found: error

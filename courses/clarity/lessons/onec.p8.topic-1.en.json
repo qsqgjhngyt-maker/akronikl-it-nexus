@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p8-1-author-v1",
   "id": "onec.p8.topic-1",
   "courseId": "onec",
   "moduleId": "onec.p8",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Managed forms and contexts",
   "locale": "en",
-  "title": "Form data and object",
+  "title": "The field says 77. Why does the database still say 30?",
   "goal": "Observe 77 in form/object buffers while the persisted document remains 30.",
   "prerequisites": [
     {
@@ -17,7 +17,14 @@
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "A question before observation",
+      "paragraphs": [
+        "You edited the minutes in an open request. The screen shows the new number, but has it been saved? Follow three sources for one field without pressing Save."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "Forms hold a representation",
       "paragraphs": [
         "A managed form has attributes and controls; an application object has logic and persisted state. Form values can be intermediate and unsaved. Equal field names do not create one variable in every context. Trace where minutes came from and when they become a persisted document value.",
@@ -25,57 +32,87 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Reconcile the complete experiment",
-      "paragraphs": [],
+      "id": "platform-contract",
+      "title": "Continue your own form",
+      "paragraphs": [
+        "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work.",
+        "In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "In the form editor create the command ПоказатьБуфер, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link СверитьНовуюЗаявку similarly for the independent task.",
+        "Worked setup: open your own saved 30-minute request. For buffer/directive observations set 77 without saving; the callback command sets 90 and version 2 itself. The server experiment explicitly supplies 90, 1441, and the string “90”."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "Methods for the worked experiment",
+      "paragraphs": [
+        "Only methods needed for this experiment are shown. If a previous topic already added a method, retain its single definition. The course retains the original complete module."
+      ],
       "code": {
-        "language": "text",
-        "source": "Result = СверитьБуфер();\nСообщить(Result.ВФорме);\nСообщить(Result.ВОбъекте);\nСообщить(Result.ВБазе);",
-        "output": "77/77/30 before saving;30 again after closing without save."
+        "language": "bsl",
+        "source": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The client command and its actual output",
+      "paragraphs": [
+        "Your saved request contains 30 minutes. Change the open form buffer to 77. СверитьБуфер converts the form data into a document object and independently rereads the reference: the first two values are 77, the persisted value is 30. Conversion does not call Записать."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "&НаКлиенте\nПроцедура ПоказатьБуфер(Команда) Экспорт\n    Р = СверитьБуфер();\n    Сообщить(\"В форме: \" + Строка(Р.ВФорме));\n    Сообщить(\"В объекте: \" + Строка(Р.ВОбъекте));\n    Сообщить(\"В базе: \" + Строка(Р.ВБазе));\nКонецПроцедуры\n",
+        "output": "В форме: 77\nВ объекте: 77\nВ базе: 30",
+        "files": {
+          "Форма.bsl": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n",
+          "Команда.bsl": "&НаКлиенте\nПроцедура ПоказатьБуфер(Команда) Экспорт\n    Р = СверитьБуфер();\n    Сообщить(\"В форме: \" + Строка(Р.ВФорме));\n    Сообщить(\"В объекте: \" + Строка(Р.ВОбъекте));\n    Сообщить(\"В базе: \" + Строка(Р.ВБазе));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "From action to observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Action",
+            "Observation and reason"
           ],
           "rows": [
             [
               "Database",
-              "Own reference → 30",
-              "Persisted state."
+              "Own reference → 30 — Persisted state."
             ],
             [
               "Editor",
-              "Change to 77",
-              "Not saved yet."
+              "Change to 77 — Not saved yet."
             ],
             [
               "Convert",
-              "Object from form → 77",
-              "Still no write."
+              "Object from form → 77 — Still no write."
             ],
             [
               "Reread",
-              "Reference → 30",
-              "Original retained."
+              "Reference → 30 — Original retained."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Conversion is explicit",
       "paragraphs": [
         "On the server, FormAttributeToValuecan obtain an application object from a suitable form attribute. Returning data also requires proper conversion. Do not assume form data exposes every object method. Identify actual type and allowed context rather than moving everything to the client to silence an error.",
-        "СверитьБуфер belongs to the managed form module with &НаСервере. РеквизитФормыВЗначение(\"Объект\") converts current form data; Объект.Ссылка.ПолучитьОбъект() independently rereads persisted state. No write method is called."
+        "СверитьБуфер belongs to the managed form module with &НаСервере. РеквизитФормыВЗначение with the attribute name «Объект» converts current form data; Объект.Ссылка.ПолучитьОбъект() independently rereads persisted state. No write method is called."
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Predict before running",
+      "paragraphs": [
+        "What will an independent reference read return before saving?"
+      ],
+      "reveal": "30. Form data and the converted object can agree while the persisted record remains unchanged. The third observation is independent because it is reread through the reference."
+    },
+    {
+      "id": "concept-2",
       "title": "UI validation does not protect writes",
       "paragraphs": [
         "The form may highlight bad ranges before submission, but the object boundary must enforce mandatory rules. Client data can become stale between read and write. Important operations need an agreed server-side version/state check. A new screen must not bypassP5preservation rules.",
@@ -83,41 +120,57 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "A case that distinguishes the wrong solution",
+      "id": "trace",
+      "title": "Follow the source and action boundary",
       "paragraphs": [
-        "An independent check must read another layer."
+        "Arrows follow observation sources, not automatic saves. The independent task uses different values: 135 / 135 / 60."
       ],
-      "code": {
-        "language": "text",
-        "source": "In another copy replace the reference reread with the form value.",
-        "output": "The invalid control reports 77 as if it were persisted."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Separate copy",
-              "In another copy replace the reference reread with the form value.",
-              "Retain the accepted original."
-            ],
-            [
-              "Observe",
-              "The invalid control reports 77 as if it were persisted.",
-              "An independent check must read another layer."
+      "flow": {
+        "kind": "sequence",
+        "caption": "Arrows follow observation sources, not automatic saves. The independent task uses different values: 135 / 135 / 60.",
+        "nodes": [
+          {
+            "title": "Persisted",
+            "lines": [
+              "30"
             ]
-          ]
-        }
+          },
+          {
+            "title": "Buffer",
+            "lines": [
+              "77"
+            ]
+          },
+          {
+            "title": "Convert",
+            "lines": [
+              "77"
+            ]
+          },
+          {
+            "title": "Reread",
+            "lines": [
+              "30"
+            ]
+          }
+        ],
+        "alternative": [
+          "Persisted: 30",
+          "Buffer: 77",
+          "Convert: 77",
+          "Reread: 30"
+        ]
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "The mistake this experiment distinguishes",
+      "paragraphs": [
+        "Replace the independent read with another form-field read and all three values become 77. This establishes no save: all observations now come from one buffer. Restore the independent read instead of adjusting the expectation."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Test two routes",
       "paragraphs": [
         "Create a valid request through the form and programmatically; outcomes should agree. Submit invalid data by both routes. Reopen and compare fields. If presentation is stale, refresh it through the agreed event rather than rewriting the database merely to synchronize the screen.",
@@ -125,16 +178,59 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "A new independent task",
       "paragraphs": [
-        "Form data is assumed to already be persisted. Read the actual saved reference independently before accepting persistence.",
-        "A no-context function reaches into the form object. Pass the minimal explicit input or deliberately choose the correct context.",
-        "Direct continuation tests are reported as physical dialog clicks. Record native branch coverage and actual UI interaction separately."
+        "Use a separate new request already saved with 60 minutes. Once open, change only its buffer to 135. Add a client command that calls СверитьБуфер and prints Form, Object, and Database separately. Close without saving and reopen the same reference. Preserve the earlier 30-minute request and methods.",
+        "Preserve your prediction and code before viewing the reference. The worked example does not solve this new task. Viewing its files does not replace your work."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The actual training 1C window",
+      "paragraphs": [
+        "The yellow area is the installed 1C interface; the Nexus lesson remains matte. A command driver calls the same managed form, without a real account or other infobases."
+      ],
+      "figures": [
+        {
+          "height": 753,
+          "src": "media/tutorials/v2/p8-form-main-output.jpg",
+          "sha256": "42c9f6d190eb3de4ff1abf8dad16319a9eb32cd00531b28b15b5071cb7329a24",
+          "sourcePngSha256": "90355270e8f3feec1588d7639a3d04c6904be3d2b0ec79415876b23f40561e4b",
+          "width": 1438,
+          "id": "form-main",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "alt": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "caption": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What was established and what you explain",
+      "paragraphs": [
+        "A local file infobase establishes the chosen branches and contexts, not network latency, clustering, all permissions, or learner understanding. Record direct callbacks and physical dialog interaction separately.",
+        "Explain why converting data and matching two values do not establish a save."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What will an independent reference read return before saving?",
+      "options": [
+        "30 — the previously saved value",
+        "77 — every field edit is saved immediately",
+        "Undefined — the reference disappeared"
+      ],
+      "correct": 0,
+      "feedback": "30. Form data and the converted object can agree while the persisted record remains unchanged. The third observation is independent because it is reread through the reference.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -145,7 +241,8 @@
         "Creates an account"
       ],
       "correct": 1,
-      "feedback": "Writing is separate."
+      "feedback": "Writing is separate.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -157,7 +254,8 @@
         "From title"
       ],
       "correct": 0,
-      "feedback": "This is the independent source."
+      "feedback": "This is the independent source.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -169,135 +267,105 @@
         "Earlier 30"
       ],
       "correct": 2,
-      "feedback": "The buffer was not persisted."
+      "feedback": "The buffer was not persisted.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Which check reveals a buffer value substituted for persisted data?",
+      "options": [
+        "Reread the same reference after closing without saving",
+        "Look at the field again",
+        "Compare two panel colours"
+      ],
+      "correct": 0,
+      "feedback": "Explain why converting data and matching two values do not establish a save.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Save 77 normally in another copy and reconcile.",
-      "feedback": "Cancel and save have separate protocols."
+      "prompt": "Explain your new task: where did each value come from, which action was permitted, and what establishes preservation?",
+      "feedback": "This answer is not graded automatically. Compare it with your own observations.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Form data and object",
-    "task": "Save 77 normally in another copy and reconcile.",
-    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
-    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "title": "The field says 77. Why does the database still say 30?",
+    "task": "Use a separate new request already saved with 60 minutes. Once open, change only its buffer to 135. Add a client command that calls СверитьБуфер and prints Form, Object, and Database separately. Close without saving and reopen the same reference. Preserve the earlier 30-minute request and methods.",
+    "environment": "Installed 1C 8.3 and a separate own infobase. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Managed УчебнаяФормаЗаявки module",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "// P8: модуль существующей управляемой УчебнаяФормаЗаявки.\n// Добавьте реквизит формы ИтогОпыта: Строка(120), ВерсияЗапроса: Число(10,0).\n&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура ПроверитьЧасы(Команда) Экспорт\n    ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура УчебноеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    Оповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Проверить часы без записи документа?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеПодтверждения(Ответ,Снимок) Экспорт\n    Если Ответ <> КодВозвратаДиалога.Да Тогда ИтогОпыта = \"Отменено\"; Возврат; КонецЕсли;\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    ИтогОпыта = Строка(ЧасыНаСервере(Снимок.Минуты));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n"
+        "path": "Форма.bsl",
+        "content": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n"
+      },
+      {
+        "path": "Команда.bsl",
+        "content": "&НаКлиенте\nПроцедура СверитьНовуюЗаявку(Команда) Экспорт\n    // TODO: получите три независимых наблюдения и подпишите их.\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "step-1",
-        "title": "Preserve and select an own request",
-        "where": "Конфигуратор своей отдельной копии",
-        "action": "Retain a DT and the earlier form module. Identify an own saved 30-minute request and record its actual reference.",
-        "why": "Protect prior work.",
-        "expected": "The original and own copy are distinct.",
-        "troubleshooting": "Inspect the database path and reference; display names may coincide.",
-        "before": "Own path, prior sources and a restorable backup identified."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n",
+      "files": {
+        "Форма.bsl": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n",
+        "Команда.bsl": "&НаКлиенте\nПроцедура СверитьНовуюЗаявку(Команда) Экспорт\n    Р = СверитьБуфер();\n    Сообщить(\"В форме: \" + Строка(Р.ВФорме));\n    Сообщить(\"В объекте: \" + Строка(Р.ВОбъекте));\n    Сообщить(\"В базе: \" + Строка(Р.ВБазе));\nКонецПроцедуры\n"
       },
-      {
-        "id": "step-2",
-        "title": "Open the managed form module",
-        "where": "Документы → ЗаявкаУслуги → Формы → УчебнаяФормаЗаявки → Модуль",
-        "action": "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String 120 and ВерсияЗапроса:Number 10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
-        "why": "The form owns UI state while the document schema stays intact.",
-        "expected": "Methods and two form attributes exist.",
-        "troubleshooting": "Do not add these attributes to the document metadata or paste form code into a common module.",
-        "before": "The original and own copy are distinct."
-      },
-      {
-        "id": "step-3",
-        "title": "Bind commands",
-        "where": "Редактор формы → Команды → собственные команды",
-        "action": "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
-        "why": "Make code reachable through explicit UI actions.",
-        "expected": "Commands show the intended actions without automatic startup.",
-        "troubleshooting": "If an action generator creates an empty duplicate, merge only its body into the existing matching handler.",
-        "before": "Methods and two form attributes exist."
-      },
-      {
-        "id": "step-4",
-        "title": "Check contexts and run",
-        "where": "Ctrl+S → Конфигурация → Проверка конфигурации → F7 → Предприятие",
-        "action": "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
-        "why": "Compilation and observed behaviour are independent checks.",
-        "expected": "77/77/30 before saving;30 again after closing without save.",
-        "troubleshooting": "Record the method/line; distinguish a context error from a missing command binding.",
-        "before": "Commands show the intended actions without automatic startup."
-      },
-      {
-        "id": "step-5",
-        "title": "Record cancellation and retain work",
-        "where": "Предприятие → закрытие формы без записи",
-        "action": "In another copy replace the reference reread with the form value. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check.",
-        "why": "Separate adverse cases from accepted work.",
-        "expected": "The invalid control reports 77 as if it were persisted.",
-        "troubleshooting": "Reopen the actual reference to check persisted state.",
-        "before": "77/77/30 before saving;30 again after closing without save."
-      }
-    ],
+      "paragraphs": [
+        "Append both files to the form module, retaining one copy of each earlier method. This is the independent solution, not the worked example. Opening the reference does not modify your code."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "The original and own copy are distinct."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Methods and two form attributes exist."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Commands show the intended actions without automatic startup."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "77/77/30 before saving;30 again after closing without save."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "The invalid control reports 77 as if it were persisted."
+        "label": "New task: input and result",
+        "input": "A new own reference: 60 persisted, 135 in the buffer.",
+        "output": "В форме: 135\nВ объекте: 135\nВ базе: 60\nПосле открытия: 60"
       }
     ],
     "criteria": [
-      "Buffer/object/database distinguished.",
-      "Reference and 30 preserved.",
-      "Cancel and save have separate protocols.",
-      "Exact own source and version; actual keys, observations and expected versus actual table.",
-      "Original and changed-copy results, failed attempts and untested environment limits.",
-      "In another copy replace the reference reread with the form value."
+      "Before closing: 135 / 135 / 60; after reopening: 60. Each value has a source label.",
+      "Save the new request before opening its form; do not simultaneously change it through a second object.",
+      "Explain why converting data and matching two values do not establish a save.",
+      "“После открытия: 60” is a separate reopening observation, not an automatic command message."
     ],
-    "hint": "Read the actual saved reference independently before accepting persistence.",
-    "exercises": [
+    "hint": "Arrows follow observation sources, not automatic saves. The independent task uses different values: 135 / 135 / 60.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Identify the three layers and execution context.",
-        "criteria": "Buffer/object/database distinguished."
+        "where": "Nexus → Practice",
+        "action": "Before running, record inputs, expected value sources, and one refusal.",
+        "why": "Keep the prediction independent of the supplied output.",
+        "expected": "An own prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Observe 77/77/30 and 30 after cancelling.",
-        "criteria": "Reference and 30 preserved."
+        "where": "Own copy → Designer → form",
+        "action": "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work. In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "why": "Preserve work and choose the correct module type.",
+        "expected": "Prior definitions are preserved; new attributes belong to the form."
       },
       {
-        "level": "Advanced",
-        "task": "Save 77 normally in another copy and reconcile.",
-        "criteria": "Cancel and save have separate protocols."
+        "where": "Form module and commands",
+        "action": "In the form editor create the command ПоказатьБуфер, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link СверитьНовуюЗаявку similarly for the independent task.",
+        "why": "Both files belong to the form; no startup handler is required.",
+        "expected": "The command points to its single intended procedure."
+      },
+      {
+        "where": "Save → F7 → Enterprise",
+        "action": "Use a separate new request already saved with 60 minutes. Once open, change only its buffer to 135. Add a client command that calls СверитьБуфер and prints Form, Object, and Database separately. Close without saving and reopen the same reference. Preserve the earlier 30-minute request and methods.",
+        "why": "The new task checks independent transfer of the idea.",
+        "expected": "В форме: 135\nВ объекте: 135\nВ базе: 60\nПосле открытия: 60"
+      },
+      {
+        "where": "Own source and self-report",
+        "action": "Save your source and expected/actual observations. Explain a changed or initially mismatching case. Close without saving wherever the contract requires it.",
+        "why": "A run and understanding are different facts.",
+        "expected": "Source, observations, and explanation are recorded; earlier work is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/form-context-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -307,12 +375,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p8-form-data.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p8-1-author-v1",
     "quiz": [
+      {
+        "question": "What will an independent reference read return before saving?",
+        "options": [
+          "30 — the previously saved value",
+          "77 — every field edit is saved immediately",
+          "Undefined — the reference disappeared"
+        ],
+        "correct": 0,
+        "explanation": "30. Form data and the converted object can agree while the persisted record remains unchanged. The third observation is independent because it is reread through the reference."
+      },
       {
         "question": "FormDataToValue itself",
         "options": [
@@ -342,7 +416,31 @@
         ],
         "correct": 2,
         "explanation": "The buffer was not persisted."
+      },
+      {
+        "question": "Which check reveals a buffer value substituted for persisted data?",
+        "options": [
+          "Reread the same reference after closing without saving",
+          "Look at the field again",
+          "Compare two panel colours"
+        ],
+        "correct": 0,
+        "explanation": "Explain why converting data and matching two values do not establish a save."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-forms-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Managed forms and client/server contexts",
+      "language": "English",
+      "purpose": "Optional reading after your attempt; the lesson explains its required route.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p8.topic-1.en.json"
 }
