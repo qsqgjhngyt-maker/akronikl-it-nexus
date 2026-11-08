@@ -1,7 +1,29 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// В модуле P2 нужна настоящая обратная стрелка; прежние линейные трассы не меняются.
+function whileCycleMarkup(flow){
+ const l=flow.labels,x=132;
+ const text=(value,cx,cy,branch=false)=>`<text${branch?' class="flowchart-branch"':''} x="${cx}" y="${cy}" dominant-baseline="central">${esc(value)}</text>`;
+ const node=(id,shape,value,cy)=>`<g data-flowchart-node="${id}">${shape}${text(value,x,cy)}</g>`;
+ const rect=(id,value,y)=>node(id,`<rect x="12" y="${y}" width="240" height="64" rx="12"/>`,value,y+32);
+ const arrow=(line,head,edge='')=>`<path class="flowchart-arrow"${edge?' data-flow-edge="'+esc(edge)+'"':''} d="${line} ${head}"/>`;
+ const down=(from,to)=>arrow(`M${x} ${from}V${to}`,'m-5-7 5 7 5-7');
+ return `<figure class="learning-flow" data-while-cycle><figcaption>${esc(flow.caption)}</figcaption>
+ <svg viewBox="0 0 320 616" role="img" aria-label="${esc(flow.caption)}"><desc>${esc(flow.alternative.join(' '))}</desc>
+ ${rect('initial',l.initial,4)}${down(68,104)}
+ ${node('condition','<path style="fill:#243b52;stroke:#93abc2;stroke-width:1.7" d="M132 104 232 152 132 200 32 152Z"/>',l.condition,152)}
+ ${down(200,250)}${text(l.yes,154,225,true)}
+ ${rect('body',l.body,250)}${down(314,344)}${rect('advance',l.advance,344)}
+ ${arrow('M12 376H3V152H32','m-7-5 7 5-7 5','return')}
+ ${arrow('M232 152H292V502H252','m7-5-7 5 7 5','exit')}${text(l.no,260,126,true)}
+ ${node('result','<path style="fill:#172d44;stroke:#a6bfd7;stroke-width:1.5" d="M24 470H252l-12 64H12Z"/>',l.result,502)}
+ ${down(534,568)}
+ ${node('end','<ellipse style="fill:#172d44;stroke:#a6bfd7;stroke-width:1.5" cx="132" cy="590" rx="68" ry="22"/>',l.end,590)}
+ </svg><details><summary>${esc(flow.textLabel)}</summary><ol>${flow.alternative.map(t=>`<li>${esc(t)}</li>`).join('')}</ol></details></figure>`;
+}
 // SVG хранится локально; полный смысл доступен и обычным текстом.
 export function learningFlowMarkup(flow){
  if(!flow)return '';
+ if(flow.kind==='while-cycle')return whileCycleMarkup(flow);
  const height=flow.nodes.length*108-22;
  return `<figure class="learning-flow"><figcaption>${esc(flow.caption)}</figcaption>
  <svg viewBox="0 0 260 ${height}" role="img" aria-label="${esc(flow.caption)}"><desc>${esc(flow.alternative.join(' '))}</desc>

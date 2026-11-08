@@ -6,10 +6,11 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {staticMime} from '../pwa/static-mime.js';
 import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';
+import {flowchartGeometry,stableOnecPracticeGeometry} from './helpers/cpp-clarity-flowchart-geometry.mjs';
 const out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE,'p2-conditions'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);
 await mkdir(out,{recursive:true});
 const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
-const ids=['onec.p2.topic-3'],checks=[],errors=[],external=[];
+const ids=['onec.p2.topic-3'],checks=[],errors=[],external=[],geometryRecords=[],practiceRecords=[];
 const server=http.createServer(async(req,res)=>{try{
  const u=new URL(req.url,'http://127.0.0.1');
  if(u.pathname==='/__p2_conditions__'){res.setHeader('content-type','text/html');return res.end('<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="'+prefix+'/styles/app.css"><body style="margin:0;background:#091622"><main id="app"></main></body></html>');}
@@ -41,6 +42,11 @@ try{
    const visuals=await root.locator('.lesson-flowchart svg').evaluateAll(svgs=>svgs.map(svg=>{const vb=svg.viewBox.baseVal,scale=svg.getBoundingClientRect().width/vb.width;return {minFont:Math.min(...[...svg.querySelectorAll('text')].map(t=>parseFloat(getComputedStyle(t).fontSize)*scale)),outside:[...svg.querySelectorAll('text')].filter(t=>{const b=t.getBBox();return b.x<0||b.x+b.width>vb.width;}).map(t=>t.textContent)};}));
    assert.equal(visuals.length,2);
    for(const visual of visuals){assert.deepEqual(visual.outside,[],id+' '+locale+' clipped SVG labels');assert.ok(visual.minFont>=12,id+' '+width+' diagram text too small');}
+   for(const svg of await root.locator('.lesson-flowchart svg').all()){
+    const labels=await svg.evaluate(flowchartGeometry);
+    for(const label of labels){assert.notEqual(label.insideWith4pxPadding,false,locale+' '+width+' node boundary: '+label.text);assert.equal(label.arrowCollisions,0,locale+' '+width+' arrow: '+label.text);assert.ok(label.fontPx>=12);}
+    geometryRecords.push({locale,width,labels});
+   }
    for(const [index,diagram]of(await root.locator('.lesson-flowchart').all()).entries()){await diagram.scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,id+'-'+locale+'-'+width+'-diagram'+index+'.png')});}
    const main=root.locator('#example-1');assert.equal((await main.locator('[data-expected-output]').textContent()).trim(),'Без затрат');await main.screenshot({path:path.join(out,id+'-'+locale+'-'+width+'-main-example.png')});
   }
@@ -60,6 +66,19 @@ try{
    // Viewing the example, reference and recalling theory never replace the editor.
    await stage(root,'explanation');await stage(root,'practice');assert.equal(await editor.inputValue(),marker);
    await editor.fill(marker+'\n// unsaved new edit');await root.locator('[data-lab-reference] summary').first().click();assert.equal(await editor.inputValue(),marker+'\n// unsaved new edit');await saved(root);
+  }
+  await stage(root,'practice');
+  const ownEditor=root.locator('#editor'),ownCode=await ownEditor.inputValue(),reportValue='Independent external observations '+locale;
+  await root.locator('[data-r3-report]').fill(reportValue);await saved(root);
+  for(const width of [320,390,1366]){
+   await p.setViewportSize({width,height:900});await root.locator('[data-r3-report]').scrollIntoViewIfNeeded();
+   const geometry=await root.evaluate(stableOnecPracticeGeometry);
+   assert.equal(geometry.overlap,0,locale+' '+width+' stable editor/report overlap');
+   assert.ok(geometry.studio.bottom<=geometry.report.y,locale+' '+width+' studio is contained above report');
+   assert.equal(geometry.highlightPosition,'absolute');assert.equal(geometry.editorPosition,'absolute');assert.equal(geometry.stylesheetImported,true);
+   assert.equal(geometry.sourceValue,ownCode);assert.equal(geometry.reportValue,reportValue);
+   practiceRecords.push({locale,width,...geometry});
+   await p.screenshot({path:path.join(out,id+'-'+locale+'-'+width+'-practice-stable.png')});
   }
   const source=JSON.parse(await readFile(`courses/clarity/lessons/${id}.${locale}.json`));await stage(root,'selfcheck');
   for(const q of source.selfcheck.filter(q=>q.kind==='choice'))await root.locator('[data-answer="'+q.id+'"][value="'+q.correct+'"]').check();
@@ -83,7 +102,7 @@ try{
  for(const id of ids)for(const locale of ['ru','en']){await p.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'onec',lesson:id,locale,stage:'explanation'}),{id,locale});const root=p.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]');await root.waitFor();await inspectImages(root);}
  await f.closeBrowser();f.networkDown();p=await f.launch();await p.context().setOffline(true);
  await p.goto(f.origin+'/offline.html#course=onec&lesson=onec.p2.topic-3&locale=ru&stage=explanation');
- for(const id of ids)for(const locale of ['ru','en']){await p.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'onec',lesson:id,locale,stage:'explanation'}),{id,locale});const root=p.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]');await root.waitFor();const imgs=await inspectImages(root);assert.ok(imgs.every(i=>i.loaded));assert.equal(await root.locator('.lesson-flowchart svg').count(),2);await stage(root,'practice');assert.equal(await root.locator('[data-r3-create]:enabled,[data-r3-report]:enabled,[data-r3-record]:enabled').count(),0);}
+ for(const id of ids)for(const locale of ['ru','en']){await p.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'onec',lesson:id,locale,stage:'explanation'}),{id,locale});const root=p.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]');await root.waitFor();const imgs=await inspectImages(root);assert.ok(imgs.every(i=>i.loaded));assert.equal(await root.locator('.lesson-flowchart svg').count(),2);assert.equal(await p.evaluate(async prefix=>{const r=await fetch(prefix+'/styles/clarity-onec-code-studio.css');return r.ok&&(await r.text()).includes('.onec-integrated');},prefix),true,'New stylesheet is available in the cold offline cache');await stage(root,'practice');assert.equal(await root.locator('[data-r3-create]:enabled,[data-r3-report]:enabled,[data-r3-record]:enabled').count(),0);}
  checks.push({name:'Cold offline reading',editions:2,actualServiceWorker:true,newBrowserProcess:true,privateWriter:'not used',status:'PASS'});
 }catch(e){failure={message:e.message,stack:String(e.stack).slice(0,2200)};console.error(e);for(const [i,p]of context.pages().entries())await p.screenshot({path:path.join(out,'FAIL-'+i+'.png')}).catch(()=>{});}
-finally{await writeFile(path.join(out,'ONEC_P2_CONDITIONS_BROWSER.json'),JSON.stringify({status:failure?'FAIL':'PASS',checks,errors,externalRequests:external,failure,syntheticAccountOnly:true,serverAuthentication:'NOT TESTED',native1CExecution:'SEPARATE',learnerUnderstanding:'NOT MEASURED'},null,2)+'\n');await browser.close();await new Promise(r=>server.close(r));if(f)await f.finish({status:failure?'FAIL':'PASS'});if(failure)process.exitCode=1;}
+finally{await writeFile(path.join(out,'ONEC_P2_CONDITIONS_BROWSER.json'),JSON.stringify({status:failure?'FAIL':'PASS',checks,geometryRecords,practiceRecords,errors,externalRequests:external,failure,syntheticAccountOnly:true,serverAuthentication:'NOT TESTED',native1CExecution:'SEPARATE',learnerUnderstanding:'NOT MEASURED'},null,2)+'\n');await browser.close();await new Promise(r=>server.close(r));if(f)await f.finish({status:failure?'FAIL':'PASS'});if(failure)process.exitCode=1;}

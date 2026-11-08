@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {CLARITY_COURSES} from '../core/clarity-course-registry.mjs';
 import {gradeQuiz} from '../courses/onec-education/model.mjs';
-import {authoredMarkup} from '../core/cpp-clarity-authored.mjs';
+import {authoredMarkup,authoredStyles} from '../core/cpp-clarity-authored.mjs';
 import {lessonFiguresMarkup} from '../courses/onec-education/lesson-media.mjs';
 const id='onec.p2.topic-3',base='35773232b90863d9a4b2991fd2e0e022a97aadb5';
 const json=async p=>JSON.parse(await readFile(p,'utf8')),hash=b=>createHash('sha256').update(b).digest('hex');
@@ -14,8 +14,9 @@ const nativeRoot='docs/ru/03-content/cpp-clarity-01/R3_EVIDENCE/onec-p2-conditio
 const author=locale=>json('courses/clarity/authoring/'+id+'.'+locale+'.json');
 
 test('Условия: ровно согласованная пара; принятые курсы и общий экран неизменны',()=>{
- for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','courses/onec-education','review/cpp-clarity-r3','core/cpp-clarity-r3-renderer.mjs','core/cpp-clarity-authored.mjs','core/clarity-visuals.mjs','core/storage.js','core/clarity-course-progress.mjs','project-studio','sandbox/qt','pwa'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'',area);
- assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),['en','ru'].map(l=>'courses/clarity/lessons/'+id+'.'+l+'.json'));
+ for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3','core/cpp-clarity-r3-renderer.mjs','core/storage.js','core/clarity-course-progress.mjs','project-studio','sandbox/qt','pwa'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'',area);
+ assert.deepEqual(git('diff','--name-only',base,'--','courses/onec-education').toString().trim().split(/\r?\n/),['courses/onec-education/candidate.css'],'Only the MASTER-approved stylesheet import changes');
+ assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),[id,'onec.p2.topic-4','onec.p2.numbers-dates-locales'].flatMap(topic=>['en','ru'].map(l=>'courses/clarity/lessons/'+topic+'.'+l+'.json')).sort());
  for(const topic of ['onec.p1.architecture','onec.p1.infobase','onec.p1.lifecycle','onec.p1.tools','onec.p2.topic-2'])for(const dir of ['authoring','lessons'])for(const locale of ['ru','en'])assert.equal(git('diff','--name-only',base,'--','courses/clarity/'+dir+'/'+topic+'.'+locale+'.json').toString().trim(),'');
 });
 
@@ -88,4 +89,39 @@ test('Условия: шаги точно различают Nexus, редакт
   assert.match(steps[0].where,/Nexus/);assert.match(steps[1].where,locale==='ru'?/Конфигуратор/:/Designer/);assert.match(steps[2].where,/ПриНачалеРаботыСистемы/);assert.match(steps[3].where,/F7.*F5/);assert.match(steps[4].where,locale==='ru'?/Фиксация результата/:/Result recording/);
   assert.ok(a.selfcheck.find(q=>q.kind==='free').feedback.includes(locale==='ru'?'не оценивается автоматически':'not graded automatically'));
  }
+});
+
+test('Визуальное исправление сохраняет CONTENT ACCEPT и добавляет только две layout-настройки на язык',async()=>{
+ const accepted='5ffd3153577c411f6a3031c517542904f6b59c23';
+ for(const locale of ['ru','en'])for(const dir of ['authoring','lessons']){
+  const p='courses/clarity/'+dir+'/'+id+'.'+locale+'.json',current=await json(p),old=JSON.parse(git('show',accepted+':'+p));let changed=0;
+  for(const s of current.sections)if(s.flowchart){assert.equal(s.flowchart.layout,'roomy');delete s.flowchart.layout;changed++;}
+  assert.equal(changed,2);assert.deepEqual(current,old,'Accepted semantics and revision: '+p);
+ }
+ const p='courses/onec-education/candidate.css',old=git('show',accepted+':'+p).toString();
+ assert.equal(await readFile(p,'utf8'),"@import url('../../styles/clarity-onec-code-studio.css');\n"+old);
+ const css=await readFile('styles/clarity-onec-code-studio.css','utf8');
+ assert.equal(hash(css),'403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84');
+ assert.match(css,/\.onec-integrated\s*\{/);
+ assert.equal(git('diff','--name-only',accepted,'--','styles/app.css','sandbox/code-studio.js','core/cpp-clarity-r3-renderer.mjs').toString().trim(),'');
+});
+
+test('Opt-in геометрия не меняет прежний HTML и CSS авторских уроков',async()=>{
+ const previous=git('show','5ffd3153577c411f6a3031c517542904f6b59c23:core/cpp-clarity-authored.mjs').toString().replace("'./clarity-visuals.mjs'",JSON.stringify(new URL('../core/clarity-visuals.mjs',import.meta.url).href));
+ const prior=await import('data:text/javascript;base64,'+Buffer.from(previous).toString('base64'));
+ assert.equal(authoredStyles,prior.authoredStyles);
+ const currentVisuals=await import('../core/clarity-visuals.mjs'),priorVisuals=await import('data:text/javascript;base64,'+Buffer.from(git('show','5ffd3153577c411f6a3031c517542904f6b59c23:core/clarity-visuals.mjs')).toString('base64'));
+ assert.equal(currentVisuals.learningVisualStyles,priorVisuals.learningVisualStyles);
+ const render={code:(...a)=>JSON.stringify(a),table:t=>JSON.stringify(t),url:(...a)=>JSON.stringify(a),programBundle:p=>JSON.stringify(p),figures:f=>JSON.stringify(f)};
+ const {readdir}=await import('node:fs/promises');let compared=0;
+ for(const folder of ['courses/clarity/lessons','courses/cpp-clarity-r3/lessons'])for(const name of await readdir(folder)){
+  if(!name.endsWith('.json'))continue;const lesson=await json(folder+'/'+name);if(!lesson.authored)continue;
+  if(lesson.id===id)for(const s of lesson.sections)if(s.flowchart)delete s.flowchart.layout;
+  for(const s of lesson.sections)if(s.flow&&s.flow.kind!=='while-cycle')assert.equal(currentVisuals.learningFlowMarkup(s.flow),priorVisuals.learningFlowMarkup(s.flow),name+' existing flow');
+  const a=authoredMarkup(lesson,render),b=prior.authoredMarkup(lesson,render);
+  assert.equal(a.explanation(),b.explanation(),name);assert.equal(a.reading(),b.reading(),name);
+  for(const s of lesson.sections)assert.deepEqual(a.recall(s.id),b.recall(s.id),name+' '+s.id);
+  compared++;
+ }
+ assert.ok(compared>=144);
 });

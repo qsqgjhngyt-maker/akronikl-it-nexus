@@ -11,8 +11,9 @@ const id='onec.p2.topic-2',base='704c23616f1d8536416fb90a9b46502e1b0f1831';
 const json=async p=>JSON.parse(await readFile(p,'utf8')),hash=b=>createHash('sha256').update(b).digest('hex');
 const git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{maxBuffer:64e6});
 test('P2 types меняет одну редакционную пару и сохраняет принятый пилот, P1 и исходные курсы',()=>{
- for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3','courses/onec-education','core/clarity-course-progress.mjs','core/storage.js','project-studio','sandbox/qt'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'');
- const approved=[id,'onec.p2.topic-3'].flatMap(topic=>['en','ru'].map(l=>`courses/clarity/lessons/${topic}.${l}.json`));
+ for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3','core/clarity-course-progress.mjs','core/storage.js','project-studio','sandbox/qt'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'');
+ assert.deepEqual(git('diff','--name-only',base,'--','courses/onec-education').toString().trim().split(/\r?\n/),['courses/onec-education/candidate.css'],'Only the MASTER-approved stylesheet import changes');
+ const approved=[id,'onec.p2.topic-3','onec.p2.topic-4','onec.p2.numbers-dates-locales'].flatMap(topic=>['en','ru'].map(l=>`courses/clarity/lessons/${topic}.${l}.json`));
  assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),approved.sort());
  const acceptedTypes=['authoring','lessons'].flatMap(dir=>['en','ru'].map(l=>`courses/clarity/${dir}/${id}.${l}.json`));
  assert.equal(git('diff','--name-only','7bafbe88e2eb07c972c33525afb8f0de365faa31','--',...acceptedTypes).toString().trim(),'','Accepted types edition remains byte-identical');
@@ -74,7 +75,7 @@ test('Преобразуемый отрицательный ввод и неве
 test('P2 types: смысловая SVG и подлинные локальные снимки не раскрывают эталонный код до попытки',async()=>{
  const captures=await json('docs/ru/03-content/cpp-clarity-01/R65_ONEC_P2_TYPES_NATIVE_CAPTURES.json');
  const matrix=await json('docs/ru/03-content/cpp-clarity-01/R65_VISUAL_EDU_MATRIX.json');assert.equal(matrix.rows.length,151);
- const row=matrix.rows.find(row=>row.id===id);assert.equal(row.visualAcceptance,'IMPLEMENTED / AUTOMATED PASS / MASTER REVIEW PENDING');assert.ok(row.required.length&&row.implemented.length&&row.verified.length&&row.missing.length);
+ const row=matrix.rows.find(row=>row.id===id);assert.equal(row.visualAcceptance,'CONTENT / VISUAL ACCEPT at7bafbe88; accepted source unchanged');assert.ok(row.required.length&&row.implemented.length&&row.verified.length&&row.missing.length);
  for(const locale of ['ru','en']){
   const a=await json(`courses/clarity/authoring/${id}.${locale}.json`),flows=a.sections.filter(s=>s.flow),figures=a.sections.flatMap(s=>s.figures||[]);
   assert.equal(flows.length,1);assert.equal(figures.length,2);

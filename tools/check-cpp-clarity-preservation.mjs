@@ -19,8 +19,22 @@ const p2TypesMedia=new Map(JSON.parse(await readFile('docs/ru/03-content/cpp-cla
 for(const [file,digest]of p2TypesMedia)assert.equal(sha(await readFile(file)),digest,'P2 original screenshot: '+file);
 const p2ConditionsMedia=new Map(JSON.parse(await readFile('docs/ru/03-content/cpp-clarity-01/R65_ONEC_P2_CONDITIONS_NATIVE_CAPTURES.json','utf8')).images.map(f=>['courses/clarity/'+f.src,f.sha256]));
 for(const[file,digest]of p2ConditionsMedia)assert.equal(sha(await readFile(file)),digest,'P2 conditions native image: '+file);
-const presentationOnly=new Set(['courses/onec-education/lesson-media.mjs','core/clarity-course-progress.mjs']);
+const presentationOnly=new Set(['courses/onec-education/lesson-media.mjs','core/clarity-course-progress.mjs','courses/onec-education/candidate.css']);
+// MASTER00 / 90ffee3a: только согласованные пути и точные bytes визуального исправления.
+const approvedOnecUiPaths=new Map([
+ ['styles/clarity-onec-code-studio.css','403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84'],
+ ['courses/onec-education/candidate.css','82250ddcb1953409456576801efe150af74e99fde083f8be6d86dd263dacf8d2'],
+ ['core/cpp-clarity-authored.mjs','3f9fae901c10df759d4137ba1c62d700d942f85fd550c0d242024c05759f5ea3'],
+ ['core/clarity-visuals.mjs','968a84a49f36ea46b623cbb191c8ade20f774c750021492d768f8b501249faf9'],
+]);
+for(const[file,digest]of approvedOnecUiPaths)assert.equal(sha(await readFile(file)),digest,'Approved 1C presentation bytes: '+file);
+// Модульная поставка P2 по решению владельца и MASTER00 / f636357a.
+const p2ModuleSources=new Set(['onec.p2.topic-4','onec.p2.numbers-dates-locales'].flatMap(id=>['ru','en'].map(locale=>'courses/clarity/authoring/'+id+'.'+locale+'.json')));
+const p2ModuleMedia=new Map(JSON.parse(await readFile('docs/ru/03-content/cpp-clarity-01/R65_ONEC_P2_MODULE_NATIVE_CAPTURES.json','utf8')).images.map(f=>['courses/clarity/'+f.src,f.sha256]));
+for(const[file,digest]of p2ModuleMedia)assert.equal(sha(await readFile(file)),digest,'P2 module genuine image: '+file);
 const sourceAllow=new Set([...presentationOnly,'core/clarity-visuals.mjs',...contractApproved,'tests/helpers/module3-gold-programs.mjs','tests/helpers/module4-gold-programs.mjs','tests/helpers/module5-gold-programs.mjs','tests/helpers/module6-gold-programs.mjs','tests/code-studio-foundation-check.mjs','akronikl/knowledge/core-index.ru.json','akronikl/knowledge/core-index.en.json','akronikl/knowledge/manifest.json','akronikl/ui/knowledge-loader.js','tests/platform-lazy-imports.test.mjs','tests/workspace-persistence-resume-check.mjs','tests/account-storage-isolation-check.mjs','core/cpp-clarity-r3-state.mjs','core/clarity-course-registry.mjs','core/clarity-course-controls.mjs','core/cpp-clarity-authored.mjs','tools/preview-cpp-clarity-r3.mjs','tools/START_CPP_CLARITY_R3.cmd','tools/start-cpp-clarity-r3.mjs','tools/cpp-clarity-r3-pilot-preview.mjs','tools/preview-cpp-clarity.mjs','tools/START_CPP_CLARITY.cmd','core/academy-gold-presentation.js','core/cpp-clarity-presentation.js','core/learning-views.js','core/app.js','core/nexus-learning-discovery.js','styles/academy-gold.css','pwa/offline-entry.js','courses/cpp/data/gold-laboratories.json','tools/build-academy-gold-laboratories.mjs','.github/workflows/cpp-clarity-01.yml']);
+for(const file of approvedOnecUiPaths.keys())sourceAllow.add(file);
+for(const file of [...p2ModuleSources,...p2ModuleMedia.keys()])sourceAllow.add(file);
 // MASTER 00: только три новых QA-only пути с точными bytes; защищённые области не расширяются.
 const qaDiagnosticApproved=new Map([
  ['.github/workflows/cpp-clarity-qt03-selected.yml','a29885a26b6d4f80387da7ce354128d701e29b3f65aa1d6f658dbcd44e163d68'],

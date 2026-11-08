@@ -18,6 +18,7 @@ on:
       - 'core/nexus-learning-discovery.js'
       - 'pwa/offline-entry.js'
       - 'styles/academy-gold.css'
+      - 'styles/clarity-onec-code-studio.css'
       - 'tools/*cpp-clarity*'
       - 'tests/*cpp-clarity*'
       - 'tests/helpers/cpp-clarity-*'
@@ -31,7 +32,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   onec-p1:
-    name: 1С P1 — уроки, наглядность, работа и offline
+    name: 1С P1/P2 — уроки, наглядность, работа и offline
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -51,7 +52,7 @@ jobs:
           npm ci --prefix server-access --ignore-scripts
           npm ci --prefix tools/qa-browser-driver
           node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
-          node --test tests/cpp-clarity-onec-p1-content.test.mjs tests/cpp-clarity-onec-p2-types-content.test.mjs tests/cpp-clarity-onec-p2-conditions-content.test.mjs
+          node --test tests/cpp-clarity-onec-p1-content.test.mjs tests/cpp-clarity-onec-p2-types-content.test.mjs tests/cpp-clarity-onec-p2-conditions-content.test.mjs tests/cpp-clarity-onec-p2-module-content.test.mjs
           node tools/build-cpp-clarity-candidate.mjs
       - name: Проверить восемь редакций, настоящие изображения, редактор и холодный offline
         run: node tests/cpp-clarity-onec-p1-browser.mjs
@@ -59,6 +60,8 @@ jobs:
         run: node tests/cpp-clarity-onec-p2-types-browser.mjs
       - name: Отдельно проверить условия, две блок-схемы, работу и холодный offline
         run: node tests/cpp-clarity-onec-p2-conditions-browser.mjs
+      - name: Проверить весь модуль P2, десять редакций, схемы, работу и холодный offline
+        run: node tests/cpp-clarity-onec-p2-module-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
