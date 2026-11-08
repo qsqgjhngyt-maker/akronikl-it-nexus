@@ -33,7 +33,13 @@ export async function classify(s){
   if(p.ciMigration){
    assert.equal(p.baseline,'14d8629042aef9b913881c4b340aee11a573cba1');assert.equal(p.module,'onec.p8');assert.equal(p.migrationDecision,'78663428-2975-43fb-a62f-a90f2d6c8fa3');
    const history=git(s.cwd,'log','--format=%H',p.baseline+'..HEAD','--',policyPath).toString().trim().split(/\r?\n/).filter(Boolean);
-   if(!s.worktree){assert.equal(history.length,1);const head=git(s.cwd,'rev-parse','HEAD').toString().trim(),parents=git(s.cwd,'show','-s','--format=%P','HEAD').toString().trim().split(' ');assert.ok(history[0]===head||parents.length===2&&history[0]===parents[1]);}
+   // MASTER00 dc12efae: corrections descend from the immutable first migration.
+   const migrationAnchor='5cdfbada33befe46d66f50391e4d80993422a4fb';git(s.cwd,'merge-base','--is-ancestor',migrationAnchor,'HEAD');
+   const anchorPolicy=JSON.parse(git(s.cwd,'show',migrationAnchor+':'+policyPath));
+   const normalizePolicy=value=>{const copy=structuredClone(value);for(const file of ['tools/classify-cpp-clarity-ci.mjs','tools/check-cpp-clarity-preservation.mjs'])copy.migrationHashes[file]=anchorPolicy.migrationHashes[file];return copy;};
+   assert.deepEqual(normalizePolicy(p),anchorPolicy,'Only two approved guard hash pins may change');
+   const lineage=git(s.cwd,'log','--reverse','--format=%H',p.baseline+'..HEAD','--',policyPath).toString().trim().split(/\r?\n/).filter(Boolean);assert.equal(lineage[0],migrationAnchor,'First migration remains in history');
+   for(const commit of lineage)assert.deepEqual(normalizePolicy(JSON.parse(git(s.cwd,'show',commit+':'+policyPath))),anchorPolicy,'No unauthorized policy revision in '+commit);
    for(const [file,digest]of Object.entries(p.migrationHashes)){assert.equal(hash(await s.current(file)),digest,file);}
   }else{
    const previous=JSON.parse(await s.prior(policyPath));assert.equal(previous.schemaVersion,1);assert.deepEqual(p.migrationHashes,previous.migrationHashes);

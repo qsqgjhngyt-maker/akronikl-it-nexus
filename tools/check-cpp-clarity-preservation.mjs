@@ -65,7 +65,7 @@ for(const[file,digest]of qaDiagnosticApproved)assert.equal(sha(await readFile(fi
 assert.equal(sha(await readFile('tests/helpers/cpp-clarity-qt03-selection-diagnostic.mjs')),'0139e8c726ecdcd1517bb1d745b40d9397c9020b1a1dc9d333bdee87446aee29','Unchanged Qt diagnostic helper');
 // MASTER 00: однократная миграция BASIC, два точных новых инструмента.
 const ciBasicToolApproved=new Map([
- ['tools/classify-cpp-clarity-ci.mjs','4a77335780297938924f5c7ee6935db2851147b46e504f9ab88f2a45139c2cfe'],
+ ['tools/classify-cpp-clarity-ci.mjs','fb79b206d9da443dd7af287fffb1a90ad2963cc9284443e17dcc206b9cc9bd0c'],
  ['tools/package-cpp-clarity-basic-source.py','5a229216ff7fc13ba6a27c61da2b0efb49c23fd0e16fd578953f7298a925520e']
 ]);
 for(const[file,digest]of ciBasicToolApproved){assert.equal(sha(await readFile(file)),digest,'Approved BASIC CI bytes: '+file);sourceAllow.add(file);}
