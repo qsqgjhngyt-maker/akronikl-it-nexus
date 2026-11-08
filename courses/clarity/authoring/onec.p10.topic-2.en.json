@@ -1,0 +1,486 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P10",
+  "id": "onec.p10.topic-2",
+  "locale": "en",
+  "revision": "onec-p10-topic-2-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p10-access.json",
+    "sha256": "25655982a5225a2ecb121242c5ae07dbb9d1e9a39573f6438f7e1ea63a8b3262"
+  },
+  "title": "Seeing a row does not mean being allowed to edit it",
+  "goal": "Test object and row-level restrictions with negative cases without broadening permissions.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P9. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A reader opens a 30-minute request and enters a valid 25, but the update is refused. This is not a range error: action permission and visible-data scope are separate checks.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Your copy and separate files",
+      "paragraphs": [
+        "For roles,create a separate empty training infobase with your own metadata. Preserve a DT backup and source files of the previous P9 infobase first. Save its configuration to your own CF,create a new empty infobase,and load the CF only there. Verify the new path and preserve the previous infobase. This worked dataset starts without requests.",
+        "Use a separate synthetic copy. Set up two training roles and fictional profiles: administrator for own data, and reader with Read/View and no updates. Restrict ЗаявкаУслуги Read by ГДЕ ДлительностьМинут <=30. Assign no second broadening role to the reader. This changes neither Nexus Account nor real permissions. If your current copy has no such roles,create them using this route; a historical module reference does not imply an existing profile in your infobase.",
+        "First as administrator prepare the original 12 values: 30, 45, 15, 0, 60, 20, 25, 35, 40, 50, 55, 65, total 440. The A 8 собственная comment marker plus index identifies the worked set. Visible values 30,15,0,20,25 total 90. The reference includes a separate preparation file.",
+        "Put the checks in server common module УчебнаяПроверкаПрав without privilege; the application calls under the current training profile. To add the new pair, use your administrator, append only those data, then return to the reader. If the edition cannot support the roles/RLS, record NOT RUN and do not bypass it.",
+        "CF/DT here are your own training files. Download no closed configuration and load no full CF over your previous working infobase. Do not repeat the original seed. Append the new pair after the worked case while preserving its12 documents."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Authorization checks an action",
+      "paragraphs": [
+        "A role permits object operations; data restrictions refine scope. A user allowed Alpha requests does not gainBeta access merely by knowing a key. Test lists, direct open and edits. Hidden buttons and editable client filters are not authorization enforcement.",
+        "The available worked route uses the separate training roles described in this lesson. These are infobase roles, not Nexus accounts/RLS. Use an otherwise valid write so range validation is not mistaken for an authorization rejection."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "Use a separate synthetic copy. Set up two training roles and fictional profiles: administrator for own data, and reader with Read/View and no updates. Restrict ЗаявкаУслуги Read by ГДЕ ДлительностьМинут <=30. Assign no second broadening role to the reader. This changes neither Nexus Account nor real permissions.",
+        "Below is the worked-set check, not user creation. Do not paste the two files into one module.",
+        "Старт.bsl is available with the example without revealing the new task reference. Add it separately to the same own server module and call ИтоговыйОпыт(\"seed\") once as administrator in the new empty infobase. Remove only that startup call,then run the check as reader."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ПроверитьОсновнойНаборПрав() Экспорт\n    Запрос = Новый Запрос(\"ВЫБРАТЬ РАЗРЕШЕННЫЕ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий ПОДОБНО &Метка\"); Запрос.УстановитьПараметр(\"Метка\",\"A8 собственная %\"); Данные = Запрос.Выполнить().Выгрузить();\n    Если Данные.Количество() <> 5 Или Данные.Итог(\"Минуты\") <> 90 Тогда ВызватьИсключение \"RLS состав5/90\"; КонецЕсли;\n    Для Каждого Ряд Из Данные Цикл Если Ряд.Минуты > 30 Тогда ВызватьИсключение \"RLS граница\"; КонецЕсли; КонецЦикла;\n    Отказ = Ложь; Попытка НовыйЗапрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка ИЗ Документ.ЗаявкаУслуги КАК З\"); НовыйЗапрос.Выполнить(); Исключение Отказ = Истина; КонецПопытки;\n    Если Не Отказ Тогда ВызватьИсключение \"RLS unrestricted query unexpectedly allowed\"; КонецЕсли;\n    Ссылка = Данные[0].Ссылка; Ранее = Ссылка.ДлительностьМинут; Объект = Ссылка.ПолучитьОбъект(); Отказ = Ложь;\n    Попытка Объект.ДлительностьМинут = 25; Объект.Записать(); Исключение Отказ = Истина; КонецПопытки;\n    Если Не Отказ Или Ссылка.ДлительностьМинут <> Ранее Тогда ВызватьИсключение \"RLS запись не защищена\"; КонецЕсли;\n    Возврат \"PASS|five-rows-90|all-le30|unrestricted-query-rejected|valid-update-rejected|prior-value-retained\";\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The worked set contains 12 own documents totalling 440 minutes. A training reader restricted by ДлительностьМинут <=30 sees five totalling 90. The function also selects the worked set’s marker, so later independent data do not change this example. An unrestricted query and a valid update to 25 are refused.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяПроверкаПрав.ПроверитьОсновнойНаборПрав();\n    Если Р <> \"PASS|five-rows-90|all-le30|unrestricted-query-rejected|valid-update-rejected|prior-value-retained\" Тогда ВызватьИсключение \"Неожиданный результат\"; КонецЕсли;\n    Сообщить(\"Основных видимых заявок: 5\");\n    Сообщить(\"Минут основного набора: 90\");\n    Сообщить(\"Обычный запрос отклонён: Да\");\n    Сообщить(\"Корректная запись 25 отклонена: Да\");\n    Сообщить(\"Прежнее значение сохранено: Да\");\nКонецПроцедуры\n",
+        "output": "Основных видимых заявок: 5\nМинут основного набора: 90\nОбычный запрос отклонён: Да\nКорректная запись 25 отклонена: Да\nПрежнее значение сохранено: Да",
+        "files": {
+          "Данные.bsl": "Функция ПроверитьОсновнойНаборПрав() Экспорт\n    Запрос = Новый Запрос(\"ВЫБРАТЬ РАЗРЕШЕННЫЕ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий ПОДОБНО &Метка\"); Запрос.УстановитьПараметр(\"Метка\",\"A8 собственная %\"); Данные = Запрос.Выполнить().Выгрузить();\n    Если Данные.Количество() <> 5 Или Данные.Итог(\"Минуты\") <> 90 Тогда ВызватьИсключение \"RLS состав5/90\"; КонецЕсли;\n    Для Каждого Ряд Из Данные Цикл Если Ряд.Минуты > 30 Тогда ВызватьИсключение \"RLS граница\"; КонецЕсли; КонецЦикла;\n    Отказ = Ложь; Попытка НовыйЗапрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка ИЗ Документ.ЗаявкаУслуги КАК З\"); НовыйЗапрос.Выполнить(); Исключение Отказ = Истина; КонецПопытки;\n    Если Не Отказ Тогда ВызватьИсключение \"RLS unrestricted query unexpectedly allowed\"; КонецЕсли;\n    Ссылка = Данные[0].Ссылка; Ранее = Ссылка.ДлительностьМинут; Объект = Ссылка.ПолучитьОбъект(); Отказ = Ложь;\n    Попытка Объект.ДлительностьМинут = 25; Объект.Записать(); Исключение Отказ = Истина; КонецПопытки;\n    Если Не Отказ Или Ссылка.ДлительностьМинут <> Ранее Тогда ВызватьИсключение \"RLS запись не защищена\"; КонецЕсли;\n    Возврат \"PASS|five-rows-90|all-le30|unrestricted-query-rejected|valid-update-rejected|prior-value-retained\";\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяПроверкаПрав.ПроверитьОсновнойНаборПрав();\n    Если Р <> \"PASS|five-rows-90|all-le30|unrestricted-query-rejected|valid-update-rejected|prior-value-retained\" Тогда ВызватьИсключение \"Неожиданный результат\"; КонецЕсли;\n    Сообщить(\"Основных видимых заявок: 5\");\n    Сообщить(\"Минут основного набора: 90\");\n    Сообщить(\"Обычный запрос отклонён: Да\");\n    Сообщить(\"Корректная запись 25 отклонена: Да\");\n    Сообщить(\"Прежнее значение сохранено: Да\");\nКонецПроцедуры\n",
+          "Старт.bsl": "// Оригинальный инженерный эталон A8/P12; собственная отдельная база, не код новичка.\nФункция ИтоговыйОпыт(Режим) Экспорт\n    Если Режим = \"seed\" Тогда\n        Для Индекс = 1 По 3 Цикл\n            Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Код = \"A8C\" + Строка(Индекс); Клиент.Наименование = ?(Индекс = 2,\"Учебная Бета\",\"Учебная Альфа\"); Клиент.Записать();\n        КонецЦикла;\n        Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Код = \"A8S1\"; Услуга.Наименование = \"Учебная консультация\"; Услуга.Записать();\n        Части = СтрРазделить(\"30,45,15,0,60,20,25,35,40,50,55,65\",\",\");\n        Для Индекс = 0 По 11 Цикл\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Номер = \"F\" + Прав(\"00000000\"+СокрЛП(Строка(Индекс+1)),8); Документ.Дата = Дата(2026,11,2,12,0,0);\n            Документ.Клиент = Справочники.Клиенты.НайтиПоКоду(?(Индекс % 2 = 0,\"A8C1\",\"A8C2\")); Документ.Услуга = Услуга.Ссылка;\n            Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Число(Части[Индекс]); Документ.Комментарий = \"A8 собственная \" + Строка(Индекс+1); Документ.Записать();\n        КонецЦикла;\n    КонецЕсли;\n    Если Режим = \"edit\" Тогда\n        Документ = Документы.ЗаявкаУслуги.НайтиПоНомеру(\"F00000012\").ПолучитьОбъект(); Документ.ДлительностьМинут = 80; Документ.Записать();\n    КонецЕсли;\n    Если Режим = \"invalid\" Тогда\n        Ссылка = Документы.ЗаявкаУслуги.НайтиПоНомеру(\"F00000001\"); Документ = Ссылка.ПолучитьОбъект();\n        Отказ = Ложь; Попытка Документ.ДлительностьМинут = 1441; Документ.Записать(); Исключение Отказ = Истина; КонецПопытки;\n        Если Не Отказ Или Ссылка.ДлительностьМинут <> 30 Тогда ВызватьИсключение \"A8 отказ не сохранил30\"; КонецЕсли;\n    КонецЕсли;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.Номер,З.Дата,З.Клиент,З.Услуга,З.Статус,З.ДлительностьМинут КАК Минуты,З.Комментарий КАК Заметка ИЗ Документ.ЗаявкаУслуги КАК З УПОРЯДОЧИТЬ ПО З.Номер\");\n    Таблица = Запрос.Выполнить().Выгрузить(); Ожидание = ?(Режим = \"edit\" Или Режим = \"verify-copy\",455,440);\n    Если Таблица.Количество() <> 12 Или Таблица.Итог(\"Минуты\") <> Ожидание Тогда ВызватьИсключение \"A8 количество/сумма\"; КонецЕсли;\n    Альфа = Справочники.Клиенты.НайтиПоКоду(\"A8C1\"); Бета = Справочники.Клиенты.НайтиПоКоду(\"A8C2\"); Пустой = Справочники.Клиенты.НайтиПоКоду(\"A8C3\");\n    ИтогА = 0; ИтогБ = 0; Пустых = 0; Снимок = Новый Массив;\n    Для Каждого Строка Из Таблица Цикл\n        Если Строка.Клиент = Альфа Тогда ИтогА = ИтогА + Строка.Минуты; КонецЕсли;\n        Если Строка.Клиент = Бета Тогда ИтогБ = ИтогБ + Строка.Минуты; КонецЕсли;\n        Если Строка.Клиент = Пустой Тогда Пустых = Пустых + 1; КонецЕсли;\n        Снимок.Добавить(Строка.Номер+\"|\"+Строка(Строка.Ссылка.УникальныйИдентификатор())+\"|\"+Строка(Строка.Клиент.УникальныйИдентификатор())+\"|\"+Строка(Строка.Услуга.УникальныйИдентификатор())+\"|\"+Строка(Строка.Дата)+\"|\"+Строка(Строка.Статус)+\"|\"+Строка(Строка.Минуты)+\"|\"+Строка.Заметка);\n    КонецЦикла;\n    Если ИтогА <> 225 Или ИтогБ <> Ожидание - 225 Или Пустых <> 0 Или Альфа = Пустой Или Альфа.Наименование <> Пустой.Наименование Тогда ВызватьИсключение \"A8 состав по ключам\"; КонецЕсли;\n    Возврат СтрСоединить(Снимок,Символы.ПС);\nКонецФункции\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Step",
+            "Observation and meaning"
+          ],
+          "rows": [
+            [
+              "Administrator",
+              "12/440 — Complete training set."
+            ],
+            [
+              "RLS reader",
+              "5/90 — Only ≤30."
+            ],
+            [
+              "Valid update",
+              "Insufficient rights — Data unchanged."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Permissions can combine",
+      "paragraphs": [
+        "Additional roles change effective permissions. Analyze the full set and context, not one role alone. Full rights can hide missing enforcement. Use separate synthetic least-privilege profiles and a positive control so a denial is not merely an inability to log in.",
+        "For advanced RLS in another copy restrict document Read with WHERE ДлительностьМинут <=30, matching the current schema. Do not load the historical Минуты fixture over learner work. A second broader role can widen access; inspect the complete role set."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "If 25 is within the valid range, must a reader be able to save it?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. A value can be valid while the role forbids the action. Use a valid 25 in the negative case and reread the prior minutes; otherwise a range refusal can be mistaken for working access control."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Privilege needs justification",
+      "paragraphs": [
+        "Privileged execution can alter normal permission boundaries. Do not enable it merely to silence a read error; justify need and outputs. Even aggregates can disclose forbidden information. Agree on a minimal contract and test indirect routes as well as visible records.",
+        "The final 12 values yield 5 visible records:30, 15, 0, 20, 25, total 90. Compare SELECT ALLOWED with an unrestricted query in an admitted own module: one returns the subset; access to prohibited rows must reject. Separately the administrator sees 12/440."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "Data scope and action permission are checked separately. In the independent task, an own marker separates 30/35 from the previous 12 documents. Fictional 1C profiles are not Nexus accounts.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Administrator",
+            "lines": [
+              "12 / 440"
+            ]
+          },
+          {
+            "title": "Reader",
+            "lines": [
+              "<= 30"
+            ]
+          },
+          {
+            "title": "Visible",
+            "lines": [
+              "5 / 90"
+            ]
+          },
+          {
+            "title": "Write 25",
+            "lines": [
+              "отказ / refusal"
+            ]
+          }
+        ],
+        "alternative": [
+          "Administrator: 12 / 440",
+          "Reader: <= 30",
+          "Visible: 5 / 90",
+          "Write 25: отказ / refusal"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "A second role grants broad reading to the restricted profile. Analysing only its first role is now incomplete. Check the full role set and direct data access; hiding a button does not establish a prohibition.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Bind the matrix to the actual environment",
+      "paragraphs": [
+        "Record build, profile, object, action, scope and expectation. TestAlpha, Beta, direct references, writes and aggregates in a suitable stand. Mark unavailable training checksNOTRUN. Logs contain no passwords or full user data; successful login is not a complete security audit.",
+        "Record permitted object reading, denied update,30/35 boundary and unchanged prior fields. Own synthetic profiles need no password/OS authentication for this exercise. If the edition lacks the mode, complete object-right checks and leave RLS explicitly NOT RUN."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "As training administrator, create a new own 30/35 pair with its own marker. With the same restricted reader, select this pair: one 30-minute request is visible and 35 is excluded. Updating 30 to a valid 25 is refused; rereading still gives 30. Finally the administrator confirms both new requests and total 65.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "Use a separate synthetic copy. Set up two training roles and fictional profiles: administrator for own data, and reader with Read/View and no updates. Restrict ЗаявкаУслуги Read by ГДЕ ДлительностьМинут <=30. Assign no second broadening role to the reader. This changes neither Nexus Account nor real permissions.",
+        "The image shows the actual own NexusP10Reader profile. It establishes 5/90, unrestricted-query refusal and refusal of a valid 25 update. The worked set is selected by its marker; the new independent pair stays separate."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p10-access-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "efee44ea14593bc9fb31b400e5947ef09a644fe06842095aae9d6dbf371103c8",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "caption": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "Only the described training actions are established. Two concurrent sessions, clusters, field latency, debugger GUI and arbitrary external-code safety remain separate. Execution, a saved mark and learner understanding are distinct.",
+        "Distinguish action permission, row restriction, client filtering and the complete role set."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "If 25 is within the valid range, must a reader be able to save it?",
+      "options": [
+        "No: update permission is checked separately",
+        "Yes: valid numbers override permissions",
+        "Yes: a visible button grants permission"
+      ],
+      "correct": 0,
+      "feedback": "No. A value can be valid while the role forbids the action. Use a valid 25 in the negative case and reread the prior minutes; otherwise a range refusal can be mistaken for working access control.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does knowing a key authorize foreign data?",
+      "options": [
+        "Yes",
+        "No",
+        "Only in lists"
+      ],
+      "correct": 1,
+      "feedback": "Identification is not authorization.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Full rights to fix a denial are",
+      "options": [
+        "A universal solution",
+        "Always safe",
+        "Unjustified broadening without analysis"
+      ],
+      "correct": 2,
+      "feedback": "Use the minimum required contract.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "A positive control is needed",
+      "options": [
+        "So denial of everything is not mistaken for a correct role",
+        "For color",
+        "To delete logs"
+      ],
+      "correct": 0,
+      "feedback": "A role must support required work.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Does refusal to save 1441 establish that a user lacks update permission?",
+      "options": [
+        "No: range validation may have rejected it",
+        "Yes: any refusal is role-related",
+        "Yes: if the button is hidden"
+      ],
+      "correct": 0,
+      "feedback": "Distinguish action permission, row restriction, client filtering and the complete role set.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Seeing a row does not mean being allowed to edit it",
+    "task": "As training administrator, create a new own 30/35 pair with its own marker. With the same restricted reader, select this pair: one 30-minute request is visible and 35 is excluded. Updating 30 to a valid 25 is refused; rereading still gives 30. Finally the administrator confirms both new requests and total 65.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Own copy → УчебнаяПроверкаПрав → two training profiles",
+    "setupGuide": false,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ПодготовитьНовуюПаруПрав() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P10 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P10\"; Услуга.Записать();\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,8,12,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n        Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,30,35);\n        Документ.Комментарий = \"P10 независимая пара\"; Документ.Записать();\n    КонецЦикла;\n    Возврат \"PREPARED|two-new-documents|30|35\";\nКонецФункции\n\nФункция ПроверитьНовуюПаруПрав() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяПроверкаПрав.ПроверитьНовуюПаруПрав();\n    Если Р <> \"PASS|one-new-row|30|35-hidden|valid-update-rejected|30-retained\" Тогда ВызватьИсключение \"Неожиданный результат\"; КонецЕсли;\n    Сообщить(\"Новых видимых заявок: 1\");\n    Сообщить(\"Минуты новой видимой заявки: 30\");\n    Сообщить(\"Заявка 35 скрыта: Да\");\n    Сообщить(\"Корректная запись 25 отклонена: Да\");\n    Сообщить(\"Прежние 30 сохранены: Да\");\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ПроверитьНовуюПаруПрав() Экспорт\n    Запрос = Новый Запрос(\"ВЫБРАТЬ РАЗРЕШЕННЫЕ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Метка\");\n    Запрос.УстановитьПараметр(\"Метка\",\"P10 независимая пара\");\n    Таблица = Запрос.Выполнить().Выгрузить();\n    Если Таблица.Количество() <> 1 Или Таблица[0].Минуты <> 30 Тогда\n        ВызватьИсключение \"Новый отбор: должна быть только своя строка30\";\n    КонецЕсли;\n    Ссылка = Таблица[0].Ссылка; Объект = Ссылка.ПолучитьОбъект();\n    ОтказПрав = Ложь;\n    Попытка\n        Объект.ДлительностьМинут = 25; Объект.Записать();\n    Исключение\n        ОтказПрав = Истина;\n    КонецПопытки;\n    Если Не ОтказПрав Или Ссылка.ДлительностьМинут <> 30 Тогда\n        ВызватьИсключение \"Корректная25 не должна менять запись читателем\";\n    КонецЕсли;\n    Возврат \"PASS|one-new-row|30|35-hidden|valid-update-rejected|30-retained\";\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ПроверитьНовуюПаруПрав() Экспорт\n    Запрос = Новый Запрос(\"ВЫБРАТЬ РАЗРЕШЕННЫЕ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Метка\");\n    Запрос.УстановитьПараметр(\"Метка\",\"P10 независимая пара\");\n    Таблица = Запрос.Выполнить().Выгрузить();\n    Если Таблица.Количество() <> 1 Или Таблица[0].Минуты <> 30 Тогда\n        ВызватьИсключение \"Новый отбор: должна быть только своя строка30\";\n    КонецЕсли;\n    Ссылка = Таблица[0].Ссылка; Объект = Ссылка.ПолучитьОбъект();\n    ОтказПрав = Ложь;\n    Попытка\n        Объект.ДлительностьМинут = 25; Объект.Записать();\n    Исключение\n        ОтказПрав = Истина;\n    КонецПопытки;\n    Если Не ОтказПрав Или Ссылка.ДлительностьМинут <> 30 Тогда\n        ВызватьИсключение \"Корректная25 не должна менять запись читателем\";\n    КонецЕсли;\n    Возврат \"PASS|one-new-row|30|35-hidden|valid-update-rejected|30-retained\";\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяПроверкаПрав.ПроверитьНовуюПаруПрав();\n    Если Р <> \"PASS|one-new-row|30|35-hidden|valid-update-rejected|30-retained\" Тогда ВызватьИсключение \"Неожиданный результат\"; КонецЕсли;\n    Сообщить(\"Новых видимых заявок: 1\");\n    Сообщить(\"Минуты новой видимой заявки: 30\");\n    Сообщить(\"Заявка 35 скрыта: Да\");\n    Сообщить(\"Корректная запись 25 отклонена: Да\");\n    Сообщить(\"Прежние 30 сохранены: Да\");\nКонецПроцедуры\n",
+        "НоваяПара.bsl": "Функция ПодготовитьНовуюПаруПрав() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P10 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P10\"; Услуга.Записать();\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,8,12,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n        Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,30,35);\n        Документ.Комментарий = \"P10 независимая пара\"; Документ.Записать();\n    КонецЦикла;\n    Возврат \"PREPARED|two-new-documents|30|35\";\nКонецФункции\n",
+        "Старт.bsl": "// Оригинальный инженерный эталон A8/P12; собственная отдельная база, не код новичка.\nФункция ИтоговыйОпыт(Режим) Экспорт\n    Если Режим = \"seed\" Тогда\n        Для Индекс = 1 По 3 Цикл\n            Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Код = \"A8C\" + Строка(Индекс); Клиент.Наименование = ?(Индекс = 2,\"Учебная Бета\",\"Учебная Альфа\"); Клиент.Записать();\n        КонецЦикла;\n        Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Код = \"A8S1\"; Услуга.Наименование = \"Учебная консультация\"; Услуга.Записать();\n        Части = СтрРазделить(\"30,45,15,0,60,20,25,35,40,50,55,65\",\",\");\n        Для Индекс = 0 По 11 Цикл\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Номер = \"F\" + Прав(\"00000000\"+СокрЛП(Строка(Индекс+1)),8); Документ.Дата = Дата(2026,11,2,12,0,0);\n            Документ.Клиент = Справочники.Клиенты.НайтиПоКоду(?(Индекс % 2 = 0,\"A8C1\",\"A8C2\")); Документ.Услуга = Услуга.Ссылка;\n            Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Число(Части[Индекс]); Документ.Комментарий = \"A8 собственная \" + Строка(Индекс+1); Документ.Записать();\n        КонецЦикла;\n    КонецЕсли;\n    Если Режим = \"edit\" Тогда\n        Документ = Документы.ЗаявкаУслуги.НайтиПоНомеру(\"F00000012\").ПолучитьОбъект(); Документ.ДлительностьМинут = 80; Документ.Записать();\n    КонецЕсли;\n    Если Режим = \"invalid\" Тогда\n        Ссылка = Документы.ЗаявкаУслуги.НайтиПоНомеру(\"F00000001\"); Документ = Ссылка.ПолучитьОбъект();\n        Отказ = Ложь; Попытка Документ.ДлительностьМинут = 1441; Документ.Записать(); Исключение Отказ = Истина; КонецПопытки;\n        Если Не Отказ Или Ссылка.ДлительностьМинут <> 30 Тогда ВызватьИсключение \"A8 отказ не сохранил30\"; КонецЕсли;\n    КонецЕсли;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.Номер,З.Дата,З.Клиент,З.Услуга,З.Статус,З.ДлительностьМинут КАК Минуты,З.Комментарий КАК Заметка ИЗ Документ.ЗаявкаУслуги КАК З УПОРЯДОЧИТЬ ПО З.Номер\");\n    Таблица = Запрос.Выполнить().Выгрузить(); Ожидание = ?(Режим = \"edit\" Или Режим = \"verify-copy\",455,440);\n    Если Таблица.Количество() <> 12 Или Таблица.Итог(\"Минуты\") <> Ожидание Тогда ВызватьИсключение \"A8 количество/сумма\"; КонецЕсли;\n    Альфа = Справочники.Клиенты.НайтиПоКоду(\"A8C1\"); Бета = Справочники.Клиенты.НайтиПоКоду(\"A8C2\"); Пустой = Справочники.Клиенты.НайтиПоКоду(\"A8C3\");\n    ИтогА = 0; ИтогБ = 0; Пустых = 0; Снимок = Новый Массив;\n    Для Каждого Строка Из Таблица Цикл\n        Если Строка.Клиент = Альфа Тогда ИтогА = ИтогА + Строка.Минуты; КонецЕсли;\n        Если Строка.Клиент = Бета Тогда ИтогБ = ИтогБ + Строка.Минуты; КонецЕсли;\n        Если Строка.Клиент = Пустой Тогда Пустых = Пустых + 1; КонецЕсли;\n        Снимок.Добавить(Строка.Номер+\"|\"+Строка(Строка.Ссылка.УникальныйИдентификатор())+\"|\"+Строка(Строка.Клиент.УникальныйИдентификатор())+\"|\"+Строка(Строка.Услуга.УникальныйИдентификатор())+\"|\"+Строка(Строка.Дата)+\"|\"+Строка(Строка.Статус)+\"|\"+Строка(Строка.Минуты)+\"|\"+Строка.Заметка);\n    КонецЦикла;\n    Если ИтогА <> 225 Или ИтогБ <> Ожидание - 225 Или Пустых <> 0 Или Альфа = Пустой Или Альфа.Наименование <> Пустой.Наименование Тогда ВызватьИсключение \"A8 состав по ключам\"; КонецЕсли;\n    Возврат СтрСоединить(Снимок,Символы.ПС);\nКонецФункции\n"
+      },
+      "paragraphs": [
+        "Full reference for the new task. First compare your own attempt and labelled observations. The example, reference and own work are distinct; viewing the reference changes no draft.",
+        "Prepare the original set once with ИтоговыйОпыт(\"seed\") as administrator in a new empty copy; do not repeat the helper. Run ПодготовитьНовуюПаруПрав as administrator and ПроверитьНовуюПаруПрав as reader. Preserve previous files and delete no records."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "Two new own requests 30/35; reader profile: read <=30, updates forbidden.",
+        "output": "Новых видимых заявок: 1\nМинуты новой видимой заявки: 30\nЗаявка 35 скрыта: Да\nКорректная запись 25 отклонена: Да\nПрежние 30 сохранены: Да"
+      }
+    ],
+    "criteria": [
+      "Reader:1 new row/30;35 hidden; update 25 refused;30 preserved. Administrator:2/65.",
+      "Use a separate training infobase and two fictional profiles; change no real permissions or Nexus Account.",
+      "Distinguish action permission, row restriction, client filtering and the complete role set."
+    ],
+    "hint": "Data scope and action permission are checked separately. In the independent task, an own marker separates 30/35 from the previous 12 documents. Fictional 1C profiles are not Nexus accounts.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate own infobase → administrator",
+        "action": "Prepare the worked set once in a separate empty infobase. Preserve your files; the new-pair helper is already in the starter. As administrator call ПодготовитьНовуюПаруПрав once and change none of the previous12 documents.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "Only the own30/35 pair is added with its new marker."
+      },
+      {
+        "where": "УчебнаяПроверкаПрав → your new method",
+        "action": "Implement the new-pair TODO. Do not copy the worked-set solution:the marker differs and one30-minute row is expected. Save your source and open the infobase as reader.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Authorization checks an action",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Permissions can combine",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Privilege needs justification",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Bind the matrix to the actual environment",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p10-topic-2-author-v1",
+    "quiz": [
+      {
+        "question": "If 25 is within the valid range, must a reader be able to save it?",
+        "options": [
+          "No: update permission is checked separately",
+          "Yes: valid numbers override permissions",
+          "Yes: a visible button grants permission"
+        ],
+        "correct": 0,
+        "explanation": "No. A value can be valid while the role forbids the action. Use a valid 25 in the negative case and reread the prior minutes; otherwise a range refusal can be mistaken for working access control."
+      },
+      {
+        "question": "Does knowing a key authorize foreign data?",
+        "options": [
+          "Yes",
+          "No",
+          "Only in lists"
+        ],
+        "correct": 1,
+        "explanation": "Identification is not authorization."
+      },
+      {
+        "question": "Full rights to fix a denial are",
+        "options": [
+          "A universal solution",
+          "Always safe",
+          "Unjustified broadening without analysis"
+        ],
+        "correct": 2,
+        "explanation": "Use the minimum required contract."
+      },
+      {
+        "question": "A positive control is needed",
+        "options": [
+          "So denial of everything is not mistaken for a correct role",
+          "For color",
+          "To delete logs"
+        ],
+        "correct": 0,
+        "explanation": "A role must support required work."
+      },
+      {
+        "question": "Does refusal to save 1441 establish that a user lacks update permission?",
+        "options": [
+          "No: range validation may have rejected it",
+          "Yes: any refusal is role-related",
+          "Yes: if the button is hidden"
+        ],
+        "correct": 0,
+        "explanation": "Distinguish action permission, row restriction, client filtering and the complete role set."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS / MAIN GUI OBSERVED",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "access-main",
+      "access-independent"
+    ],
+    "scope": "Eight canonical main/independent native cases across four topics; four main GUI observations. One session does not establish concurrency; own roles are not Nexus IAM. Field p95 and debugger GUI were not measured.",
+    "studentAuthorshipVerified": false
+  }
+}
