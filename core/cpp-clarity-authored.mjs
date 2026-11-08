@@ -5,10 +5,14 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 
 // Геометрия roomy включается явно; разметка остальных схем сохраняется.
 function roomyDecisionFlowchart(chart,say){
- const x=90,resultX=262,exitX=334,firstY=225,step=212,half=82,ioH=28,ioW=65;
- const lastY=firstY+(chart.decisions.length-1)*step,fallbackY=lastY+130,endY=fallbackY+80;
+ const x=90,resultX=262,exitX=334,firstY=250,step=260,half=110,ioH=28,ioW=65;
+ const lastY=firstY+(chart.decisions.length-1)*step,fallbackY=lastY+170,endY=fallbackY+80;
  const label=(text,x,y,cls='')=>`<text class="${cls}" x="${x}" y="${y}">${esc(text)}</text>`;
- const node=(id,kind,shape,text,cx,cy)=>`<g data-flowchart-node="${id}" data-node-kind="${kind}">${shape}${label(text,cx,cy)}</g>`;
+ const decisionLabel=(text,cx,cy)=>{
+  const split=String(text).match(/^(.*\s(?:или|or))\s(.+)$/);
+  return split?`<text x="${cx}" y="${cy}"><tspan x="${cx}" dy="-11">${esc(split[1])} </tspan><tspan x="${cx}" dy="22">${esc(split[2])}</tspan></text>`:label(text,cx,cy);
+ };
+ const node=(id,kind,shape,text,cx,cy)=>`<g data-flowchart-node="${id}" data-node-kind="${kind}">${shape}${kind==='decision'?decisionLabel(text,cx,cy):label(text,cx,cy)}</g>`;
  const terminal=(id,text,y)=>node(id,'terminal',`<ellipse cx="${x}" cy="${y}" rx="68" ry="24"/>`,text,x,y);
  const io=(id,text,cx,y)=>node(id,'output',`<path d="M${cx-ioW+12} ${y-ioH}H${cx+ioW}l-12 ${ioH*2}H${cx-ioW}Z"/>`,text,cx,y);
  const arrow=(line,tip)=>`<path class="flowchart-arrow" d="${line} ${tip}"/>`;
