@@ -1,23 +1,40 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p11-topic-3-author-v1",
   "id": "onec.p11.topic-3",
   "courseId": "onec",
   "moduleId": "onec.p11",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Integrations and background operations",
   "locale": "en",
-  "title": "Retries and idempotency",
+  "title": "The reply was lost: retry the intention, not a new one",
   "goal": "Handle redelivery and same-requestIDpayload conflicts without duplicate documents.",
   "prerequisites": [
     {
-      "text": "onec.p10; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P10. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "The sender does not know the result, but the receiver may already have saved a document. Assigning a new key turns a retry into another operation. Trace the key, payload and result reference.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Own copy, common module and separate caller",
+      "paragraphs": [
+        "Continue your own training copy after P10. Preserve a DT backup and previous sources, restore into a separate new infobase and verify its path. Preserve prior work and records.",
+        "Put functions in server common module УчебныйОбмен: Server/Server call enabled, Client, Global, Privileged disabled. Данные.bsl and Приложение.bsl belong to different modules. Append only missing definitions and retain one copy of each helper.",
+        "Preserve the previous application handler first. Remove only the added startup call after one experiment. Your UUIDs and own process port may differ from the author’s observation."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "Delivery can repeat",
       "paragraphs": [
         "A sender may miss the reply to an accepted request. Redelivery with the samerequestIDshould return the agreed result without another document. This differs from deduplicating similar names. Define the key’s sender/operation scope and retention policy.",
@@ -25,46 +42,59 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Reconcile the complete experiment",
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
       "paragraphs": [
-        "Create an own operation with a fresh UUID key and 30 minutes. Store the key in the existing Comment field of a new synthetic request; it is not an account ID or an instruction to clear data. Repeats compare minutes/customer/service, not only key labels."
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "First → KeyK,30 → ReferenceR created.\nRepeat → SameK/30 → SameR.\nConflict → K/31 → Rejected;one 30 effect.",
-        "output": "K/31; Rejected;one 30 effect."
+        "language": "bsl",
+        "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ПринятьУчебнуюОперацию(Ключ,Минуты,Клиент,Услуга) Экспорт\n    Если ТипЗнч(Ключ) <> Тип(\"Строка\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если СтрДлина(Ключ) <> 36 Или Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Неверный договор\"; КонецЕсли;\n    НачатьТранзакцию();\n    Попытка\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты,З.Клиент,З.Услуга ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\",Ключ); Найдено = Запрос.Выполнить().Выгрузить();\n        Если Найдено.Количество() > 0 Тогда\n            Если Найдено.Количество() <> 1 Или Найдено[0].Минуты <> Минуты Или Найдено[0].Клиент <> Клиент Или Найдено[0].Услуга <> Услуга Тогда ВызватьИсключение \"Конфликт ключа/содержимого\"; КонецЕсли;\n            Ссылка = Найдено[0].Ссылка;\n        Иначе\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,12,0,0); Документ.Клиент = Клиент; Документ.Услуга = Услуга; Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Минуты; Документ.Комментарий = Ключ; Документ.Записать(); Ссылка = Документ.Ссылка;\n        КонецЕсли;\n        ЗафиксироватьТранзакцию(); Возврат Ссылка;\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\nКонецФункции\n\nФункция ОпытПовторногоПриёма() Экспорт\n    Д = НовыйНаборРегистров(); Ключ = Строка(Новый УникальныйИдентификатор);\n    Первая = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга); Повтор = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга);\n    Конфликт = Ложь; Попытка ПринятьУчебнуюОперацию(Ключ,31,Д.Клиент,Д.Услуга); Исключение Конфликт = Истина; КонецПопытки;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\"); Запрос.УстановитьПараметр(\"Ключ\",Ключ);\n    Возврат Новый Структура(\"ПовторТотЖе,КонфликтОтклонен,ОдинЭффект\",Первая = Повтор,Конфликт,Запрос.Выполнить().Выгрузить().Количество() = 1 И Первая.ДлительностьМинут = 30);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The first own UUID key with 30 minutes creates a request. An exact retry returns the same reference. The same key with 31 minutes conflicts, while an independent key query finds one 30-minute effect. The helper’s two preparation requests belong to another set.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытПовторногоПриёма();\n    Сообщить(\"Повтор вернул ту же ссылку: \" + Строка(Р.ПовторТотЖе));\n    Сообщить(\"Конфликт31 отклонён: \" + Строка(Р.КонфликтОтклонен));\n    Сообщить(\"Один эффект по своему ключу: \" + Строка(Р.ОдинЭффект));\nКонецПроцедуры\n",
+        "output": "Повтор вернул ту же ссылку: Да\nКонфликт31 отклонён: Да\nОдин эффект по своему ключу: Да",
+        "files": {
+          "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ПринятьУчебнуюОперацию(Ключ,Минуты,Клиент,Услуга) Экспорт\n    Если ТипЗнч(Ключ) <> Тип(\"Строка\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если СтрДлина(Ключ) <> 36 Или Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Неверный договор\"; КонецЕсли;\n    НачатьТранзакцию();\n    Попытка\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты,З.Клиент,З.Услуга ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\",Ключ); Найдено = Запрос.Выполнить().Выгрузить();\n        Если Найдено.Количество() > 0 Тогда\n            Если Найдено.Количество() <> 1 Или Найдено[0].Минуты <> Минуты Или Найдено[0].Клиент <> Клиент Или Найдено[0].Услуга <> Услуга Тогда ВызватьИсключение \"Конфликт ключа/содержимого\"; КонецЕсли;\n            Ссылка = Найдено[0].Ссылка;\n        Иначе\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,12,0,0); Документ.Клиент = Клиент; Документ.Услуга = Услуга; Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Минуты; Документ.Комментарий = Ключ; Документ.Записать(); Ссылка = Документ.Ссылка;\n        КонецЕсли;\n        ЗафиксироватьТранзакцию(); Возврат Ссылка;\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\nКонецФункции\n\nФункция ОпытПовторногоПриёма() Экспорт\n    Д = НовыйНаборРегистров(); Ключ = Строка(Новый УникальныйИдентификатор);\n    Первая = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга); Повтор = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга);\n    Конфликт = Ложь; Попытка ПринятьУчебнуюОперацию(Ключ,31,Д.Клиент,Д.Услуга); Исключение Конфликт = Истина; КонецПопытки;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\"); Запрос.УстановитьПараметр(\"Ключ\",Ключ);\n    Возврат Новый Структура(\"ПовторТотЖе,КонфликтОтклонен,ОдинЭффект\",Первая = Повтор,Конфликт,Запрос.Выполнить().Выгрузить().Количество() = 1 И Первая.ДлительностьМинут = 30);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытПовторногоПриёма();\n    Сообщить(\"Повтор вернул ту же ссылку: \" + Строка(Р.ПовторТотЖе));\n    Сообщить(\"Конфликт31 отклонён: \" + Строка(Р.КонфликтОтклонен));\n    Сообщить(\"Один эффект по своему ключу: \" + Строка(Р.ОдинЭффект));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Step",
+            "Observation and meaning"
           ],
           "rows": [
             [
               "First",
-              "KeyK,30",
-              "ReferenceR created."
+              "KeyK,30 — ReferenceR created."
             ],
             [
               "Repeat",
-              "SameK/30",
-              "SameR."
+              "SameK/30 — SameR."
             ],
             [
               "Conflict",
-              "K/31",
-              "Rejected;one 30 effect."
+              "K/31 — Rejected;one 30 effect."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Bind key to content",
       "paragraphs": [
         "Store requestID, canonical payload semantics or hash, state and result reference. The sameIDwith different amounts is a conflict, not permission to overwrite the first request. Different JSON key order can have identical semantics; define hashing rules explicitly.",
@@ -72,49 +102,81 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "The same key arrives with different minutes. Should the prior result be overwritten?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. A key links one intention to an agreed payload and result. Another payload under that key grants no right to silently replace the document. The check compares minutes, customer and service before saving or returning a result."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Acceptance and result are atomic",
       "paragraphs": [
         "Processing registry and created document need transactional consistency. MarkingDonebefore a failed write makes retries return a nonexistent result. Writing without registeringIDduplicates on retry. Concurrent repeats need key protection; external effects need a separate protocol.",
-        "Run the complete source in a separate own copy through the server module. Print ПовторТотЖе,КонфликтОтклонен,ОдинЭффект and retain the actual key/reference. Two preparation documents form a different set; three documents overall do not mean three operation effects."
+        "Run the complete source in a separate own copy through the server module. Print ПовторТотЖе, КонфликтОтклонен, ОдинЭффект and retain the actual key/reference. Two preparation documents form a different set; three documents overall do not mean three operation effects."
       ]
     },
     {
-      "id": "example-2",
-      "title": "A case that distinguishes the wrong solution",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "This is a real sequential BSL experiment, not a production receiver. Concurrent receivers need a unique-key register/correct locking, atomic outcome storage and crash recovery. Diagram a lost response: unknown outcome requires state lookup or the same key, not a fresh UUID. These additional guarantees remain unproved."
+        "The diagram traces one key; the new task compares two intentions. This is an actual sequential experiment. Concurrent first deliveries and crash recovery need separate protection and are not claimed as tested.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "After a lost response propose using a fresh UUID.",
-        "output": "Reject: a new key can create a second effect; reconcile the earlier outcome."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Separate copy",
-              "After a lost response propose using a fresh UUID.",
-              "Retain the accepted original."
-            ],
-            [
-              "Observe",
-              "Reject: a new key can create a second effect; reconcile the earlier outcome.",
-              "This is a real sequential BSL experiment, not a production receiver. Concurrent receivers need a unique-key register/correct locking, atomic outcome storage and crash recovery. Diagram a lost response: unknown outcome requires state lookup or the same key, not a fresh UUID. These additional guarantees remain unproved."
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "First key",
+            "lines": [
+              "K1 / 30"
             ]
-          ]
-        }
+          },
+          {
+            "title": "Exact retry",
+            "lines": [
+              "same reference"
+            ]
+          },
+          {
+            "title": "Other payload",
+            "lines": [
+              "K1 / 31"
+            ]
+          },
+          {
+            "title": "Conflict",
+            "lines": [
+              "one effect"
+            ]
+          }
+        ],
+        "alternative": [
+          "First key: K1 / 30",
+          "Exact retry: same reference",
+          "Other payload: K1 / 31",
+          "Conflict: one effect"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "A timeout automatically generates a new UUID. The receiver correctly sees another intention and creates another document. Alternatively, checking only key presence misses a payload conflict. Both differ from an exact retry.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Include unknown outcomes",
       "paragraphs": [
         "Test first call, exact retry, payload conflict, mid-step failure and concurrent repeats. After timeout, retry the sameIDand query state. Do not automatically create a newIDfor the same intent. Tie every reply to the original operation and persisted document.",
@@ -122,16 +184,58 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "Success is inferred from an unavailable environment. Separate actual observations from a planned advanced scenario and name edition limits.",
-        "A failed attempt is removed to make the record look successful. Retain the original failure, its cause, correction and regression evidence.",
-        "An own-copy change is applied over the accepted original. Verify the actual directory and preserve source identities before making changes."
+        "Create an own new customer and service. Accept the first new key with 45 minutes and retry it exactly. A second new key with the same 45 must produce another reference. The first key with 46 must conflict. Querying both keys must find exactly two effects and 90 minutes.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p11-repeat-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "ea3811cf62d56a06779f76a37b84afb7391472e3035d94370c71ffb70bad39a1",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "caption": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "Only the described training paths are established. Real HTTPS services, arbitrary URLs, concurrent first delivery, crash recovery, background queues and scheduling remain NOT RUN. Technical observations, self-report and learner understanding are separate.",
+        "Distinguish a retry, new intention, conflict, concurrent first deliveries and crash recovery."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "The same key arrives with different minutes. Should the prior result be overwritten?",
+      "options": [
+        "No: it is a payload conflict",
+        "Yes: a retry always updates data",
+        "Yes: matching keys bypass checks"
+      ],
+      "correct": 0,
+      "feedback": "No. A key links one intention to an agreed payload and result. Another payload under that key grants no right to silently replace the document. The check compares minutes, customer and service before saving or returning a result.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -142,7 +246,8 @@
         "A contract conflict"
       ],
       "correct": 2,
-      "feedback": "Do not overwrite the first accepted intent."
+      "feedback": "Do not overwrite the first accepted intent.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -154,7 +259,8 @@
         "A randomID"
       ],
       "correct": 0,
-      "feedback": "The key binds retry to the prior operation."
+      "feedback": "The key binds retry to the prior operation.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -166,135 +272,104 @@
         "For small data"
       ],
       "correct": 1,
-      "feedback": "Registry and result need atomic consistency."
+      "feedback": "Registry and result need atomic consistency.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Does a new UUID after an unknown outcome guarantee no duplicates?",
+      "options": [
+        "No: it denotes another intention",
+        "Yes: key uniqueness removes a prior effect",
+        "Yes: a transaction solves all exchange cases"
+      ],
+      "correct": 0,
+      "feedback": "Distinguish a retry, new intention, conflict, concurrent first deliveries and crash recovery.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Investigate the separate adverse case without claiming an unavailable environment was tested. After a lost response propose using a fresh UUID.",
-      "feedback": "Accepted original preserved; rejection and its limits explained."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Retries and idempotency",
-    "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. After a lost response propose using a fresh UUID.",
-    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
-    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "title": "The reply was lost: retry the intention, not a new one",
+    "task": "Create an own new customer and service. Accept the first new key with 45 minutes and retry it exactly. A second new key with the same 45 must produce another reference. The first key with 46 must conflict. Querying both keys must find exactly two effects and 90 minutes.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныйОбмен",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\n// Последовательный опыт. Два конкурирующих получателя и crash recovery отдельно не доказаны.\nФункция ПринятьУчебнуюОперацию(Ключ,Минуты,Клиент,Услуга) Экспорт\n    Если ТипЗнч(Ключ) <> Тип(\"Строка\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если СтрДлина(Ключ) <> 36 Или Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Неверный договор\"; КонецЕсли;\n    НачатьТранзакцию();\n    Попытка\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты,З.Клиент,З.Услуга ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\",Ключ); Найдено = Запрос.Выполнить().Выгрузить();\n        Если Найдено.Количество() > 0 Тогда\n            Если Найдено.Количество() <> 1 Или Найдено[0].Минуты <> Минуты Или Найдено[0].Клиент <> Клиент Или Найдено[0].Услуга <> Услуга Тогда ВызватьИсключение \"Конфликт ключа/содержимого\"; КонецЕсли;\n            Ссылка = Найдено[0].Ссылка;\n        Иначе\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,12,0,0); Документ.Клиент = Клиент; Документ.Услуга = Услуга; Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Минуты; Документ.Комментарий = Ключ; Документ.Записать(); Ссылка = Документ.Ссылка;\n        КонецЕсли;\n        ЗафиксироватьТранзакцию(); Возврат Ссылка;\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\nКонецФункции\n\nФункция ОпытПовторногоПриёма() Экспорт\n    Д = НовыйНаборРегистров(); Ключ = Строка(Новый УникальныйИдентификатор);\n    Первая = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга); Повтор = ПринятьУчебнуюОперацию(Ключ,30,Д.Клиент,Д.Услуга);\n    Конфликт = Ложь; Попытка ПринятьУчебнуюОперацию(Ключ,31,Д.Клиент,Д.Услуга); Исключение Конфликт = Истина; КонецПопытки;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\"); Запрос.УстановитьПараметр(\"Ключ\",Ключ);\n    Возврат Новый Структура(\"ПовторТотЖе,КонфликтОтклонен,ОдинЭффект\",Первая = Повтор,Конфликт,Запрос.Выполнить().Выгрузить().Количество() = 1 И Первая.ДлительностьМинут = 30);\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "Функция ПринятьУчебнуюОперацию(Ключ,Минуты,Клиент,Услуга) Экспорт\n    Если ТипЗнч(Ключ) <> Тип(\"Строка\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если СтрДлина(Ключ) <> 36 Или Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Неверный договор\"; КонецЕсли;\n    НачатьТранзакцию();\n    Попытка\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты,З.Клиент,З.Услуга ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\",Ключ); Найдено = Запрос.Выполнить().Выгрузить();\n        Если Найдено.Количество() > 0 Тогда\n            Если Найдено.Количество() <> 1 Или Найдено[0].Минуты <> Минуты Или Найдено[0].Клиент <> Клиент Или Найдено[0].Услуга <> Услуга Тогда ВызватьИсключение \"Конфликт ключа/содержимого\"; КонецЕсли;\n            Ссылка = Найдено[0].Ссылка;\n        Иначе\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,12,0,0); Документ.Клиент = Клиент; Документ.Услуга = Услуга; Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Минуты; Документ.Комментарий = Ключ; Документ.Записать(); Ссылка = Документ.Ссылка;\n        КонецЕсли;\n        ЗафиксироватьТранзакцию(); Возврат Ссылка;\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\nКонецФункции\n\nФункция ОпытДвухНамерений() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытДвухНамерений();\n    Сообщить(\"Точный повтор сохранён: \" + Строка(Р.ПовторТотЖе));\n    Сообщить(\"Другой ключ дал другую ссылку: \" + Строка(Р.НовоеНамерениеДругое));\n    Сообщить(\"Конфликт46 отклонён: \" + Строка(Р.КонфликтОтклонен));\n    Сообщить(\"Эффектов по двум ключам: \" + Строка(Р.Эффектов));\n    Сообщить(\"Минуты по двум ключам: \" + Строка(Р.Минуты));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "step-1",
-        "title": "Preserve the starting state",
-        "where": "Own-copy Designer",
-        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
-        "why": "Keep the accepted work independent.",
-        "expected": "Separate copy opens with the earlier records.",
-        "troubleshooting": "A new list name alone does not create another database directory.",
-        "before": "Own path, prior sources and a restorable backup identified."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ПринятьУчебнуюОперацию(Ключ,Минуты,Клиент,Услуга) Экспорт\n    Если ТипЗнч(Ключ) <> Тип(\"Строка\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если СтрДлина(Ключ) <> 36 Или Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Неверный договор\"; КонецЕсли;\n    НачатьТранзакцию();\n    Попытка\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты,З.Клиент,З.Услуга ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\",Ключ); Найдено = Запрос.Выполнить().Выгрузить();\n        Если Найдено.Количество() > 0 Тогда\n            Если Найдено.Количество() <> 1 Или Найдено[0].Минуты <> Минуты Или Найдено[0].Клиент <> Клиент Или Найдено[0].Услуга <> Услуга Тогда ВызватьИсключение \"Конфликт ключа/содержимого\"; КонецЕсли;\n            Ссылка = Найдено[0].Ссылка;\n        Иначе\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,12,0,0); Документ.Клиент = Клиент; Документ.Услуга = Услуга; Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Минуты; Документ.Комментарий = Ключ; Документ.Записать(); Ссылка = Документ.Ссылка;\n        КонецЕсли;\n        ЗафиксироватьТранзакцию(); Возврат Ссылка;\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\nКонецФункции\n\nФункция ОпытДвухНамерений() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P11 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P11\"; Услуга.Записать();\n    ПервыйКлюч = Строка(Новый УникальныйИдентификатор); ВторойКлюч = Строка(Новый УникальныйИдентификатор);\n    Первая = ПринятьУчебнуюОперацию(ПервыйКлюч,45,Клиент.Ссылка,Услуга.Ссылка);\n    Повтор = ПринятьУчебнуюОперацию(ПервыйКлюч,45,Клиент.Ссылка,Услуга.Ссылка);\n    Другая = ПринятьУчебнуюОперацию(ВторойКлюч,45,Клиент.Ссылка,Услуга.Ссылка);\n    Конфликт = Ложь; Попытка ПринятьУчебнуюОперацию(ПервыйКлюч,46,Клиент.Ссылка,Услуга.Ссылка); Исключение Конфликт = Истина; КонецПопытки;\n    Ключи = Новый Массив; Ключи.Добавить(ПервыйКлюч); Ключи.Добавить(ВторойКлюч);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий В (&Ключи)\");\n    Запрос.УстановитьПараметр(\"Ключи\",Ключи); Таблица = Запрос.Выполнить().Выгрузить();\n    Возврат Новый Структура(\"ПовторТотЖе,НовоеНамерениеДругое,КонфликтОтклонен,Эффектов,Минуты\",Первая = Повтор,Другая <> Первая,Конфликт,Таблица.Количество(),Таблица.Итог(\"Минуты\"));\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ПринятьУчебнуюОперацию(Ключ,Минуты,Клиент,Услуга) Экспорт\n    Если ТипЗнч(Ключ) <> Тип(\"Строка\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если СтрДлина(Ключ) <> 36 Или Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Неверный договор\"; КонецЕсли;\n    НачатьТранзакцию();\n    Попытка\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты,З.Клиент,З.Услуга ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\",Ключ); Найдено = Запрос.Выполнить().Выгрузить();\n        Если Найдено.Количество() > 0 Тогда\n            Если Найдено.Количество() <> 1 Или Найдено[0].Минуты <> Минуты Или Найдено[0].Клиент <> Клиент Или Найдено[0].Услуга <> Услуга Тогда ВызватьИсключение \"Конфликт ключа/содержимого\"; КонецЕсли;\n            Ссылка = Найдено[0].Ссылка;\n        Иначе\n            Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,12,0,0); Документ.Клиент = Клиент; Документ.Услуга = Услуга; Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = Минуты; Документ.Комментарий = Ключ; Документ.Записать(); Ссылка = Документ.Ссылка;\n        КонецЕсли;\n        ЗафиксироватьТранзакцию(); Возврат Ссылка;\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\nКонецФункции\n\nФункция ОпытДвухНамерений() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P11 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P11\"; Услуга.Записать();\n    ПервыйКлюч = Строка(Новый УникальныйИдентификатор); ВторойКлюч = Строка(Новый УникальныйИдентификатор);\n    Первая = ПринятьУчебнуюОперацию(ПервыйКлюч,45,Клиент.Ссылка,Услуга.Ссылка);\n    Повтор = ПринятьУчебнуюОперацию(ПервыйКлюч,45,Клиент.Ссылка,Услуга.Ссылка);\n    Другая = ПринятьУчебнуюОперацию(ВторойКлюч,45,Клиент.Ссылка,Услуга.Ссылка);\n    Конфликт = Ложь; Попытка ПринятьУчебнуюОперацию(ПервыйКлюч,46,Клиент.Ссылка,Услуга.Ссылка); Исключение Конфликт = Истина; КонецПопытки;\n    Ключи = Новый Массив; Ключи.Добавить(ПервыйКлюч); Ключи.Добавить(ВторойКлюч);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Комментарий В (&Ключи)\");\n    Запрос.УстановитьПараметр(\"Ключи\",Ключи); Таблица = Запрос.Выполнить().Выгрузить();\n    Возврат Новый Структура(\"ПовторТотЖе,НовоеНамерениеДругое,КонфликтОтклонен,Эффектов,Минуты\",Первая = Повтор,Другая <> Первая,Конфликт,Таблица.Количество(),Таблица.Итог(\"Минуты\"));\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытДвухНамерений();\n    Сообщить(\"Точный повтор сохранён: \" + Строка(Р.ПовторТотЖе));\n    Сообщить(\"Другой ключ дал другую ссылку: \" + Строка(Р.НовоеНамерениеДругое));\n    Сообщить(\"Конфликт46 отклонён: \" + Строка(Р.КонфликтОтклонен));\n    Сообщить(\"Эффектов по двум ключам: \" + Строка(Р.Эффектов));\n    Сообщить(\"Минуты по двум ключам: \" + Строка(Р.Минуты));\nКонецПроцедуры\n"
       },
-      {
-        "id": "step-2",
-        "title": "Add the complete server source",
-        "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
-        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
-        "why": "Database access has an explicit server boundary.",
-        "expected": "Definitions are module-level; no duplicate helper.",
-        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
-        "before": "Separate copy opens with the earlier records."
-      },
-      {
-        "id": "step-3",
-        "title": "Prepare and call the experiment",
-        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
-        "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытПовторногоПриёма();\nСообщить(Результат.ПовторТотЖе);\nСообщить(Результат.КонфликтОтклонен);\nСообщить(Результат.ОдинЭффект);",
-        "why": "Print every named result instead of accepting compilation alone.",
-        "expected": "Only the stated caller is inside the existing startup handler.",
-        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
-        "before": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "id": "step-4",
-        "title": "Save, update and run once",
-        "where": "Ctrl+S → F7 → Предприятие",
-        "action": "Run once and compare the fields with the worked trace. K/31; Rejected;one 30 effect.",
-        "why": "Observe actual 1C data, not the browser diagram.",
-        "expected": "K/31; Rejected;one 30 effect.",
-        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
-        "before": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "id": "step-5",
-        "title": "Retain both results",
-        "where": "Конфигуратор после закрытия Предприятия",
-        "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
-        "why": "Preserve provenance and avoid repeating data creation at every startup.",
-        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
-        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
-        "before": "K/31; Rejected;one 30 effect."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Separate copy opens with the earlier records."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "K/31; Rejected;one 30 effect."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Original retained, negative experiment isolated, automatic caller removed."
+        "label": "New independent task",
+        "input": "Two new keys: K1/45, retry K1/45, K2/45, conflict K1/46.",
+        "output": "Точный повтор сохранён: Да\nДругой ключ дал другую ссылку: Да\nКонфликт46 отклонён: Да\nЭффектов по двум ключам: 2\nМинуты по двум ключам: 90"
       }
     ],
     "criteria": [
-      "R 1 is created andID → R 1 persisted.",
-      "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
-      "Accepted original preserved; rejection and its limits explained.",
-      "Exact own source and version; actual keys, observations and expected versus actual table.",
-      "Original and changed-copy results, failed attempts and untested environment limits.",
-      "After a lost response propose using a fresh UUID."
+      "Labelled results: Да, Да, Да, 2, 90. Compare both intentions’ actual references.",
+      "Preserve old documents; count effects for the two own keys, not the whole infobase.",
+      "Distinguish a retry, new intention, conflict, concurrent first deliveries and crash recovery."
     ],
-    "hint": "Separate actual observations from a planned advanced scenario and name edition limits.",
-    "exercises": [
+    "hint": "The diagram traces one key; the new task compares two intentions. This is an actual sequential experiment. Concurrent first deliveries and crash recovery need separate protection and are not claimed as tested.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Explain the checked boundary using the first trace. Processjob-001 once.",
-        "criteria": "R 1 is created andID → R 1 persisted."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Perform the stated available experiment and retain actual observations. Repeat the samepayload.",
-        "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
       },
       {
-        "level": "Advanced",
-        "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. After a lost response propose using a fresh UUID.",
-        "criteria": "Accepted original preserved; rejection and its limits explained."
+        "where": "Общие → Общие модули → УчебныйОбмен",
+        "action": "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/exchange-repeat-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -304,12 +379,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p11-idempotency.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p11-topic-3-author-v1",
     "quiz": [
+      {
+        "question": "The same key arrives with different minutes. Should the prior result be overwritten?",
+        "options": [
+          "No: it is a payload conflict",
+          "Yes: a retry always updates data",
+          "Yes: matching keys bypass checks"
+        ],
+        "correct": 0,
+        "explanation": "No. A key links one intention to an agreed payload and result. Another payload under that key grants no right to silently replace the document. The check compares minutes, customer and service before saving or returning a result."
+      },
       {
         "question": "SameIDwith a newpayload is",
         "options": [
@@ -339,7 +420,31 @@
         ],
         "correct": 1,
         "explanation": "Registry and result need atomic consistency."
+      },
+      {
+        "question": "Does a new UUID after an unknown outcome guarantee no duplicates?",
+        "options": [
+          "No: it denotes another intention",
+          "Yes: key uniqueness removes a prior effect",
+          "Yes: a transaction solves all exchange cases"
+        ],
+        "correct": 0,
+        "explanation": "Distinguish a retry, new intention, conflict, concurrent first deliveries and crash recovery."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p11.topic-3.en.json"
 }

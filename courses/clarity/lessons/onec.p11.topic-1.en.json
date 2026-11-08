@@ -1,121 +1,187 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p11-topic-1-author-v1",
   "id": "onec.p11.topic-1",
   "courseId": "onec",
   "moduleId": "onec.p11",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Integrations and background operations",
   "locale": "en",
-  "title": "HTTP and safe boundaries",
+  "title": "A 200 response arrived: was the contract met?",
   "goal": "Design a bounded HTTP contract and test success, rejection and timeout against a local mock.",
   "prerequisites": [
     {
-      "text": "onec.p10; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P10. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
-      "title": "Exchange is an external boundary",
+      "id": "orientation",
+      "title": "The question we are checking",
       "paragraphs": [
-        "An HTTP request crosses into another participant’s failures and lifecycle. Specify method, path, body schema, response codes and size limits. A connection is not an accepted request; a 200 with a malformed body also fails the application contract. Do not send real data to public teaching services.",
-        "This advanced exercise uses only an own 127.0.0.1 с портом собственного mock service, not a learner-controlled arbitrary host or Nexus. Inspect native/full-support/http-pedagogy-mock.mjs in the extracted source kit: loopback-only GET and synthetic responses. No tokens or real data."
+        "The server replied, but its body is not what was promised. Connectivity and status 200 are only part of the contract. Use an own local service to distinguish success, explicit refusal and no timely response.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
     },
     {
-      "id": "example-1",
-      "title": "Reconcile the complete experiment",
+      "id": "platform-contract",
+      "title": "Own copy, common module and separate caller",
       "paragraphs": [
-        "This advanced exercise uses only an own 127.0.0.1 с портом собственного mock service, not a learner-controlled arbitrary host or Nexus. Inspect native/full-support/http-pedagogy-mock.mjs in the extracted source kit: loopback-only GET and synthetic responses. No tokens or real data."
+        "Continue your own training copy after P10. Preserve a DT backup and previous sources, restore into a separate new infobase and verify its path. Preserve prior work and records.",
+        "Put functions in server common module УчебныйОбмен: Server/Server call enabled, Client, Global, Privileged disabled. Данные.bsl and Приложение.bsl belong to different modules. Append only missing definitions and retain one copy of each helper.",
+        "Preserve the previous application handler first. Remove only the added startup call after one experiment. Your UUIDs and own process port may differ from the author’s observation.",
+        "This additional experiment needs Node.js. Save the known mock.mjs from the example files into a separate own folder. In that folder’s PowerShell run node mock.mjs ready.json. Only after your process is ready, read its ready.json and use its port value in the BSL call. If startup fails, use no occupied unknown port.",
+        "The function fixes the host at 127.0.0.1. The displayed caller’s number belongs to the author’s actual run; replace it with your new process’s port value. The helper stops after 3minutes; Ctrl+C stops your own process. Use no real service, secret or Account."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Exchange is an external boundary",
+      "paragraphs": [
+        "An HTTP request crosses into another participant’s failures and lifecycle. Specify method, path, body schema, response codes and size limits. A connection is not an accepted request; a 200 with a malformed body also fails the application contract. Do not send real data to public teaching services.",
+        "This advanced exercise uses only an own 127.0.0.1 с портом собственного mock service, not a learner-controlled arbitrary host or Nexus. Inspect mock.mjs in the extracted source kit: loopback-only GET and synthetic responses. No tokens or real data."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "Prepare → Own loopback ready → No other services.\nRequests → 200/400 → Contract distinguished.\nDelay → 1-second timeout → No false success.",
-        "output": "1-second timeout; No false success."
+        "language": "bsl",
+        "source": "Функция ОпытHTTP(Порт) Экспорт\n    Если ТипЗнч(Порт) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужен номер порта своего mock\"; КонецЕсли;\n    Если Порт < 1 Или Порт > 65535 Или Цел(Порт) <> Порт Тогда ВызватьИсключение \"Неверный порт\"; КонецЕсли;\n    Соединение = Новый HTTPСоединение(\"127.0.0.1\",Порт,,,,1);\n    Ответ = Соединение.Получить(Новый HTTPЗапрос(\"/health\"));\n    Текст = Ответ.ПолучитьТелоКакСтроку();\n    Успех = Ответ.КодСостояния = 200 И СтрДлина(Текст) < 4096 И СтрНайти(Текст,\"nexus-course-mock\") > 0;\n    Отказ = Соединение.Получить(Новый HTTPЗапрос(\"/reject\"));\n    Таймаут = Ложь; Попытка Соединение.Получить(Новый HTTPЗапрос(\"/slow\")); Исключение Таймаут = Истина; КонецПопытки;\n    Возврат Новый Структура(\"HealthВерный,ОтказВерный,ТаймаутВерный\",Успех,Отказ.КодСостояния = 400,Таймаут);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "Actual 1C sends GET only to the own loopback mock. /health returns 200 and the service marker, /reject returns 400, and /slow outlasts the one-second timeout. The three labelled flags test different properties; this is not a browser simulation of HTTPСоединение.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran.",
+        "Our known helper adds synthetic /not-json for the new task to the three original routes. This is an own local process, not the Nexus server. Checking body length after receipt is not a streaming network limit."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытHTTP(61739);\n    Сообщить(\"200 и своё тело: \" + Строка(Р.HealthВерный));\n    Сообщить(\"Отказ400 распознан: \" + Строка(Р.ОтказВерный));\n    Сообщить(\"Таймаут распознан: \" + Строка(Р.ТаймаутВерный));\nКонецПроцедуры\n",
+        "output": "200 и своё тело: Да\nОтказ400 распознан: Да\nТаймаут распознан: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытHTTP(Порт) Экспорт\n    Если ТипЗнч(Порт) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужен номер порта своего mock\"; КонецЕсли;\n    Если Порт < 1 Или Порт > 65535 Или Цел(Порт) <> Порт Тогда ВызватьИсключение \"Неверный порт\"; КонецЕсли;\n    Соединение = Новый HTTPСоединение(\"127.0.0.1\",Порт,,,,1);\n    Ответ = Соединение.Получить(Новый HTTPЗапрос(\"/health\"));\n    Текст = Ответ.ПолучитьТелоКакСтроку();\n    Успех = Ответ.КодСостояния = 200 И СтрДлина(Текст) < 4096 И СтрНайти(Текст,\"nexus-course-mock\") > 0;\n    Отказ = Соединение.Получить(Новый HTTPЗапрос(\"/reject\"));\n    Таймаут = Ложь; Попытка Соединение.Получить(Новый HTTPЗапрос(\"/slow\")); Исключение Таймаут = Истина; КонецПопытки;\n    Возврат Новый Структура(\"HealthВерный,ОтказВерный,ТаймаутВерный\",Успех,Отказ.КодСостояния = 400,Таймаут);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытHTTP(61739);\n    Сообщить(\"200 и своё тело: \" + Строка(Р.HealthВерный));\n    Сообщить(\"Отказ400 распознан: \" + Строка(Р.ОтказВерный));\n    Сообщить(\"Таймаут распознан: \" + Строка(Р.ТаймаутВерный));\nКонецПроцедуры\n",
+          "mock.mjs": "// Оригинальный loopback-only mock курса. Не Studio bridge и не production endpoint.\nimport http from'node:http';import fs from'node:fs';\nconst ready=process.argv[2];if(!ready)throw Error('OWNED_READY_PATH_REQUIRED');\nconst server=http.createServer((req,res)=>{const send=(code,body)=>{res.writeHead(code,{'content-type':'application/json'});res.end(JSON.stringify(body));};if(req.method!=='GET'){send(405,{error:'method'});return;}switch(req.url){case'/not-json':res.writeHead(200,{'content-type':'text/plain'});res.end('synthetic invalid JSON');break;case'/health':send(200,{service:'nexus-course-mock',status:'ok'});break;case'/reject':send(400,{error:'synthetic-rejection'});break;case'/slow':setTimeout(()=>send(200,{status:'late'}),2500);break;default:send(404,{error:'unknown-route'});}});\nserver.listen(0,'127.0.0.1',()=>fs.writeFileSync(ready,JSON.stringify({scope:'loopback-only',port:server.address().port,production:false})+'\\n'));\nserver.on('error',e=>{console.error('OWN_MOCK_START_FAILED '+e.code);process.exitCode=1;});const stop=()=>server.close(()=>process.exit());process.on('SIGTERM',stop);setTimeout(stop,180000).unref();\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Step",
+            "Observation and meaning"
           ],
           "rows": [
             [
               "Prepare",
-              "Own loopback ready",
-              "No other services."
+              "Own loopback ready — No other services."
             ],
             [
               "Requests",
-              "200/400",
-              "Contract distinguished."
+              "200/400 — Contract distinguished."
             ],
             [
               "Delay",
-              "1-second timeout",
-              "No false success."
+              "1-second timeout — No false success."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Policy selects addresses",
       "paragraphs": [
         "A user-suppliedURLmust not grant server code arbitrary internal-network/file access. Use a fixed loopback mock without secrets; it is not a production endpoint. RealHTTPSrequires certificate validation and redirect policy. DisablingTLSvalidation to make tests green is unacceptable.",
-        "Node.js from its official distribution is needed only for this extra HTTP exercise. In PowerShell at the kit directory run node native/full-support/http-pedagogy-mock.mjs mock-ready.json. Require the own process readiness file; if the port is occupied and startup fails, never contact the unknown service. Beginner labs need no such setup.",
-        " Open the mock-ready.json produced by your process in a text editor. Replace НомерПортаИзСвоегоMockReady in the caller with its numeric port value; the marker is not a predefined BSL variable. The host remains 127.0.0.1."
+        "Node.js from its official distribution is needed only for this extra HTTP exercise. In PowerShell at the kit directory run node mock.mjs ready.json. Require the own process readiness file; if the port is occupied and startup fails, never contact the unknown service. Beginner labs need no such setup.",
+        " Open the ready.json produced by your process in a text editor. Replace the port number from ready.json in the caller with its numeric port value; the marker is not a predefined BSL variable. The host remains 127.0.0.1."
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "HTTP 200 arrives, but the body violates the contract. Can the operation be considered accepted?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. A transport observation does not establish the application result. Check version, types and required fields. A timeout also does not establish that a remote participant did nothing; a safe retry needs the same intention key."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Responses can be ambiguous",
       "paragraphs": [
         "A timeout after sending does not reveal whether the remote side accepted the request. Blind retry can duplicate work. Use a requestIDand verification/retry policy. Distinguish transport failure, business 4 xx, temporary 5 xxand schema failure. Log safe IDs rather than tokens or complete payloads.",
-        "Append the complete BSL to server common module УчебныеПрофессиональныеОпыты. Call ОпытHTTP from the existing startup handler and print all three result fields. Save, F7 and run: health gives 200 plus own-service marker, reject gives 400 and slow raises a 1-second timeout. No response creates a request document."
+        "Append the complete BSL to server common module УчебныйОбмен. Call ОпытHTTP from the existing startup handler and print all three result fields. Save, F7 and run: health gives 200 plus own-service marker, reject gives 400 and slow raises a 1-second timeout. No response creates a request document."
       ]
     },
     {
-      "id": "example-2",
-      "title": "A case that distinguishes the wrong solution",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "The mock exits after three minutes; Ctrl+C may stop only its own terminal process. Remove the startup call and retain all observations. The 4096 check is after string materialization, not a streaming network limit. This local test does not prove HTTPS, redirect policy, arbitrary-host SSRF protection or real external integration."
+        "Method, route, status and body are distinct contract parts. The independent task distinguishes invalid-body 200 from valid 200. HTTPS, redirects, arbitrary-URL protection and production exchange are not tested here.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "After the admitted run stop the own mock and call BSL again.",
-        "output": "Availability failure is distinct from business 400; no success claim."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Separate copy",
-              "After the admitted run stop the own mock and call BSL again.",
-              "Retain the accepted original."
-            ],
-            [
-              "Observe",
-              "Availability failure is distinct from business 400; no success claim.",
-              "The mock exits after three minutes; Ctrl+C may stop only its own terminal process. Remove the startup call and retain all observations. The 4096 check is after string materialization, not a streaming network limit. This local test does not prove HTTPS, redirect policy, arbitrary-host SSRF protection or real external integration."
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Own process",
+            "lines": [
+              "loopback"
             ]
-          ]
-        }
+          },
+          {
+            "title": "Response",
+            "lines": [
+              "code + body"
+            ]
+          },
+          {
+            "title": "Validate",
+            "lines": [
+              "contract"
+            ]
+          },
+          {
+            "title": "Conclusion",
+            "lines": [
+              "known / unknown"
+            ]
+          }
+        ],
+        "alternative": [
+          "Own process: loopback",
+          "Response: code + body",
+          "Validate: contract",
+          "Conclusion: known / unknown"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Unparsed text under status 200 is accepted, or a timeout automatically generates a new requestID. The first confuses transport and schema; the second may duplicate an effect. Keep those checks separate and record unknown outcomes explicitly.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Mocks control outcomes",
       "paragraphs": [
         "Prepare valid 200, 400, 500, delay and oversized-body cases. Set expectations before running the BSL client. The mock inspects method/path but does not replace the 1C platform. Browserfetchor aJSmodel is not execution ofHTTPConnection.",
@@ -123,16 +189,58 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "Success is inferred from an unavailable environment. Separate actual observations from a planned advanced scenario and name edition limits.",
-        "A failed attempt is removed to make the record look successful. Retain the original failure, its cause, correction and regression evidence.",
-        "An own-copy change is applied over the accepted original. Verify the actual directory and preserve source identities before making changes."
+        "On the same own mock, request /missing and observe 404. Then /not-json returns 200 with intentionally invalid JSON: parsing must refuse it. A positive /health control parses as an object with service=nexus-course-mock and status=ok. Report both status codes separately from the two body-validation flags.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p11-http-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "81cafe6c77787f57ef19e0929b44ec8494e43926c9e8e99e47b2eb6d048c14db",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "caption": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "Only the described training paths are established. Real HTTPS services, arbitrary URLs, concurrent first delivery, crash recovery, background queues and scheduling remain NOT RUN. Technical observations, self-report and learner understanding are separate.",
+        "Explain transport status, body validity, business result and an unknown timeout outcome separately."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "HTTP 200 arrives, but the body violates the contract. Can the operation be considered accepted?",
+      "options": [
+        "No: check status and body separately",
+        "Yes: any 200 suffices",
+        "Yes: if the connection is fast"
+      ],
+      "correct": 0,
+      "feedback": "No. A transport observation does not establish the application result. Check version, types and required fields. A timeout also does not establish that a remote participant did nothing; a safe retry needs the same intention key.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -143,7 +251,8 @@
         "Always for JSON"
       ],
       "correct": 0,
-      "feedback": "Validate the body contract."
+      "feedback": "Validate the body contract.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -155,7 +264,8 @@
         "Always success"
       ],
       "correct": 1,
-      "feedback": "Use idempotency and state verification."
+      "feedback": "Use idempotency and state verification.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -167,135 +277,104 @@
         "A fixed synthetic mock"
       ],
       "correct": 2,
-      "feedback": "Constrain addresses and data."
+      "feedback": "Constrain addresses and data.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Does a timeout establish that the server did not accept a request?",
+      "options": [
+        "No: the outcome may be unknown",
+        "Yes: the server always cancels everything",
+        "Yes: a new requestID fixes it"
+      ],
+      "correct": 0,
+      "feedback": "Explain transport status, body validity, business result and an unknown timeout outcome separately.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Investigate the separate adverse case without claiming an unavailable environment was tested. After the admitted run stop the own mock and call BSL again.",
-      "feedback": "Accepted original preserved; rejection and its limits explained."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "HTTP and safe boundaries",
-    "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. After the admitted run stop the own mock and call BSL again.",
-    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
-    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "title": "A 200 response arrived: was the contract met?",
+    "task": "On the same own mock, request /missing and observe 404. Then /not-json returns 200 with intentionally invalid JSON: parsing must refuse it. A positive /health control parses as an object with service=nexus-course-mock and status=ok. Report both status codes separately from the two body-validation flags.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныйОбмен",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "// Только собственный loopback mock из native/full-support/http-mock.mjs; не произвольный URL.\nФункция ОпытHTTP(Порт) Экспорт\n    Если ТипЗнч(Порт) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужен номер порта своего mock\"; КонецЕсли;\n    Если Порт < 1 Или Порт > 65535 Или Цел(Порт) <> Порт Тогда ВызватьИсключение \"Неверный порт\"; КонецЕсли;\n    Соединение = Новый HTTPСоединение(\"127.0.0.1\",Порт,,,,1);\n    Ответ = Соединение.Получить(Новый HTTPЗапрос(\"/health\"));\n    Текст = Ответ.ПолучитьТелоКакСтроку();\n    Успех = Ответ.КодСостояния = 200 И СтрДлина(Текст) < 4096 И СтрНайти(Текст,\"nexus-course-mock\") > 0;\n    Отказ = Соединение.Получить(Новый HTTPЗапрос(\"/reject\"));\n    Таймаут = Ложь; Попытка Соединение.Получить(Новый HTTPЗапрос(\"/slow\")); Исключение Таймаут = Истина; КонецПопытки;\n    Возврат Новый Структура(\"HealthВерный,ОтказВерный,ТаймаутВерный\",Успех,Отказ.КодСостояния = 400,Таймаут);\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "Функция ОпытНеуспешногоТела(Порт) Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытНеуспешногоТела(61739);\n    Сообщить(\"Неизвестный маршрут: \" + Строка(Р.КодНеизвестного));\n    Сообщить(\"Код неправильного тела: \" + Строка(Р.КодПлохого));\n    Сообщить(\"Тело отклонено: \" + Строка(Р.ТелоОтклонено));\n    Сообщить(\"Контроль JSON принят: \" + Строка(Р.КонтрольВерный));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "step-1",
-        "title": "Preserve the starting state",
-        "where": "Own-copy Designer",
-        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
-        "why": "Keep the accepted work independent.",
-        "expected": "Separate copy opens with the earlier records.",
-        "troubleshooting": "A new list name alone does not create another database directory.",
-        "before": "Own path, prior sources and a restorable backup identified."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытНеуспешногоТела(Порт) Экспорт\n    Если ТипЗнч(Порт) <> Тип(\"Число\") Или Порт < 1 Или Порт > 65535 Или Цел(Порт) <> Порт Тогда\n        ВызватьИсключение \"Нужен порт своего готового mock\";\n    КонецЕсли;\n    Соединение = Новый HTTPСоединение(\"127.0.0.1\",Порт,,,,1);\n    Неизвестный = Соединение.Получить(Новый HTTPЗапрос(\"/missing\"));\n    Плохой = Соединение.Получить(Новый HTTPЗапрос(\"/not-json\"));\n    ОтказТела = Ложь;\n    Попытка\n        Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Плохой.ПолучитьТелоКакСтроку());\n        ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Исключение\n        ОтказТела = Истина;\n    КонецПопытки;\n    Контроль = Соединение.Получить(Новый HTTPЗапрос(\"/health\"));\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Контроль.ПолучитьТелоКакСтроку());\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Возврат Новый Структура(\"КодНеизвестного,КодПлохого,ТелоОтклонено,КонтрольВерный\",Неизвестный.КодСостояния,Плохой.КодСостояния,ОтказТела,Контроль.КодСостояния = 200 И Данные.service = \"nexus-course-mock\" И Данные.status = \"ok\");\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытНеуспешногоТела(Порт) Экспорт\n    Если ТипЗнч(Порт) <> Тип(\"Число\") Или Порт < 1 Или Порт > 65535 Или Цел(Порт) <> Порт Тогда\n        ВызватьИсключение \"Нужен порт своего готового mock\";\n    КонецЕсли;\n    Соединение = Новый HTTPСоединение(\"127.0.0.1\",Порт,,,,1);\n    Неизвестный = Соединение.Получить(Новый HTTPЗапрос(\"/missing\"));\n    Плохой = Соединение.Получить(Новый HTTPЗапрос(\"/not-json\"));\n    ОтказТела = Ложь;\n    Попытка\n        Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Плохой.ПолучитьТелоКакСтроку());\n        ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Исключение\n        ОтказТела = Истина;\n    КонецПопытки;\n    Контроль = Соединение.Получить(Новый HTTPЗапрос(\"/health\"));\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Контроль.ПолучитьТелоКакСтроку());\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Возврат Новый Структура(\"КодНеизвестного,КодПлохого,ТелоОтклонено,КонтрольВерный\",Неизвестный.КодСостояния,Плохой.КодСостояния,ОтказТела,Контроль.КодСостояния = 200 И Данные.service = \"nexus-course-mock\" И Данные.status = \"ok\");\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытНеуспешногоТела(61739);\n    Сообщить(\"Неизвестный маршрут: \" + Строка(Р.КодНеизвестного));\n    Сообщить(\"Код неправильного тела: \" + Строка(Р.КодПлохого));\n    Сообщить(\"Тело отклонено: \" + Строка(Р.ТелоОтклонено));\n    Сообщить(\"Контроль JSON принят: \" + Строка(Р.КонтрольВерный));\nКонецПроцедуры\n"
       },
-      {
-        "id": "step-2",
-        "title": "Add the complete server source",
-        "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
-        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
-        "why": "Database access has an explicit server boundary.",
-        "expected": "Definitions are module-level; no duplicate helper.",
-        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
-        "before": "Separate copy opens with the earlier records."
-      },
-      {
-        "id": "step-3",
-        "title": "Prepare and call the experiment",
-        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
-        "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытHTTP(НомерПортаИзСвоегоMockReady);\nСообщить(Результат.HealthВерный);\nСообщить(Результат.ОтказВерный);\nСообщить(Результат.ТаймаутВерный); Open the mock-ready.json produced by your process in a text editor. Replace НомерПортаИзСвоегоMockReady in the caller with its numeric port value; the marker is not a predefined BSL variable. The host remains 127.0.0.1.",
-        "why": "Print every named result instead of accepting compilation alone.",
-        "expected": "Only the stated caller is inside the existing startup handler.",
-        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
-        "before": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "id": "step-4",
-        "title": "Save, update and run once",
-        "where": "Ctrl+S → F7 → Предприятие",
-        "action": "Run once and compare the fields with the worked trace. 1-second timeout; No false success.",
-        "why": "Observe actual 1C data, not the browser diagram.",
-        "expected": "1-second timeout; No false success.",
-        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
-        "before": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "id": "step-5",
-        "title": "Retain both results",
-        "where": "Конфигуратор после закрытия Предприятия",
-        "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
-        "why": "Preserve provenance and avoid repeating data creation at every startup.",
-        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
-        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
-        "before": "1-second timeout; No false success."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Separate copy opens with the earlier records."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "1-second timeout; No false success."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Original retained, negative experiment isolated, automatic caller removed."
+        "label": "New independent task",
+        "input": "Only own 127.0.0.1 and the own ready-file port; GET /missing, /not-json, /health.",
+        "output": "Неизвестный маршрут: 404\nКод неправильного тела: 200\nТело отклонено: Да\nКонтроль JSON принят: Да"
       }
     ],
     "criteria": [
-      "Actual 1C confirms method, path, status and body.",
-      "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
-      "Accepted original preserved; rejection and its limits explained.",
-      "Exact own source and version; actual keys, observations and expected versus actual table.",
-      "Original and changed-copy results, failed attempts and untested environment limits.",
-      "After the admitted run stop the own mock and call BSL again."
+      "Labelled values: 404, 200, Да, Да. Invalid content is refused despite status 200.",
+      "Use no occupied unknown port, external URL, token or real data. Launch only the lesson’s known helper.",
+      "Explain transport status, body validity, business result and an unknown timeout outcome separately."
     ],
-    "hint": "Separate actual observations from a planned advanced scenario and name edition limits.",
-    "exercises": [
+    "hint": "Method, route, status and body are distinct contract parts. The independent task distinguishes invalid-body 200 from valid 200. HTTPS, redirects, arbitrary-URL protection and production exchange are not tested here. Use your own ready.json port, not the screenshot’s port.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Explain the checked boundary using the first trace. Call a validhealthmock.",
-        "criteria": "Actual 1C confirms method, path, status and body."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Perform the stated available experiment and retain actual observations. Return 400 and 500.",
-        "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+        "where": "Own folder → mock.mjs → ready.json",
+        "action": "This additional experiment needs Node.js. Save the known mock.mjs from the example files into a separate own folder. In that folder’s PowerShell run node mock.mjs ready.json. Only after your process is ready, read its ready.json and use its port value in the BSL call. If startup fails, use no occupied unknown port.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "Your own loopback process is ready and its port is known."
       },
       {
-        "level": "Advanced",
-        "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. After the admitted run stop the own mock and call BSL again.",
-        "criteria": "Accepted original preserved; rejection and its limits explained."
+        "where": "Общие → Общие модули → УчебныйОбмен",
+        "action": "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/exchange-http-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -305,12 +384,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p11-http.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p11-topic-1-author-v1",
     "quiz": [
+      {
+        "question": "HTTP 200 arrives, but the body violates the contract. Can the operation be considered accepted?",
+        "options": [
+          "No: check status and body separately",
+          "Yes: any 200 suffices",
+          "Yes: if the connection is fast"
+        ],
+        "correct": 0,
+        "explanation": "No. A transport observation does not establish the application result. Check version, types and required fields. A timeout also does not establish that a remote participant did nothing; a safe retry needs the same intention key."
+      },
       {
         "question": "Does HTTP 200 alone establish business success?",
         "options": [
@@ -340,7 +425,31 @@
         ],
         "correct": 2,
         "explanation": "Constrain addresses and data."
+      },
+      {
+        "question": "Does a timeout establish that the server did not accept a request?",
+        "options": [
+          "No: the outcome may be unknown",
+          "Yes: the server always cancels everything",
+          "Yes: a new requestID fixes it"
+        ],
+        "correct": 0,
+        "explanation": "Explain transport status, body validity, business result and an unknown timeout outcome separately."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p11.topic-1.en.json"
 }
