@@ -12,9 +12,11 @@ function roomyDecisionFlowchart(chart,say){
   const split=String(text).match(/^(.*\s(?:или|or))\s(.+)$/);
   return split?`<text x="${cx}" y="${cy}"><tspan x="${cx}" dy="-11">${esc(split[1])} </tspan><tspan x="${cx}" dy="22">${esc(split[2])}</tspan></text>`:label(text,cx,cy);
  };
- const node=(id,kind,shape,text,cx,cy)=>`<g data-flowchart-node="${id}" data-node-kind="${kind}">${shape}${kind==='decision'?decisionLabel(text,cx,cy):label(text,cx,cy)}</g>`;
+ const splitOutput=text=>String(text).length>8?String(text).match(/^(\S+)\s(.+)$/):null;
+ const outputLabel=(text,cx,cy)=>{const split=splitOutput(text);return split?`<text x="${cx}" y="${cy}"><tspan x="${cx}" dy="-11">${esc(split[1])} </tspan><tspan x="${cx}" dy="22">${esc(split[2])}</tspan></text>`:label(text,cx,cy);};
+ const node=(id,kind,shape,text,cx,cy)=>`<g data-flowchart-node="${id}" data-node-kind="${kind}">${shape}${kind==='decision'?decisionLabel(text,cx,cy):kind==='output'?outputLabel(text,cx,cy):label(text,cx,cy)}</g>`;
  const terminal=(id,text,y)=>node(id,'terminal',`<ellipse cx="${x}" cy="${y}" rx="68" ry="24"/>`,text,x,y);
- const io=(id,text,cx,y)=>node(id,'output',`<path d="M${cx-ioW+12} ${y-ioH}H${cx+ioW}l-12 ${ioH*2}H${cx-ioW}Z"/>`,text,cx,y);
+ const io=(id,text,cx,y)=>{const h=splitOutput(text)?40:ioH;return node(id,'output',`<path d="M${cx-ioW+12} ${y-h}H${cx+ioW}l-12 ${h*2}H${cx-ioW}Z"/>`,text,cx,y);};
  const arrow=(line,tip)=>`<path class="flowchart-arrow" d="${line} ${tip}"/>`;
  const down=(from,to)=>arrow(`M${x} ${from}V${to}`,`m-4-7 4 7 4-7`);
  const branch=b=>b==='yes'?say('да','yes'):say('нет','no');

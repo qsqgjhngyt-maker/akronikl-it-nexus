@@ -24,7 +24,7 @@ const presentationOnly=new Set(['courses/onec-education/lesson-media.mjs','core/
 const approvedOnecUiPaths=new Map([
  ['styles/clarity-onec-code-studio.css','403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84'],
  ['courses/onec-education/candidate.css','82250ddcb1953409456576801efe150af74e99fde083f8be6d86dd263dacf8d2'],
- ['core/cpp-clarity-authored.mjs','3dfecce59a6163649261a40df3041d270591be81e8c99d3deb17f500b19d7696'],
+ ['core/cpp-clarity-authored.mjs','b893ed72aa560601dc34b21dc97dbc3a26c4a4286638cf3c217e54ac1c3e4f97'],
  ['core/clarity-visuals.mjs','968a84a49f36ea46b623cbb191c8ade20f774c750021492d768f8b501249faf9'],
 ]);
 for(const[file,digest]of approvedOnecUiPaths)assert.equal(sha(await readFile(file)),digest,'Approved 1C presentation bytes: '+file);
