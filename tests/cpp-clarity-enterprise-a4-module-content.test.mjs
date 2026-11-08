@@ -13,13 +13,13 @@ const git=(...a)=>execFileSync('git',['-c','core.longpaths=true',...a],{maxBuffe
 
 
 test('A4: четыре прикладных урока RU/EN, исходная сильная теория, новые ручные задачи и эталоны',async()=>{
- const edits=await json(docs+'R65_ENTERPRISE_A4_THEORY_PRESENTATION_EXCEPTIONS.json');
+ const edits=await json(docs+'R65_ENTERPRISE_A4_THEORY_PRESENTATION_EXCEPTIONS.json');assert.deepEqual(edits.quiz,[{id:'1c-enterprise.a4.topic-3',locale:'ru',question:1,option:2,before:'СправочникСсылка.Клиенты',after:'Ссылка на клиента'}]);
  for(const id of ids)for(const locale of ['ru','en']){
   const a=await json('courses/clarity/authoring/'+id+'.'+locale+'.json'),d=await json('courses/clarity/lessons/'+id+'.'+locale+'.json'),old=await json(a.source.path);
   assert.equal(old.topicId,id);assert.equal(sha(await readFile(a.source.path)),a.source.sha256);assert.equal(d.authored,true);assert.equal(CLARITY_COURSES[id].courseId,'1c-enterprise');assert.equal(CLARITY_COURSES[id].contentRevision,a.revision);
   for(const k of ['sections','selfcheck','practice','assessment'])assert.deepEqual(a[k],d[k]);assert.equal(a.sections.length,14+Math.max(0,old.sections.length-4));
   for(const[i,s]of old.sections.entries())assert.deepEqual(a.sections.find(s=>s.id==='concept-'+i).paragraphs,s.slice(1).map(p=>edits[locale].reduce((v,[x,y])=>v.replaceAll(x,y),p)));
-  for(const[i,q]of old.quiz.entries()){const k=a.selfcheck.find(x=>x.id==='check-'+i);assert.deepEqual([k.prompt,k.options,k.correct],[q.question,q.options,q.correct]);}
+  for(const[i,q]of old.quiz.entries()){const k=a.selfcheck.find(x=>x.id==='check-'+i);assert.deepEqual([k.prompt,k.options,k.correct],[q.question,q.options.map((v,j)=>edits.quiz.find(e=>e.id===id&&e.locale===locale&&e.question===i&&e.option===j&&e.before===v)?.after||v),q.correct]);}
   assert.equal(a.selfcheck.filter(q=>q.kind==='choice').length,5);assert.equal(a.selfcheck.filter(q=>q.kind==='free').length,1);assert.deepEqual(a.practice.files,[]);assert.equal(a.practice.referenceSolution.language,'text');assert.ok(a.practice.referenceSolution.source.length>200);
   const example=a.sections.find(s=>s.id==='example-1').code;assert.equal(example.language,'text');assert.ok(example.output.length>80);assert.notEqual(example.output,a.practice.cases[0].output);assert.ok(!a.practice.cases[0].output.includes('\\n'));
   const anchors=new Set(a.sections.map(s=>s.id));for(const k of [...Object.values(a.coverage),...a.selfcheck.map(q=>q.recall),a.practice.returnAnchor])assert.ok(anchors.has(k),k);
