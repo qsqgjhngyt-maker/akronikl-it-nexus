@@ -1,23 +1,31 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p6-reposting-author-v1",
   "id": "onec.p6.reposting",
   "courseId": "onec",
   "moduleId": "onec.p6",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Registers and accounting models",
   "locale": "en",
-  "title": "Reposting:75 stays 75, changes yield 90 and unposting preserves the other recorder",
+  "title": "Reposting: replace one effect, preserve another",
   "goal": "Verify repeat/replacement/unposting without duplication or losing another recorder.",
   "prerequisites": [
     {
-      "text": "onec.p5; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P5. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A user posts the same document again. If minutes double, the successful command hides an accounting defect. Check repeat, change, and unposting separately for two documents.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "A repeatable transformation",
       "paragraphs": [
         "Posting transforms the current document into a movement set. Identical input should yield an equivalent set regardless of repetition. Compare dimensions, resources, periods and recorder—not merely one total. Opposite duplicates can cancel numerically while leaving invalid records.",
@@ -25,51 +33,72 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Native worked example",
+      "id": "platform-contract",
+      "title": "Add only the missing part of your own setup",
       "paragraphs": [
-        "Excerpt only; the complete source below belongs to the stated server common module."
+        "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+        "Reuse module 5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
+        "Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists, do not add another definition:retain it and append only the new function. Do not load a full CF over your work."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "Первая.Записать(РежимЗаписиДокумента.Проведение);\nПервая.Записать(РежимЗаписиДокумента.Проведение);\n// Verify every stage, not only the final state.",
-        "output": "Five True; own-set75 → 75 → 90 → 45 → 0."
+        "language": "bsl",
+        "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытПовторногоПроведения() Экспорт\n    Набор = НовыйНаборРегистров(30,45); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\"); Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение); ПервыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.Проведение); ПовторныйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.ДлительностьМинут = 45; Первая.Записать(РежимЗаписиДокумента.Проведение); НовыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ЧужойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Вторая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ПустойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Возврат Новый Структура(\"НачалоВерно,ПовторНеУдвоил,ЗаменаВерна,ДругойСохранен,СвоиОтменены,Клиент\",ПервыйИтог = 75,ПовторныйИтог = 75,НовыйИтог = 90,ЧужойИтог = 45,ПустойИтог = 0,Набор.Клиент);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The worked path is 75→75→90→45→0:repeating does not double; editing the first request replaces 30 with 45; unposting it preserves the second request’s 45; unposting the second removes the remaining own movements.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПовторногоПроведения();\n    Сообщить(\"Первый итог75: \" + Строка(Результат.НачалоВерно));\n    Сообщить(\"Повтор не удвоил: \" + Строка(Результат.ПовторНеУдвоил));\n    Сообщить(\"Замена дала90: \" + Строка(Результат.ЗаменаВерна));\n    Сообщить(\"Другой документ сохранился: \" + Строка(Результат.ДругойСохранен));\n    Сообщить(\"Свои движения отменены: \" + Строка(Результат.СвоиОтменены));\nКонецПроцедуры\n",
+        "output": "Первый итог75: Да\nПовтор не удвоил: Да\nЗамена дала90: Да\nДругой документ сохранился: Да\nСвои движения отменены: Да",
+        "files": {
+          "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытПовторногоПроведения() Экспорт\n    Набор = НовыйНаборРегистров(30,45); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\"); Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение); ПервыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.Проведение); ПовторныйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.ДлительностьМинут = 45; Первая.Записать(РежимЗаписиДокумента.Проведение); НовыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ЧужойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Вторая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ПустойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Возврат Новый Структура(\"НачалоВерно,ПовторНеУдвоил,ЗаменаВерна,ДругойСохранен,СвоиОтменены,Клиент\",ПервыйИтог = 75,ПовторныйИтог = 75,НовыйИтог = 90,ЧужойИтог = 45,ПустойИтог = 0,Набор.Клиент);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПовторногоПроведения();\n    Сообщить(\"Первый итог75: \" + Строка(Результат.НачалоВерно));\n    Сообщить(\"Повтор не удвоил: \" + Строка(Результат.ПовторНеУдвоил));\n    Сообщить(\"Замена дала90: \" + Строка(Результат.ЗаменаВерна));\n    Сообщить(\"Другой документ сохранился: \" + Строка(Результат.ДругойСохранен));\n    Сообщить(\"Свои движения отменены: \" + Строка(Результат.СвоиОтменены));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Action",
+            "Observation and reason"
           ],
           "rows": [
             [
               "Two documents",
-              "30/45",
-              "75."
+              "30/45 — 75."
             ],
             [
               "Repeat",
-              "First unchanged",
-              "75."
+              "First unchanged — 75."
             ],
             [
               "Replace",
-              "First 45",
-              "90."
+              "First 45 — 90."
             ],
             [
               "Unpost",
-              "First then second",
-              "45 then 0; other sets retained."
+              "First then second — 45 then 0; other sets retained."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "A change replaces the prior effect",
       "paragraphs": [
         "Changing 30 → 45 replaces the recorder’s old effect under the agreed policy. Appending 45 gives 75 incorrectly. For multiline documents, test a removed line: its old movement must disappear. Define behavior for an empty document too.",
@@ -77,7 +106,21 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "After unposting the second document, may the whole customer register be cleared to obtain 0?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. Each document owns its movement set. Synthetic data does not remove the operation boundary:unposting the second must not alter the first."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Failures must not mix versions",
       "paragraphs": [
         "Failure between removing old and writing new records must not leave a partial effect. Inject failure only in a new copy and test atomicity. Reread document/register in a fresh session. Transactions and locks address different concerns: one change’s consistency versus interacting concurrent changes.",
@@ -85,41 +128,59 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "Discriminating semantic control",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "A compilable wrong value is not a syntax-only test."
+        "The diagram shows the worked example’s first four states. Unposting the second next gives 0. The new task additionally counts rows and reverses the unposting order.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "In another copy use 31/45 rather than 30/45; initial 75 must detect 76.",
-        "output": "The independent original expectation fails; preserve the original copy."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Mutation",
-              "In another copy use 31/45 rather than 30/45; initial 75 must detect 76.",
-              "Only another own copy."
-            ],
-            [
-              "Check",
-              "Five True; own-set75 → 75 → 90 → 45 → 0.",
-              "Observe the failed claim."
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Post both",
+            "lines": [
+              "75"
             ]
-          ]
-        }
+          },
+          {
+            "title": "Repeat first",
+            "lines": [
+              "75"
+            ]
+          },
+          {
+            "title": "Edit first",
+            "lines": [
+              "90"
+            ]
+          },
+          {
+            "title": "Unpost first",
+            "lines": [
+              "45"
+            ]
+          }
+        ],
+        "alternative": [
+          "Post both: 75",
+          "Repeat first: 75",
+          "Edit first: 90",
+          "Unpost first: 45"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Checking only the total can hide extra positive and negative rows that cancel each other. The new task checks row count and minutes together.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Use a matrix beyond the happy path",
       "paragraphs": [
         "Use post 30, repeat 30, change 45, remove a line, reverse, repost. Record counts and movement identities at every step. Include another recorder to expose accidental deletion of someone else’s set. Preserve both the current invariant and independent earlier documents.",
@@ -127,16 +188,58 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "A helper definition is duplicated inside the startup handler. Keep one module-level helper and only its call inside startup.",
-        "Whole-register totals replace the own-key control. Filter by the actual customer/service/recorder reference for this experiment.",
-        "A runnable result is treated as proof of all accounting/security behavior. Record each checked mechanism and retain untested concurrency/edition limits."
+        "Post new requests of 20 and 40:2 rows/60. Change the first to 50 and repost:2/90. Unpost the second:1/50, the first remains. Unpost the first:0 rows. Filter every query by the own customer.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p6-reposting-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "1dbd8359fd33b714bdb0ffbb594f47cd2dd4a972faea6d335fabab273fae5d41",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain what repeatability guarantees and which observation detects removal of another document’s effect."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "After unposting the second document, may the whole customer register be cleared to obtain 0?",
+      "options": [
+        "No:the first document’s movements must remain",
+        "Yes:unposting always clears all",
+        "Yes:if the customer is synthetic"
+      ],
+      "correct": 0,
+      "feedback": "No. Each document owns its movement set. Synthetic data does not remove the operation boundary:unposting the second must not alter the first.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -147,7 +250,8 @@
         "0"
       ],
       "correct": 0,
-      "feedback": "Begin with own 30/45 requests totaling 75. Reposting the first is not another 30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
+      "feedback": "Begin with own 30/45 requests totaling 75. Reposting the first is not another 30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -159,7 +263,8 @@
         "75"
       ],
       "correct": 1,
-      "feedback": "Changing the first 30 → 45 replaces its effect, giving 90 rather than 120. Unposting it leaves the second 45; unposting the second leaves 0 for this own customer, without clearing other customers."
+      "feedback": "Changing the first 30 → 45 replaces its effect, giving 90 rather than 120. Unposting it leaves the second 45; unposting the second leaves 0 for this own customer, without clearing other customers.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -171,150 +276,104 @@
         "The second own recorder’s45"
       ],
       "correct": 2,
-      "feedback": "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity."
+      "feedback": "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What is expected after unposting only the second request?",
+      "options": [
+        "1 row/50 minutes from the first",
+        "0 rows for the customer",
+        "2 rows/90 minutes"
+      ],
+      "correct": 0,
+      "feedback": "Explain what repeatability guarantees and which observation detects removal of another document’s effect.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Specify injected failure and separate concurrency testing without a server-PASS claim.",
-      "feedback": "Atomicity/concurrency have separate checks/environments."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Reposting:75 stays 75, changes yield 90 and unposting preserves the other recorder",
-    "task": "Specify injected failure and separate concurrency testing without a server-PASS claim.",
-    "environment": "Own synthetic infobase and original metadata; no real accounting, mandatory Studio or Sandbox.",
-    "externalRoute": "Installed official 1C Designer → server module → managed application",
+    "title": "Reposting: replace one effect, preserve another",
+    "task": "Post new requests of 20 and 40:2 rows/60. Change the first to 50 and repost:2/90. Unpost the second:1/50, the first remains. Unpost the first:0 rows. Filter every query by the own customer.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытПовторногоПроведения() Экспорт\n    Набор = НовыйНаборРегистров(30,45); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\"); Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение); ПервыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.Проведение); ПовторныйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.ДлительностьМинут = 45; Первая.Записать(РежимЗаписиДокумента.Проведение); НовыйИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Первая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ЧужойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Вторая.Записать(РежимЗаписиДокумента.ОтменаПроведения); ПустойИтог = Запрос.Выполнить().Выгрузить()[0].Минуты;\n    Возврат Новый Структура(\"НачалоВерно,ПовторНеУдвоил,ЗаменаВерна,ДругойСохранен,СвоиОтменены,Клиент\",ПервыйИтог = 75,ПовторныйИтог = 75,НовыйИтог = 90,ЧужойИтог = 45,ПустойИтог = 0,Набор.Клиент);\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЧислаДвижений() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЧислаДвижений();\n    Сообщить(\"Сначала строк: \" + Строка(Результат.ДоСтрок));\n    Сообщить(\"Сначала минут: \" + Строка(Результат.ДоМинут));\n    Сообщить(\"После замены строк: \" + Строка(Результат.ПослеСтрок));\n    Сообщить(\"После замены минут: \" + Строка(Результат.ПослеМинут));\n    Сообщить(\"После отмены второго строк: \" + Строка(Результат.ОдинСтрок));\n    Сообщить(\"После отмены второго минут: \" + Строка(Результат.ОдинМинут));\n    Сообщить(\"После обеих отмен строк: \" + Строка(Результат.НольСтрок));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "copy",
-        "title": "Identify the own experiment copy",
-        "where": "Own-copy Designer",
-        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
-        "why": "Keep prior work independent.",
-        "expected": "Own copy/path and provenance identified.",
-        "troubleshooting": "Check actual directories rather than list-entry names.",
-        "before": "P5 work, backup and exact own-copy path retained."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЧислаДвижений() Экспорт\n    Набор = НовыйНаборРегистров(20,40); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк,ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\");\n    Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение); До = Запрос.Выполнить().Выгрузить()[0];\n    Первая.ДлительностьМинут = 50; Первая.Записать(РежимЗаписиДокумента.Проведение); После = Запрос.Выполнить().Выгрузить()[0];\n    Вторая.Записать(РежимЗаписиДокумента.ОтменаПроведения); Один = Запрос.Выполнить().Выгрузить()[0];\n    Первая.Записать(РежимЗаписиДокумента.ОтменаПроведения); Ноль = Запрос.Выполнить().Выгрузить()[0];\n    Возврат Новый Структура(\"ДоСтрок,ДоМинут,ПослеСтрок,ПослеМинут,ОдинСтрок,ОдинМинут,НольСтрок\",\n        До.Строк,До.Минуты,После.Строк,После.Минуты,Один.Строк,Один.Минуты,Ноль.Строк);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЧислаДвижений() Экспорт\n    Набор = НовыйНаборРегистров(20,40); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк,ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\");\n    Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение); До = Запрос.Выполнить().Выгрузить()[0];\n    Первая.ДлительностьМинут = 50; Первая.Записать(РежимЗаписиДокумента.Проведение); После = Запрос.Выполнить().Выгрузить()[0];\n    Вторая.Записать(РежимЗаписиДокумента.ОтменаПроведения); Один = Запрос.Выполнить().Выгрузить()[0];\n    Первая.Записать(РежимЗаписиДокумента.ОтменаПроведения); Ноль = Запрос.Выполнить().Выгрузить()[0];\n    Возврат Новый Структура(\"ДоСтрок,ДоМинут,ПослеСтрок,ПослеМинут,ОдинСтрок,ОдинМинут,НольСтрок\",\n        До.Строк,До.Минуты,После.Строк,После.Минуты,Один.Строк,Один.Минуты,Ноль.Строк);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЧислаДвижений();\n    Сообщить(\"Сначала строк: \" + Строка(Результат.ДоСтрок));\n    Сообщить(\"Сначала минут: \" + Строка(Результат.ДоМинут));\n    Сообщить(\"После замены строк: \" + Строка(Результат.ПослеСтрок));\n    Сообщить(\"После замены минут: \" + Строка(Результат.ПослеМинут));\n    Сообщить(\"После отмены второго строк: \" + Строка(Результат.ОдинСтрок));\n    Сообщить(\"После отмены второго минут: \" + Строка(Результат.ОдинМинут));\n    Сообщить(\"После обеих отмен строк: \" + Строка(Результат.НольСтрок));\nКонецПроцедуры\n"
       },
-      {
-        "id": "metadata",
-        "title": "Prepare the stated metadata",
-        "where": "Конфигуратор → дерево конфигурации",
-        "action": "Reuse module 5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
-        "why": "The native function needs these actual platform objects.",
-        "expected": "Names/types/recorder connections match.",
-        "troubleshooting": "Inspect existing objects before adding duplicates; retain old UUIDs/fields.",
-        "before": "Own copy/path and provenance identified."
-      },
-      {
-        "id": "source",
-        "title": "Place the complete function",
-        "where": "Конфигуратор → Общие → Общие модули → УчебныеРегистры",
-        "action": "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
-        "why": "Definitions have explicit server scope.",
-        "expected": "One definition per function; earlier code retained.",
-        "troubleshooting": "Do not nest functions inside startup or duplicate shared preparation.",
-        "before": "Names/types/recorder connections match."
-      },
-      {
-        "id": "call",
-        "title": "Add only the client call",
-        "where": "Модуль приложения → ПриНачалеРаботыСистемы",
-        "action": "Результат = УчебныеРегистры.ОпытПовторногоПроведения();\nСообщить(Результат.НачалоВерно);\nСообщить(Результат.ПовторНеУдвоил);\nСообщить(Результат.ЗаменаВерна);\nСообщить(Результат.ДругойСохранен);\nСообщить(Результат.СвоиОтменены);",
-        "why": "Print every independent claim.",
-        "expected": "Caller is inside the existing handler.",
-        "troubleshooting": "Keep one startup handler and retain its earlier source.",
-        "before": "One definition per function; earlier code retained."
-      },
-      {
-        "id": "run",
-        "title": "Save, update and run once",
-        "where": "Ctrl+S → F7 → Предприятие",
-        "action": "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
-        "why": "Observe real 1C, then reconcile with the prediction.",
-        "expected": "Five True; own-set75 → 75 → 90 → 45 → 0.",
-        "troubleshooting": "Retain the actual module/line and failed claim; never change expected values to conceal a defect.",
-        "before": "Caller is inside the existing handler."
-      },
-      {
-        "id": "retain",
-        "title": "Preserve observations and stop startup repetition",
-        "where": "Конфигуратор после закрытия Предприятия",
-        "action": "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols.",
-        "why": "Reopening must not silently recreate datasets.",
-        "expected": "Work retained; no automatic repetition.",
-        "troubleshooting": "Do not clear whole registers or remove prior work.",
-        "before": "Five True; own-set75 → 75 → 90 → 45 → 0."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Own copy/path and provenance identified."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Names/types/recorder connections match."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "One definition per function; earlier code retained."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "Caller is inside the existing handler."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Five True; own-set75 → 75 → 90 → 45 → 0."
-      },
-      {
-        "label": "Observation 6",
-        "input": "",
-        "output": "Work retained; no automatic repetition."
+        "label": "New independent task",
+        "input": "20+40;replace the first with 50;unpost the second, then the first.",
+        "output": "Сначала строк: 2\nСначала минут: 60\nПосле замены строк: 2\nПосле замены минут: 90\nПосле отмены второго строк: 1\nПосле отмены второго минут: 50\nПосле обеих отмен строк: 0"
       }
     ],
     "criteria": [
-      "Each transition has an independent expectation.",
-      "Other recorder retained until its own unposting.",
-      "Atomicity/concurrency have separate checks/environments.",
-      "Actual source, version and per-field observations with own identities.",
-      "Separate compilable negative control and retained original; no server grading/authorship claim.",
-      "In another copy use 31/45 rather than 30/45; initial 75 must detect 76."
+      "Seven labelled values:2, 60, 2, 90, 1, 50, 0.",
+      "Compare rows and total as pairs; unposting the second preserves one 50-minute row from the first.",
+      "Explain what repeatability guarantees and which observation detects removal of another document’s effect."
     ],
-    "hint": "Keep one module-level helper and only its call inside startup.",
-    "exercises": [
+    "hint": "The diagram shows the worked example’s first four states. Unposting the second next gives 0. The new task additionally counts rows and reverses the unposting order.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Predict all five totals before running.",
-        "criteria": "Each transition has an independent expectation."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Run repeat/replacement/two unpostings and reconcile.",
-        "criteria": "Other recorder retained until its own unposting."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work. Reuse module 5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "Prior work is retained; the required metadata objects and relationships are defined."
       },
       {
-        "level": "Advanced",
-        "task": "Specify injected failure and separate concurrency testing without a server-PASS claim.",
-        "criteria": "Atomicity/concurrency have separate checks/environments."
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions. Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists,do not add another definition:retain it and append only the new function. Do not load a full CF over your work.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/register-reposting-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "register",
@@ -328,12 +387,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p6-reposting.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p6-reposting-author-v1",
     "quiz": [
+      {
+        "question": "After unposting the second document, may the whole customer register be cleared to obtain 0?",
+        "options": [
+          "No:the first document’s movements must remain",
+          "Yes:unposting always clears all",
+          "Yes:if the customer is synthetic"
+        ],
+        "correct": 0,
+        "explanation": "No. Each document owns its movement set. Synthetic data does not remove the operation boundary:unposting the second must not alter the first."
+      },
       {
         "question": "Repeating first 30 at total 75 yields",
         "options": [
@@ -363,7 +428,31 @@
         ],
         "correct": 2,
         "explanation": "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity."
+      },
+      {
+        "question": "What is expected after unposting only the second request?",
+        "options": [
+          "1 row/50 minutes from the first",
+          "0 rows for the customer",
+          "2 rows/90 minutes"
+        ],
+        "correct": 0,
+        "explanation": "Explain what repeatability guarantees and which observation detects removal of another document’s effect."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p6.reposting.en.json"
 }
