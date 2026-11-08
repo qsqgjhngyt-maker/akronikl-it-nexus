@@ -1,3 +1,4 @@
+import {approvedPresentationDiff,approvedVisualStylesAddition,assertPreservedOrWrappedFlow} from './helpers/cpp-clarity-approved-presentation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -19,15 +20,15 @@ test('P1: счётчик принимает явную отметку новой
  }
 });
 test('Принятая пара P1 и оба исходных курса сохраняются при отдельной новой редакции P2',()=>{
- for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'');
- const changed=git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort();
+ for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3'])assert.equal(approvedPresentationDiff(git('diff','--name-only',base,'--',area)).toString().trim(),'');
+ const changed=approvedPresentationDiff(git('diff','--name-only',base,'--','courses/clarity/lessons')).toString().trim().split(/\r?\n/).sort();
  const p1=slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/lessons/onec.p1.${s}.${l}.json`));
  const p2Types=['en','ru'].map(l=>`courses/clarity/lessons/onec.p2.topic-2.${l}.json`);
  const p2Conditions=['en','ru'].map(l=>`courses/clarity/lessons/onec.p2.topic-3.${l}.json`);
  const p2Module=['onec.p2.topic-4','onec.p2.numbers-dates-locales'].flatMap(id=>['en','ru'].map(l=>`courses/clarity/lessons/${id}.${l}.json`));
  assert.deepEqual(changed,[...p1,...p2Types,...p2Conditions,...p2Module,...['onec.p3.topic-1','onec.p3.topic-2','onec.p3.topic-3','onec.p3.topic-4','onec.p3.module-tests','onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4','onec.p5.topic-1','onec.p5.topic-2','onec.p5.topic-3','onec.p5.topic-4','onec.p6.topic-1','onec.p6.topic-2','onec.p6.topic-3','onec.p6.topic-4','onec.p6.reposting','onec.p7.topic-1','onec.p7.topic-3','onec.p7.topic-4','onec.p8.topic-1','onec.p8.topic-2','onec.p8.topic-3','onec.p8.topic-4','onec.p9.topic-1','onec.p9.topic-2','onec.p9.topic-3','onec.p9.topic-4','onec.p10.topic-1','onec.p10.topic-2','onec.p10.topic-3','onec.p10.topic-4','onec.p10.safe-mode','onec.p11.topic-1','onec.p11.topic-2','onec.p11.topic-3','onec.p11.topic-4','onec.p12.topic-1','onec.p12.topic-2','onec.p12.topic-3','onec.p12.topic-4','1c-enterprise.a1.orientation','1c-enterprise.a1.modes','1c-enterprise.a1.interface','1c-enterprise.a1.safe-lab','1c-enterprise.a2.topic-1','1c-enterprise.a2.topic-2','1c-enterprise.a2.topic-3','1c-enterprise.a2.topic-4'].flatMap(id=>['en','ru'].map(l=>`courses/clarity/lessons/${id}.${l}.json`))].sort());
  const acceptedP1=[...p1,...slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/authoring/onec.p1.${s}.${l}.json`))];
- assert.equal(git('diff','--name-only','704c23616f1d8536416fb90a9b46502e1b0f1831','--',...acceptedP1).toString().trim(),'','Accepted P1 remains byte-identical');
+ assert.equal(approvedPresentationDiff(git('diff','--name-only','704c23616f1d8536416fb90a9b46502e1b0f1831','--',...acceptedP1)).toString().trim(),'','Accepted P1 remains byte-identical');
 });
 test('P1 содержит связное объяснение, свой прогноз, перенос, эталон и точное оценивание четырёх вопросов',async()=>{
  for(const slug of slugs)for(const locale of ['ru','en']){

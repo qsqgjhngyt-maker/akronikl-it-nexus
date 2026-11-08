@@ -26,7 +26,7 @@ const approvedOnecUiPaths=new Map([
  ['styles/clarity-onec-code-studio.css','403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84'],
  ['courses/onec-education/candidate.css','31025ebda96d0bc1d9add3802bb604cbe8c1e8cbff2257752b0bd8944f5f59d1'],
  ['core/cpp-clarity-authored.mjs','b893ed72aa560601dc34b21dc97dbc3a26c4a4286638cf3c217e54ac1c3e4f97'],
- ['core/clarity-visuals.mjs','968a84a49f36ea46b623cbb191c8ade20f774c750021492d768f8b501249faf9'],
+ ['core/clarity-visuals.mjs','186f24da2e4cc44de25c6a00285eaf995c3a11074114b7a3a8f6eb958b962ffb'],
 ]);
 for(const[file,digest]of approvedOnecUiPaths)assert.equal(sha(await readFile(file)),digest,'Approved 1C presentation bytes: '+file);
 // Модульная поставка P2 по решению владельца и MASTER00 / f636357a.

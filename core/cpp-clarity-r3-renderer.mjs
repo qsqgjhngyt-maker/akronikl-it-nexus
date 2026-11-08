@@ -200,6 +200,9 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  .r3-lesson[data-r3-topic] :is(.lesson-section,.question,.practice-card){background:#122438;border-color:#3d536a}
  .r3-lesson[data-r3-topic^="cpp."] .example-layout[data-example-single]{grid-template-columns:minmax(0,1fr)}
  .r3-lesson .clarification-links{display:flex;flex-wrap:wrap;gap:8px 16px;list-style:none;margin:0;padding:0}
+ .r3-lesson [data-lab-reference-content] :is(pre,pre code){white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
+ .r3-lesson [data-lab-reference-content] pre{height:auto;max-height:none;overflow:visible}
+ .r3-lesson [data-reference-language="text"] :is(pre,pre code){font:inherit;line-height:inherit}
  .r3-lesson .clarification-links li{max-width:100%;min-width:0}
  .r3-lesson .clarification-links a{display:inline-block;padding-block:4px;text-decoration:underline;text-underline-offset:.18em;overflow-wrap:anywhere}
  .r3-lesson .practice-cases{list-style:none;display:grid;gap:16px;padding:0}
@@ -386,8 +389,9 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   try{
    const solution=await labReference();
    if(!live()||!details.isConnected)return;
+    panel.dataset.referenceLanguage=solution.language||'';
    panel.innerHTML=(solution.paragraphs||[]).map(t=>'<p>'+esc(t)+'</p>').join('')+(solution.source?`<pre data-reference-source><code>${esc(solution.source)}</code></pre>${programBundle(solution)}
-    <button type="button" class="btn" data-action="copy-reference">${say('Скопировать код','Copy code')}</button>`:'');
+     <button type="button" class="btn" data-action="copy-reference">${solution.language==='text'?say('Скопировать текст','Copy text'):say('Скопировать код','Copy code')}</button>`:'');
    details.dataset.loaded='ready';
   }catch{
    if(!live()||!details.isConnected)return;

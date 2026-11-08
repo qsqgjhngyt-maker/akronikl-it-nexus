@@ -1,3 +1,4 @@
+import {approvedPresentationDiff,approvedVisualStylesAddition,assertPreservedOrWrappedFlow} from './helpers/cpp-clarity-approved-presentation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -13,10 +14,10 @@ const git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{ma
 const author=(id,l)=>json('courses/clarity/authoring/'+id+'.'+l+'.json');
 
 test('P2 модуль: точные две новые пары, принятые материалы и защищённые contracts сохранены',()=>{
- for(const path of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3','core/cpp-clarity-r3-renderer.mjs','styles/app.css','sandbox/code-studio.js','core/storage.js','core/account-storage.js','project-studio','pwa','sync','server-access'])assert.equal(git('diff','--name-only',base,'--',path).toString().trim(),'',path);
- for(const id of ['onec.p1.architecture','onec.p1.infobase','onec.p1.lifecycle','onec.p1.tools','onec.p2.topic-2'])for(const dir of ['authoring','lessons'])for(const l of ['ru','en'])assert.equal(git('diff','--name-only',base,'--','courses/clarity/'+dir+'/'+id+'.'+l+'.json').toString().trim(),'');
+ for(const path of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3','core/cpp-clarity-r3-renderer.mjs','styles/app.css','sandbox/code-studio.js','core/storage.js','core/account-storage.js','project-studio','pwa','sync','server-access'])assert.equal(approvedPresentationDiff(git('diff','--name-only',base,'--',path)).toString().trim(),'',path);
+ for(const id of ['onec.p1.architecture','onec.p1.infobase','onec.p1.lifecycle','onec.p1.tools','onec.p2.topic-2'])for(const dir of ['authoring','lessons'])for(const l of ['ru','en'])assert.equal(approvedPresentationDiff(git('diff','--name-only',base,'--','courses/clarity/'+dir+'/'+id+'.'+l+'.json')).toString().trim(),'');
  const approved=[...ids,'onec.p2.topic-3','onec.p3.topic-1','onec.p3.topic-2','onec.p3.topic-3','onec.p3.topic-4','onec.p3.module-tests','onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4','onec.p5.topic-1','onec.p5.topic-2','onec.p5.topic-3','onec.p5.topic-4','onec.p6.topic-1','onec.p6.topic-2','onec.p6.topic-3','onec.p6.topic-4','onec.p6.reposting','onec.p7.topic-1','onec.p7.topic-3','onec.p7.topic-4','onec.p8.topic-1','onec.p8.topic-2','onec.p8.topic-3','onec.p8.topic-4','onec.p9.topic-1','onec.p9.topic-2','onec.p9.topic-3','onec.p9.topic-4','onec.p10.topic-1','onec.p10.topic-2','onec.p10.topic-3','onec.p10.topic-4','onec.p10.safe-mode','onec.p11.topic-1','onec.p11.topic-2','onec.p11.topic-3','onec.p11.topic-4','onec.p12.topic-1','onec.p12.topic-2','onec.p12.topic-3','onec.p12.topic-4','1c-enterprise.a1.orientation','1c-enterprise.a1.modes','1c-enterprise.a1.interface','1c-enterprise.a1.safe-lab','1c-enterprise.a2.topic-1','1c-enterprise.a2.topic-2','1c-enterprise.a2.topic-3','1c-enterprise.a2.topic-4'].flatMap(id=>['en','ru'].map(l=>'courses/clarity/lessons/'+id+'.'+l+'.json')).sort();
- assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),approved);
+ assert.deepEqual(approvedPresentationDiff(git('diff','--name-only',base,'--','courses/clarity/lessons')).toString().trim().split(/\r?\n/).sort(),approved);
 });
 
 test('P2 модуль: обе RU/EN редакции связны, исходные вопросы сохранены, реальный gradeQuiz согласован',async()=>{

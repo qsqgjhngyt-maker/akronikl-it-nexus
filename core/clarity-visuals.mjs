@@ -24,6 +24,10 @@ function whileCycleMarkup(flow){
 export function learningFlowMarkup(flow){
  if(!flow)return '';
  if(flow.kind==='while-cycle')return whileCycleMarkup(flow);
+ // Длинные подписи занимают необходимую высоту, а не обрезаются рамкой SVG.
+ if(flow.nodes.some(n=>[n.title,...n.lines].some(t=>String(t).length>24)||n.lines.length>2))return `<figure class="learning-flow" data-wrapped-flow><figcaption>${esc(flow.caption)}</figcaption>
+ <ol class="flow-steps">${flow.nodes.map((n,i)=>`<li class="flow-step"><strong>${esc(n.title)}</strong>${n.lines.map(line=>`<p>${esc(line)}</p>`).join('')}${i<flow.nodes.length-1?'<span class="flow-step-arrow" aria-hidden="true">↓</span>':''}</li>`).join('')}</ol>
+ <details><summary>${esc(flow.textLabel)}</summary><ol>${flow.alternative.map(t=>`<li>${esc(t)}</li>`).join('')}</ol></details></figure>`;
  const height=flow.nodes.length*108-22;
  return `<figure class="learning-flow"><figcaption>${esc(flow.caption)}</figcaption>
  <svg viewBox="0 0 260 ${height}" role="img" aria-label="${esc(flow.caption)}"><desc>${esc(flow.alternative.join(' '))}</desc>
@@ -40,6 +44,10 @@ export const learningVisualStyles=`
  .r3-lesson .learning-flow rect{fill:#172d44;stroke:#a6bfd7;stroke-width:1.5}
  .r3-lesson .learning-flow path{fill:none;stroke:#c6d9ea;stroke-width:2}
  .r3-lesson .learning-flow text{fill:#f1f7ff;font:600 18px system-ui,sans-serif;text-anchor:middle}
+ .r3-lesson .flow-steps{display:grid;gap:32px;list-style:none;padding:0;margin:16px auto;max-width:640px;min-width:0}
+ .r3-lesson .flow-step{position:relative;box-sizing:border-box;min-width:0;padding:16px 20px;border:1.5px solid #a6bfd7;border-radius:12px;background:#172d44;color:#f1f7ff;text-align:center;white-space:normal;overflow-wrap:anywhere}
+ .r3-lesson .flow-step p{margin:6px 0 0}
+ .r3-lesson .flow-step-arrow{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);line-height:28px;font-size:24px;color:#c6d9ea}
  .r3-lesson .authored-native-media{max-width:100%;min-width:0}
  .r3-lesson .authored-native-media .onec-shot-scroll{overflow:auto;max-width:100%;border:1px solid var(--r3-line);border-radius:8px}
  .r3-lesson .authored-native-media .onec-shot-frame{position:relative;overflow:hidden}
