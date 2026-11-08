@@ -14,7 +14,7 @@ const git=(...a)=>execFileSync('git',['-c','core.longpaths=true',...a],{maxBuffe
 
 test('P3: только пять новых пар; принятые курсы, контракты и матовый экран сохранены',()=>{
  for(const p of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','courses/onec-education','review/cpp-clarity-r3','core/cpp-clarity-r3-renderer.mjs','core/cpp-clarity-authored.mjs','core/clarity-visuals.mjs','styles','sandbox','core/storage.js','core/account-storage.js','pwa','project-studio','sync','server-access'])assert.equal(git('diff','--name-only',base,'--',p).toString().trim(),'',p);
- const expected=[...ids,'onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4'].flatMap(id=>['en','ru'].map(l=>'courses/clarity/lessons/'+id+'.'+l+'.json')).sort();
+ const expected=[...ids,'onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4','onec.p5.topic-1','onec.p5.topic-2','onec.p5.topic-3','onec.p5.topic-4'].flatMap(id=>['en','ru'].map(l=>'courses/clarity/lessons/'+id+'.'+l+'.json')).sort();
  assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),expected);
 });
 

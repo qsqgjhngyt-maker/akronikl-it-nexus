@@ -1,23 +1,31 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p5-topic-4-author-v1",
   "id": "onec.p5.topic-4",
   "courseId": "onec",
   "moduleId": "onec.p5",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Documents and transactional changes",
   "locale": "en",
-  "title": "Transactions: roll back the experiment and verify a fresh read",
+  "title": "Written is not committed: the transaction boundary",
   "goal": "Distinguish an in-transaction write, rollback and commit using own synthetic catalog items.",
   "prerequisites": [
     {
-      "text": "onec.p4; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P4. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A card has passed Записать, and then the operation fails. Should the card remain? The answer depends on the transaction boundary. First deliberately roll a change back, then perform a separate successful commit.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "One business fact needs one decision",
       "paragraphs": [
         "If a request and dependent record must appear together, do not accept them independently. A transaction groups changes into commit or rollback. It does not make the algorithm correct or replace validation. Identify all affected data and require either complete consistency or the previous state.",
@@ -25,21 +33,47 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Write, refusal and rollback",
+      "id": "platform-contract",
+      "title": "Prepare the experiment while retaining P4",
       "paragraphs": [
-        "The full function separately exercises successful commit."
+        "Continue your own P4 copy after preserving its DT and sources. Do not load a full configuration over prior work. If using the supplied training template, load service-desk-documents-v2 into a new separate infobase and distinguish it from your continuing work.",
+        "ЗаявкаУслуги needs Клиент, Услуга, Статус, ДлительностьМинут and Комментарий. ПередЗаписью must refuse missing customer/service/status and minutes outside 0…1440. Review the existing handler first; do not create another procedure of the same name.",
+        "Keep the existing УчебныеДанные common module. Append the new function outside existing definitions; the application calls it once. Posting is not required for these observations."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "НачатьТранзакцию();\n// Create and write an own item\n// Controlled refusal\nОтменитьТранзакцию();\n// Fresh lookup outside the rolled-back transaction",
-        "output": "The rejected item is absent from a fresh lookup."
+        "language": "bsl",
+        "source": "Функция ОпытГраницыТранзакции() Экспорт\n    УникальноеИмя = \"Учебный P5 TX \" + Строка(Новый УникальныйИдентификатор);\n    НачатьТранзакцию();\n    Попытка\n        Черновик = Справочники.Клиенты.СоздатьЭлемент(); Черновик.Наименование = УникальноеИмя;\n        Черновик.Записать();\n        ВызватьИсключение \"Учебный отказ после записи внутри транзакции\";\n    Исключение\n        ОтменитьТранзакцию();\n    КонецПопытки;\n    ПослеОтказаНетЗаписи = Справочники.Клиенты.НайтиПоНаименованию(УникальноеИмя,Истина).Пустая();\n    НачатьТранзакцию();\n    Попытка\n        Принятый = Справочники.Клиенты.СоздатьЭлемент(); Принятый.Наименование = УникальноеИмя + \" принято\";\n        Принятый.Записать();\n        ЗафиксироватьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию();\n        ВызватьИсключение;\n    КонецПопытки;\n    ПослеФиксацииЕстьЗапись = Справочники.Клиенты.НайтиПоНаименованию(УникальноеИмя + \" принято\",Истина) = Принятый.Ссылка;\n    Возврат Новый Структура(\"ПослеОтказаНетЗаписи,ПослеФиксацииЕстьЗапись,Ссылка\",ПослеОтказаНетЗаписи,ПослеФиксацииЕстьЗапись,Принятый.Ссылка);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The first unique customer is written inside a transaction, then a deliberate failure triggers rollback. A fresh exact-name lookup finds nothing. The second path writes another name and commits; lookup returns that reference. These are two distinct outcomes, not deletion of earlier customers.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытГраницыТранзакции();\n    Сообщить(\"После отказа записи нет: \" + Строка(Результат.ПослеОтказаНетЗаписи));\n    Сообщить(\"После фиксации запись есть: \" + Строка(Результат.ПослеФиксацииЕстьЗапись));\nКонецПроцедуры\n",
+        "output": "После отказа записи нет: Да\nПосле фиксации запись есть: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытГраницыТранзакции() Экспорт\n    УникальноеИмя = \"Учебный P5 TX \" + Строка(Новый УникальныйИдентификатор);\n    НачатьТранзакцию();\n    Попытка\n        Черновик = Справочники.Клиенты.СоздатьЭлемент(); Черновик.Наименование = УникальноеИмя;\n        Черновик.Записать();\n        ВызватьИсключение \"Учебный отказ после записи внутри транзакции\";\n    Исключение\n        ОтменитьТранзакцию();\n    КонецПопытки;\n    ПослеОтказаНетЗаписи = Справочники.Клиенты.НайтиПоНаименованию(УникальноеИмя,Истина).Пустая();\n    НачатьТранзакцию();\n    Попытка\n        Принятый = Справочники.Клиенты.СоздатьЭлемент(); Принятый.Наименование = УникальноеИмя + \" принято\";\n        Принятый.Записать();\n        ЗафиксироватьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию();\n        ВызватьИсключение;\n    КонецПопытки;\n    ПослеФиксацииЕстьЗапись = Справочники.Клиенты.НайтиПоНаименованию(УникальноеИмя + \" принято\",Истина) = Принятый.Ссылка;\n    Возврат Новый Структура(\"ПослеОтказаНетЗаписи,ПослеФиксацииЕстьЗапись,Ссылка\",ПослеОтказаНетЗаписи,ПослеФиксацииЕстьЗапись,Принятый.Ссылка);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытГраницыТранзакции();\n    Сообщить(\"После отказа записи нет: \" + Строка(Результат.ПослеОтказаНетЗаписи));\n    Сообщить(\"После фиксации запись есть: \" + Строка(Результат.ПослеФиксацииЕстьЗапись));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
+            "Action",
             "Observation",
             "Reason"
           ],
@@ -69,7 +103,7 @@
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Boundary and lifetime",
       "paragraphs": [
         "Keep explicit transactions short and finish every path. Do not wait for users, network or long reports while holding a transaction. Some platform operations already have a transactional context; understand the call site before nesting another boundary. A nested start is not an independent backup.",
@@ -77,7 +111,21 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Two new records were written in one transaction, and failure occurred before commit. What should fresh lookups show after rollback?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "Both writes roll back when both belong to that transaction. A successful Записать inside its boundary is not final commit. This does not extend to arbitrary external HTTP requests or files."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Preserve the original failure",
       "paragraphs": [
         "On exception, roll back the transaction you started and propagate the failure with safe diagnostics. Do not continue as if successful. Rollback cannot undo actions outside the transaction, especially files and external requests. Those need another coordination and idempotency protocol.",
@@ -85,41 +133,39 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "Committing inside the failure handler",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "This negative control detects an incorrect transaction ending."
+        "Each separate transaction has one outcome: rollback after failure, or commit after successful actions. The main function takes the first path, then begins a new transaction for the other."
       ],
-      "code": {
-        "language": "text",
-        "source": "Incorrect variant: first ОтменитьТранзакцию becomes ЗафиксироватьТранзакцию.",
-        "output": "The item incorrectly persists and the absence assertion fails."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Failure",
-              "Changes committed",
-              "Wrong ending."
-            ],
-            [
-              "Reread",
-              "Name found",
-              "Rollback unproved."
-            ]
-          ]
-        }
+      "flowchart": {
+        "layout": "roomy",
+        "caption": "Failure and success end differently",
+        "input": "Begin / write",
+        "decisions": [
+          {
+            "condition": "Failure?",
+            "branch": "yes",
+            "output": "Rollback"
+          }
+        ],
+        "fallback": "Commit",
+        "paths": [
+          "Failure branch: ОтменитьТранзакцию; an exact lookup after completion finds no rejected name.",
+          "Success branch: ЗафиксироватьТранзакцию; a separate read finds the accepted record."
+        ]
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Committing in the exception branch instead of rolling back lets execution continue while leaving the rejected customer behind. The independent expectation “name absent” detects the error even without an unhandled exception.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Choose a failure point",
       "paragraphs": [
         "In a separate copy, inject failure between two related writes. Reopen a session and compare both tables after rejection. Then run the valid operation and expect exactly one effect. A before-state snapshot is essential because test setup itself may have changed the baseline.",
@@ -127,16 +173,58 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "A successful write before rollback is treated as final persistence. Reread after completing the transaction using a separate lookup.",
-        "The failure branch commits instead of rolling back. Review each ending branch and independently assert absence of the rejected change.",
-        "Database rollback is assumed to reverse external HTTP effects. Separate database state from external effects and specify delivery/compensation."
+        "In one transaction create a customer and 600-rate service sharing a unique marker. After both writes deliberately fail and roll back:both exact lookups must be empty. In a new transaction create an accepted pair under a different marker with rate 900, commit, and verify both references and 900.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p5-atomicity-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "18782fa0a66a746530e37cfd2e965e98b42333b3a4036a6425daf32354a35ebf",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain which writes belong to the boundary and why database rollback does not undo external email or HTTP actions."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Two new records were written in one transaction, and failure occurred before commit. What should fresh lookups show after rollback?",
+      "options": [
+        "Neither record exists",
+        "The first remains, the second disappears",
+        "Both remain because Записать succeeded"
+      ],
+      "correct": 0,
+      "feedback": "Both writes roll back when both belong to that transaction. A successful Записать inside its boundary is not final commit. This does not extend to arbitrary external HTTP requests or files.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -147,7 +235,8 @@
         "Catalog cleanup"
       ],
       "correct": 0,
-      "feedback": "The rejected change must not persist."
+      "feedback": "The rejected change must not persist.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -159,7 +248,8 @@
         "Form width"
       ],
       "correct": 1,
-      "feedback": "Test durable state."
+      "feedback": "Test durable state.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -171,150 +261,104 @@
         "Needs a separate coordination protocol"
       ],
       "correct": 2,
-      "feedback": "Database transactions do not cover arbitrary network effects."
+      "feedback": "Database transactions do not cover arbitrary network effects.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Why check customer and service separately after rollback?",
+      "options": [
+        "To detect a partially persisted pair",
+        "Because identical names merge catalogs",
+        "One error message is enough"
+      ],
+      "correct": 0,
+      "feedback": "Explain which writes belong to the boundary and why database rollback does not undo external email or HTTP actions.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain rollback limits for external files/HTTP and the wrong commit in a separate copy.",
-      "feedback": "No automatic external rollback claim; failed outcome not hidden by deletion."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Rejected item absent, accepted item reread",
-    "task": "Explain rollback limits for external files/HTTP and the wrong commit in a separate copy.",
-    "environment": "Official installed training1C; your continuing P4 base with Клиенты/Услуги/ЗаявкаУслуги/СтатусыЗаявки. Studio optional.",
-    "externalRoute": "Own-copy Designer → server common module УчебныеДокументы → managed Enterprise",
+    "title": "Written is not committed: the transaction boundary",
+    "task": "In one transaction create a customer and 600-rate service sharing a unique marker. After both writes deliberately fail and roll back:both exact lookups must be empty. In a new transaction create an accepted pair under a different marker with rate 900, commit, and verify both references and 900.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "Функция ОпытГраницыТранзакции() Экспорт\n    УникальноеИмя = \"Учебный P5 TX \" + Строка(Новый УникальныйИдентификатор);\n    НачатьТранзакцию();\n    Попытка\n        Черновик = Справочники.Клиенты.СоздатьЭлемент(); Черновик.Наименование = УникальноеИмя;\n        Черновик.Записать();\n        ВызватьИсключение \"Учебный отказ после записи внутри транзакции\";\n    Исключение\n        ОтменитьТранзакцию();\n    КонецПопытки;\n    ПослеОтказаНетЗаписи = Справочники.Клиенты.НайтиПоНаименованию(УникальноеИмя,Истина).Пустая();\n    НачатьТранзакцию();\n    Попытка\n        Принятый = Справочники.Клиенты.СоздатьЭлемент(); Принятый.Наименование = УникальноеИмя + \" принято\";\n        Принятый.Записать();\n        ЗафиксироватьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию();\n        ВызватьИсключение;\n    КонецПопытки;\n    ПослеФиксацииЕстьЗапись = Справочники.Клиенты.НайтиПоНаименованию(УникальноеИмя + \" принято\",Истина) = Принятый.Ссылка;\n    Возврат Новый Структура(\"ПослеОтказаНетЗаписи,ПослеФиксацииЕстьЗапись,Ссылка\",ПослеОтказаНетЗаписи,ПослеФиксацииЕстьЗапись,Принятый.Ссылка);\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "Функция ОпытПарыВТранзакции() Экспорт\n    // TODO: implement the independent task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПарыВТранзакции();\n    Сообщить(\"Откат убрал клиента: \" + Строка(Результат.НетКлиента));\n    Сообщить(\"Откат убрал услугу: \" + Строка(Результат.НетУслуги));\n    Сообщить(\"Фиксация сохранила клиента: \" + Строка(Результат.ЕстьКлиент));\n    Сообщить(\"Фиксация сохранила услугу900: \" + Строка(Результат.ЕстьУслуга));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "copy",
-        "title": "Verify the own copy",
-        "where": "Own-copy Designer",
-        "action": "Use your continuing P4 copy, verify metadata and preserve source before adding code. For a new experiment restore a DT only into a new empty base. Do not reload a full CF over prior work.",
-        "why": "Keep earlier functions and records.",
-        "expected": "Source and experiment base distinguished.",
-        "troubleshooting": "Return to P4 preparation if required metadata is absent.",
-        "before": "Own continuing work and DT backup retained; exact base path and source modules identified."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытПарыВТранзакции() Экспорт\n    Метка = \"P5 пара \" + Строка(Новый УникальныйИдентификатор);\n    НачатьТранзакцию();\n    Попытка\n        Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = Метка;\n        Клиент.Записать();\n        Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = Метка;\n        Услуга.ТарифЗаЧас = 600; Услуга.Записать();\n        ВызватьИсключение \"Учебный отказ после обеих записей\";\n    Исключение\n        ОтменитьТранзакцию();\n    КонецПопытки;\n    НетКлиента = Справочники.Клиенты.НайтиПоНаименованию(Метка,Истина).Пустая();\n    НетУслуги = Справочники.Услуги.НайтиПоНаименованию(Метка,Истина).Пустая();\n    НачатьТранзакцию();\n    Попытка\n        Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = Метка + \" принято\";\n        Клиент.Записать();\n        Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = Метка + \" принято\";\n        Услуга.ТарифЗаЧас = 900; Услуга.Записать();\n        ЗафиксироватьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию();\n        ВызватьИсключение;\n    КонецПопытки;\n    ЕстьКлиент = Справочники.Клиенты.НайтиПоНаименованию(Метка + \" принято\",Истина) = Клиент.Ссылка;\n    ЕстьУслуга = Справочники.Услуги.НайтиПоНаименованию(Метка + \" принято\",Истина) = Услуга.Ссылка\n        И Услуга.Ссылка.ПолучитьОбъект().ТарифЗаЧас = 900;\n    Возврат Новый Структура(\"НетКлиента,НетУслуги,ЕстьКлиент,ЕстьУслуга\",НетКлиента,НетУслуги,ЕстьКлиент,ЕстьУслуга);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытПарыВТранзакции() Экспорт\n    Метка = \"P5 пара \" + Строка(Новый УникальныйИдентификатор);\n    НачатьТранзакцию();\n    Попытка\n        Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = Метка;\n        Клиент.Записать();\n        Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = Метка;\n        Услуга.ТарифЗаЧас = 600; Услуга.Записать();\n        ВызватьИсключение \"Учебный отказ после обеих записей\";\n    Исключение\n        ОтменитьТранзакцию();\n    КонецПопытки;\n    НетКлиента = Справочники.Клиенты.НайтиПоНаименованию(Метка,Истина).Пустая();\n    НетУслуги = Справочники.Услуги.НайтиПоНаименованию(Метка,Истина).Пустая();\n    НачатьТранзакцию();\n    Попытка\n        Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = Метка + \" принято\";\n        Клиент.Записать();\n        Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = Метка + \" принято\";\n        Услуга.ТарифЗаЧас = 900; Услуга.Записать();\n        ЗафиксироватьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию();\n        ВызватьИсключение;\n    КонецПопытки;\n    ЕстьКлиент = Справочники.Клиенты.НайтиПоНаименованию(Метка + \" принято\",Истина) = Клиент.Ссылка;\n    ЕстьУслуга = Справочники.Услуги.НайтиПоНаименованию(Метка + \" принято\",Истина) = Услуга.Ссылка\n        И Услуга.Ссылка.ПолучитьОбъект().ТарифЗаЧас = 900;\n    Возврат Новый Структура(\"НетКлиента,НетУслуги,ЕстьКлиент,ЕстьУслуга\",НетКлиента,НетУслуги,ЕстьКлиент,ЕстьУслуга);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПарыВТранзакции();\n    Сообщить(\"Откат убрал клиента: \" + Строка(Результат.НетКлиента));\n    Сообщить(\"Откат убрал услугу: \" + Строка(Результат.НетУслуги));\n    Сообщить(\"Фиксация сохранила клиента: \" + Строка(Результат.ЕстьКлиент));\n    Сообщить(\"Фиксация сохранила услугу900: \" + Строка(Результат.ЕстьУслуга));\nКонецПроцедуры\n"
       },
-      {
-        "id": "function",
-        "title": "Append the server function",
-        "where": "Конфигуратор → Общие → Общие модули → УчебныеДокументы",
-        "action": "Create the module if absent: Server and Server call enabled; Global and Privileged disabled. Append the complete function below outside other procedures/functions. Preserve older modules.",
-        "why": "Run database operations in their server context.",
-        "expected": "Exactly one exported function definition added.",
-        "troubleshooting": "Do not paste a function definition into the startup handler.",
-        "before": "Source and experiment base distinguished."
-      },
-      {
-        "id": "caller",
-        "title": "Insert the application call",
-        "where": "Конфигуратор → корень → Модуль приложения → ПриНачалеРаботыСистемы",
-        "action": "Preserve the current handler, then insert only these statements inside it:\nРезультат = УчебныеДокументы.ОпытГраницыТранзакции();\nСообщить(Результат.ПослеОтказаНетЗаписи);\nСообщить(Результат.ПослеФиксацииЕстьЗапись);\nСообщить(Результат.Ссылка);",
-        "why": "Call the function once and print each independent claim.",
-        "expected": "Caller and function definition are in distinct locations.",
-        "troubleshooting": "Keep one startup handler; do not nest exported functions.",
-        "before": "Exactly one exported function definition added."
-      },
-      {
-        "id": "run",
-        "title": "Apply and run once",
-        "where": "Ctrl+S → F7 → 1С:Предприятие",
-        "action": "Review metadata changes, update only your experiment copy and launch once. Record every boolean and actual reference/number.",
-        "why": "Observe the real platform rather than browser highlighting.",
-        "expected": "Two True values: rejected name absent after rollback and accepted card found after commit.",
-        "troubleshooting": "Preserve module/line and specific discrepancy; never revise expectations to match a defect.",
-        "before": "Caller and function definition are in distinct locations."
-      },
-      {
-        "id": "reread",
-        "title": "Reconcile saved records",
-        "where": "Enterprise lists and own control notes",
-        "action": "Open the accepted item by its actual code. A fresh exact-name lookup should not find the rejected one. Retain older items.",
-        "why": "Separate durable observations from a displayed message.",
-        "expected": "Actual records agree with the stated scoped assertions.",
-        "troubleshooting": "Use actual identities; list position is not a key.",
-        "before": "Two True values: rejected name absent after rollback and accepted card found after commit."
-      },
-      {
-        "id": "finish",
-        "title": "Retain the result and stop repetition",
-        "where": "Конфигуратор после закрытия Предприятия",
-        "action": "Remove only this startup call or restore the preserved handler. Keep the function, created own records and notes. Perform the incorrect variant only in another own copy, recording the failed assertion.",
-        "why": "Normal reopening must not recreate experiment data.",
-        "expected": "Work retained and automatic repetition stopped.",
-        "troubleshooting": "Do not clear catalogs, drop modules or alter unrelated documents.",
-        "before": "Actual records agree with the stated scoped assertions."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Source and experiment base distinguished."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Exactly one exported function definition added."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Caller and function definition are in distinct locations."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "Two True values: rejected name absent after rollback and accepted card found after commit."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Actual records agree with the stated scoped assertions."
-      },
-      {
-        "label": "Observation 6",
-        "input": "",
-        "output": "Work retained and automatic repetition stopped."
+        "label": "New independent task",
+        "input": "A rejected600pair; a separate accepted900pair. Existing records remain untouched.",
+        "output": "Откат убрал клиента: Да\nОткат убрал услугу: Да\nФиксация сохранила клиента: Да\nФиксация сохранила услугу900: Да"
       }
     ],
     "criteria": [
-      "Write separated from transaction completion.",
-      "Rejected item absent, accepted item present; older items intact.",
-      "No automatic external rollback claim; failed outcome not hidden by deletion.",
-      "Own-copy provenance, platform version, exact function and actual assertions.",
-      "Actual synthetic identities and an explained semantic negative control; no real user data.",
-      "Run the second worked variant only in a separate own experiment copy; preserve the original and the observed rejection."
+      "Four labelled assertions give Да:both rejected records absent, both accepted records present.",
+      "A fresh read of the accepted service gives 900; exact names and actual references are checked.",
+      "Explain which writes belong to the boundary and why database rollback does not undo external email or HTTP actions."
     ],
-    "hint": "Reread after completing the transaction using a separate lookup.",
-    "exercises": [
+    "hint": "The sequence shows two separate experiments. The first ends in rollback and absence of its name. The second begins afresh and commits another name; it does not continue the rolled-back transaction.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Locate begin, write, rollback and reread.",
-        "criteria": "Write separated from transaction completion."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Run once and retain both independent assertions plus accepted item code.",
-        "criteria": "Rejected item absent, accepted item present; older items intact."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Use your continuing P4 copy, verify metadata and preserve source before adding code. For a new experiment restore a DT only into a new empty base. Do not reload a full CF over prior work.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "The own copy contains Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки; posting additionally requires Трудозатраты."
       },
       {
-        "level": "Advanced",
-        "task": "Explain rollback limits for external files/HTTP and the wrong commit in a separate copy.",
-        "criteria": "No automatic external rollback claim; failed outcome not hidden by deletion."
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/document-transaction-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "document",
@@ -328,12 +372,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p5-atomicity.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p5-topic-4-author-v1",
     "quiz": [
+      {
+        "question": "Two new records were written in one transaction, and failure occurred before commit. What should fresh lookups show after rollback?",
+        "options": [
+          "Neither record exists",
+          "The first remains, the second disappears",
+          "Both remain because Записать succeeded"
+        ],
+        "correct": 0,
+        "explanation": "Both writes roll back when both belong to that transaction. A successful Записать inside its boundary is not final commit. This does not extend to arbitrary external HTTP requests or files."
+      },
       {
         "question": "After the first refusal use",
         "options": [
@@ -363,7 +413,31 @@
         ],
         "correct": 2,
         "explanation": "Database transactions do not cover arbitrary network effects."
+      },
+      {
+        "question": "Why check customer and service separately after rollback?",
+        "options": [
+          "To detect a partially persisted pair",
+          "Because identical names merge catalogs",
+          "One error message is enough"
+        ],
+        "correct": 0,
+        "explanation": "Explain which writes belong to the boundary and why database rollback does not undo external email or HTTP actions."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p5.topic-4.en.json"
 }
