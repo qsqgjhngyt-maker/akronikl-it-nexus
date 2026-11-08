@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 1,
+  "block": "ENTERPRISE-A4",
+  "id": "1c-enterprise.a4.topic-3",
+  "locale": "en",
+  "revision": "enterprise-a4-topic-3-author-v1",
+  "source": {
+    "path": "courses/1c-enterprise/lessons/en/a4-attribute.json",
+    "sha256": "69f98629e9afd799397d6a9bd873531de7fb06e7476a5e5b774cc02fddd55f19"
+  },
+  "title": "Your first attribute: a customer training note",
+  "goal": "Add one optional string attribute to Клиенты and save the description while understanding the database-update boundary.",
+  "prerequisites": [
+    {
+      "text": "1c-enterprise.a 3; A1–A2: separate infobase, catalogs, references and documents; synthetic data only.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "From a familiar situation to a checkable question",
+      "paragraphs": [
+        "The example’s customer training note applies across that customer’s requests. A particular request’s channel can differ: one came through a form, another through training chat. Define the new value at the correct level and decide what existing records will contain."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Where to act",
+      "paragraphs": [
+        "Continue your service in a separate verified copy from the preceding lesson. Preserve the original and completedDT. The example adds a customer note; the independent task uses another document field in a further copy. Before changing anything verify the target and field list. Nexus stores the lesson and your note, but does not operate the external1Capplication."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Decide who owns the value",
+      "paragraphs": [
+        "The note describes one customer independently of requests, so it belongs to a Клиенты item. Putting it in a document would give separate notes to that customer’s different requests. That can be another valid need, but is not ours. Do not create another customer entity for one field.",
+        "In the prepared structure Клиенты has no custom attributes; Код and Наименование are standard properties. Use Add in Реквизиты rather than Табличные части. A tabular section stores multiple rows inside one object and is excessive here."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "Reason before acting",
+      "paragraphs": [
+        "A shared field description is not one customer’s note.",
+        "Identify the infobase, list and particular record separately. A command, visible text and saved state are different things."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Catalog: Клиенты\nAttribute: УчебнаяЗаметка\nSynonym: Учебная заметка\nType: Строка, 80, variable length, optional."
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "Example beside its observation",
+      "paragraphs": [
+        "A shared field description is not one customer’s note."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Catalog: Клиенты\nAttribute: УчебнаяЗаметка\nSynonym: Учебная заметка\nType: Строка, 80, variable length, optional.",
+        "output": "Actual properties read:customer note String 80, new document channel String 40, both optional. Before entry the new field is empty; it has not replaced previous values. Saving the XML definition and applying the structure are separate steps. Complete manual 80/81 and 40/41 entry was not tested."
+      },
+      "tables": [
+        {
+          "caption": "A field description before a first value",
+          "columns": [
+            "Step / condition",
+            "Observation",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Owner",
+              "Клиенты",
+              "One value per customer."
+            ],
+            [
+              "Name",
+              "УчебнаяЗаметка",
+              "Technical access."
+            ],
+            [
+              "Type",
+              "String, 80",
+              "Short text."
+            ],
+            [
+              "Save",
+              "Configuration",
+              "Database application follows next."
+            ]
+          ]
+        },
+        {
+          "caption": "Repeating should not multiply fields",
+          "columns": [
+            "Step / condition",
+            "Observation",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Inspect",
+              "Existing attribute found",
+              "Verify its purpose."
+            ],
+            [
+              "Continue",
+              "Type and length correct",
+              "Reuse the same object."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "A technical name and readable synonym",
+      "paragraphs": [
+        "Use the technical name УчебнаяЗаметка without spaces. Its synonym Учебная заметка is displayed in the form. The platform may derive the synonym automatically when you leave the name field; still verify it. A synonym change does not alter the purpose or type of stored values.",
+        "If the attribute exists from an earlier attempt, inspect and reuse it instead of adding УчебнаяЗаметка1. Prior work and attempt history matter more than matching an illustration. Resolve a different meaning behind an identical name before proceeding."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Predict the result",
+      "paragraphs": [
+        "An old request’s new optional channel is empty. Was previous text lost?"
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. The attribute did not previously exist; an empty string does not replace old fields. Verify number, references, minutes and status separately. The new field must not invent a channel for past requests."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "A string holds text with chosen limits",
+      "paragraphs": [
+        "Choose Строка and length 80. This stores short text, not a calculation, customer reference or secret. Variable length permits short notes while the maximum bounds input. Leave unlimited length disabled. Check the new attribute’s right-hand Длина, not the standard Наименование length in the central editor.",
+        "Choose limits from need and boundary examples. Plan empty, ordinary, exactly 80-character and over-limit inputs. Do not promise a specific over-limit message: a form may constrain input before writing. Observe actual behavior and compare the persisted length."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Context and transitions",
+      "paragraphs": [
+        "Read the path and explain what changes at each step. The diagram does not operate the external application."
+      ],
+      "flow": {
+        "caption": "Explore the example: A field description before a first value",
+        "nodes": [
+          {
+            "title": "Owner",
+            "lines": [
+              "Клиенты → One value per customer."
+            ]
+          },
+          {
+            "title": "Name",
+            "lines": [
+              "УчебнаяЗаметка → Technical access."
+            ]
+          },
+          {
+            "title": "Type",
+            "lines": [
+              "String, 80 → Short text."
+            ]
+          },
+          {
+            "title": "Save",
+            "lines": [
+              "Configuration → Database application follows next."
+            ]
+          }
+        ],
+        "alternative": [
+          "Owner: Клиенты → One value per customer.",
+          "Name: УчебнаяЗаметка → Technical access.",
+          "Type: String, 80 → Short text.",
+          "Save: Configuration → Database application follows next."
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "Check the explanation’s boundary",
+      "paragraphs": [
+        "A repeated attempt reuses the existing field without a duplicate.",
+        "Select УчебнаяЗаметка and inspect its right-hand property palette."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "An empty initial value preserves existing meaning",
+      "paragraphs": [
+        "Earlier items initially have empty notes until filled. The attribute is optional, so this update does not require rewriting every old customer. An empty note does not mean a missing name, code or reference. Mandatory input and default filling are separate rules introduced deliberately.",
+        "Close the object editor and save the configuration. This saves the development description. Database configuration may still differ, with its update command available and a difference marker at the tree. Next inspect and apply that update, then test the form and persistence. A tree node does not prove a saved Enterprise note."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new independent task",
+      "paragraphs": [
+        "On another separate copy after the example add optional УчебныйКанал to ЗаявкаУслуги: synonym “Request channel”, variable-length String 40. Save the definition, but predict the four previous requests before updating the database. Rename neither the existing customer note nor customer fields. Apply and verify in the next topic.",
+        "Record a prediction first. After your own attempt reveal the reference and compare the selected record as well as its number."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Actual training-service window",
+      "paragraphs": [
+        "The author created two new training copies by actualDTrestore. One applies customer note 80; the other adds request channel 40. Saving, restarting and comparing all eight old fields, identities and report 4/120 were performed. Two GUI captures show only saved values. Complete manual attribute creation, 80/81 and 40/41 boundaries, all learner steps, permissions and installer are NOT RUN."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/a4-saved-note-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "d73aa7b37c33aff805ce6f632edce4f3cb6f416fd0df7e085670350ee8ef355c",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "The actual previous customer form:code A3N1 and the saved training note. This is after applying the change, not a metadata editor capture. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
+          "caption": "The actual previous customer form:code A3N1 and the saved training note. This is after applying the change, not a metadata editor capture. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What the result establishes",
+      "paragraphs": [
+        "The author created two new training copies by actualDTrestore. One applies customer note 80; the other adds request channel 40. Saving, restarting and comparing all eight old fields, identities and report 4/120 were performed. Two GUI captures show only saved values. Complete manual attribute creation, 80/81 and 40/41 boundaries, all learner steps, permissions and installer are NOT RUN.",
+        "Technical checks do not assess understanding. Distinguish your observations from unperformed steps. Training names, numbers and comments are fictional; no work data is required."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "An old request’s new optional channel is empty. Was previous text lost?",
+      "options": [
+        "No: this new field did not exist before",
+        "Yes: previous comments were deleted",
+        "Yes: invent values"
+      ],
+      "correct": 0,
+      "feedback": "No. The attribute did not previously exist; an empty string does not replace old fields. Verify number, references, minutes and status separately. The new field must not invent a channel for past requests.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What is the technical field name?",
+      "options": [
+        "УчебнаяЗаметка",
+        "Учебный Север",
+        "Клиенты 1"
+      ],
+      "correct": 0,
+      "feedback": "It is an attribute of the existing catalog.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Which type stores our note?",
+      "options": [
+        "Number",
+        "String",
+        "Customer reference"
+      ],
+      "correct": 1,
+      "feedback": "Text needs a string type.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What remains to demonstrate after Ctrl+S?",
+      "options": [
+        "Window colour",
+        "Internet access",
+        "Database application and value persistence"
+      ],
+      "correct": 2,
+      "feedback": "Saving a description does not prove its behavior.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "How does the independent УчебныйКанал differ from the example’s note?",
+      "options": [
+        "Document owner, length 40, synonym Канал обращения",
+        "Only its colour",
+        "The same customer field 80"
+      ],
+      "correct": 0,
+      "feedback": "The new attribute belongs to the document, not Клиенты. Its technical name is УчебныйКанал, readable synonym “Request channel”, type String of length 40, and it is optional. Saving the definition does not establish that the application already has the field. After applying it I expect an empty new channel in old documents and unchanged numbers, references, dates, minutes, statuses and comments. Customer УчебнаяЗаметка (String 80) remains a separate attribute.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How did you distinguish the field definition, applying it to the infobase and a saved value? Name your own copy, observation and unperformed check.",
+      "feedback": "This free response is not graded automatically. Compare it with actual fields in your own infobase.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Your first attribute: a customer training note",
+    "task": "On another separate copy after the example add optional УчебныйКанал to ЗаявкаУслуги: synonym “Request channel”, variable-length String 40. Save the definition, but predict the four previous requests before updating the database. Rename neither the existing customer note nor customer fields. Apply and verify in the next topic.",
+    "environment": "Official installed 1C, prepared copy only; no code or Studio.",
+    "externalRoute": "Copy Designer → Справочники → Клиенты → Данные",
+    "setupGuide": true,
+    "files": [],
+    "referenceSolution": {
+      "language": "text",
+      "source": "The new attribute belongs to the document, not Клиенты. Its technical name is УчебныйКанал, readable synonym “Request channel”, type String of length 40, and it is optional. Saving the definition does not establish that the application already has the field. After applying it I expect an empty new channel in old documents and unchanged numbers, references, dates, minutes, statuses and comments. Customer УчебнаяЗаметка (String 80) remains a separate attribute.",
+      "files": {
+        "Observation.txt": "The new attribute belongs to the document, not Клиенты. Its technical name is УчебныйКанал, readable synonym “Request channel”, type String of length 40, and it is optional. Saving the definition does not establish that the application already has the field. After applying it I expect an empty new channel in old documents and unchanged numbers, references, dates, minutes, statuses and comments. Customer УчебнаяЗаметка (String 80) remains a separate attribute."
+      },
+      "paragraphs": [
+        "This is a reasoning reference, not an automatic completion certificate. Opening it does not replace your note."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent work",
+        "input": "On another separate copy after the example add optional УчебныйКанал to ЗаявкаУслуги: synonym “Request channel”, variable-length String 40. Save the definition, but predict the four previous requests before updating the database. Rename neither the existing customer note nor customer fields. Apply and verify in the next topic.",
+        "output": "The new attribute belongs to the document, not Клиенты. Its technical name is УчебныйКанал, readable synonym “Request channel”, type String of length 40, and it is optional. Saving the definition does not establish that the application already has the field. After applying it I expect an empty new channel in old documents and unchanged numbers, references, dates, minutes, statuses and comments. Customer УчебнаяЗаметка (String 80) remains a separate attribute."
+      }
+    ],
+    "criteria": [
+      "Name the own infobase, exact records and observations after reopening.",
+      "The new task preserves the worked example; only intended fields change.",
+      "An expected refusal is not reported as a successful save; unperformed steps are explicit."
+    ],
+    "hint": "No. The attribute did not previously exist; an empty string does not replace old fields. Verify number, references, minutes and status separately. The new field must not invent a channel for past requests.",
+    "steps": [
+      {
+        "id": "own-1",
+        "title": "New copy",
+        "where": "Own separate infobase",
+        "action": "Verify the own copy’s path and state; preserve original work separately.",
+        "why": "Check a particular saved state.",
+        "expected": "Only the selected copy changes."
+      },
+      {
+        "id": "own-2",
+        "title": "Channel definition",
+        "where": "Designer → document → attributes",
+        "action": "Add УчебныйКанал, synonym “Request channel”, optional variable-length String 40.",
+        "why": "Check a particular saved state.",
+        "expected": "The new attribute is defined at request level."
+      },
+      {
+        "id": "own-3",
+        "title": "Predict before applying",
+        "where": "Saved definition; Nexus",
+        "action": "Save the configuration. Record the expected empty channel and previous fields before updating the database.",
+        "why": "Check a particular saved state.",
+        "expected": "Definition and saved values are distinguished."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Catalogs, documents and forms",
+      "language": "English",
+      "purpose": "Optional clarification after your attempt; required steps are provided in the lesson.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Decide who owns the value",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "A technical name and readable synonym",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "A string holds text with chosen limits",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "An empty initial value preserves existing meaning",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "enterprise-a4-topic-3-author-v1",
+    "quiz": [
+      {
+        "question": "An old request’s new optional channel is empty. Was previous text lost?",
+        "options": [
+          "No: this new field did not exist before",
+          "Yes: previous comments were deleted",
+          "Yes: invent values"
+        ],
+        "correct": 0,
+        "explanation": "No. The attribute did not previously exist; an empty string does not replace old fields. Verify number, references, minutes and status separately. The new field must not invent a channel for past requests."
+      },
+      {
+        "question": "What is the technical field name?",
+        "options": [
+          "УчебнаяЗаметка",
+          "Учебный Север",
+          "Клиенты 1"
+        ],
+        "correct": 0,
+        "explanation": "It is an attribute of the existing catalog."
+      },
+      {
+        "question": "Which type stores our note?",
+        "options": [
+          "Number",
+          "String",
+          "Customer reference"
+        ],
+        "correct": 1,
+        "explanation": "Text needs a string type."
+      },
+      {
+        "question": "What remains to demonstrate after Ctrl+S?",
+        "options": [
+          "Window colour",
+          "Internet access",
+          "Database application and value persistence"
+        ],
+        "correct": 2,
+        "explanation": "Saving a description does not prove its behavior."
+      },
+      {
+        "question": "How does the independent УчебныйКанал differ from the example’s note?",
+        "options": [
+          "Document owner, length 40, synonym Канал обращения",
+          "Only its colour",
+          "The same customer field 80"
+        ],
+        "correct": 0,
+        "explanation": "The new attribute belongs to the document, not Клиенты. Its technical name is УчебныйКанал, readable synonym “Request channel”, type String of length 40, and it is optional. Saving the definition does not establish that the application already has the field. After applying it I expect an empty new channel in old documents and unchanged numbers, references, dates, minutes, statuses and comments. Customer УчебнаяЗаметка (String 80) remains a separate attribute."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS / OWN TRAINING RECORDS",
+    "platformVersion": "8.3.27.2214",
+    "scope": "The author created two new training copies by actualDTrestore. One applies customer note 80; the other adds request channel 40. Saving, restarting and comparing all eight old fields, identities and report 4/120 were performed. Two GUI captures show only saved values. Complete manual attribute creation, 80/81 and 40/41 boundaries, all learner steps, permissions and installer are NOT RUN.",
+    "cases": [
+      "saved-note"
+    ],
+    "studentAuthorshipVerified": false
+  }
+}
