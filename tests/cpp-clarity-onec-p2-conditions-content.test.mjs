@@ -99,7 +99,7 @@ test('Визуальное исправление сохраняет CONTENT ACC
   assert.equal(changed,2);assert.deepEqual(current,old,'Accepted semantics and revision: '+p);
  }
  const p='courses/onec-education/candidate.css',old=git('show',accepted+':'+p).toString();
- assert.equal(await readFile(p,'utf8'),"@import url('../../styles/clarity-onec-code-studio.css');\n"+old);
+ assert.equal(await readFile(p,'utf8'),"@import url('../../styles/clarity-onec-code-studio.css');\n@import url('../../styles/clarity-onec-p2-types.css');\n"+old);
  const css=await readFile('styles/clarity-onec-code-studio.css','utf8');
  assert.equal(hash(css),'403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84');
  assert.match(css,/\.onec-integrated\s*\{/);

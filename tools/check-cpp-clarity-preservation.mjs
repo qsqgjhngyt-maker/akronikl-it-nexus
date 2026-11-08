@@ -22,8 +22,9 @@ for(const[file,digest]of p2ConditionsMedia)assert.equal(sha(await readFile(file)
 const presentationOnly=new Set(['courses/onec-education/lesson-media.mjs','core/clarity-course-progress.mjs','courses/onec-education/candidate.css']);
 // MASTER00 / 90ffee3a: только согласованные пути и точные bytes визуального исправления.
 const approvedOnecUiPaths=new Map([
+ ['styles/clarity-onec-p2-types.css','9d96321aeed8c79f7fa7e49d3a6beb1836630045ab1f7f6ae2791440cdcdeb14'],
  ['styles/clarity-onec-code-studio.css','403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84'],
- ['courses/onec-education/candidate.css','82250ddcb1953409456576801efe150af74e99fde083f8be6d86dd263dacf8d2'],
+ ['courses/onec-education/candidate.css','31025ebda96d0bc1d9add3802bb604cbe8c1e8cbff2257752b0bd8944f5f59d1'],
  ['core/cpp-clarity-authored.mjs','b893ed72aa560601dc34b21dc97dbc3a26c4a4286638cf3c217e54ac1c3e4f97'],
  ['core/clarity-visuals.mjs','968a84a49f36ea46b623cbb191c8ade20f774c750021492d768f8b501249faf9'],
 ]);

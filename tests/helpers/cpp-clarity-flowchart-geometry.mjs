@@ -1,7 +1,8 @@
 // Эти функции исполняются Playwright внутри страницы; обращения к Node API отсутствуют.
 export function flowchartGeometry(svg){
  const scale=svg.getBoundingClientRect().width/svg.viewBox.baseVal.width;
- const arrows=[...svg.querySelectorAll('.flowchart-arrow')];
+ const linear=svg.closest('.learning-flow')&&!svg.closest('[data-while-cycle]');
+ const arrows=[...svg.querySelectorAll(linear?'g>path':'.flowchart-arrow')];
  return [...svg.querySelectorAll('text')].map(text=>{
   const b=text.getBBox(),pad=4/scale,shape=text.previousElementSibling;
   const branch=text.classList.contains('flowchart-branch');
