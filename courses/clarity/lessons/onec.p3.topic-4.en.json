@@ -1,23 +1,31 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p3-topic-4-author-v1",
   "id": "onec.p3.topic-4",
   "courseId": "onec",
   "moduleId": "onec.p3",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Modules, functions and collections",
   "locale": "en",
-  "title": "Exceptions: explain a failure and preserve the original input",
-  "goal": "Handle an expected conversion failure while preserving input and avoiding a false successful zero.",
+  "title": "Exceptions: preserve input and report rejection honestly",
+  "goal": "Trace an interrupted path, separate conversion from domain validation, and return an explicit result without false success.",
   "prerequisites": [
     {
-      "text": "The preceding language lesson; saving, updating and launching your own infobase.",
+      "text": "Complete BSL fundamentals: variables, types, conditions, and loops. Know how to preserve a separate source and run your training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "Why this task matters",
+      "paragraphs": [
+        "Invalid text must not silently become a free request. Preserve the original input, explain the reason, and let it be corrected. Distinguish the failing statement, skipped statements, and a separate handling path.",
+        "Read the worked example and predict a changed input. The independent task uses a different contract. Save the previous training source before replacing a module; a personal Nexus mark is not an assessment of your explanation."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "An operation may fail to produce a value",
       "paragraphs": [
         "Число(\"30\") produces a number; Число(\"ошибка\") cannot perform the requested conversion. An exception interrupts the ordinary sequence. The remaining instructions in Попытка are skipped and control moves to Исключение. Результат = Истина is therefore not reached in the main example.",
@@ -26,50 +34,19 @@
     },
     {
       "id": "example-1",
-      "title": "Trace the main example",
+      "title": "The complete worked example and its result",
       "paragraphs": [
-        "Conversion rejects the text, skips the success assignment and preserves the original input."
+        "ИсходныйТекст contains«ошибка» and the flag starts false. Число cannot produce the expected number, so assignment to true is skipped. The handler displays guidance and the original string remains available.",
+        "Match code and result by each statement’s role. Explain matching output through inputs, execution order, and state; one observed run does not check every possible variant."
       ],
       "code": {
-        "language": "text",
-        "source": "ИсходныйТекст = \"ошибка\";\nРезультат = Ложь;\nПопытка\n    Минуты = Число(ИсходныйТекст);\n    Результат = Истина;\nИсключение\n    Сообщить(\"Введите число минут, например 30\");\nКонецПопытки;\nСообщить(Результат);",
-        "output": "The prompt «Введите число минут, например 30» and the Boolean Ложь."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Before try",
-              "ИсходныйТекст=\"ошибка\"",
-              "Результат=Ложь."
-            ],
-            [
-              "Convert",
-              "No numeric result",
-              "Control moves to the handler."
-            ],
-            [
-              "Handle",
-              "Display a useful prompt",
-              "The success assignment was skipped."
-            ],
-            [
-              "After try",
-              "Display Результат",
-              "Ложь."
-            ]
-          ]
-        }
-      ]
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    ИсходныйТекст = \"ошибка\";\n    Результат = Ложь;\n    Попытка\n        Минуты = Число(ИсходныйТекст);\n        Результат = Истина;\n    Исключение\n        Сообщить(\"Введите число минут, например 30\");\n    КонецПопытки;\n    Сообщить(Результат);\nКонецПроцедуры\n",
+        "output": "Введите число минут, например 30\nНет"
+      }
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Catch where you can provide a useful response",
       "paragraphs": [
         "Keep the risky conversion in a narrow block. Combining many unrelated operations makes the failed action harder to identify. An empty exception handler hides a missing result while allowing the program to appear active.",
@@ -77,7 +54,67 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "trace",
+      "title": "Trace the important transitions",
+      "paragraphs": [
+        "Conversion and acceptable duration are separate checks. Text«-1» can become the number−1 successfully; that does not make a negative duration acceptable. Do not hide both reasons behind an unconditional success message.",
+        "Before the next statement, record state separately from messages already displayed. This finds the first divergence rather than guessing from the final line."
+      ],
+      "tables": [
+        {
+          "caption": "Worked-example state",
+          "columns": [
+            "Step or value",
+            "Role and observation"
+          ],
+          "rows": [
+            [
+              "ИсходныйТекст=\"ошибка\"",
+              "Preserve input"
+            ],
+            [
+              "Результат=Ложь",
+              "No success yet"
+            ],
+            [
+              "Число(ИсходныйТекст)",
+              "Exception"
+            ],
+            [
+              "Результат=Истина",
+              "Statement skipped"
+            ],
+            [
+              "Исключение",
+              "Guidance; input preserved"
+            ]
+          ],
+          "kind": "state"
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction before revealing",
+      "paragraphs": [
+        "Replace«ошибка» with«-1», leaving the worked code unchanged. What is the conversion flag?",
+        "Write your answer before revealing it. Identify the changed input and unchanged rule, then compare with the changed example."
+      ],
+      "reveal": {
+        "title": "Check the prediction",
+        "paragraphs": [
+          "Match the changed values with the same rule. This checks transfer rather than memorisation of the previous final line.",
+          "After successful conversion, Истина is displayed as Да in the Russian interface. This is the expected message for the changed input; the actual screenshot below belongs to the original invalid text."
+        ],
+        "code": {
+          "language": "bsl",
+          "source": "Процедура ПриНачалеРаботыСистемы()\n    ИсходныйТекст = \"-1\";\n    Результат = Ложь;\n    Попытка\n        Минуты = Число(ИсходныйТекст);\n        Результат = Истина;\n    Исключение\n        Сообщить(\"Введите число минут, например 30\");\n    КонецПопытки;\n    Сообщить(Результат);\nКонецПроцедуры\n",
+          "output": "Да"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Technical conversion is not business validation",
       "paragraphs": [
         "The text \"-1\" can convert successfully. A negative duration still violates our service rule. Check the range after conversion; catching an exception does not replace that check or make an invalid value acceptable.",
@@ -85,41 +122,19 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "Corrected input follows the ordinary path",
+      "id": "counterexample",
+      "title": "A faulty variant and its first divergence",
       "paragraphs": [
-        "Rejecting every input is not a working solution, so test the positive path too."
+        "Setting Результат=true in the exception handler falsely accepts invalid input. An error message does not repair a false success flag. Assign success only after obtaining and validating a result, preserving the original text separately.",
+        "Keep the faulty variant separately. Restore the working version and repeat the positive case. Do not change an expectation merely because the program printed something else."
       ],
       "code": {
-        "language": "text",
-        "source": "ИсходныйТекст = \"30\";\n// Keep the rest of the main example unchanged.",
-        "output": "No error prompt; Истина and Минуты=30."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Convert",
-              "\"30\" → 30",
-              "No exception."
-            ],
-            [
-              "Next line",
-              "Результат=Истина",
-              "The handler is skipped."
-            ]
-          ]
-        }
-      ]
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    ИсходныйТекст = \"ошибка\";\n    Результат = Ложь;\n    Попытка\n        Минуты = Число(ИсходныйТекст);\n        Результат = Истина;\n    Исключение\n        Результат = Истина;\n        Сообщить(\"Введите число минут, например 30\");\n    КонецПопытки;\n    Сообщить(Результат);\nКонецПроцедуры\n"
+      }
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Make the failure reproducible",
       "paragraphs": [
         "Record input, execution location, action, expected result and actual result. A synthetic string and short message suffice here; no full database, password or borrowed configuration is needed. A result from a different source version does not verify this experiment.",
@@ -127,16 +142,123 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "algorithm",
+      "title": "See the values and direction",
       "paragraphs": [
-        "Continuing after a catch does not imply success. Track an explicit result and test valid and invalid input.",
-        "Converting -1 does not validate duration. Check the permitted duration range after conversion.",
-        "Raw technical errors should not be forwarded indiscriminately. Give actionable feedback and retain only non-sensitive technical diagnostics."
+        "The diagram unfolds the selected sequence. Labels do not replace code: match each transition to a statement and record what remains unchanged.",
+        "This is the independent parser route: empty input is rejected before conversion. A failed conversion exits through invalid_format. Only a number passing the separate 0…180 range check reaches success. Format and range failures have different causes."
+      ],
+      "flowchart": {
+        "layout": "roomy",
+        "caption": "Different paths have different outcomes",
+        "input": "Input",
+        "decisions": [
+          {
+            "condition": "Empty?",
+            "branch": "yes",
+            "output": "Reject"
+          },
+          {
+            "condition": "Parsed?",
+            "branch": "no",
+            "output": "Reject"
+          },
+          {
+            "condition": "0…180?",
+            "branch": "no",
+            "output": "Reject"
+          }
+        ],
+        "fallback": "Success",
+        "paths": [
+          "Setting Результат=true in the exception handler falsely accepts invalid input. An error message does not repair a false success flag. Assign success only after obtaining and validating a result, preserving the original text separately.",
+          "Write ПрочитатьМинуты for the specified string inputs. Return Успех/Минуты/Причина:«45» givesok and45;«ошибка» givesinvalid_format;«-1» givesout_of_range;«0» givesok and0; empty input givesempty_input. Rejection leaves Минуты undefined. Display reason, value orempty, andsource=[original text]."
+        ]
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a different independent task",
+      "paragraphs": [
+        "Write ПрочитатьМинуты for the specified string inputs. Return Успех/Минуты/Причина:«45» givesok and 45;«ошибка» givesinvalid_format;«-1» givesout_of_range;«0» givesok and 0; empty input givesempty_input. Rejection leaves Минуты undefined. Display reason, value orempty, andsource=[original text].",
+        "The worked example is not a ready solution to this task. Use a separate starter; reveal the reference on request after your own attempt. Viewing it must not replace saved or unsaved work."
+      ]
+    },
+    {
+      "id": "independent-trace",
+      "title": "How to check transfer",
+      "paragraphs": [
+        "Keep conversion in a narrow try block; check the 0…180 domain separately.",
+        "Label each control input, expected observation, and reason in advance. Use rejection where the contract requires it; do not turn an unknown result into a convenient zero."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The exact work location in 1C",
+      "paragraphs": [
+        "ИсходныйТекст contains«ошибка» and the flag starts false. Число cannot produce the expected number, so assignment to true is skipped. The handler displays guidance and the original string remains available.",
+        "In your separate training infobase, save the source, update the database configuration, and launch a new session from Designer. Distinguish the editor, saved configuration, and running version; an old session does not prove the new text ran."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-exceptions-main-bad-designer.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "66f6ab0cc488ceeaec533188e2bfcfad9d1b165ba38da0c01e5c7fdeac931f81",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "caption": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "native-observation",
+      "title": "Compare the observation with your explanation",
+      "paragraphs": [
+        "Accept zero and reject invalid text and negative numbers with different reasons.",
+        "The source and expected messages accompany the explanation. Actual images of the complete worked example come from a separate training infobase; they are not your run or proof of your authorship. Record your independent work separately."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-exceptions-main-bad-client.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "0561898f7167d6a9bfa4460eaaac0b49df36f0d90439653d0542719dfa0ddd2b",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "caption": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What is established and what still needs explanation",
+      "paragraphs": [
+        "The contract is limited to the specified string inputs and 0…180 range. This is not a universal parser for arbitrary locales. A local rejection does not establish authorship or work in someone’s production infobase.",
+        "Before marking completion, explain one changed input of your own. A technical pass, matching messages, and your completion mark are different facts; understanding is discussed through explanation and transfer."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Replace«ошибка» with«-1», leaving the worked code unchanged. What is the conversion flag?",
+      "options": [
+        "False: negative numbers cannot be converted",
+        "True: conversion succeeded; the domain rule was not checked",
+        "Undefined"
+      ],
+      "correct": 1,
+      "feedback": "Compare the prediction with the unchanged rule and explain the first important transition.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -147,7 +269,8 @@
         "They are deleted"
       ],
       "correct": 1,
-      "feedback": "An exception changes control flow."
+      "feedback": "An exception changes control flow.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -159,7 +282,8 @@
         "No"
       ],
       "correct": 2,
-      "feedback": "Conversion and business validation are different."
+      "feedback": "Conversion and business validation are different.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -171,135 +295,116 @@
         "To change all database types"
       ],
       "correct": 0,
-      "feedback": "Rejecting every input is not a correct fix."
+      "feedback": "Rejecting every input is not a correct fix.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "«ошибка» returned Успех=true and Минуты=undefined. What is violated?",
+      "options": [
+        "The success contract: no result was obtained",
+        "Only text formatting",
+        "Nothing: an exception always means success"
+      ],
+      "correct": 0,
+      "feedback": "Setting Результат=true in the exception handler falsely accepts invalid input. An error message does not repair a false success flag. Assign success only after obtaining and validating a result, preserving the original text separately.",
+      "recall": "counterexample"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Write a reproduction record containing your source version, input, action, expectation, observation and correction.",
-      "feedback": "No real data or secrets; the positive path is repeated after the correction."
+      "prompt": "Explain one changed case of your own: input, important transition, actual result, and limits of the conclusion.",
+      "feedback": "This answer is not graded automatically. Compare it with the trace and your own work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Exceptions: explain a failure and preserve the original input",
-    "task": "Write a reproduction record containing your source version, input, action, expectation, observation and correction.",
-    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
-    "externalRoute": "Designer → managed application module of your training copy",
+    "title": "Exceptions: preserve input and report rejection honestly",
+    "task": "Write ПрочитатьМинуты for the specified string inputs. Return Успех/Минуты/Причина:«45» givesok and 45;«ошибка» givesinvalid_format;«-1» givesout_of_range;«0» givesok and 0; empty input givesempty_input. Rejection leaves Минуты undefined. Display reason, value orempty, andsource=[original text].",
+    "environment": "Installed training 1C8.3 and your separate file infobase. Nexus stores a draft; actual BSL runs in the platform.",
+    "setupGuide": true,
+    "externalRoute": "Own training infobase → Designer → root → Открыть модуль приложения",
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "ИсходныйТекст = \"ошибка\";\nРезультат = Ложь;\nПопытка\n    Минуты = Число(ИсходныйТекст);\n    Результат = Истина;\nИсключение\n    Сообщить(\"Введите число минут, например 30\");\nКонецПопытки;\nСообщить(Результат);\n"
+        "path": "МодульУправляемогоПриложения.bsl",
+        "content": "Функция ПрочитатьМинуты(Знач ИсходныйТекст)\n    // TODO: implement the specified contract.\n    ВызватьИсключение \"TODO: допишите функцию\";\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    ИсходныйТекст = \"45\";\n    Ответ = ПрочитатьМинуты(ИсходныйТекст);\n    Сообщить(Ответ.Причина);\n    Если Ответ.Успех Тогда\n        Сообщить(Ответ.Минуты);\n    Иначе\n        Сообщить(\"empty\");\n    КонецЕсли;\n    Сообщить(\"source=[\" + ИсходныйТекст + \"]\");\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "predict",
-        "title": "Predict the result",
-        "where": "Nexus → this lesson’s worked example",
-        "action": "Identify the skipped instruction after conversion failure and explain the final flag.",
-        "why": "An expectation makes a wrong result detectable.",
-        "expected": "The prompt «Введите число минут, например 30» and the Boolean Ложь.",
-        "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
-        "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
-      },
-      {
-        "id": "prepare-source",
-        "title": "Preserve your preceding work",
-        "where": "Your infobase → Designer → configuration root → managed application module",
-        "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
-        "why": "The next exercise must not destroy the preceding version.",
-        "expected": "The intended module is open and the earlier source remains available.",
-        "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
-        "before": "The prompt «Введите число минут, например 30» and the Boolean Ложь."
-      },
-      {
-        "id": "enter-code",
-        "title": "Enter this example",
-        "where": "Designer → the module text window",
-        "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
-        "why": "Conversion rejects the text, skips the success assignment and preserves the original input.",
-        "expected": "The exact exercise source is entered in the intended context.",
-        "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
-        "before": "The intended module is open and the earlier source remains available."
-      },
-      {
-        "id": "run-check",
-        "title": "Save, update and execute",
-        "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
-        "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
-        "why": "Only the installed platform executes this BSL.",
-        "expected": "The prompt «Введите число минут, например 30» and the Boolean Ложь.",
-        "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
-        "before": "The exact exercise source is entered in the intended context."
-      },
-      {
-        "id": "vary-record",
-        "title": "Change one condition and retain evidence",
-        "where": "The same module, then Enterprise mode and Nexus notes",
-        "action": "Replace \"ошибка\" with \"30\" and run again. Separately try \"-1\" and explain why conversion does not prohibit it.",
-        "why": "A changed input tests understanding beyond copying the example.",
-        "expected": "30 gives Истина without the prompt; -1 converts too and needs a separate rule.",
-        "troubleshooting": "Do not leave an empty handler, mark failure as success or substitute zero for an unknown result.",
-        "before": "The prompt «Введите число минут, например 30» and the Boolean Ложь."
-      }
-    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ПрочитатьМинуты(Знач ИсходныйТекст)\n    Итог = Новый Структура(\"Успех,Минуты,Причина\", Ложь, Неопределено, \"\");\n    Если СокрЛП(ИсходныйТекст) = \"\" Тогда\n        Итог.Причина = \"empty_input\";\n        Возврат Итог;\n    КонецЕсли;\n    Попытка\n        Минуты = Число(ИсходныйТекст);\n    Исключение\n        Итог.Причина = \"invalid_format\";\n        Возврат Итог;\n    КонецПопытки;\n    Если Минуты < 0 Или Минуты > 180 Тогда\n        Итог.Причина = \"out_of_range\";\n        Возврат Итог;\n    КонецЕсли;\n    Итог.Успех = Истина;\n    Итог.Минуты = Минуты;\n    Итог.Причина = \"ok\";\n    Возврат Итог;\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    ИсходныйТекст = \"45\";\n    Ответ = ПрочитатьМинуты(ИсходныйТекст);\n    Сообщить(Ответ.Причина);\n    Если Ответ.Успех Тогда\n        Сообщить(Ответ.Минуты);\n    Иначе\n        Сообщить(\"empty\");\n    КонецЕсли;\n    Сообщить(\"source=[\" + ИсходныйТекст + \"]\");\nКонецПроцедуры\n",
+      "paragraphs": [
+        "The reference opens on request. Compare state, rejection, and reasoning as well as the final line. Your editor is not replaced."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "The prompt «Введите число минут, например 30» and the Boolean Ложь."
+        "label": "Control case 1",
+        "input": "ИсходныйТекст = \"45\".",
+        "output": "ok\n45\nsource=[45]"
       },
       {
-        "label": "Observation 2",
-        "input": "",
-        "output": "The intended module is open and the earlier source remains available."
+        "label": "Control case 2",
+        "input": "ИсходныйТекст = \"ошибка\".",
+        "output": "invalid_format\nempty\nsource=[ошибка]"
       },
       {
-        "label": "Observation 3",
-        "input": "",
-        "output": "The exact exercise source is entered in the intended context."
+        "label": "Control case 3",
+        "input": "ИсходныйТекст = \"-1\".",
+        "output": "out_of_range\nempty\nsource=[-1]"
       },
       {
-        "label": "Observation 4",
-        "input": "",
-        "output": "The prompt «Введите число минут, например 30» and the Boolean Ложь."
+        "label": "Control case 4",
+        "input": "ИсходныйТекст = \"0\".",
+        "output": "ok\n0\nsource=[0]"
       },
       {
-        "label": "Observation 5",
-        "input": "",
-        "output": "30 gives Истина without the prompt; -1 converts too and needs a separate rule."
+        "label": "Control case 5",
+        "input": "ИсходныйТекст = \"\".",
+        "output": "empty_input\nempty\nsource=[]"
       }
     ],
     "criteria": [
-      "Результат=Истина is not reached; the flag remains Ложь.",
-      "Invalid text and negative numbers have distinct actionable reasons; 30 passes.",
-      "No real data or secrets; the positive path is repeated after the correction.",
-      "Source version, predicted and actual outputs.",
-      "One changed input and a trace explaining its result; no automatic grading claim.",
-      "Do not leave an empty handler, mark failure as success or substitute zero for an unknown result."
+      "Keep conversion in a narrow try block; check the 0…180 domain separately.",
+      "Accept zero and reject invalid text and negative numbers with different reasons.",
+      "Preserve the original string; rejection must not invent numeric 0 or a success flag."
     ],
-    "hint": "Track an explicit result and test valid and invalid input.",
-    "exercises": [
+    "hint": "Conversion and acceptable duration are separate checks. Text«-1» can become the number−1 successfully; that does not make a negative duration acceptable. Do not hide both reasons behind an unconditional success message.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Identify the skipped instruction after conversion failure and explain the final flag.",
-        "criteria": "Результат=Истина is not reached; the flag remains Ложь."
+        "where": "Nexus → Practice → own prediction",
+        "action": "Write ПрочитатьМинуты for the specified string inputs. Return Успех/Минуты/Причина:«45» givesok and45;«ошибка» givesinvalid_format;«-1» givesout_of_range;«0» givesok and0; empty input givesempty_input. Rejection leaves Минуты undefined. Display reason, value orempty, andsource=[original text].",
+        "why": "An expectation must precede the observation.",
+        "expected": "Inputs and expectations are recorded."
       },
       {
-        "level": "Applied",
-        "task": "Test \"ошибка\", \"30\" and \"-1\"; add a separate negative-duration check after successful conversion.",
-        "criteria": "Invalid text and negative numbers have distinct actionable reasons; 30 passes."
+        "where": "Own training infobase → Designer → root → Открыть модуль приложения",
+        "action": "Save the previous source separately. Keep functions outside one ПриНачалеРаботыСистемы handler in the complete source.",
+        "why": "Keep versions and contexts distinct.",
+        "expected": "The infobase, module, and preserved previous version are known."
       },
       {
-        "level": "Advanced",
-        "task": "Write a reproduction record containing your source version, input, action, expectation, observation and correction.",
-        "criteria": "No real data or secrets; the positive path is repeated after the correction."
+        "where": "Module editor → function and ПриНачалеРаботыСистемы",
+        "action": "Complete the TODO contract. Do not nest a function declaration inside the procedure.",
+        "why": "Declaration and invocation have different locations.",
+        "expected": "Your complete source is ready to check."
+      },
+      {
+        "where": "Designer → Ctrl+S → F7 → F5 → client messages",
+        "action": "Update your own infobase and read the new run for each case.",
+        "why": "Nexus does not execute this BSL.",
+        "expected": "Actual messages or a precise rejection are available."
+      },
+      {
+        "where": "Result recording → BSL file and Nexus → self-report",
+        "action": "Save the source and a prediction/fact/explanation table, including the faulty copy.",
+        "why": "Matching output does not establish understanding.",
+        "expected": "Facts and your explanation are distinct."
       }
-    ],
-    "sourceFile": "code/pedagogy/exceptions-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -308,12 +413,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p3-exceptions.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p3-topic-4-author-v1",
     "quiz": [
+      {
+        "question": "Replace«ошибка» with«-1», leaving the worked code unchanged. What is the conversion flag?",
+        "options": [
+          "False: negative numbers cannot be converted",
+          "True: conversion succeeded; the domain rule was not checked",
+          "Undefined"
+        ],
+        "correct": 1,
+        "explanation": "Compare the prediction with the unchanged rule and explain the first important transition."
+      },
       {
         "question": "What happens to the remaining instructions inside Попытка after an exception?",
         "options": [
@@ -343,7 +454,31 @@
         ],
         "correct": 0,
         "explanation": "Rejecting every input is not a correct fix."
+      },
+      {
+        "question": "«ошибка» returned Успех=true and Минуты=undefined. What is violated?",
+        "options": [
+          "The success contract: no result was obtained",
+          "Only text formatting",
+          "Nothing: an exception always means success"
+        ],
+        "correct": 0,
+        "explanation": "Setting Результат=true in the exception handler falsely accepts invalid input. An error message does not repair a false success flag. Assign success only after obtaining and validating a result, preserving the original text separately."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-language-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Script: modules, methods, collections, and exceptions",
+      "language": "English",
+      "purpose": "Look up syntax after your independent work; the lesson contains the required steps.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p3.topic-4.en.json"
 }

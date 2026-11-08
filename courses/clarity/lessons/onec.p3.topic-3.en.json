@@ -1,23 +1,31 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p3-topic-3-author-v1",
   "id": "onec.p3.topic-3",
   "courseId": "onec",
   "moduleId": "onec.p3",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Modules, functions and collections",
   "locale": "en",
-  "title": "Collections: order, named fields and lookup by key",
-  "goal": "Choose an Array, Structure or Map for its purpose and calculate a total while distinguishing order, fields and keys.",
+  "title": "Collections: indexes, fields, keys, and a real copy",
+  "goal": "Choose how to address data and distinguish an array alias from an independent flat copy through observation.",
   "prerequisites": [
     {
-      "text": "The preceding language lesson; saving, updating and launching your own infobase.",
+      "text": "Complete BSL fundamentals: variables, types, conditions, and loops. Know how to preserve a separate source and run your training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "Why this task matters",
+      "paragraphs": [
+        "Separate variables are convenient for two requests. A dozen needs a collection. But a collection is not one universal container: element order, named record fields, and key lookup answer different questions.",
+        "Read the worked example and predict a changed input. The independent task uses a different contract. Save the previous training source before replacing a module; a personal Nexus mark is not an assessment of your explanation."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "An array preserves a sequence",
       "paragraphs": [
         "Our requests now take different durations: 30 and 45 minutes. Массив preserves a sequence. Добавить appends an element; the first index is 0, so МинутыЗаявок[0] is 30. There are two elements and the last valid index is 1.",
@@ -26,50 +34,19 @@
     },
     {
       "id": "example-1",
-      "title": "Trace the main example",
+      "title": "The complete worked example and its result",
       "paragraphs": [
-        "The array supplies inputs, the loop totals 75, the structure names the result and the map retrieves it by a training key."
+        "The complete handler stores 30 and 45 in an array, sums 75, names Клиент and Минуты in a structure, and maps a separate key to 75. The three messages 30/75/75 are similar-looking numbers obtained through different addressing methods.",
+        "Match code and result by each statement’s role. Explain matching output through inputs, execution order, and state; one observed run does not check every possible variant."
       ],
       "code": {
-        "language": "text",
-        "source": "МинутыЗаявок = Новый Массив;\nМинутыЗаявок.Добавить(30);\nМинутыЗаявок.Добавить(45);\nРезультат = 0;\nДля Каждого Минуты Из МинутыЗаявок Цикл\n    Результат = Результат + Минуты;\nКонецЦикла;\nКарточка = Новый Структура(\"Клиент,Минуты\", \"Учебный клиент\", Результат);\nИтоги = Новый Соответствие;\nИтоги.Вставить(\"Клиент-А\", Карточка.Минуты);\nСообщить(МинутыЗаявок[0]);\nСообщить(Карточка.Минуты);\nСообщить(Итоги.Получить(\"Клиент-А\"));",
-        "output": "Messages: 30, 75, 75."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Append",
-              "[30,45]",
-              "Two elements; indexes 0 and 1."
-            ],
-            [
-              "Traverse",
-              "0 → 30 → 75",
-              "Результат=75."
-            ],
-            [
-              "Structure",
-              "Минуты=75",
-              "A named field."
-            ],
-            [
-              "Map",
-              "Key \"Клиент-А\"",
-              "Получить returns 75."
-            ]
-          ]
-        }
-      ]
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыЗаявок = Новый Массив;\n    МинутыЗаявок.Добавить(30);\n    МинутыЗаявок.Добавить(45);\n    Результат = 0;\n    Для Каждого Минуты Из МинутыЗаявок Цикл\n        Результат = Результат + Минуты;\n    КонецЦикла;\n    Карточка = Новый Структура(\"Клиент,Минуты\", \"Учебный клиент\", Результат);\n    Итоги = Новый Соответствие;\n    Итоги.Вставить(\"Клиент-А\", Карточка.Минуты);\n    Сообщить(МинутыЗаявок[0]);\n    Сообщить(Карточка.Минуты);\n    Сообщить(Итоги.Получить(\"Клиент-А\"));\nКонецПроцедуры\n",
+        "output": "30\n75\n75"
+      }
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "A structure names the fields of one record",
       "paragraphs": [
         "Карточка has Клиент and Минуты fields. Карточка.Минуты communicates meaning more clearly than an arbitrary index. Structure field names must be suitable property identifiers. Several unrelated fields do not become a sequence of requests merely by being placed together.",
@@ -77,7 +54,62 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "trace",
+      "title": "Trace the important transitions",
+      "paragraphs": [
+        "ВтороеИмя = МинутыЗаявок does not create another object. Adding 15 through the alias gives three elements in the original array. An independent flat copy needs a new array and transferred elements; this alone is not a deep copy of nested mutable objects.",
+        "Before the next statement, record state separately from messages already displayed. This finds the first divergence rather than guessing from the final line."
+      ],
+      "tables": [
+        {
+          "caption": "Worked-example state",
+          "columns": [
+            "Step or value",
+            "Role and observation"
+          ],
+          "rows": [
+            [
+              "[30,45]",
+              "Array and order"
+            ],
+            [
+              "Результат:0→30→75",
+              "Accumulator state"
+            ],
+            [
+              "Карточка.Минуты=75",
+              "Named field"
+            ],
+            [
+              "Итоги.Получить(\"Клиент-А\")=75",
+              "Key lookup"
+            ]
+          ],
+          "kind": "state"
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction before revealing",
+      "paragraphs": [
+        "Add a third duration 15 before summation. What are the Минуты field and mapped value?",
+        "Write your answer before revealing it. Identify the changed input and unchanged rule, then compare with the changed example."
+      ],
+      "reveal": {
+        "title": "Check the prediction",
+        "paragraphs": [
+          "Match the changed values with the same rule. This checks transfer rather than memorisation of the previous final line."
+        ],
+        "code": {
+          "language": "bsl",
+          "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыЗаявок = Новый Массив;\n    МинутыЗаявок.Добавить(30);\n    МинутыЗаявок.Добавить(45);\n    МинутыЗаявок.Добавить(15);\n    Результат = 0;\n    Для Каждого Минуты Из МинутыЗаявок Цикл\n        Результат = Результат + Минуты;\n    КонецЦикла;\n    Карточка = Новый Структура(\"Клиент,Минуты\", \"Учебный клиент\", Результат);\n    Итоги = Новый Соответствие;\n    Итоги.Вставить(\"Клиент-А\", Карточка.Минуты);\n    Сообщить(МинутыЗаявок[0]);\n    Сообщить(Карточка.Минуты);\n    Сообщить(Итоги.Получить(\"Клиент-А\"));\nКонецПроцедуры\n",
+          "output": "30\n90\n90"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "A map associates a key with a value",
       "paragraphs": [
         "Соответствие is useful for lookup by key rather than position or a predefined field name. \"Клиент-А\" is an educational label here. A changeable customer name is not reliable identity in a real application; later lessons introduce catalog references. Inserting the same key replaces its associated value rather than appending a second array row.",
@@ -85,41 +117,19 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "A missing value or a stored zero?",
+      "id": "counterexample",
+      "title": "A faulty variant and its first divergence",
       "paragraphs": [
-        "Absence and a known zero total are different states."
+        "Replace КопияМинут(Исходный) with Копия = Исходный. Assigning 99 at index 0 makes both names show 99. This visibly violates preservation of the original 10. A new variable name or Знач parameter does not promise another object.",
+        "Keep the faulty variant separately. Restore the working version and repeat the positive case. Do not change an expectation merely because the program printed something else."
       ],
       "code": {
-        "language": "text",
-        "source": "Итоги.Вставить(\"Нулевой\", 0);\nСообщить(Итоги.Получить(\"Нулевой\"));\nСообщить(Итоги.Получить(\"НетТакого\"));",
-        "output": "The first key stores zero; the second returns Неопределено."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Нулевой",
-              "Existing key",
-              "Number 0."
-            ],
-            [
-              "НетТакого",
-              "No such key",
-              "Неопределено, not a number."
-            ]
-          ]
-        }
-      ]
+        "language": "bsl",
+        "source": "Функция КопияМинут(Знач Источник)\n    Копия = Новый Массив;\n    Для Каждого Минуты Из Источник Цикл\n        Копия.Добавить(Минуты);\n    КонецЦикла;\n    Возврат Копия;\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    Исходный = Новый Массив;\n    Исходный.Добавить(10);\n    Исходный.Добавить(20);\n    Копия = Исходный;\n    Если Копия.Количество() > 0 Тогда\n        Копия[0] = 99;\n        Сообщить(Исходный[0]);\n        Сообщить(Копия[0]);\n    Иначе\n        Сообщить(\"empty\");\n        Сообщить(\"empty\");\n    КонецЕсли;\n    Сообщить(Копия.Количество());\nКонецПроцедуры\n"
+      }
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Two variables can name the same mutable object",
       "paragraphs": [
         "ВтороеИмя = МинутыЗаявок does not create an independent array. Both variables access the same mutable object; an append through one is visible through the other. Build a new array and transfer values for an independent flat collection. Nested mutable objects need an additional copying decision.",
@@ -127,16 +137,132 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "algorithm",
+      "title": "See the values and direction",
       "paragraphs": [
-        "Two elements do not make index 2 valid. For two elements use indexes 0 and 1; handle an empty array before indexing.",
-        "An in-memory structure does not write database records. Persisting data needs an explicit object operation; a structure only stores in-memory values.",
-        "Reusing a map key replaces its value; it is not a new request. Use a distinct key for a distinct entity and check the previous total was not replaced accidentally."
+        "The diagram unfolds the selected sequence. Labels do not replace code: match each transition to a statement and record what remains unchanged.",
+        "Two names can point to one array. Новый Массив creates another container; transferring the numbers fills it. Changing a copied element leaves the source number unchanged. This concerns a flat numeric array, not arbitrary nested objects."
+      ],
+      "flow": {
+        "caption": "Order of observable actions",
+        "nodes": [
+          {
+            "title": "Original",
+            "lines": [
+              "10;20"
+            ]
+          },
+          {
+            "title": "New array",
+            "lines": [
+              "10;20"
+            ]
+          },
+          {
+            "title": "Edit copy",
+            "lines": [
+              "99;20"
+            ]
+          },
+          {
+            "title": "Original",
+            "lines": [
+              "10;20"
+            ]
+          }
+        ],
+        "textLabel": "Read the diagram as text",
+        "alternative": [
+          "Original: 10;20",
+          "New array: 10;20",
+          "Edit copy: 99;20",
+          "Original: 10;20"
+        ]
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a different independent task",
+      "paragraphs": [
+        "The original flat array contains 10 and 20. Make a separate copy by transferring numeric elements; set copied element 0 to 99. Display original first element 10, copied first element 99, and copied count 2. Array[7] gives 7/99/1; an empty array givesempty/empty/0 without indexing 0.",
+        "The worked example is not a ready solution to this task. Use a separate starter; reveal the reference on request after your own attempt. Viewing it must not replace saved or unsaved work."
+      ]
+    },
+    {
+      "id": "independent-trace",
+      "title": "How to check transfer",
+      "paragraphs": [
+        "Obtain 10/99/2,7/99/1 andempty/empty/0 for the respective cases.",
+        "Label each control input, expected observation, and reason in advance. Use rejection where the contract requires it; do not turn an unknown result into a convenient zero."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The exact work location in 1C",
+      "paragraphs": [
+        "The complete handler stores 30 and 45 in an array, sums 75, names Клиент and Минуты in a structure, and maps a separate key to 75. The three messages 30/75/75 are similar-looking numbers obtained through different addressing methods.",
+        "In your separate training infobase, save the source, update the database configuration, and launch a new session from Designer. Distinguish the editor, saved configuration, and running version; an old session does not prove the new text ran."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-collections-main-designer.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "0de201b6a0765098201cc5e856bbcd93f7e0f06516b12bef31ac474868634188",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "caption": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "native-observation",
+      "title": "Compare the observation with your explanation",
+      "paragraphs": [
+        "Preserve the original array; the empty path must not index a missing element.",
+        "The source and expected messages accompany the explanation. Actual images of the complete worked example come from a separate training infobase; they are not your run or proof of your authorship. Record your independent work separately."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-collections-main-client.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "364dd8fe8f280d01da166b54c1b86e94ea15294b6fb7f4f475c77e27656f376e",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "caption": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What is established and what still needs explanation",
+      "paragraphs": [
+        "We copy a flat numeric array, not an arbitrary object graph. A displayed type name can contain a space: the observed type presentation was «Не определено», while the language value is Неопределено. Check type identity rather than label formatting.",
+        "Before marking completion, explain one changed input of your own. A technical pass, matching messages, and your completion mark are different facts; understanding is discussed through explanation and transfer."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Add a third duration 15 before summation. What are the Минуты field and mapped value?",
+      "options": [
+        "75;75",
+        "90;90",
+        "15;90"
+      ],
+      "correct": 1,
+      "feedback": "Compare the prediction with the unchanged rule and explain the first important transition.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -147,7 +273,8 @@
         "0"
       ],
       "correct": 2,
-      "feedback": "Array indexing begins at zero."
+      "feedback": "Array indexing begins at zero.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -159,7 +286,8 @@
         "The last element"
       ],
       "correct": 1,
-      "feedback": "A missing value differs from a stored zero."
+      "feedback": "A missing value differs from a stored zero.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -171,135 +299,106 @@
         "Yes, if the name is new"
       ],
       "correct": 0,
-      "feedback": "A variable name does not define an object copy."
+      "feedback": "A variable name does not define an object copy.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Changing the copy makes the original first element 99. What should you inspect first?",
+      "options": [
+        "Whether a new array was created instead of an alias",
+        "Why 99 is not a valid number",
+        "Whether the original variable needs a new name"
+      ],
+      "correct": 0,
+      "feedback": "Replace КопияМинут(Исходный) with Копия = Исходный. Assigning 99 at index 0 makes both names show 99. This visibly violates preservation of the original 10. A new variable name or Знач parameter does not promise another object.",
+      "recall": "counterexample"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "In a separate copy alias the array and append through the alias; then explicitly create an independent flat array and repeat.",
-      "feedback": "Shared identity and a new collection are distinguished; the original working source remains available."
+      "prompt": "Explain one changed case of your own: input, important transition, actual result, and limits of the conclusion.",
+      "feedback": "This answer is not graded automatically. Compare it with the trace and your own work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Collections: order, named fields and lookup by key",
-    "task": "In a separate copy alias the array and append through the alias; then explicitly create an independent flat array and repeat.",
-    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
-    "externalRoute": "Designer → managed application module of your training copy",
+    "title": "Collections: indexes, fields, keys, and a real copy",
+    "task": "The original flat array contains 10 and 20. Make a separate copy by transferring numeric elements; set copied element 0 to 99. Display original first element 10, copied first element 99, and copied count 2. Array[7] gives 7/99/1; an empty array givesempty/empty/0 without indexing 0.",
+    "environment": "Installed training 1C8.3 and your separate file infobase. Nexus stores a draft; actual BSL runs in the platform.",
+    "setupGuide": true,
+    "externalRoute": "Own training infobase → Designer → root → Открыть модуль приложения",
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "МинутыЗаявок = Новый Массив;\nМинутыЗаявок.Добавить(30);\nМинутыЗаявок.Добавить(45);\nРезультат = 0;\nДля Каждого Минуты Из МинутыЗаявок Цикл\n    Результат = Результат + Минуты;\nКонецЦикла;\nКарточка = Новый Структура(\"Клиент,Минуты\", \"Учебный клиент\", Результат);\nИтоги = Новый Соответствие;\nИтоги.Вставить(\"Клиент-А\", Карточка.Минуты);\nСообщить(МинутыЗаявок[0]);\nСообщить(Карточка.Минуты);\nСообщить(Итоги.Получить(\"Клиент-А\"));\n"
+        "path": "МодульУправляемогоПриложения.bsl",
+        "content": "Функция КопияМинут(Знач Источник)\n    // TODO: implement the specified contract.\n    ВызватьИсключение \"TODO: допишите функцию\";\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    Исходный = Новый Массив;\n    Исходный.Добавить(10);\n    Исходный.Добавить(20);\n    Копия = КопияМинут(Исходный);\n    Если Копия.Количество() > 0 Тогда\n        Копия[0] = 99;\n        Сообщить(Исходный[0]);\n        Сообщить(Копия[0]);\n    Иначе\n        Сообщить(\"empty\");\n        Сообщить(\"empty\");\n    КонецЕсли;\n    Сообщить(Копия.Количество());\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "predict",
-        "title": "Predict the result",
-        "where": "Nexus → this lesson’s worked example",
-        "action": "Trace both loop iterations and explain the three messages.",
-        "why": "An expectation makes a wrong result detectable.",
-        "expected": "Messages: 30, 75, 75.",
-        "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
-        "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
-      },
-      {
-        "id": "prepare-source",
-        "title": "Preserve your preceding work",
-        "where": "Your infobase → Designer → configuration root → managed application module",
-        "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
-        "why": "The next exercise must not destroy the preceding version.",
-        "expected": "The intended module is open and the earlier source remains available.",
-        "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
-        "before": "Messages: 30, 75, 75."
-      },
-      {
-        "id": "enter-code",
-        "title": "Enter this example",
-        "where": "Designer → the module text window",
-        "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
-        "why": "The array supplies inputs, the loop totals 75, the structure names the result and the map retrieves it by a training key.",
-        "expected": "The exact exercise source is entered in the intended context.",
-        "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
-        "before": "The intended module is open and the earlier source remains available."
-      },
-      {
-        "id": "run-check",
-        "title": "Save, update and execute",
-        "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
-        "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
-        "why": "Only the installed platform executes this BSL.",
-        "expected": "Messages: 30, 75, 75.",
-        "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
-        "before": "The exact exercise source is entered in the intended context."
-      },
-      {
-        "id": "vary-record",
-        "title": "Change one condition and retain evidence",
-        "where": "The same module, then Enterprise mode and Nexus notes",
-        "action": "Append 15 before the loop and run again. In a separate experiment remove all appends and explain the empty array.",
-        "why": "A changed input tests understanding beyond copying the example.",
-        "expected": "With the third request: 30, 90, 90. For the empty experiment remove [0] access: the total is 0, but index 0 does not exist.",
-        "troubleshooting": "Do not index an empty array at [0], treat Неопределено as zero or describe assignment as an independent copy.",
-        "before": "Messages: 30, 75, 75."
-      }
-    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция КопияМинут(Знач Источник)\n    Копия = Новый Массив;\n    Для Каждого Минуты Из Источник Цикл\n        Копия.Добавить(Минуты);\n    КонецЦикла;\n    Возврат Копия;\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    Исходный = Новый Массив;\n    Исходный.Добавить(10);\n    Исходный.Добавить(20);\n    Копия = КопияМинут(Исходный);\n    Если Копия.Количество() > 0 Тогда\n        Копия[0] = 99;\n        Сообщить(Исходный[0]);\n        Сообщить(Копия[0]);\n    Иначе\n        Сообщить(\"empty\");\n        Сообщить(\"empty\");\n    КонецЕсли;\n    Сообщить(Копия.Количество());\nКонецПроцедуры\n",
+      "paragraphs": [
+        "The reference opens on request. Compare state, rejection, and reasoning as well as the final line. Your editor is not replaced."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Messages: 30, 75, 75."
+        "label": "Control case 1",
+        "input": "New source array: 10, 20. After copying, set Копия[0] to 99.",
+        "output": "10\n99\n2"
       },
       {
-        "label": "Observation 2",
-        "input": "",
-        "output": "The intended module is open and the earlier source remains available."
+        "label": "Control case 2",
+        "input": "New source array: 7. After copying, set Копия[0] to 99.",
+        "output": "7\n99\n1"
       },
       {
-        "label": "Observation 3",
-        "input": "",
-        "output": "The exact exercise source is entered in the intended context."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "Messages: 30, 75, 75."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "With the third request: 30, 90, 90. For the empty experiment remove [0] access: the total is 0, but index 0 does not exist."
+        "label": "Control case 3",
+        "input": "The new source array is empty. Do not access index 0.",
+        "output": "empty\nempty\n0"
       }
     ],
     "criteria": [
-      "Index 0, total 75, named field and separate key are identified.",
-      "Three elements; total 90; the structure and map both show 90.",
-      "Shared identity and a new collection are distinguished; the original working source remains available.",
-      "Source version, predicted and actual outputs.",
-      "One changed input and a trace explaining its result; no automatic grading claim.",
-      "Do not index an empty array at [0], treat Неопределено as zero or describe assignment as an independent copy."
+      "Obtain 10/99/2,7/99/1 andempty/empty/0 for the respective cases.",
+      "Preserve the original array; the empty path must not index a missing element.",
+      "Explain an index, field name, and key; do not equate a missing key with stored zero."
     ],
-    "hint": "For two elements use indexes 0 and 1; handle an empty array before indexing.",
-    "exercises": [
+    "hint": "ВтороеИмя = МинутыЗаявок does not create another object. Adding15 through the alias gives three elements in the original array. An independent flat copy needs a new array and transferred elements; this alone is not a deep copy of nested mutable objects.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Trace both loop iterations and explain the three messages.",
-        "criteria": "Index 0, total 75, named field and separate key are identified."
+        "where": "Nexus → Practice → own prediction",
+        "action": "The original flat array contains10 and20. Make a separate copy by transferring numeric elements; set copied element0 to99. Display original first element10, copied first element99, and copied count2. Array[7] gives7/99/1; an empty array givesempty/empty/0 without indexing0.",
+        "why": "An expectation must precede the observation.",
+        "expected": "Inputs and expectations are recorded."
       },
       {
-        "level": "Applied",
-        "task": "Add a third duration of 15 and reconcile the result manually.",
-        "criteria": "Three elements; total 90; the structure and map both show 90."
+        "where": "Own training infobase → Designer → root → Открыть модуль приложения",
+        "action": "Save the previous source separately. Keep functions outside one ПриНачалеРаботыСистемы handler in the complete source.",
+        "why": "Keep versions and contexts distinct.",
+        "expected": "The infobase, module, and preserved previous version are known."
       },
       {
-        "level": "Advanced",
-        "task": "In a separate copy alias the array and append through the alias; then explicitly create an independent flat array and repeat.",
-        "criteria": "Shared identity and a new collection are distinguished; the original working source remains available."
+        "where": "Module editor → function and ПриНачалеРаботыСистемы",
+        "action": "Complete the TODO contract. Do not nest a function declaration inside the procedure.",
+        "why": "Declaration and invocation have different locations.",
+        "expected": "Your complete source is ready to check."
+      },
+      {
+        "where": "Designer → Ctrl+S → F7 → F5 → client messages",
+        "action": "Update your own infobase and read the new run for each case.",
+        "why": "Nexus does not execute this BSL.",
+        "expected": "Actual messages or a precise rejection are available."
+      },
+      {
+        "where": "Result recording → BSL file and Nexus → self-report",
+        "action": "Save the source and a prediction/fact/explanation table, including the faulty copy.",
+        "why": "Matching output does not establish understanding.",
+        "expected": "Facts and your explanation are distinct."
       }
-    ],
-    "sourceFile": "code/pedagogy/collections-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -308,12 +407,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p3-collections.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p3-topic-3-author-v1",
     "quiz": [
+      {
+        "question": "Add a third duration 15 before summation. What are the Минуты field and mapped value?",
+        "options": [
+          "75;75",
+          "90;90",
+          "15;90"
+        ],
+        "correct": 1,
+        "explanation": "Compare the prediction with the unchanged rule and explain the first important transition."
+      },
       {
         "question": "What is the first array index?",
         "options": [
@@ -343,7 +448,31 @@
         ],
         "correct": 0,
         "explanation": "A variable name does not define an object copy."
+      },
+      {
+        "question": "Changing the copy makes the original first element 99. What should you inspect first?",
+        "options": [
+          "Whether a new array was created instead of an alias",
+          "Why 99 is not a valid number",
+          "Whether the original variable needs a new name"
+        ],
+        "correct": 0,
+        "explanation": "Replace КопияМинут(Исходный) with Копия = Исходный. Assigning 99 at index 0 makes both names show 99. This visibly violates preservation of the original 10. A new variable name or Знач parameter does not promise another object."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-language-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Script: modules, methods, collections, and exceptions",
+      "language": "English",
+      "purpose": "Look up syntax after your independent work; the lesson contains the required steps.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p3.topic-3.en.json"
 }
