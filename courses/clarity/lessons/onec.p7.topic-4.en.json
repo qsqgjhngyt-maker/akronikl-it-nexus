@@ -1,70 +1,100 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p7-topic-4-author-v1",
   "id": "onec.p7.topic-4",
   "courseId": "onec",
   "moduleId": "onec.p7",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Queries and performance",
   "locale": "en",
-  "title": "Measurement plan and eliminating N+1",
+  "title": "Fewer calls: first establish the same result",
   "goal": "Compare two explicit queries with one batch selection using the same keys and 75 total.",
   "prerequisites": [
     {
-      "text": "onec.p6; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P6. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "The new report makes fewer calls, but has it lost a request? Compare keys and values first, then discuss call count and observed time.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "Convenient access can hide cost",
       "paragraphs": [
-        "A100-request loop reading customer and rate can cause many individual calls. A shortCustomer.Descriptionexpression does not prove negligible cost. Map data sources and count calls. One form may tolerate this; bulk reporting may benefit from a combined selection. Measurements decide.",
+        "A loop over 100 requests that reads the customer and rate can cause many individual calls. A short Клиент.Наименование expression does not prove negligible cost. Map data sources and count calls. One form may tolerate this; bulk reporting may benefit from a combined selection. Measurements decide.",
         "Count calls to Execute in our own code: two per-reference queries versus one IN(&Keys). This is a local measured boundary, not a count of internal SQL statements, packets or cache reads."
       ]
     },
     {
-      "id": "example-1",
-      "title": "Reconcile the complete experiment",
+      "id": "platform-contract",
+      "title": "Continue your own P6 setup",
       "paragraphs": [
-        "Fewer explicit calls are demonstrable; elapsed time depends on conditions."
+        "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "Use the existing Клиенты, Услуги and ЗаявкаУслуги. Queries require no new permanent metadata object. Functions run in УчебныеДанные: Server and Server call enabled; Client/Global/Privileged disabled. Do not load a full CF over your work.",
+        "НовыйНаборРегистров is the P6 preparation helper. If already defined, retain its single definition and append only the new experience function. The Приложение.bsl caller belongs in the separate application handler. After one run, remove only the added startup call."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "// Two Execute calls for two references\n// versus one Execute with IN (&Keys)\n// Reconcile keys/2/75 before observed milliseconds.",
-        "output": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee."
+        "language": "bsl",
+        "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЧислаЗапросов() Экспорт\n    Д = НовыйНаборРегистров(); Ссылки = Новый Массив; Ссылки.Добавить(Д.Первая); Ссылки.Добавить(Д.Вторая);\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах(); Сумма = 0; ОтдельныхВызовов = 0;\n    Для Каждого Ссылка Из Ссылки Цикл\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\", Ссылка); Сумма = Сумма + Запрос.Выполнить().Выгрузить()[0].Минуты; ОтдельныхВызовов = ОтдельныхВызовов + 1;\n    КонецЦикла;\n    ОтдельноМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах();\n    Пакет = Новый Запрос(\"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка В (&Ключи)\");\n    Пакет.УстановитьПараметр(\"Ключи\",Ссылки); Таблица = Пакет.Выполнить().Выгрузить();\n    ПакетомМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Возврат Новый Структура(\"Эквивалентно,ВызовыУменьшены,ОтдельноМс,ПакетомМс\",Сумма = 75 И Таблица.Количество() = 2 И Таблица.Итог(\"Минуты\") = Сумма, ОтдельныхВызовов = 2, ОтдельноМс, ПакетомМс);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The worked example reads the same two references individually and in one query. Both yield 2 records/ 75 minutes. Two explicit Выполнить calls become one. This is not a count of internal SQL, cache, or network operations. The function returns millisecond fields, but this caller does not print them: no timings are guessed.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЧислаЗапросов();\n    Сообщить(\"Результаты совпали: \" + Строка(Результат.Эквивалентно));\n    Сообщить(\"Отдельных вызовов два: \" + Строка(Результат.ВызовыУменьшены));\nКонецПроцедуры\n",
+        "output": "Результаты совпали: Да\nОтдельных вызовов два: Да",
+        "files": {
+          "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЧислаЗапросов() Экспорт\n    Д = НовыйНаборРегистров(); Ссылки = Новый Массив; Ссылки.Добавить(Д.Первая); Ссылки.Добавить(Д.Вторая);\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах(); Сумма = 0; ОтдельныхВызовов = 0;\n    Для Каждого Ссылка Из Ссылки Цикл\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\", Ссылка); Сумма = Сумма + Запрос.Выполнить().Выгрузить()[0].Минуты; ОтдельныхВызовов = ОтдельныхВызовов + 1;\n    КонецЦикла;\n    ОтдельноМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах();\n    Пакет = Новый Запрос(\"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка В (&Ключи)\");\n    Пакет.УстановитьПараметр(\"Ключи\",Ссылки); Таблица = Пакет.Выполнить().Выгрузить();\n    ПакетомМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Возврат Новый Структура(\"Эквивалентно,ВызовыУменьшены,ОтдельноМс,ПакетомМс\",Сумма = 75 И Таблица.Количество() = 2 И Таблица.Итог(\"Минуты\") = Сумма, ОтдельныхВызовов = 2, ОтдельноМс, ПакетомМс);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЧислаЗапросов();\n    Сообщить(\"Результаты совпали: \" + Строка(Результат.Эквивалентно));\n    Сообщить(\"Отдельных вызовов два: \" + Строка(Результат.ВызовыУменьшены));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Action",
+            "Observation and reason"
           ],
           "rows": [
             [
               "Baseline",
-              "Two keys,two queries",
-              "30+45=75."
+              "Two keys,two queries — 30+45=75."
             ],
             [
               "Change",
-              "Same keys,one query",
-              "2/75."
+              "Same keys,one query — 2/75."
             ],
             [
               "Measure",
-              "Both durations",
-              "Observations,not a standard."
+              "Both durations — Observations,not a standard."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Freeze the baseline",
       "paragraphs": [
         "Record version, volume, dataset, cold/warm state and measured operation. Network, cache and UI affect timing. Do not compare one cold baseline with a warmed new version. A small training infobase demonstrates method, not field p95 or industrial scaling.",
@@ -72,7 +102,21 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "If the batched query loses a reference, may fewer calls establish an improvement?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. First require the same keys and values within the chosen measurement boundary. A coincidentally equal total does not replace the reference set. Fewer explicit calls do not guarantee every run is faster."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Establish equivalence first",
       "paragraphs": [
         "Replace per-item reads with a query selecting required fields and correct relationships. Compare identities, rows, missing values, sums and required order. Losing request-free customers can make a report faster but wrong. Keep a small oracle dataset beside the benchmark so optimization does not change the task.",
@@ -80,58 +124,118 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "A case that distinguishes the wrong solution",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "Faster data loss is not an acceptable optimization."
+        "This compares two paths over the same input, not four successive queries. The boundary starts after data preparation. Counting own Выполнить calls does not count every platform operation.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "In a separate copy omit one reference from the batch parameter.",
-        "output": "Эквивалентно=False: one row and an incomplete total."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Separate copy",
-              "In a separate copy omit one reference from the batch parameter.",
-              "Retain the accepted original."
-            ],
-            [
-              "Observe",
-              "Эквивалентно=False: one row and an incomplete total.",
-              "Faster data loss is not an acceptable optimization."
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Same input",
+            "lines": [
+              "2 references"
             ]
-          ]
+          },
+          {
+            "title": "Individually",
+            "lines": [
+              "2 calls"
+            ]
+          },
+          {
+            "title": "Batched",
+            "lines": [
+              "1 call"
+            ]
+          },
+          {
+            "title": "Compare",
+            "lines": [
+              "2 / 75"
+            ]
+          }
+        ],
+        "alternative": [
+          "Same input: 2 references",
+          "Individually: 2 calls",
+          "Batched: 1 call",
+          "Compare: 2 / 75"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Omitting the third reference can return two rows sooner while solving a different task. The independent check requires all three references, three rows, and 120 minutes. Order is not promised without УПОРЯДОЧИТЬ.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Make two distinct conclusions",
+      "paragraphs": [
+        "Report equivalence separately from call count and timing. Repeated runs reveal variability; one run is not p95. Unmeasured speedup remains a hypothesis. Do not enlargeNexusstartup budgets for the course; NEXUS-PERF-01 checks those independently.",
+        "For an optional study after the core task, use a new copy for a larger synthetic dataset, consistent conditions and at least five runs per variant. Retain raw timings, version and cache assumptions. These are not field p95 or a change to frontend NEXUS-PERF-01."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Prepare new own requests of 20, 40, and 60 minutes. Read the three references individually and in one query. Verify all exact keys and total 120. Print equivalence, explicit call counts 3 and 1, and total 120. These numbers establish neither milliseconds nor production p 95.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p7-measurement-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "fec4dc799d765d97ac51cbc7ccb40d471dc519e6d3eff4226391f842e3d66eb4",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
         }
       ]
     },
     {
-      "id": "theory-4",
-      "title": "Make two distinct conclusions",
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
       "paragraphs": [
-        "Report equivalence separately from call count and timing. Repeated runs reveal variability; one run is not p95. Unmeasured speedup remains a hypothesis. Do not enlargeNexusstartup budgets for the course; NEXUS-PERF-01 checks those independently.",
-        "Use a new copy for a larger synthetic dataset, consistent conditions and at least five runs per variant. Retain raw timings, version and cache assumptions. These are not field p95 or a change to frontend NEXUS-PERF-01."
-      ]
-    },
-    {
-      "id": "diagnostics",
-      "title": "Check your explanation",
-      "paragraphs": [
-        "A customer name replaces its reference. Use the actual typed reference of the experiment, not its display label.",
-        "An equal sum is accepted without membership checks. Reconcile actual keys and row count before accepting the aggregate.",
-        "A tiny timing is promoted to a server performance guarantee. Retain raw observations and explicitly limit the environment and metric."
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain the difference between own explicit calls, internal platform operations, and actual elapsed time."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "If the batched query loses a reference, may fewer calls establish an improvement?",
+      "options": [
+        "No: the result changed",
+        "Yes: call count is more important",
+        "Yes: if the total happens to match"
+      ],
+      "correct": 0,
+      "feedback": "No. First require the same keys and values within the chosen measurement boundary. A coincidentally equal total does not replace the reference set. Fewer explicit calls do not guarantee every run is faster.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -142,7 +246,8 @@
         "Font size"
       ],
       "correct": 1,
-      "feedback": "A fast wrong answer remains wrong."
+      "feedback": "A fast wrong answer remains wrong.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -154,7 +259,8 @@
         "Network p95"
       ],
       "correct": 0,
-      "feedback": "Internal operations are not counted."
+      "feedback": "Internal operations are not counted.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -166,135 +272,104 @@
         "Can reflect scale/resolution"
       ],
       "correct": 2,
-      "feedback": "Conditions and repeated observations are needed."
+      "feedback": "Conditions and repeated observations are needed.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What comes before a speed claim?",
+      "options": [
+        "Equivalent keys and values",
+        "Only source-code length",
+        "One unusually fast run"
+      ],
+      "correct": 0,
+      "feedback": "Explain the difference between own explicit calls, internal platform operations, and actual elapsed time.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Run five repetitions on a larger own dataset and state limits.",
-      "feedback": "Raw runs/version/limits retained."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Measurement plan and eliminating N+1",
-    "task": "Run five repetitions on a larger own dataset and state limits.",
-    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
-    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "title": "Fewer calls: first establish the same result",
+    "task": "Prepare new own requests of 20, 40, and 60 minutes. Read the three references individually and in one query. Verify all exact keys and total 120. Print equivalence, explicit call counts 3 and 1, and total 120. These numbers establish neither milliseconds nor production p 95.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЧислаЗапросов() Экспорт\n    Д = НовыйНаборРегистров(); Ссылки = Новый Массив; Ссылки.Добавить(Д.Первая); Ссылки.Добавить(Д.Вторая);\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах(); Сумма = 0; ОтдельныхВызовов = 0;\n    Для Каждого Ссылка Из Ссылки Цикл\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\", Ссылка); Сумма = Сумма + Запрос.Выполнить().Выгрузить()[0].Минуты; ОтдельныхВызовов = ОтдельныхВызовов + 1;\n    КонецЦикла;\n    ОтдельноМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах();\n    Пакет = Новый Запрос(\"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка В (&Ключи)\");\n    Пакет.УстановитьПараметр(\"Ключи\",Ссылки); Таблица = Пакет.Выполнить().Выгрузить();\n    ПакетомМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Возврат Новый Структура(\"Эквивалентно,ВызовыУменьшены,ОтдельноМс,ПакетомМс\",Сумма = 75 И Таблица.Количество() = 2 И Таблица.Итог(\"Минуты\") = Сумма, ОтдельныхВызовов = 2, ОтдельноМс, ПакетомМс);\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытТрехКлючей() Экспорт\n    // TODO: implement the new task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытТрехКлючей();\n    Сообщить(\"Точные результаты совпали: \" + Строка(Результат.Совпало));\n    Сообщить(\"Отдельных вызовов: \" + Строка(Результат.ПоОдному));\n    Сообщить(\"Пакетных вызовов: \" + Строка(Результат.Пакетных));\n    Сообщить(\"Общая длительность: \" + Строка(Результат.Минуты));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "step-1",
-        "title": "Preserve the starting state",
-        "where": "Own-copy Designer",
-        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
-        "why": "Keep the accepted work independent.",
-        "expected": "Separate copy opens with the earlier records.",
-        "troubleshooting": "A new list name alone does not create another database directory.",
-        "before": "Own path, prior sources and a restorable backup identified."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытТрехКлючей() Экспорт\n    Д = НовыйНаборРегистров(20,40);\n    Третья = Документы.ЗаявкаУслуги.СоздатьДокумент(); Третья.Дата = Дата(2026,11,2,14,0,0); Третья.Клиент = Д.Клиент; Третья.Услуга = Д.Услуга;\n    Третья.Статус = Перечисления.СтатусыЗаявки.Новая; Третья.ДлительностьМинут = 60; Третья.Записать();\n    Ключи = Новый Массив; Ключи.Добавить(Д.Первая); Ключи.Добавить(Д.Вторая); Ключи.Добавить(Третья.Ссылка);\n    ПоОдному = 0; Сумма = 0;\n    Для Каждого Ключ Из Ключи Цикл\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка = &Ключ\"); Запрос.УстановитьПараметр(\"Ключ\",Ключ);\n        Сумма = Сумма + Запрос.Выполнить().Выгрузить()[0].Минуты; ПоОдному = ПоОдному + 1;\n    КонецЦикла;\n    Пакет = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка В (&Ключи)\"); Пакет.УстановитьПараметр(\"Ключи\",Ключи);\n    Таблица = Пакет.Выполнить().Выгрузить(); Пакетных = 1;\n    Совпало = Таблица.Количество() = 3 И Сумма = 120 И Таблица.Итог(\"Минуты\") = Сумма;\n    Для Каждого Ключ Из Ключи Цикл Совпало = Совпало И Таблица.Найти(Ключ,\"Ссылка\") <> Неопределено; КонецЦикла;\n    Возврат Новый Структура(\"Совпало,ПоОдному,Пакетных,Минуты\",Совпало,ПоОдному,Пакетных,Таблица.Итог(\"Минуты\"));\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытТрехКлючей() Экспорт\n    Д = НовыйНаборРегистров(20,40);\n    Третья = Документы.ЗаявкаУслуги.СоздатьДокумент(); Третья.Дата = Дата(2026,11,2,14,0,0); Третья.Клиент = Д.Клиент; Третья.Услуга = Д.Услуга;\n    Третья.Статус = Перечисления.СтатусыЗаявки.Новая; Третья.ДлительностьМинут = 60; Третья.Записать();\n    Ключи = Новый Массив; Ключи.Добавить(Д.Первая); Ключи.Добавить(Д.Вторая); Ключи.Добавить(Третья.Ссылка);\n    ПоОдному = 0; Сумма = 0;\n    Для Каждого Ключ Из Ключи Цикл\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка = &Ключ\"); Запрос.УстановитьПараметр(\"Ключ\",Ключ);\n        Сумма = Сумма + Запрос.Выполнить().Выгрузить()[0].Минуты; ПоОдному = ПоОдному + 1;\n    КонецЦикла;\n    Пакет = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка В (&Ключи)\"); Пакет.УстановитьПараметр(\"Ключи\",Ключи);\n    Таблица = Пакет.Выполнить().Выгрузить(); Пакетных = 1;\n    Совпало = Таблица.Количество() = 3 И Сумма = 120 И Таблица.Итог(\"Минуты\") = Сумма;\n    Для Каждого Ключ Из Ключи Цикл Совпало = Совпало И Таблица.Найти(Ключ,\"Ссылка\") <> Неопределено; КонецЦикла;\n    Возврат Новый Структура(\"Совпало,ПоОдному,Пакетных,Минуты\",Совпало,ПоОдному,Пакетных,Таблица.Итог(\"Минуты\"));\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытТрехКлючей();\n    Сообщить(\"Точные результаты совпали: \" + Строка(Результат.Совпало));\n    Сообщить(\"Отдельных вызовов: \" + Строка(Результат.ПоОдному));\n    Сообщить(\"Пакетных вызовов: \" + Строка(Результат.Пакетных));\n    Сообщить(\"Общая длительность: \" + Строка(Результат.Минуты));\nКонецПроцедуры\n"
       },
-      {
-        "id": "step-2",
-        "title": "Add the complete server source",
-        "where": "Конфигуратор → Общие → Общие модули → УчебныеЗапросы",
-        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
-        "why": "Database access has an explicit server boundary.",
-        "expected": "Definitions are module-level; no duplicate helper.",
-        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
-        "before": "Separate copy opens with the earlier records."
-      },
-      {
-        "id": "step-3",
-        "title": "Prepare and call the experiment",
-        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
-        "action": "Результат = УчебныеЗапросы.ОпытЧислаЗапросов();\nСообщить(Результат.Эквивалентно);\nСообщить(Результат.ВызовыУменьшены);\nСообщить(Результат.ОтдельноМс);\nСообщить(Результат.ПакетомМс);",
-        "why": "Print every named result instead of accepting compilation alone.",
-        "expected": "Only the stated caller is inside the existing startup handler.",
-        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
-        "before": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "id": "step-4",
-        "title": "Save, update and run once",
-        "where": "Ctrl+S → F7 → Предприятие",
-        "action": "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
-        "why": "Observe actual 1C data, not the browser diagram.",
-        "expected": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee.",
-        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
-        "before": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "id": "step-5",
-        "title": "Retain both results",
-        "where": "Конфигуратор после закрытия Предприятия",
-        "action": "Remove only the startup call. Retain functions/data and investigate the negative control in another restored copy.",
-        "why": "Preserve provenance and avoid repeating data creation at every startup.",
-        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
-        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
-        "before": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Separate copy opens with the earlier records."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Original retained, negative experiment isolated, automatic caller removed."
+        "label": "New independent task",
+        "input": "Three unique references; 20+40+60=120; the same inputs for both paths.",
+        "output": "Точные результаты совпали: Да\nОтдельных вызовов: 3\nПакетных вызовов: 1\nОбщая длительность: 120"
       }
     ],
     "criteria": [
-      "Counter boundary explicit.",
-      "Equivalence checked first.",
-      "Raw runs/version/limits retained.",
-      "Exact own source and version; actual keys, observations and expected versus actual table.",
-      "Original and changed-copy results, failed attempts and untested environment limits.",
-      "In a separate copy omit one reference from the batch parameter."
+      "Labelled results: Да, 3, 1, 120.",
+      "All three keys and values are checked within one chosen boundary, not only the total.",
+      "Explain the difference between own explicit calls, internal platform operations, and actual elapsed time."
     ],
-    "hint": "Use the actual typed reference of the experiment, not its display label.",
-    "exercises": [
+    "hint": "This compares two paths over the same input, not four successive queries. The boundary starts after data preparation. Counting own Выполнить calls does not count every platform operation.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Distinguish an explicit call from internal platform requests.",
-        "criteria": "Counter boundary explicit."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Retain both timings and prove 2 → 1 with the same set.",
-        "criteria": "Equivalence checked first."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "The own P6 copy and prior definitions are preserved."
       },
       {
-        "level": "Advanced",
-        "task": "Run five repetitions on a larger own dataset and state limits.",
-        "criteria": "Raw runs/version/limits retained."
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "Use the existing Клиенты, Услуги and ЗаявкаУслуги. Queries require no new permanent metadata object. Functions run in УчебныеДанные: Server and Server call enabled; Client/Global/Privileged disabled. Do not load a full CF over your work. НовыйНаборРегистров is the P6 preparation helper. If already defined,retain its single definition and append only the new experience function. The Приложение.bsl caller belongs in the separate application handler. After one run,remove only the added startup call.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/query-measurement-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -304,12 +379,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p7-measurement.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p7-topic-4-author-v1",
     "quiz": [
+      {
+        "question": "If the batched query loses a reference, may fewer calls establish an improvement?",
+        "options": [
+          "No: the result changed",
+          "Yes: call count is more important",
+          "Yes: if the total happens to match"
+        ],
+        "correct": 0,
+        "explanation": "No. First require the same keys and values within the chosen measurement boundary. A coincidentally equal total does not replace the reference set. Fewer explicit calls do not guarantee every run is faster."
+      },
       {
         "question": "First compare",
         "options": [
@@ -339,7 +420,31 @@
         ],
         "correct": 2,
         "explanation": "Conditions and repeated observations are needed."
+      },
+      {
+        "question": "What comes before a speed claim?",
+        "options": [
+          "Equivalent keys and values",
+          "Only source-code length",
+          "One unusually fast run"
+        ],
+        "correct": 0,
+        "explanation": "Explain the difference between own explicit calls, internal platform operations, and actual elapsed time."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p7.topic-4.en.json"
 }

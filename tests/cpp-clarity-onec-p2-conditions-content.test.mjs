@@ -16,7 +16,7 @@ const author=locale=>json('courses/clarity/authoring/'+id+'.'+locale+'.json');
 test('Условия: ровно согласованная пара; принятые курсы и общий экран неизменны',()=>{
  for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3','core/cpp-clarity-r3-renderer.mjs','core/storage.js','core/clarity-course-progress.mjs','project-studio','sandbox/qt','pwa'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'',area);
  assert.deepEqual(git('diff','--name-only',base,'--','courses/onec-education').toString().trim().split(/\r?\n/),['courses/onec-education/candidate.css'],'Only the MASTER-approved stylesheet import changes');
- assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),[id,'onec.p2.topic-4','onec.p2.numbers-dates-locales','onec.p3.topic-1','onec.p3.topic-2','onec.p3.topic-3','onec.p3.topic-4','onec.p3.module-tests','onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4','onec.p5.topic-1','onec.p5.topic-2','onec.p5.topic-3','onec.p5.topic-4','onec.p6.topic-1','onec.p6.topic-2','onec.p6.topic-3','onec.p6.topic-4','onec.p6.reposting'].flatMap(topic=>['en','ru'].map(l=>'courses/clarity/lessons/'+topic+'.'+l+'.json')).sort());
+ assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),[id,'onec.p2.topic-4','onec.p2.numbers-dates-locales','onec.p3.topic-1','onec.p3.topic-2','onec.p3.topic-3','onec.p3.topic-4','onec.p3.module-tests','onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4','onec.p5.topic-1','onec.p5.topic-2','onec.p5.topic-3','onec.p5.topic-4','onec.p6.topic-1','onec.p6.topic-2','onec.p6.topic-3','onec.p6.topic-4','onec.p6.reposting','onec.p7.topic-1','onec.p7.topic-3','onec.p7.topic-4'].flatMap(topic=>['en','ru'].map(l=>'courses/clarity/lessons/'+topic+'.'+l+'.json')).sort());
  for(const topic of ['onec.p1.architecture','onec.p1.infobase','onec.p1.lifecycle','onec.p1.tools','onec.p2.topic-2'])for(const dir of ['authoring','lessons'])for(const locale of ['ru','en'])assert.equal(git('diff','--name-only',base,'--','courses/clarity/'+dir+'/'+topic+'.'+locale+'.json').toString().trim(),'');
 });
 
@@ -116,7 +116,7 @@ test('Opt-in геометрия не меняет прежний HTML и CSS а�
  const {readdir}=await import('node:fs/promises');let compared=0;
  for(const folder of ['courses/clarity/lessons','courses/cpp-clarity-r3/lessons'])for(const name of await readdir(folder)){
   if(!name.endsWith('.json'))continue;const lesson=await json(folder+'/'+name);if(!lesson.authored)continue;
-  if([id,'onec.p3.topic-4','onec.p3.module-tests','onec.p5.topic-4','onec.p6.topic-4'].includes(lesson.id))for(const s of lesson.sections)if(s.flowchart)delete s.flowchart.layout;
+  if([id,'onec.p3.topic-4','onec.p3.module-tests','onec.p5.topic-4','onec.p6.topic-4','onec.p7.topic-1'].includes(lesson.id))for(const s of lesson.sections)if(s.flowchart)delete s.flowchart.layout;
   for(const s of lesson.sections)if(s.flow&&s.flow.kind!=='while-cycle')assert.equal(currentVisuals.learningFlowMarkup(s.flow),priorVisuals.learningFlowMarkup(s.flow),name+' existing flow');
   const a=authoredMarkup(lesson,render),b=prior.authoredMarkup(lesson,render);
   assert.equal(a.explanation(),b.explanation(),name);assert.equal(a.reading(),b.reading(),name);

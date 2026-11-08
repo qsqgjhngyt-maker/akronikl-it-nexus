@@ -25,7 +25,7 @@ test('Принятая пара P1 и оба исходных курса сох�
  const p2Types=['en','ru'].map(l=>`courses/clarity/lessons/onec.p2.topic-2.${l}.json`);
  const p2Conditions=['en','ru'].map(l=>`courses/clarity/lessons/onec.p2.topic-3.${l}.json`);
  const p2Module=['onec.p2.topic-4','onec.p2.numbers-dates-locales'].flatMap(id=>['en','ru'].map(l=>`courses/clarity/lessons/${id}.${l}.json`));
- assert.deepEqual(changed,[...p1,...p2Types,...p2Conditions,...p2Module,...['onec.p3.topic-1','onec.p3.topic-2','onec.p3.topic-3','onec.p3.topic-4','onec.p3.module-tests','onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4','onec.p5.topic-1','onec.p5.topic-2','onec.p5.topic-3','onec.p5.topic-4','onec.p6.topic-1','onec.p6.topic-2','onec.p6.topic-3','onec.p6.topic-4','onec.p6.reposting'].flatMap(id=>['en','ru'].map(l=>`courses/clarity/lessons/${id}.${l}.json`))].sort());
+ assert.deepEqual(changed,[...p1,...p2Types,...p2Conditions,...p2Module,...['onec.p3.topic-1','onec.p3.topic-2','onec.p3.topic-3','onec.p3.topic-4','onec.p3.module-tests','onec.p4.topic-1','onec.p4.topic-2','onec.p4.topic-3','onec.p4.topic-4','onec.p5.topic-1','onec.p5.topic-2','onec.p5.topic-3','onec.p5.topic-4','onec.p6.topic-1','onec.p6.topic-2','onec.p6.topic-3','onec.p6.topic-4','onec.p6.reposting','onec.p7.topic-1','onec.p7.topic-3','onec.p7.topic-4'].flatMap(id=>['en','ru'].map(l=>`courses/clarity/lessons/${id}.${l}.json`))].sort());
  const acceptedP1=[...p1,...slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/authoring/onec.p1.${s}.${l}.json`))];
  assert.equal(git('diff','--name-only','704c23616f1d8536416fb90a9b46502e1b0f1831','--',...acceptedP1).toString().trim(),'','Accepted P1 remains byte-identical');
 });

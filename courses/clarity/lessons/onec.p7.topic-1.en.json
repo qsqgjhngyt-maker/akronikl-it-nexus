@@ -1,23 +1,31 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "onec-p7-topic-1-author-v1",
   "id": "onec.p7.topic-1",
   "courseId": "onec",
   "moduleId": "onec.p7",
   "course": "1C:Enterprise 8 Programming — from foundations to professional development",
   "module": "Queries and performance",
   "locale": "en",
-  "title": "Selection and parameters",
+  "title": "Who enters the result: a reference and two time boundaries",
   "goal": "Verify a typed customer filter and half-open hour boundary using two own requests.",
   "prerequisites": [
     {
-      "text": "onec.p6; P1–P3; explicit contracts, types, collections and failure handling.",
+      "text": "Complete P1–P6. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
       "setup": true
     }
   ],
   "sections": [
     {
-      "id": "theory-1",
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A request was created exactly at 13:00. Does it belong to a “12 to 13” report? Define the exact period contract before checking references and minutes.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
       "title": "A query expresses a set",
       "paragraphs": [
         "1C query language addresses the metadata model, not arbitrary SQL for modifying internal tables. SELECT chooses fields, FROM defines the source, andWHERE defines conditions. Begin with expected identities and values rather than selecting everything and hoping to understand later.",
@@ -25,46 +33,68 @@
       ]
     },
     {
-      "id": "example-1",
-      "title": "Reconcile the complete experiment",
+      "id": "platform-contract",
+      "title": "Continue your own P6 setup",
       "paragraphs": [
-        "12:00 belongs to this interval;13:00 to the next. The own reference excludes earlier work."
+        "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "Use the existing Клиенты, Услуги and ЗаявкаУслуги. Queries require no new permanent metadata object. Functions run in УчебныеДанные: Server and Server call enabled; Client/Global/Privileged disabled. Do not load a full CF over your work.",
+        "НовыйНаборРегистров is the P6 preparation helper. If already defined, retain its single definition and append only the new experience function. The Приложение.bsl caller belongs in the separate application handler. After one run, remove only the added startup call."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
       ],
       "code": {
-        "language": "text",
-        "source": "Begin = Дата(2026,11,2,12,0,0);\nEnd = Дата(2026,11,2,13,0,0);\n// З.Дата >= &Начало И З.Дата < &Конец",
-        "output": "ГраницаВерна=True and ПустойКлюч=True: first request/30, then no rows."
+        "language": "bsl",
+        "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытПараметров() Экспорт\n    Д = НовыйНаборРегистров();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент И З.Дата >= &Начало И З.Дата < &Конец\");\n    Запрос.УстановитьПараметр(\"Клиент\", Д.Клиент);\n    Запрос.УстановитьПараметр(\"Начало\", Дата(2026,11,2,12,0,0));\n    Запрос.УстановитьПараметр(\"Конец\", Дата(2026,11,2,13,0,0));\n    Таблица = Запрос.Выполнить().Выгрузить();\n    НаГранице = Таблица.Количество() = 1 И Таблица[0].Ссылка = Д.Первая И Таблица.Итог(\"Минуты\") = 30;\n    Запрос.УстановитьПараметр(\"Клиент\", Справочники.Клиенты.ПустаяСсылка());\n    Возврат Новый Структура(\"ГраницаВерна,ПустойКлюч\", НаГранице, Запрос.Выполнить().Пустой());\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "Preparation creates two own requests of 30 and 45 minutes at 12:00 and 13:00. Дата >= Начало И Дата < Конец includes the first and excludes the second. The check verifies the first request’s actual reference, not just 30. An empty customer reference gives an empty result.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПараметров();\n    Сообщить(\"Левая граница включена: \" + Строка(Результат.ГраницаВерна));\n    Сообщить(\"Пустой ключ без результата: \" + Строка(Результат.ПустойКлюч));\nКонецПроцедуры\n",
+        "output": "Левая граница включена: Да\nПустой ключ без результата: Да",
+        "files": {
+          "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытПараметров() Экспорт\n    Д = НовыйНаборРегистров();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент И З.Дата >= &Начало И З.Дата < &Конец\");\n    Запрос.УстановитьПараметр(\"Клиент\", Д.Клиент);\n    Запрос.УстановитьПараметр(\"Начало\", Дата(2026,11,2,12,0,0));\n    Запрос.УстановитьПараметр(\"Конец\", Дата(2026,11,2,13,0,0));\n    Таблица = Запрос.Выполнить().Выгрузить();\n    НаГранице = Таблица.Количество() = 1 И Таблица[0].Ссылка = Д.Первая И Таблица.Итог(\"Минуты\") = 30;\n    Запрос.УстановитьПараметр(\"Клиент\", Справочники.Клиенты.ПустаяСсылка());\n    Возврат Новый Структура(\"ГраницаВерна,ПустойКлюч\", НаГранице, Запрос.Выполнить().Пустой());\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПараметров();\n    Сообщить(\"Левая граница включена: \" + Строка(Результат.ГраницаВерна));\n    Сообщить(\"Пустой ключ без результата: \" + Строка(Результат.ПустойКлюч));\nКонецПроцедуры\n"
+        }
       },
       "tables": [
         {
-          "caption": "Step-by-step reasoning",
+          "caption": "Reasoning about the worked observation",
           "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
+            "Action",
+            "Observation and reason"
           ],
           "rows": [
             [
               "Prepare",
-              "12:00 → 30;13:00 → 45",
-              "Own customer."
+              "12:00 → 30;13:00 → 45 — Own customer."
             ],
             [
               "Interval",
-              "[12:00,13:00)",
-              "First reference and 30."
+              "[12:00,13:00) — First reference and 30."
             ],
             [
               "Other input",
-              "Empty customer reference",
-              "No rows."
+              "Empty customer reference — No rows."
             ]
           ]
         }
       ]
     },
     {
-      "id": "theory-2",
+      "id": "concept-1",
       "title": "Pass values as parameters",
       "paragraphs": [
         "Do not concatenate customer names or dates into query text. SetParameter supplies a typed value separately from structure. A customer reference is not its display string. A parameter cannot stand in for an arbitrary field name: choose structure from an allowlist and keep user values parameterized.",
@@ -72,7 +102,21 @@
       ]
     },
     {
-      "id": "theory-3",
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "With an end boundary of 13:00, is a request exactly at 13:00 included?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. A half-open interval includes its start and excludes its end. Adjacent 12–13 and 13–14 windows therefore do not count the boundary request twice. Time conditions work together with the customer-reference filter."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
       "title": "Periods have precise boundaries",
       "paragraphs": [
         "UseDate>=Start ANDDate<End for an agreed half-open interval. IncludeStart and excludeEnd. A daily query must account for document time. Ordinary rows do not expose a last-second error; add records exactly on both boundaries.",
@@ -80,41 +124,49 @@
       ]
     },
     {
-      "id": "example-2",
-      "title": "A case that distinguishes the wrong solution",
+      "id": "trace",
+      "title": "Trace preservation step by step",
       "paragraphs": [
-        "The code compiles; membership and total distinguish the semantic defect."
+        "The diagram checks membership in the worked 12–13 window. Define conditions before examining count and total. It changes no date and moves no request between windows.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
       ],
-      "code": {
-        "language": "text",
-        "source": "In another own copy replace З.Дата < &Конец with З.Дата <= &Конец.",
-        "output": "ГраницаВерна=False: two rows/75 rather than one/30."
-      },
-      "tables": [
-        {
-          "caption": "Step-by-step reasoning",
-          "columns": [
-            "Action or state",
-            "Observation",
-            "Reason"
-          ],
-          "rows": [
-            [
-              "Separate copy",
-              "In another own copy replace З.Дата < &Конец with З.Дата <= &Конец.",
-              "Retain the accepted original."
-            ],
-            [
-              "Observe",
-              "ГраницаВерна=False: two rows/75 rather than one/30.",
-              "The code compiles; membership and total distinguish the semantic defect."
-            ]
-          ]
-        }
+      "flowchart": {
+        "layout": "roomy",
+        "caption": "Which row enters the worked window",
+        "input": "Request row",
+        "decisions": [
+          {
+            "condition": "Own customer?",
+            "branch": "no",
+            "output": "Exclude"
+          },
+          {
+            "condition": "Time ≥ 12?",
+            "branch": "no",
+            "output": "Exclude"
+          },
+          {
+            "condition": "Time < 13?",
+            "branch": "no",
+            "output": "Exclude"
+          }
+        ],
+        "fallback": "Include",
+        "paths": [
+          "12:00 is included, 13:00 excluded. All conditions hold together; this filters rather than changes a document."
+        ]
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Replacing < with <= gives two requests and 75 minutes in the first window. Without a request exactly at the boundary, the error could go unnoticed. Fix the comparison contract instead of changing the expected total.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
       ]
     },
     {
-      "id": "theory-4",
+      "id": "concept-3",
       "title": "Result and cursor differ",
       "paragraphs": [
         "Execute returns a query result; Select creates traversal; Unload materializes a value table. Choose by volume and needed operations. An empty result is not inherently an error. Reconcile identities, types, count and sum, then verify reading did not modify documents.",
@@ -122,16 +174,58 @@
       ]
     },
     {
-      "id": "diagnostics",
-      "title": "Check your explanation",
+      "id": "independent-work",
+      "title": "Now a new independent task",
       "paragraphs": [
-        "A customer name replaces its reference. Use the actual typed reference of the experiment, not its display label.",
-        "An equal sum is accepted without membership checks. Reconcile actual keys and row count before accepting the aggregate.",
-        "A tiny timing is promoted to a server performance guarantee. Retain raw observations and explicitly limit the environment and metric."
+        "Create new 20-minute and 40-minute requests at 12:00 and 13:00. Execute one parameterised query for 12–13 and 13–14:expect 20 and 40, one correct reference per window without overlap. An empty customer key must again give an empty result.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p7-parameters-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "f865f8dcf0ccd9db88d18a9b990d7ddd05476313b39daa3c1f667161e71adf07",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain why the boundary request belongs to the second window and not the first."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "With an end boundary of 13:00, is a request exactly at 13:00 included?",
+      "options": [
+        "No: the end boundary is excluded",
+        "Yes: both boundaries are always included",
+        "It depends on the customer’s displayed name"
+      ],
+      "correct": 0,
+      "feedback": "No. A half-open interval includes its start and excludes its end. Adjacent 12–13 and 13–14 windows therefore do not count the boundary request twice. Time conditions work together with the customer-reference filter.",
+      "recall": "predict"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -142,7 +236,8 @@
         "Depends on form colour"
       ],
       "correct": 1,
-      "feedback": "Strict < excludes it."
+      "feedback": "Strict < excludes it.",
+      "recall": "concept-0"
     },
     {
       "id": "check-1",
@@ -154,7 +249,8 @@
         "Arbitrary SQL"
       ],
       "correct": 0,
-      "feedback": "A parameter preserves reference type and separates values from structure."
+      "feedback": "A parameter preserves reference type and separates values from structure.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -166,135 +262,104 @@
         "A wrong row could also total 30"
       ],
       "correct": 2,
-      "feedback": "Check actual references and count."
+      "feedback": "Check actual references and count.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What exposes <= instead of < at the end boundary?",
+      "options": [
+        "A record exactly at the end and checking its reference",
+        "Only an arbitrary ordinary date",
+        "Matching customer display names"
+      ],
+      "correct": 0,
+      "feedback": "Explain why the boundary request belongs to the second window and not the first.",
+      "recall": "independent-work"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Add a row one second before the interval and prove it is excluded.",
-      "feedback": "Boundary change has a prediction and observation."
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
     }
   ],
   "practice": {
     "kind": "installed-1c",
-    "title": "Selection and parameters",
-    "task": "Add a row one second before the interval and prove it is excluded.",
-    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
-    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "title": "Who enters the result: a reference and two time boundaries",
+    "task": "Create new 20-minute and 40-minute requests at 12:00 and 13:00. Execute one parameterised query for 12–13 and 13–14:expect 20 and 40, one correct reference per window without overlap. An empty customer key must again give an empty result.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
     "files": [
       {
-        "path": "lesson.bsl",
-        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытПараметров() Экспорт\n    Д = НовыйНаборРегистров();\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент И З.Дата >= &Начало И З.Дата < &Конец\");\n    Запрос.УстановитьПараметр(\"Клиент\", Д.Клиент);\n    Запрос.УстановитьПараметр(\"Начало\", Дата(2026,11,2,12,0,0));\n    Запрос.УстановитьПараметр(\"Конец\", Дата(2026,11,2,13,0,0));\n    Таблица = Запрос.Выполнить().Выгрузить();\n    НаГранице = Таблица.Количество() = 1 И Таблица[0].Ссылка = Д.Первая И Таблица.Итог(\"Минуты\") = 30;\n    Запрос.УстановитьПараметр(\"Клиент\", Справочники.Клиенты.ПустаяСсылка());\n    Возврат Новый Структура(\"ГраницаВерна,ПустойКлюч\", НаГранице, Запрос.Выполнить().Пустой());\nКонецФункции\n"
+        "path": "Данные.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытСоседнихОкон() Экспорт\n    // TODO: implement the new task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСоседнихОкон();\n    Сообщить(\"Окно12–13: \" + Строка(Результат.ПервоеОкно));\n    Сообщить(\"Окно13–14: \" + Строка(Результат.ВтороеОкно));\n    Сообщить(\"Точные ссылки без пересечения: \" + Строка(Результат.КлючиВерны));\n    Сообщить(\"Пустой ключ без результата: \" + Строка(Результат.ПустойКлюч));\nКонецПроцедуры\n"
       }
     ],
-    "returnAnchor": "example-1",
-    "steps": [
-      {
-        "id": "step-1",
-        "title": "Preserve the starting state",
-        "where": "Own-copy Designer",
-        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
-        "why": "Keep the accepted work independent.",
-        "expected": "Separate copy opens with the earlier records.",
-        "troubleshooting": "A new list name alone does not create another database directory.",
-        "before": "Own path, prior sources and a restorable backup identified."
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытСоседнихОкон() Экспорт\n    Д = НовыйНаборРегистров(20,40);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент И З.Дата >= &Начало И З.Дата < &Конец\");\n    Запрос.УстановитьПараметр(\"Клиент\",Д.Клиент);\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2,12,0,0)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,2,13,0,0));\n    Первая = Запрос.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2,13,0,0)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,2,14,0,0));\n    Вторая = Запрос.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Клиент\",Справочники.Клиенты.ПустаяСсылка()); Пустая = Запрос.Выполнить().Пустой();\n    Возврат Новый Структура(\"ПервоеОкно,ВтороеОкно,КлючиВерны,ПустойКлюч\",\n        Первая.Итог(\"Минуты\"),Вторая.Итог(\"Минуты\"),\n        Первая.Количество() = 1 И Первая[0].Ссылка = Д.Первая И Вторая.Количество() = 1 И Вторая[0].Ссылка = Д.Вторая,Пустая);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытСоседнихОкон() Экспорт\n    Д = НовыйНаборРегистров(20,40);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент И З.Дата >= &Начало И З.Дата < &Конец\");\n    Запрос.УстановитьПараметр(\"Клиент\",Д.Клиент);\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2,12,0,0)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,2,13,0,0));\n    Первая = Запрос.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2,13,0,0)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,2,14,0,0));\n    Вторая = Запрос.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Клиент\",Справочники.Клиенты.ПустаяСсылка()); Пустая = Запрос.Выполнить().Пустой();\n    Возврат Новый Структура(\"ПервоеОкно,ВтороеОкно,КлючиВерны,ПустойКлюч\",\n        Первая.Итог(\"Минуты\"),Вторая.Итог(\"Минуты\"),\n        Первая.Количество() = 1 И Первая[0].Ссылка = Д.Первая И Вторая.Количество() = 1 И Вторая[0].Ссылка = Д.Вторая,Пустая);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСоседнихОкон();\n    Сообщить(\"Окно12–13: \" + Строка(Результат.ПервоеОкно));\n    Сообщить(\"Окно13–14: \" + Строка(Результат.ВтороеОкно));\n    Сообщить(\"Точные ссылки без пересечения: \" + Строка(Результат.КлючиВерны));\n    Сообщить(\"Пустой ключ без результата: \" + Строка(Результат.ПустойКлюч));\nКонецПроцедуры\n"
       },
-      {
-        "id": "step-2",
-        "title": "Add the complete server source",
-        "where": "Конфигуратор → Общие → Общие модули → УчебныеЗапросы",
-        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
-        "why": "Database access has an explicit server boundary.",
-        "expected": "Definitions are module-level; no duplicate helper.",
-        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
-        "before": "Separate copy opens with the earlier records."
-      },
-      {
-        "id": "step-3",
-        "title": "Prepare and call the experiment",
-        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
-        "action": "Результат = УчебныеЗапросы.ОпытПараметров();\nСообщить(Результат.ГраницаВерна);\nСообщить(Результат.ПустойКлюч);",
-        "why": "Print every named result instead of accepting compilation alone.",
-        "expected": "Only the stated caller is inside the existing startup handler.",
-        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
-        "before": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "id": "step-4",
-        "title": "Save, update and run once",
-        "where": "Ctrl+S → F7 → Предприятие",
-        "action": "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
-        "why": "Observe actual 1C data, not the browser diagram.",
-        "expected": "ГраницаВерна=True and ПустойКлюч=True: first request/30, then no rows.",
-        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
-        "before": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "id": "step-5",
-        "title": "Retain both results",
-        "where": "Конфигуратор после закрытия Предприятия",
-        "action": "Remove only the startup call. Retain functions/data and investigate the negative control in another restored copy.",
-        "why": "Preserve provenance and avoid repeating data creation at every startup.",
-        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
-        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
-        "before": "ГраницаВерна=True and ПустойКлюч=True: first request/30, then no rows."
-      }
-    ],
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
     "cases": [
       {
-        "label": "Observation 1",
-        "input": "",
-        "output": "Separate copy opens with the earlier records."
-      },
-      {
-        "label": "Observation 2",
-        "input": "",
-        "output": "Definitions are module-level; no duplicate helper."
-      },
-      {
-        "label": "Observation 3",
-        "input": "",
-        "output": "Only the stated caller is inside the existing startup handler."
-      },
-      {
-        "label": "Observation 4",
-        "input": "",
-        "output": "ГраницаВерна=True and ПустойКлюч=True: first request/30, then no rows."
-      },
-      {
-        "label": "Observation 5",
-        "input": "",
-        "output": "Original retained, negative experiment isolated, automatic caller removed."
+        "label": "New independent task",
+        "input": "Own references; 12:00/20 and 13:00/40; two adjacent half-open windows.",
+        "output": "Окно12–13: 20\nОкно13–14: 40\nТочные ссылки без пересечения: Да\nПустой ключ без результата: Да"
       }
     ],
     "criteria": [
-      "Types and time explicit.",
-      "Reference, count,30 and empty key verified.",
-      "Boundary change has a prediction and observation.",
-      "Exact own source and version; actual keys, observations and expected versus actual table.",
-      "Original and changed-copy results, failed attempts and untested environment limits.",
-      "In another own copy replace З.Дата < &Конец with З.Дата <= &Конец."
+      "Labelled results:20, 40, Да, Да.",
+      "The exact references of both requests are checked, not just their totals.",
+      "Explain why the boundary request belongs to the second window and not the first."
     ],
-    "hint": "Use the actual typed reference of the experiment, not its display label.",
-    "exercises": [
+    "hint": "The diagram checks membership in the worked 12–13 window. Define conditions before examining count and total. It changes no date and moves no request between windows.",
+    "steps": [
       {
-        "level": "Basic",
-        "task": "Annotate parameter types and boundary inclusion.",
-        "criteria": "Types and time explicit."
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
       },
       {
-        "level": "Applied",
-        "task": "Run and retain the actual reference and both results.",
-        "criteria": "Reference, count,30 and empty key verified."
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "The own P6 copy and prior definitions are preserved."
       },
       {
-        "level": "Advanced",
-        "task": "Add a row one second before the interval and prove it is excluded.",
-        "criteria": "Boundary change has a prediction and observation."
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "Use the existing Клиенты, Услуги and ЗаявкаУслуги. Queries require no new permanent metadata object. Functions run in УчебныеДанные: Server and Server call enabled; Client/Global/Privileged disabled. Do not load a full CF over your work. НовыйНаборРегистров is the P6 preparation helper. If already defined,retain its single definition and append only the new experience function. The Приложение.bsl caller belongs in the separate application handler. After one run,remove only the added startup call.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
       }
-    ],
-    "sourceFile": "code/pedagogy/query-parameters-first.bsl",
-    "setupGuide": true
+    ]
   },
   "terms": [
     "bsl",
@@ -304,12 +369,18 @@
   ],
   "sourcePath": "courses/onec/lessons/en/p7-parameters.json",
   "assessment": {
-    "contentRevision": "2.0.0-pedagogy.1",
-    "sharedRefs": [
-      "onec.shared.v1@1.0.0",
-      "onec.full.shared.v1@1.0.0"
-    ],
+    "contentRevision": "onec-p7-topic-1-author-v1",
     "quiz": [
+      {
+        "question": "With an end boundary of 13:00, is a request exactly at 13:00 included?",
+        "options": [
+          "No: the end boundary is excluded",
+          "Yes: both boundaries are always included",
+          "It depends on the customer’s displayed name"
+        ],
+        "correct": 0,
+        "explanation": "No. A half-open interval includes its start and excludes its end. Adjacent 12–13 and 13–14 windows therefore do not count the boundary request twice. Time conditions work together with the customer-reference filter."
+      },
       {
         "question": "The upper bound [12:00,13:00)",
         "options": [
@@ -339,7 +410,31 @@
         ],
         "correct": 2,
         "explanation": "Check actual references and count."
+      },
+      {
+        "question": "What exposes <= instead of < at the end boundary?",
+        "options": [
+          "A record exactly at the end and checking its reference",
+          "Only an arbitrary ordinary date",
+          "Matching customer display names"
+        ],
+        "correct": 0,
+        "explanation": "Explain why the boundary request belongs to the second window and not the first."
       }
     ]
-  }
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p7.topic-1.en.json"
 }
