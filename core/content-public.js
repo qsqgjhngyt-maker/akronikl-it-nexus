@@ -1,4 +1,5 @@
 import {bindBlogMedia,validLayoutImage,decodeBlogLayout,restoreLayoutArticle} from './blog-layout.js';
+import {publishedEditorialPost,mergePublishedEditorialPosts} from './blog-publications-20261109.js';
 import {HOME_SLOTS} from './content-contract.js';
 import {blogPageMarkup,blogIndexMarkup,blogArticleMarkup,blogCardMarkup,bindBlogSections} from './blog-presentation.js';
 const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -8,29 +9,37 @@ let previousPublicMedia=null;
 export async function bindPublicContent(route){
  previousPublicMedia?.abort();const mediaController=new AbortController();previousPublicMedia=mediaController;
  const blog=document.querySelector('[data-blog-feed]'),home=document.querySelector('.visual-home');if(!blog&&!home)return;
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
- mediaController.signal.addEventListener('abort',()=>controller.abort(),{once:true});
- try{
-  const slug=route.view==='blog'?new URLSearchParams(location.hash.slice(1)).get('article'):null;
-  const response=await fetch('/api/v2/content/feed'+(slug?'?slug='+encodeURIComponent(slug):''),{credentials:'omit',cache:'no-store',redirect:'error',signal:controller.signal,headers:{accept:'application/json'}});
-  if(!response.ok)throw Error();const data=await response.json();
-  if(mediaController.signal.aborted)return;
-  if(!Array.isArray(data.posts)||data.posts.length>20||data.posts.some(p=>!p||typeof p.slug!=='string'||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug)||p.slug.length>80||typeof p.title!=='string'||typeof p.summary!=='string'||(slug&&typeof p.body!=='string')||p.cover!==undefined&&!validLayoutImage(p.cover)))throw Error();
-  data.posts=data.posts.map(p=>{if(p.layout!==undefined&&p.body===undefined)throw Error();const article=restoreLayoutArticle(p);if(article.body!==undefined)decodeBlogLayout(article.body);return article});
-  if(mediaController.signal.aborted)return;
+ const slug=route.view==='blog'?new URLSearchParams(location.hash.slice(1)).get('article'):null;
+ function render(data){
+  data={...data,posts:slug?data.posts:mergePublishedEditorialPosts(data.posts)};
   if(home?.isConnected){
    for(const [key,text]of Object.entries(data.home||{})){const slot=HOME_SLOTS[key],node=slot&&home.querySelector(slot.selector);if(node&&typeof text==='string')node.textContent=text}
-   if(data.posts.length&&!home.querySelector('[data-blog-preview]')){
-    const section=document.createElement('section');section.className='visual-section';section.dataset.blogPreview='';
+   if(data.posts.length){
+    const existing=home.querySelector('[data-blog-preview]'),section=existing||document.createElement('section');section.className='visual-section';section.dataset.blogPreview='';
     section.classList.add('blog-preview');
     section.innerHTML=blogPreviewMarkup(data.posts);
-    const target=home.querySelector('.visual-account-area');if(target)target.before(section);else home.append(section);void bindBlogMedia(section,{signal:mediaController.signal});
+    const target=home.querySelector('.visual-account-area');if(!existing){if(target)target.before(section);else home.append(section);}void bindBlogMedia(section,{signal:mediaController.signal});
    }
   }
   if(blog?.isConnected){
    blog.innerHTML=slug?(data.posts.length?blogArticleMarkup(data.posts[0]):'<p role="status">Статья не опубликована или снята с публикации.</p>'):blogIndexMarkup(data.posts);
    bindBlogSections(blog);void bindBlogMedia(blog,{signal:mediaController.signal});
   }
- }catch{if(blog?.isConnected&&!mediaController.signal.aborted){blog.innerHTML='<p role="alert">Не удалось загрузить блог.</p><button type="button" class="btn" data-blog-feed-retry>Повторить загрузку</button>';blog.querySelector('[data-blog-feed-retry]')?.addEventListener('click',()=>{if(!blog.isConnected)return;blog.innerHTML='<p role="status">Загружаем статьи…</p>';void bindPublicContent(route)})}}
+ }
+ const editorial=publishedEditorialPost(slug);
+ if(editorial){render({home:{},posts:[editorial]});return;}
+ // Публичные материалы версии доступны сразу; серверная лента добавляется отдельно.
+ if(!slug)render({home:{},posts:[]});
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+ mediaController.signal.addEventListener('abort',()=>controller.abort(),{once:true});
+ try{
+  const response=await fetch('/api/v2/content/feed'+(slug?'?slug='+encodeURIComponent(slug):''),{credentials:'omit',cache:'no-store',redirect:'error',signal:controller.signal,headers:{accept:'application/json'}});
+  if(!response.ok)throw Error();const data=await response.json();
+  if(mediaController.signal.aborted)return;
+  if(!Array.isArray(data.posts)||data.posts.length>20||data.posts.some(p=>!p||typeof p.slug!=='string'||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug)||p.slug.length>80||typeof p.title!=='string'||typeof p.summary!=='string'||(slug&&typeof p.body!=='string')||p.cover!==undefined&&!validLayoutImage(p.cover)))throw Error();
+  data.posts=data.posts.map(p=>{if(p.layout!==undefined&&p.body===undefined)throw Error();const article=restoreLayoutArticle(p);if(article.body!==undefined)decodeBlogLayout(article.body);return article});
+  if(mediaController.signal.aborted)return;
+  render(data);
+ }catch{if(blog?.isConnected&&!mediaController.signal.aborted){if(!slug){const notice=document.createElement('p');notice.setAttribute('role','status');notice.textContent='Показаны опубликованные статьи этой версии. Серверная лента сейчас недоступна.';blog.append(notice);return;}blog.innerHTML='<p role="alert">Не удалось загрузить блог.</p><button type="button" class="btn" data-blog-feed-retry>Повторить загрузку</button>';blog.querySelector('[data-blog-feed-retry]')?.addEventListener('click',()=>{if(!blog.isConnected)return;blog.innerHTML='<p role="status">Загружаем статьи…</p>';void bindPublicContent(route)})}}
  finally{clearTimeout(timer)}
 }
