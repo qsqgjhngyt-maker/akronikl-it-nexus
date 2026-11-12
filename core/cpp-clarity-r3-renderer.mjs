@@ -204,6 +204,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  .r3-lesson[data-r3-topic] :is(.lesson-section,.question,.practice-card){background:#122438;border-color:#3d536a}
  .r3-lesson[data-r3-topic^="cpp."] .example-layout[data-example-single]{grid-template-columns:minmax(0,1fr)}
  .r3-lesson .clarification-links{display:flex;flex-wrap:wrap;gap:8px 16px;list-style:none;margin:0;padding:0}
+ .r3-lesson .program-files:not([open])>:not(summary){display:none}
  .r3-lesson [data-lab-reference-content] :is(pre,pre code){white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
  .r3-lesson [data-lab-reference-content] pre{height:auto;max-height:none;overflow:visible}
  .r3-lesson [data-reference-language="text"] :is(pre,pre code){font:inherit;line-height:inherit}
