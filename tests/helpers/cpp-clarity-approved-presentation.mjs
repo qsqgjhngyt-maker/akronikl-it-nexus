@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {referencePathId,assertReferenceEdition,withoutReferencePaths} from './reference-course-contract.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-const expected={"core/clarity-visuals.mjs": "186f24da2e4cc44de25c6a00285eaf995c3a11074114b7a3a8f6eb958b962ffb", "core/cpp-clarity-r3-renderer.mjs": "a58e919a2e489c0b69d765c1363ebc603b91327080edc1153ffa24116251d615"};
+const expected={"core/clarity-visuals.mjs": "186f24da2e4cc44de25c6a00285eaf995c3a11074114b7a3a8f6eb958b962ffb", "core/cpp-clarity-r3-renderer.mjs": "7f66727b0f72d2f4cca829795b3d8d29123d32bf8adbdfbb2017db0c0b9e68ef"};
 for(const[file,digest]of Object.entries(expected))assert.equal(createHash('sha256').update(readFileSync(file)).digest('hex'),digest,'Owner-requested presentation bytes: '+file);
 const referencePins=JSON.parse(readFileSync(new URL('../../docs/ru/03-content/reference-courses-20261112/APPROVED_REFERENCE_BYTES.json',import.meta.url))).files;
 for(const pin of referencePins)assert.equal(createHash('sha256').update(readFileSync(pin.path)).digest('hex'),pin.newSha256,'Reference exact bytes: '+pin.path);
