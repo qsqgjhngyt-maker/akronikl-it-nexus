@@ -20,6 +20,8 @@ export const referenceCourseStyles=`
  .r3-lesson .reference-assessment dl>div{padding:10px;border-top:1px solid #4c6680}
  .r3-lesson .reference-assessment[data-state=passed]{border-color:#9be4cb}.r3-lesson .reference-assessment[data-state=failed]{border-color:#f5b4b9}
  .r3-lesson .reference-help button{min-height:40px}
+ .r3-lesson .reference-help{margin:6px 0}.r3-lesson [data-reference-help]{margin:0}
+ .r3-lesson [data-tour-invitation]{font-size:.8rem;margin:4px 0;line-height:1.5}
  .r3-lesson :is(.example-layout,.question) pre:not(.editor-highlight){white-space:pre-wrap;overflow-wrap:anywhere}
  .r3-lesson .reference-toc a[aria-current=location]{border-left:4px solid #a8eee2;background:#263f57;color:#fff}
  @media(min-width:1200px){
@@ -40,9 +42,9 @@ export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
  const idx=route?.topics.findIndex(t=>t[0]===lesson.id),ordinary=all.findIndex(t=>t.id===lesson.id);
  const nextId=route?(route.topics[idx+1]?.[0]||null):all[ordinary+1]?.id;
  const nextName=route?.topics[idx+1]?.[en?2:1]||all.find(t=>t.id===nextId)?.title[lesson.locale];
- if(route)scope.querySelector('.lesson-context').insertAdjacentHTML('afterend',referenceBadge(lesson.id,lesson.locale));
  const help=document.createElement('nav');help.className='reference-help';help.setAttribute('aria-label',say('Помощь и обзор','Help and overview'));help.innerHTML=`<span data-reference-help class="reference-help"></span><button type="button" class="btn" data-reference-overview-open>${say('Эталонные уроки — проверка','Reference lessons — review')}</button>`;
  scope.querySelector('.lesson-context').after(help);
+ if(route)help.insertAdjacentHTML('beforeend',referenceBadge(lesson.id,lesson.locale)+`<span>${say('Старт с нуля','Start from zero')} · ${idx+1}/${route.topics.length}</span>`);
  const toc=document.createElement('aside');toc.className='reference-toc';toc.setAttribute('aria-label',say('Содержание урока','Lesson contents'));
  const link=(id,text)=>{const a=document.createElement('a');a.href=url(lesson.id,'explanation',lesson.locale,id);a.textContent=text;return a};
  const title=document.createElement('strong');title.textContent=say('В этом уроке','In this lesson');toc.append(title);const nav=document.createElement('nav');toc.append(nav);

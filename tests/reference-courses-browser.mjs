@@ -15,7 +15,7 @@ async function snap(page,id,locale,width,stage){const name=[id,locale,width,stag
 async function inspect(page,id,locale,{editable=false}={}){
  const root=page.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]');await root.waitFor();await root.locator('[data-reference-open]').waitFor();
  assert.equal(await root.locator('[data-reference-badge]').count(),1);assert.ok(await root.locator('.reference-inline-term').count()>0,id+' inline help');
- const first=root.locator('[data-r3-panel="explanation"] .reference-inline-term').first();await first.scrollIntoViewIfNeeded();await first.click();await root.locator('.reference-dialog[open] [data-reference-card] h3').waitFor();await page.keyboard.press('Escape');await root.locator('.reference-dialog').waitFor({state:'detached'});assert.equal(await first.evaluate(n=>n===document.activeElement),true);
+ const first=root.locator('[data-r3-panel="explanation"] .reference-inline-term').first();await first.scrollIntoViewIfNeeded();await first.click();await root.locator('.reference-dialog[open] [data-reference-card] h3').waitFor();await page.keyboard.press('Escape');await root.locator('.reference-dialog').waitFor({state:'detached'});assert.equal(await first.evaluate(n=>n===(n.getRootNode().activeElement||document.activeElement)),true);
  const sourceBefore=await root.locator('.example-layout pre code').allTextContents();
  const before=await root.locator('[data-reference-term]').count();
  await root.evaluate(async(n,{prefix,locale,course})=>{const {annotateReferenceTerms}=await import(prefix+'/core/reference-learning-help.mjs');const index=await (await fetch(prefix+'/courses/reference/index.'+locale+'.json')).json();for(const panel of n.querySelectorAll('[data-r3-panel]')){const entries=index.filter(e=>e.context===course||course!=='cpp'&&e.context==='onec-common');annotateReferenceTerms(panel,entries);annotateReferenceTerms(panel,entries)}},{prefix,locale,course:id.startsWith('cpp.')?'cpp':id.startsWith('onec.')?'onec':'1c-enterprise'});
@@ -35,10 +35,11 @@ async function inspect(page,id,locale,{editable=false}={}){
   await root.locator('[data-lab-reference] summary').first().click();await root.locator('[data-lab-reference][data-loaded="ready"]').first().waitFor();assert.equal(await root.locator('#editor').inputValue(),own);
   await root.locator('[data-stage="explanation"]').click();await root.locator('[data-stage="practice"]').click();assert.equal(await root.locator('#editor').evaluate((ed,old)=>ed===old,handle),true);assert.equal(await root.locator('#editor').inputValue(),own);
  }
- checks.push({id,locale,status:'PASS',inlineHelp:true,focusReturn:true,annotationIdempotent:true,codeUnchangedByHelp:true,widths:[1366,390,320],stages:3,editable});
+ console.log('UI PASS '+id+' '+locale);checks.push({id,locale,status:'PASS',inlineHelp:true,focusReturn:true,annotationIdempotent:true,codeUnchangedByHelp:true,widths:[1366,390,320],stages:3,editable});
 }
 try{
  for(const id of REFERENCE_IDS.filter(id=>id.startsWith('cpp.')))for(const locale of ['ru','en']){const start=performance.now();await p.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'cpp',lesson:id,locale,stage:'explanation'}),{id,locale});await p.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"] [data-reference-open]').waitFor();timings.push({id,locale,ms:performance.now()-start});await inspect(p,id,locale,{editable:true})}
+ if(!process.argv.includes('--ui-only')){
  // Реальный compiler/runtime, отдельный набор входов; рабочие файлы не заменяются для этой проверки.
  const programs=new Map();
  for(const locale of ['ru','en']){
@@ -46,7 +47,7 @@ try{
   for(const c of cards.filter(c=>c.context==='cpp'))if(c.example.includes('int main(')&&!c.example.includes('std::cin'))programs.set(c.example,{name:c.id,source:c.example,expected:c.observation+'\n'});
   for(const id of REFERENCE_IDS.filter(id=>id.startsWith('cpp.'))){const l=JSON.parse(await readFile(path.join(frontend,prefix,file(id)+'.'+locale+'.json')));for(const s of l.sections)if(s.code?.language==='cpp')programs.set(s.code.source,{name:id+':'+s.id,source:s.code.source,expected:s.code.output});const spec=l.practice.referenceSolution;programs.set(spec.source,{name:id+':solution',source:spec.source,expected:l.practice.runAssessment.lines.join('\n')+'\n'});}
  }
- for(const spec of programs.values()){
+ for(const spec of programs.values()){console.log('WASI '+spec.name);
   const result=await p.evaluate(async({prefix,source})=>{const {pickProvider}=await import(prefix+'/sandbox/sandbox.js');const request={languageId:'cpp',source,stdin:'',files:{'main.cpp':source},metadata:{entryFile:'main.cpp'}};const route=await pickProvider(request);const r=await route.provider.run(request);return{providerId:route.provider.id,stdout:r.stdout,exitCode:r.exitCode}},{prefix,source:spec.source});
   assert.equal(result.providerId,'wasm-cpp');assert.equal(result.exitCode,0,spec.name);assert.equal(result.stdout.replace(/\r\n/g,'\n'),spec.expected,spec.name);runs.push({name:spec.name,sha256:createHash('sha256').update(spec.source).digest('hex'),...result,status:'PASS'});
  }
@@ -55,6 +56,7 @@ try{
   await p.locator('#editor').fill('#include <iostream>\nint main(){std::cout<<"wrong\\n";return 0;}');await p.locator('#runCode').click();await p.locator('[data-reference-assessment][data-state="failed"]').waitFor({timeout:120000});checks.push({id,status:'PASS',correctAndWrongSolutionsDiffer:true,editInvalidatesCheck:true});
  }
  await p.locator('#editor').fill('int main( {');await p.locator('#runCode').click();await p.locator('[data-reference-assessment][data-state="failed"]').waitFor({timeout:120000});assert.ok((await p.locator('[data-reference-assessment]').textContent()).includes('компиляции'));checks.push({name:'Compilation failure is not a pass',status:'PASS'});
+ }
  const lines=Array.from({length:35},(_,i)=>i===5?'':i===9?'\t// tab '+'.'.repeat(160):'// Line '+(i+1)).join('\n');await p.locator('#editor').fill(lines);
  for(const width of [1366,390,320])for(const zoom of [1,1.25,1.5,2]){await p.setViewportSize({width,height:900});await p.evaluate(zoom=>document.body.style.zoom=String(zoom),zoom);await p.locator('#editor').scrollIntoViewIfNeeded();
   for(const line of [1,10,30]){await p.locator('#editor').evaluate((ed,line)=>{const at=ed.value.split('\n').slice(0,line-1).join('\n').length+(line>1?1:0);ed.focus();ed.setSelectionRange(at,at);ed.dispatchEvent(new Event('click',{bubbles:true}));ed.scrollTop=Math.max(0,(line-4)*parseFloat(getComputedStyle(ed).lineHeight));ed.scrollLeft=40;ed.dispatchEvent(new Event('scroll'))},line);
