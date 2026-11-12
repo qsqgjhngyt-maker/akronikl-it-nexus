@@ -27,8 +27,8 @@ async function inspect(page,id,locale,{editable=false}={}){
  const workSelector=await root.locator('#editor').count()?'#editor':'[data-r3-report]';await root.locator(workSelector).fill(ownMarker);await root.locator('[data-r3-save][data-state="saved"]').waitFor();
  for(const width of [1366,390,320]){await page.setViewportSize({width,height:900});for(const stage of ['explanation','selfcheck','practice']){
    await root.locator('[data-stage="'+stage+'"]').click();await root.locator('[data-r3-panel="'+stage+'"]:visible').waitFor();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),id+' '+locale+' '+width+' '+stage+' overflow');
-   await page.evaluate(()=>scrollTo(0,0));await root.locator('.reference-lesson-neighbours').scrollIntoViewIfNeeded();
-   const top=root.locator('.reference-lesson-neighbours');assert.equal(await top.isVisible(),true);if(nextId)assert.ok((await top.textContent()).includes(lessonRoute.topics[routeIndex+1][locale==='en'?2:1]));
+   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.evaluate(()=>scrollTo(0,0));
+   const top=root.locator('.reference-lesson-neighbours');assert.equal(await top.isVisible(),true);for(const action of await top.locator('a,button').all()){const hit=await action.evaluate(a=>{const b=a.getBoundingClientRect(),hit=a.getRootNode().elementFromPoint(b.x+b.width/2,b.y+b.height/2);return b.top>=0&&b.bottom<=innerHeight&&a.contains(hit)});assert.equal(hit,true,id+' top navigation must actually be visible and unobscured');}if(nextId)assert.ok((await top.textContent()).includes(lessonRoute.topics[routeIndex+1][locale==='en'?2:1]));
    await snap(page,id,locale,width,stage+'-navigation-top');
    const continuation=root.locator('[data-reference-continuation="'+stage+'"] [data-reference-continue]');await continuation.scrollIntoViewIfNeeded();assert.equal(await continuation.isVisible(),true);
    const box=await continuation.boundingBox();assert.ok(box.height>=44&&box.x>=0&&box.x+box.width<=width+1,id+' continuation touch area');
@@ -74,6 +74,7 @@ try{
  }
  await p.locator('#editor').fill('int main( {');await p.locator('#runCode').click();await p.locator('[data-reference-assessment][data-state="failed"]').waitFor({timeout:120000});assert.ok((await p.locator('[data-reference-assessment]').textContent()).includes('компиляции'));checks.push({name:'Compilation failure is not a pass',status:'PASS'});
  }
+ await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.variables-scope&stage=practice&locale=ru');await p.locator('[data-r3-topic="cpp.variables-scope"] #editor').waitFor();
  const lines=Array.from({length:35},(_,i)=>i===5?'':i===9?'\t// tab '+'.'.repeat(160):'// Line '+(i+1)).join('\n');await p.locator('#editor').fill(lines);
  for(const width of [1366,390,320])for(const zoom of [1,1.25,1.5,2]){await p.setViewportSize({width,height:900});await p.evaluate(zoom=>document.body.style.zoom=String(zoom),zoom);await p.locator('#editor').scrollIntoViewIfNeeded();
   for(const line of [1,10,30]){await p.locator('#editor').evaluate((ed,line)=>{const at=ed.value.split('\n').slice(0,line-1).join('\n').length+(line>1?1:0);ed.focus();ed.setSelectionRange(at,at);ed.dispatchEvent(new Event('click',{bubbles:true}));ed.scrollTop=Math.max(0,(line-4)*parseFloat(getComputedStyle(ed).lineHeight));ed.scrollLeft=40;ed.dispatchEvent(new Event('scroll'))},line);

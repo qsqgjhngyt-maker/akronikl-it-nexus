@@ -1,5 +1,7 @@
 import {lessonNavigationPlan,referenceBadge,referenceOverviewMarkup,referenceHref} from './reference-course-routes.mjs';
 export const referenceCourseStyles=`
+ .r3-lesson[data-r3-topic]{background:#0b1929}
+ @media(max-width:720px){.r3-lesson nav.reference-help{display:grid;grid-template-columns:1fr 1fr;gap:6px}.r3-lesson nav.reference-help [data-reference-help]{display:contents}.r3-lesson nav.reference-help button{font-size:.8rem;line-height:1.4;min-height:44px;white-space:normal;padding:8px}.r3-lesson nav.reference-help .reference-badge{grid-column:1/-1;justify-self:start}.r3-lesson [data-tour-invitation]{font-size:.75rem}}
  .reference-badge{display:inline-block;padding:3px 8px;border:1px solid #9cb8d2;border-radius:6px;color:#e4eef9;background:#1b3046;font-size:.8rem;line-height:1.5}
  .r3-lesson .reference-help,.r3-lesson .reference-continuation{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
  .r3-lesson .reference-continuation{padding:16px 0;border-top:1px solid #607d98;background:#0b1929}
