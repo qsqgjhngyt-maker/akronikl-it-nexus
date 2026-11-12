@@ -330,5 +330,131 @@
       "feedback": "Compare your explanation with the walkthrough; it is not graded automatically.",
       "recall": "orientation"
     }
-  ]
+  ],
+  "extras": {
+    "lessonId": "cpp.data-types",
+    "locale": "en",
+    "sourceRefs": [],
+    "blockPracticum": {
+      "title": "Practicum A: a panel batch report",
+      "label": "FIRST-BLOCK PRACTICUM",
+      "starterLabel": "Starter with an explained unit conversion",
+      "challenge": "Build a reproducible report for 4 panels of 125 cm: category A, approved true, 500 cm, and 5 m. Preserve evidence for the four introductory skills.",
+      "readiness": "Begin when you can explain the main scaffold, choose unit-bearing names, distinguish const/constexpr, and initialize simple types. Division by the double factor is supplied as an explained scaffold before the conversions lesson.",
+      "skills": [
+        {
+          "lessonId": "cpp.first-cpp-program",
+          "title": "Build and output checks"
+        },
+        {
+          "lessonId": "cpp.tokens-identifiers-keywords",
+          "title": "Precise names with units"
+        },
+        {
+          "lessonId": "cpp.comments-constants-literals",
+          "title": "Constants and explanatory comments"
+        },
+        {
+          "lessonId": "cpp.data-types",
+          "title": "Types and initialization"
+        }
+      ],
+      "requirements": [
+        "stdin is empty: initial quantities are explicit and explained.",
+        "Five lines: category=A, approved=1, length_cm=500, length_m=5, cm_per_m=100.",
+        "panelCount is bounded to 0…100 and panelLengthCm to 0…1000: the product is at most 100000; long long covers this range. long long is a two-word integer type name; the rest of the declaration uses the same syntax.",
+        "The reference variants use whole meters: 0 panels and 8 panels of 125 cm. General rounding and full input parsing are outside this task."
+      ],
+      "milestones": [
+        "Write the contract and independent calculation before coding.",
+        "Add a character label, flag, reason comment, and missing output lines.",
+        "Check the main and two changed scenarios.",
+        "Attach a target report and rubric-based self-review."
+      ],
+      "walkthrough": [
+        "Count × centimeters per panel gives total centimeters. Division by the double factor produces a floating-point result. For our small values the conversion is exact; general rules follow later.",
+        "Choose long long for the product: its guaranteed range covers 100000. The minimum range of int alone does not promise this. Reason about bounds before running instead of experimenting with overflow.",
+        "constexpr double centimetersPerMeter{100.0}; stores the fixed factor as a floating-point value. It is used both in the calculation and in the report. Compared with the earlier constexpr int declaration, only the selected type and literal have changed."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    // Scaffold: the double factor makes the division floating-point.\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    return 0;\n}\n",
+      "starterExpectedStdout": "length_cm=500\nlength_m=5\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    // Each complete panel contributes the same whole-centimeter length.\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    char category{'A'};\n    bool approved{true};\n    std::cout << \"category=\" << category << '\\n';\n    std::cout << \"approved=\" << approved << '\\n';\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    std::cout << \"cm_per_m=\" << centimetersPerMeter << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "category=A\napproved=1\nlength_cm=500\nlength_m=5\ncm_per_m=100\n"
+        }
+      ],
+      "verificationVariants": [
+        {
+          "id": "zero-panels",
+          "replace": [
+            {
+              "from": "const long long panelCount{4};",
+              "to": "const long long panelCount{0};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "category=A\napproved=1\nlength_cm=0\nlength_m=0\ncm_per_m=100\n"
+        },
+        {
+          "id": "eight-panels",
+          "replace": [
+            {
+              "from": "const long long panelCount{4};",
+              "to": "const long long panelCount{8};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "category=A\napproved=1\nlength_cm=1000\nlength_m=10\ncm_per_m=100\n"
+        }
+      ],
+      "artifacts": [
+        "main.cpp with meaningful names and one reason comment.",
+        "A table of expected and actual stdout for three scenarios.",
+        "A target report distinguishing guarantees from observations.",
+        "A self-review and one diagnosed defect with a repeat check."
+      ],
+      "rubric": [
+        {
+          "criterion": "Contract and build",
+          "points": 2,
+          "complete": "All five fields and a successful build",
+          "partial": "Partly satisfied, with incomplete evidence or explanation.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Names and units",
+          "points": 2,
+          "complete": "Roles and cm/m are consistent",
+          "partial": "Partly satisfied, with incomplete evidence or explanation.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Constants and comment",
+          "points": 2,
+          "complete": "The factor is explained and used in the calculation",
+          "partial": "Partly satisfied, with incomplete evidence or explanation.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Types and bounds",
+          "points": 2,
+          "complete": "Initial values and ranges are justified",
+          "partial": "Partly satisfied, with incomplete evidence or explanation.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Checks and target",
+          "points": 2,
+          "complete": "Three scenarios and an actual target report are attached",
+          "partial": "Partly satisfied, with incomplete evidence or explanation.",
+          "missing": "No verifiable result for this criterion."
+        }
+      ],
+      "completionRule": "Self-review: 8 of 10 with no zero for contract, types, or checks. This is an editorial rubric, not an automatic score, gate, or proof of mastery of all Module 2.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  }
 }

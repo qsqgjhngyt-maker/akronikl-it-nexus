@@ -1,3 +1,4 @@
+import {REFERENCE_IDS} from '../core/reference-course-routes.mjs';
 // Полный core/app, синтетический Account DTO. Не проверяет серверный вход.
 import assert from 'node:assert/strict';import http from 'node:http';import path from 'node:path';import {readFile,mkdir,writeFile} from 'node:fs/promises';import {pathToFileURL} from 'node:url';import {staticMime} from '../pwa/static-mime.js';
 import {goldLessonPath} from '../core/academy-gold-catalog.js';
@@ -5,7 +6,7 @@ const out=path.resolve(process.env.NEXUS_CLARITY_R3_EVIDENCE||'cpp-clarity-evide
 const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'http://127.0.0.1');if(u.pathname==='/__app__'){res.setHeader('content-type','text/html');return res.end('<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="'+prefix+'/styles/app.css"><body><main id="app"></main></body></html>');}if(u.pathname.startsWith('/api/')){res.writeHead(401,{'content-type':'application/json'});return res.end('{"error":{"code":"SYNTHETIC_NO_SERVER_SESSION"}}');}const file=path.resolve(frontend,'.'+decodeURIComponent(u.pathname));if(!file.startsWith(frontend+path.sep))throw Error('PATH');res.setHeader('content-type',staticMime(file));res.end(await readFile(file));}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)),browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH}),context=await browser.newContext(),errors=[],blocked=[],checks=[];await context.route('**/*',route=>{if(!route.request().url().startsWith(origin)){blocked.push(route.request().url().split('?')[0]);return route.abort();}return route.continue();});let failure;
 function adjacentControls(panel){
- const selector='a[href],button:not([hidden])';
+ const selector='a[href],button:not([hidden]):not([data-reference-term])';
  const textRects=element=>{
   const walker=document.createTreeWalker(element,NodeFilter.SHOW_TEXT),rects=[];
   for(let node=walker.nextNode();node;node=walker.nextNode()){
@@ -66,7 +67,8 @@ try{
     const reference=panel.locator('[data-lab-reference]');
     assert.equal(await reference.getAttribute('open'),null);
     await reference.evaluate(el=>el.open=true);
-    const source=gold.teachingEdition?.referenceProgram||(topic.id==='cpp.programming-process'?gold.clarity.laboratory.referenceCode:gold.laboratory.referenceCode);
+    const current=REFERENCE_IDS.includes(topic.id)?JSON.parse(await readFile((topic.id==='cpp.programming-process'?'courses/cpp-clarity-r3/lessons/':'courses/clarity/lessons/')+topic.id+'.'+locale+'.json')):null;
+    const source=current?current.practice.referenceSolution.source:gold.teachingEdition?.referenceProgram||(topic.id==='cpp.programming-process'?gold.clarity.laboratory.referenceCode:gold.laboratory.referenceCode);
     assert.equal(await reference.locator('[data-reference-source] code').textContent(),source);
     await reference.evaluate(el=>el.open=false);
     labReference=qt?'Qt reference in Project Studio workflow':'Console reference and work window entry';

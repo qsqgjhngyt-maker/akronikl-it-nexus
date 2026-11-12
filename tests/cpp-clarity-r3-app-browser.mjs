@@ -1,6 +1,7 @@
 // Полный core/app, синтетический Account DTO. Не проверяет серверный вход.
 import assert from 'node:assert/strict';import http from 'node:http';import path from 'node:path';import {readFile,mkdir,writeFile} from 'node:fs/promises';import {pathToFileURL} from 'node:url';import {staticMime} from '../pwa/static-mime.js';
 const out=path.resolve(process.env.NEXUS_CLARITY_R3_EVIDENCE||'cpp-clarity-evidence/r3-app'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);await mkdir(out,{recursive:true});const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
+const firstProgram=JSON.parse(await readFile(path.join(frontend,prefix.slice(1),'courses/clarity/lessons/cpp.first-cpp-program.ru.json'))),anchorId=firstProgram.sections[4].id;
 const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'http://127.0.0.1');if(u.pathname==='/__app__'){res.setHeader('content-type','text/html');return res.end('<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="'+prefix+'/styles/app.css"><body><main id="app"></main></body></html>');}if(u.pathname.startsWith('/api/')){res.writeHead(401,{'content-type':'application/json'});return res.end('{"error":{"code":"SYNTHETIC_NO_SERVER_SESSION"}}');}const file=path.resolve(frontend,'.'+decodeURIComponent(u.pathname));if(!file.startsWith(frontend+path.sep))throw Error('PATH');res.setHeader('content-type',staticMime(file));res.end(await readFile(file));}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)),browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH}),context=await browser.newContext(),errors=[],blocked=[],checks=[];await context.route('**/*',route=>{if(!route.request().url().startsWith(origin)){blocked.push(route.request().url().split('?')[0]);return route.abort();}return route.continue();});let failure;
 try{const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(origin+'/__app__#course=cpp&lesson=cpp.programming-process');await p.evaluate(async prefix=>{const a=await import(prefix+'/core/account-storage.js');a.initializeAccountStorage({accountId:'synthetic-full-app',status:'active',displayName:'Synthetic'});await import(prefix+'/core/app.js');},prefix);await p.locator('[data-r3-topic="cpp.programming-process"]').waitFor();
@@ -67,17 +68,17 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
   assert.equal(await p.evaluate(()=>scrollY),520);
  }
  await lesson.locator('.lesson-map-wrap summary').click();
- await lesson.locator('.lesson-map a[href$="at=concept-4"]').click();
- await p.waitForFunction(()=>{
-  const section=document.querySelector('#concept-4');
+ await lesson.locator('.lesson-map a[href$="at='+anchorId+'"]').click();
+ await p.waitForFunction(id=>{
+  const section=document.querySelector('#'+CSS.escape(id));
   const header=document.querySelector('.lesson-context').getBoundingClientRect();
   const top=section.getBoundingClientRect().top;
   return top>=header.bottom&&Math.abs(top-parseFloat(getComputedStyle(section).scrollMarginTop))<2;
- },null,{timeout:5000});
+ },anchorId,{timeout:5000});
  const readingPosition=await p.evaluate(()=>scrollY);
  await lesson.locator('[data-stage="selfcheck"]').click();
  const greeting=lesson.locator('[data-question="concept-0"]');
- assert.match(await greeting.locator('pre code').textContent(),/Hello, C\+\+!/);
+ assert.equal((await greeting.locator('legend').textContent()).trim(),firstProgram.selfcheck.find(q=>q.id==='concept-0').prompt);
  await lesson.locator('[data-stage="explanation"]').click();
  await p.waitForFunction(y=>Math.abs(scrollY-y)<2,readingPosition);
  await p.setViewportSize({width:1366,height:900});
