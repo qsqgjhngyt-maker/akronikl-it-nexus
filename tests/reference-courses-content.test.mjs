@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-import {REFERENCE_IDS,REFERENCE_ROUTES} from '../core/reference-course-routes.mjs';
+import {REFERENCE_IDS,REFERENCE_ROUTES,lessonNavigationPlan,referenceHref} from '../core/reference-course-routes.mjs';
 import {CLARITY_COURSES} from '../core/clarity-course-registry.mjs';
 import {clarityContentRevision} from '../core/cpp-clarity-r3-state.mjs';
 import {evaluateReferenceRun} from '../core/reference-practice-assessment.mjs';
@@ -28,6 +28,18 @@ test('Старая попытка и отметка 1С сохраняются, 
  const before=structuredClone(state),adapted=curriculumForClarityProgress(c,state);
  assert.equal(adapted.modules[0].topics[0].contentRevision,clarityContentRevision(id));assert.deepEqual(state,before);
  assert.equal(hasRevisionCompletion(entry,clarityContentRevision(id)),false);assert.equal(progressFor(adapted,state).done,0);
+});
+
+test('Справка всех 302 редакций: форматы терминов, ID, aliases и связи с реальными темами',async()=>{
+ for(const locale of ['ru','en']){
+  const cards=await read('courses/reference/cards.'+locale+'.json'),index=await read('courses/reference/index.'+locale+'.json');
+  assert.deepEqual(index.map(c=>c.id),cards.map(c=>c.id));assert.equal(new Set(index.map(c=>c.id)).size,index.length);
+  for(const [id,meta]of Object.entries(CLARITY_COURSES)){
+   const l=await read('courses/'+(meta.pilot?'cpp-clarity-r3':'clarity')+'/lessons/'+id+'.'+locale+'.json');
+   for(const term of l.terms||[]){if(typeof term==='string')assert.ok(cards.some(c=>c.id===term),id+' unresolved '+term);else{assert.equal(typeof term.term,'string');assert.equal(typeof term.definition,'string');}}
+  }
+  for(const c of cards){assert.ok(['cpp','onec','onec-common','1c-enterprise'].includes(c.context));assert.ok(['now','later'].includes(c.level));assert.ok(c.aliases.every(a=>typeof a==='string'&&a.length>0));}
+ }
 });
 test('20 полных редакций, справка, задачи, перенос навыка и источники',async()=>{
  for(const locale of ['ru','en']){
@@ -56,4 +68,13 @@ test('Положительный и отрицательные контроли 
  assert.equal(evaluateReferenceRun(c,result,{current:false}).state,'stale');
  assert.equal(evaluateReferenceRun(c,null).state,'unrun');
  assert.equal(Object.hasOwn(evaluateReferenceRun(c,result),'mastery'),false);
+});
+
+test('Порядок эталонного маршрута отделён от полного курса, завершение не создаёт учебный результат',async()=>{
+ const catalog=await read('courses/cpp-clarity-r3/courses.json');
+ for(const locale of ['ru','en'])for(const route of REFERENCE_ROUTES)for(const [index,t]of route.topics.entries()){
+  const p=lessonNavigationPlan(t[0],catalog,{referenceMode:true,locale});assert.equal(p.next?.id||null,route.topics[index+1]?.[0]||null);assert.equal(p.previous?.id||null,route.topics[index-1]?.[0]||null);assert.equal(p.total,route.topics.length);assert.ok(referenceHref(t[0],locale).includes('learningRoute=reference-start'));assert.equal(Object.hasOwn(p,'completed'),false);
+ }
+ for(const course of catalog)for(const [i,t]of course.topics.entries()){const p=lessonNavigationPlan(t.id,catalog);assert.equal(p.next?.id||null,course.topics[i+1]?.id||null);assert.equal(p.previous?.id||null,course.topics[i-1]?.id||null);assert.equal(p.route,null);}
+ assert.notEqual(lessonNavigationPlan('cpp.programming-process',catalog).next.id,lessonNavigationPlan('cpp.programming-process',catalog,{referenceMode:true}).next.id);
 });

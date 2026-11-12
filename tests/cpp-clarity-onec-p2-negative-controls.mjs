@@ -5,12 +5,14 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 const repo=process.cwd(),out=process.env.NEXUS_CLARITY_EVIDENCE||'cpp-clarity-evidence';
 const source=await readFile('tools/check-cpp-clarity-preservation.mjs','utf8');
-const resolved=source.replace("'../core/academy-gold-catalog.js'",JSON.stringify(pathToFileURL(path.join(repo,'core/academy-gold-catalog.js')).href));
+const resolved=source.replace("'../tests/helpers/reference-course-contract.mjs'",JSON.stringify(pathToFileURL(path.join(repo,'tests/helpers/reference-course-contract.mjs')).href)).replace("'../core/academy-gold-catalog.js'",JSON.stringify(pathToFileURL(path.join(repo,'core/academy-gold-catalog.js')).href));
 const cases=[
  ['new-css','styles/clarity-onec-p2-types.css',/Approved 1C presentation bytes/],
  ['import-css','courses/onec-education/candidate.css',/Approved 1C presentation bytes/],
  ['unapproved-style',null,/Out of scope: styles\/unapproved-p2.css/],
  ['qt-qa','.github/workflows/cpp-clarity-qt03-selected.yml',/Approved QA diagnostic bytes/],
+ ['reference-renderer','core/cpp-clarity-r3-renderer.mjs',/Reference exact bytes/],
+ ['reference-cards','courses/reference/cards.ru.json',/Reference exact bytes/],
  ['account-storage','core/account-storage.js',/core\/account-storage.js/]
 ];
 const hashes=Object.fromEntries(await Promise.all(cases.filter(c=>c[1]).map(async c=>[c[1],createHash('sha256').update(await readFile(c[1])).digest('hex')])));
@@ -23,4 +25,4 @@ for(const[name,file,expected]of cases){
  assert.ok(failed,'Control must reject '+name);assert.match(failed.message,expected,name);results.push({name,expectedRejection:true,reason:failed.message.split('\n')[0],status:'PASS'});
 }
 for(const[file,before]of Object.entries(hashes))assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'),before,'Original file unchanged');
-await mkdir(out,{recursive:true});await writeFile(path.join(out,'P2_PRESENTATION_NEGATIVE_CONTROLS.json'),JSON.stringify({status:'PASS',controls:results,productFilesMutated:false,sourceHashesUnchanged:hashes},null,2)+'\n');console.log('PASS:5 negative controls; actual product files unchanged');
+await mkdir(out,{recursive:true});await writeFile(path.join(out,'P2_PRESENTATION_NEGATIVE_CONTROLS.json'),JSON.stringify({status:'PASS',controls:results,productFilesMutated:false,sourceHashesUnchanged:hashes},null,2)+'\n');console.log('PASS:7 negative controls; actual product files unchanged');

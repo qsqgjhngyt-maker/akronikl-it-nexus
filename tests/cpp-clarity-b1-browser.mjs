@@ -1,7 +1,8 @@
+import {REFERENCE_IDS} from '../core/reference-course-routes.mjs';
 import assert from 'node:assert/strict';import {readFile,mkdir,writeFile} from 'node:fs/promises';import path from 'node:path';import {createHash} from 'node:crypto';import {clarityLocalFixture} from './helpers/cpp-clarity-local-fixture.mjs';import {B1_NEW,B1_IDS,B2_NEW,B2_IDS,b1Lesson,authoredPrograms} from './helpers/cpp-clarity-b1-content.mjs';
 const algorithmization=process.argv.includes('--b2');
 const block=algorithmization?'B2':'B1';
-const authoredIds=algorithmization?B2_NEW:B1_NEW;
+const authoredIds=(algorithmization?B2_NEW:B1_NEW).filter(id=>!REFERENCE_IDS.includes(id));
 const moduleIds=algorithmization?B2_IDS:B1_IDS;
 const runCase=algorithmization
  ?{id:'cpp.pseudocode-euclidean-algorithm',stdin:'84 30\n',output:/6 3/}
@@ -51,31 +52,8 @@ try{
  }
  if(!before){
   if(algorithmization){
-   for(const locale of ['ru','en']){
-    await go('cpp.programming-process',locale);
-    const detail=p.locator('.clarification:has(.clarification-links)');
-    const links=detail.locator('.clarification-links a');
-    await detail.locator('summary').click();
-    const destinations=await links.evaluateAll(xs=>xs.map(a=>new URLSearchParams(a.hash.slice(1)).get('lesson')));
-    assert.deepEqual(destinations,['cpp.standard-io','cpp.relations-logic']);
-    for(const width of [1366,390,320]){
-     await p.setViewportSize({width,height:900});
-     await detail.scrollIntoViewIfNeeded();
-     const gap=await links.evaluateAll(([a,b])=>{
-      const left=a.getBoundingClientRect(),right=b.getBoundingClientRect();
-      return right.top>=left.bottom?right.top-left.bottom:right.left-left.right;
-     });
-     assert.ok(gap>=7,locale+' '+width+' link gap '+gap);
-     assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-     await snap('cpp.programming-process',locale,width,'clarification-links');
-    }
-    await detail.locator('summary').focus();await p.keyboard.press('Tab');
-    assert.ok(await links.first().evaluate(el=>el===document.activeElement));
-    await p.keyboard.press('Tab');
-    assert.ok(await links.last().evaluate(el=>el===document.activeElement));
-    await p.keyboard.press('Enter');await p.locator('[data-r3-topic="cpp.relations-logic"]').waitFor();
-    checks.push({id:'cpp.programming-process',locale,status:'PASS',scope:'Clarification links spaced at 1366, 390 and 320 px; keyboard focus and navigation'});
-   }
+   // Старый блок уточнений заменён новым начальным маршрутом; проверяем его реальные ссылки.
+   for(const locale of ['ru','en']){await p.evaluate(locale=>location.hash='#course=cpp&lesson=cpp.programming-process&locale='+locale+'&learningRoute=reference-start',locale);await p.locator('[data-reference-badge]').waitFor();const next=p.locator('a[href*="lesson=cpp.first-cpp-program"]').first();await next.focus();await p.keyboard.press('Enter');await p.locator('[data-r3-topic="cpp.first-cpp-program"]').waitFor();checks.push({id:'cpp.programming-process',locale,status:'PASS',scope:'New reference route: named next lesson and keyboard navigation'});}
    for(const id of ['cpp.algorithm-representations','cpp.flowcharts'])for(const locale of ['ru','en']){
     await go(id,locale);
     const figure=p.locator('.lesson-flowchart'),svg=figure.getByRole('img'),transcript=figure.locator('details');
@@ -133,7 +111,7 @@ try{
     }
     checks.push({id,locale,status:'PASS',scope:'Shared matte stage, full-width question code, named input and output, labelled values at 1366 and 320 px',sourceWidths});
    }
-   for(const id of ['cpp.first-cpp-program','cpp.pointers-references-addresses'])for(const locale of ['ru','en']){
+   for(const id of ['cpp.pointers-references-addresses'])for(const locale of ['ru','en']){
     await go(id,locale);
     await p.setViewportSize({width:320,height:900});
     await p.locator('.prediction-reveal summary').click();
@@ -157,7 +135,7 @@ try{
   }
   // Неизменённый сосед и принятый образец проверяются в той же установленной оболочке.
   await go('cpp.visual-event-model','ru');assert.equal(await p.locator('[data-authored="true"]').count(),1);
-  await go('cpp.data-types','en');assert.equal(await p.locator('.authored-section').count(),9);
+  await go('cpp.data-types','en');assert.equal(await p.locator('.authored-section').count(),JSON.parse(await readFile('courses/clarity/lessons/cpp.data-types.en.json')).sections.length);
   await go(authoredIds[0],'ru','practice');assert.equal(await p.locator('#editor').inputValue(),'// '+block+' '+authoredIds[0]+'\nint main(){}\n');
   await p.evaluate(()=>location.hash='#view=compiler');await p.locator('#prepareCompiler').click();await p.waitForFunction(()=>/полностью проверен и готов/.test(document.querySelector('#runtimeStatus')?.textContent||''),{},{timeout:300000});
   const bound=await authoredPrograms(authoredIds);for(const row of bound)if(row.name.startsWith('question-')||!row.name.startsWith('concept-')&&!row.name.startsWith('diagnose-')&&!row.name.startsWith('worked-'))requests.push({...row,evidence:row.name.startsWith('question-')?'Displayed question source':'Authored independent reference and bound test case'});
@@ -179,7 +157,7 @@ try{
     assert.ok(await lesson.locator('.lesson-flowchart svg').isVisible());
     assert.equal(await lesson.locator('.flowchart-decision').count(),3);
    }
-   if(id==='cpp.programming-process')assert.ok(await lesson.locator('.example-layout').first().isVisible());
+   if(REFERENCE_IDS.includes(id))assert.ok(await lesson.locator('.example-layout').first().isVisible());
    else{
     await lesson.locator('.prediction-reveal summary').click();
     assert.ok(await lesson.locator('.prediction-reveal .example-layout').isVisible());

@@ -1,3 +1,4 @@
+import {withoutReferencePaths} from './helpers/reference-course-contract.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -20,7 +21,7 @@ test('B03 включает все 18 тем и меняет только сво�
  const classic=new Set([...GOLD_CLASSIC_LESSONS,...GOLD_OOP_LESSONS,...GOLD_EVENT_LESSONS].flatMap(id=>['ru','en'].flatMap(locale=>[
   goldLessonPath(id,locale).replaceAll('\\','/'),`courses/clarity/lessons/${id}.${locale}.json`
  ])));
- assert.deepEqual(changed.filter(file=>!classic.has(file)),expected);
+ assert.deepEqual(withoutReferencePaths(changed).filter(file=>!classic.has(file)),expected);
 });
 
 test('B03 сохраняет разделы, старые вопросы, входы и исполняемые наборы',async()=>{

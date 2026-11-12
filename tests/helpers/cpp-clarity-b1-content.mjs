@@ -1,3 +1,4 @@
+import {REFERENCE_IDS} from '../../core/reference-course-routes.mjs';
 import {readFile} from 'node:fs/promises';
 import {goldLessonPath} from '../../core/academy-gold-catalog.js';
 export const B1_NEW=['first-cpp-program','tokens-identifiers-keywords','comments-constants-literals','variables-scope','expressions-operators-blocks','arithmetic-assignment','type-conversions','relations-logic','increment-decrement-sizeof-conditional','pointers-references-addresses','standard-io'].map(x=>'cpp.'+x);
@@ -11,6 +12,6 @@ export const b1Programs=()=>authoredPrograms(B1_NEW);
 export async function authoredPrograms(ids){const rows=[];for(const id of ids)for(const locale of ['ru','en']){const {g,l}=await b1Lesson(id,locale);
 for(const s of l.sections)for(const c of [s.code,s.reveal?.code,s.deep?.code].filter(Boolean))rows.push(record(id,locale,s.id,c));
 for(const q of l.selfcheck)if(q.execution)rows.push(record(id,locale,'question-'+q.id,q.execution));
-for(const c of g.teachingEdition.verificationCases)rows.push(record(id,locale,c.label,c));
-rows.push(record(id,locale,'starter',{source:l.practice.files[0].content,stdin:l.practice.stdin,expected:g.teachingEdition.starterExpected,files:{'main.cpp':l.practice.files[0].content},metadata:l.practice.metadata}));
+if(REFERENCE_IDS.includes(id)){for(const c of l.practice.cases)rows.push(record(id,locale,c.label,{source:l.practice.referenceSolution.source,expected:c.output,stdin:c.input}));}else for(const c of g.teachingEdition.verificationCases)rows.push(record(id,locale,c.label,c));
+rows.push(record(id,locale,'starter',{source:l.practice.files[0].content,stdin:l.practice.stdin,expected:l.practice.starterObservation?.stdout??g.teachingEdition.starterExpected,files:{'main.cpp':l.practice.files[0].content},metadata:l.practice.metadata}));
 }return rows;}

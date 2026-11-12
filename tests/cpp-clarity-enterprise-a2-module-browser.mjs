@@ -1,3 +1,4 @@
+import {REFERENCE_IDS} from '../core/reference-course-routes.mjs';
 // Ускоренный модульный smoke владельца: чтение RU/EN и один сценарий сохранения.
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -6,7 +7,7 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {staticMime} from '../pwa/static-mime.js';
 import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';
-const allIds=['1c-enterprise.a2.topic-1','1c-enterprise.a2.topic-2','1c-enterprise.a2.topic-3','1c-enterprise.a2.topic-4'],ids=process.env.NEXUS_ONEC_BASIC_IDS?.split(',')||allIds,locales=process.env.NEXUS_ONEC_BASIC_LOCALE?[process.env.NEXUS_ONEC_BASIC_LOCALE]:['ru','en'],out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE,'enterprise-a2-module'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);
+const allIds=['1c-enterprise.a2.topic-1','1c-enterprise.a2.topic-2','1c-enterprise.a2.topic-3','1c-enterprise.a2.topic-4'],ids=process.env.NEXUS_ONEC_BASIC_IDS?.split(',')||allIds.filter(id=>!REFERENCE_IDS.includes(id)),locales=process.env.NEXUS_ONEC_BASIC_LOCALE?[process.env.NEXUS_ONEC_BASIC_LOCALE]:['ru','en'],out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE,'enterprise-a2-module'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);
 await mkdir(out,{recursive:true});
 const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
 const errors=[],failed=[],records=[];let failure,publicFixture;

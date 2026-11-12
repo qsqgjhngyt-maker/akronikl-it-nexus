@@ -27,7 +27,8 @@ const words = {
  function position(params,fallback='explanation'){const old=params.get('section')||params.get('focus')||'',requested=params.get('stage');return {stage:stages.includes(requested)?requested:/^(practice|lab|laboratory|code|sandbox|step-)/.test(old)?'practice':/^(quiz|knowledge|selfcheck)$/.test(old)?'selfcheck':old?'explanation':fallback,anchor:params.get('at')||(/^theory-\d+$|^step-/.test(old)?old:old==='examples'?'example-1':'')};}
  const text=()=>words[locale],w=text();
  w.free=say('Сохранить объяснение','Save explanation');w.freeSaved=say('Объяснение сохранено; правильность автоматически не оценивается.','Explanation saved; correctness is not graded automatically.');
- const url=(id=topicId,stage=route.stage,language=locale,anchor='')=>'#'+new URLSearchParams({course:CLARITY_COURSES[id]?.courseId||lesson.courseId,lesson:id,stage,locale:language,...(anchor?{at:anchor}:{}),...(id===topicId&&new URLSearchParams(location.hash.slice(1)).has('copy')?{copy:new URLSearchParams(location.hash.slice(1)).get('copy')}:{})});
+ const learningRoute=new URLSearchParams(location.hash.slice(1)).get('learningRoute')==='reference-start'?'reference-start':null;
+ const url=(id=topicId,stage=route.stage,language=locale,anchor='')=>'#'+new URLSearchParams({course:CLARITY_COURSES[id]?.courseId||lesson.courseId,lesson:id,stage,locale:language,...(learningRoute?{learningRoute}:{}),...(anchor?{at:anchor}:{}),...(id===topicId&&new URLSearchParams(location.hash.slice(1)).has('copy')?{copy:new URLSearchParams(location.hash.slice(1)).get('copy')}:{})});
 function table(t){
  const state=lesson.authored&&t.columns.length===2&&(lesson.moduleId==='cpp.section.structured-programming'||t.kind==='state');
  const wide=lesson.authored&&(t.columns.length>=3||state);
@@ -457,7 +458,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  if(lesson.practice.steps?.some(s=>s.figures?.length)){const {lessonFiguresMarkup}=await import('../courses/onec-education/lesson-media.mjs');if(!live()){dispose();return null;}for(const s of lesson.practice.steps){if(s.figures?.length)root.querySelector('[data-course-figures="'+CSS.escape(s.id)+'"]').innerHTML=lessonFiguresMarkup(s.figures,locale);}}
  await showStage(route.stage,requested.anchor,false);if(!live()){dispose();return null;}showResult();if(session&&initial?.draft&&!session.dirty)status('restored');
  return {get session(){return session;},dispose,
-  async handleRoute(hash,nextLocale=locale){if(!live())return false;const p=new URLSearchParams(hash.slice(1));if(p.get('lesson')!==topicId||(p.get('course')||lesson.courseId)!==lesson.courseId||(p.get('locale')||nextLocale)!==locale)return false;const next=position(p);await showStage(next.stage,next.anchor);return true;},
+  async handleRoute(hash,nextLocale=locale){if(!live())return false;const p=new URLSearchParams(hash.slice(1));if((p.get('learningRoute')==='reference-start'?'reference-start':null)!==learningRoute||p.get('lesson')!==topicId||(p.get('course')||lesson.courseId)!==lesson.courseId||(p.get('locale')||nextLocale)!==locale)return false;const next=position(p);await showStage(next.stage,next.anchor);return true;},
   async prepareNavigation(){if(!live())return true;remember();const okay=!session||await session.prepareNavigation();if(!okay&&live())history.replaceState(null,'',acceptedHash||'#view=academy');return okay;}
  };
 }

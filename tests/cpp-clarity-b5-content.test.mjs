@@ -1,3 +1,4 @@
+import {withoutReferencePaths} from './helpers/reference-course-contract.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -19,7 +20,7 @@ test('B05 охватывает девять тем и сохраняет при�
  const expected=GOLD_OOP_LESSONS.flatMap(id=>['ru','en'].flatMap(locale=>[sourcePath(id,locale),lessonPath(id,locale)])).sort();
  const changed=git('diff','--name-only',accepted,'--','courses/clarity/lessons','courses/cpp-clarity-r3/lessons','courses/cpp/gold').trim().split(/\r?\n/).filter(p=>!p.startsWith('courses/clarity/lessons/')||p.startsWith('courses/clarity/lessons/cpp.')).sort();
  const later=new Set(GOLD_EVENT_LESSONS.flatMap(id=>['ru','en'].flatMap(locale=>[sourcePath(id,locale),lessonPath(id,locale)])));
- assert.deepEqual(changed.filter(p=>!later.has(p)),expected);
+ assert.deepEqual(withoutReferencePaths(changed).filter(p=>!later.has(p)),expected);
 });
 
 test('B05 сохраняет учебные контракты и связывает объяснение, прогноз и работу',async()=>{

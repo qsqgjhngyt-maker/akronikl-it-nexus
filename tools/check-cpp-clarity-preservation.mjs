@@ -3,6 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
+import {assertPreservedOrReference} from '../tests/helpers/reference-course-contract.mjs';
 import {GOLD_ALGORITHM_LESSONS,GOLD_BASICS_LESSONS,GOLD_CLASSIC_LESSONS,GOLD_EVENT_LESSONS,GOLD_OOP_LESSONS,GOLD_STRUCTURED_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
 const base='ee2787c0cd92da2ad1d5e79df5e2bfadab2c3dd6',git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{maxBuffer:64e6}),sha=b=>createHash('sha256').update(b).digest('hex');
 const fixed=['courses/cpp/curriculum.json','courses/cpp/manifest.json','courses/cpp/content-package.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','courses/cpp/data/gold-laboratories-m6.json','core/account-storage.js','pwa/local-vault.js','pwa/offline-learning.js','pwa/local-editor.js','pwa/runtime-manifest.js','tools/check-cpp-course-perf.mjs','release-candidate.json','version.json','index.html','service-worker.js'];
@@ -25,7 +26,7 @@ const approvedOnecUiPaths=new Map([
  ['styles/clarity-onec-p2-types.css','9d96321aeed8c79f7fa7e49d3a6beb1836630045ab1f7f6ae2791440cdcdeb14'],
  ['styles/clarity-onec-code-studio.css','403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84'],
  ['courses/onec-education/candidate.css','31025ebda96d0bc1d9add3802bb604cbe8c1e8cbff2257752b0bd8944f5f59d1'],
- ['core/cpp-clarity-authored.mjs','b893ed72aa560601dc34b21dc97dbc3a26c4a4286638cf3c217e54ac1c3e4f97'],
+ ['core/cpp-clarity-authored.mjs','223b1493879e47c6182661324ad3edaf295776cb40f2bf5deb9c3ed3b368a6ad'],
  ['core/clarity-visuals.mjs','186f24da2e4cc44de25c6a00285eaf995c3a11074114b7a3a8f6eb958b962ffb'],
 ]);
 for(const[file,digest]of approvedOnecUiPaths)assert.equal(sha(await readFile(file)),digest,'Approved 1C presentation bytes: '+file);
@@ -105,11 +106,14 @@ const ciBasicToolApproved=new Map([
  ['tools/package-cpp-clarity-basic-source.py','5a229216ff7fc13ba6a27c61da2b0efb49c23fd0e16fd578953f7298a925520e']
 ]);
 for(const[file,digest]of ciBasicToolApproved){assert.equal(sha(await readFile(file)),digest,'Approved BASIC CI bytes: '+file);sourceAllow.add(file);}
-for(const name of names)assert.ok(sourceAllow.has(name)||qaDiagnosticApproved.has(name)||p1Edition.test(name)||p2TypesEdition.test(name)||p2ConditionsEdition.test(name)||p1Media.has(name)||p2TypesMedia.has(name)||p2ConditionsMedia.has(name)||/^courses\/clarity\/(?:lessons\/|courses\.json$|editorial-map\.json$)/.test(name)||/^courses\/cpp-clarity-r3\/(?:lessons\/|code\/|courses\.json$|setup\.(ru|en)\.json$)/.test(name)||/^review\/cpp-clarity-r3\//.test(name)||/^courses\/cpp\/gold\/(algorithms|basics)\//.test(name)||extendedGoldPaths.has(name)||/^(tests\/(helpers\/)?cpp-clarity-|tools\/(check|build)-cpp-clarity|docs\/ru\/03-content\/cpp-clarity-01\/)/.test(name),'Out of scope: '+name);
+const referencePins=JSON.parse(await readFile('docs/ru/03-content/reference-courses-20261112/APPROVED_REFERENCE_BYTES.json','utf8')).files;
+for(const pin of referencePins){assert.equal(sha(await readFile(pin.path)),pin.newSha256,'Reference exact bytes: '+pin.path);sourceAllow.add(pin.path);}
+const referenceQa=new Set(['tests/helpers/reference-course-contract.mjs','tests/reference-courses-content.test.mjs','tests/reference-courses-browser.mjs','tests/reference-courses-before-browser.mjs','tools/build-reference-courses.mjs','tools/check-reference-courses-native.ps1','tools/check-reference-applied-native.ps1']);
+for(const name of names)assert.ok(referenceQa.has(name)||name.startsWith('docs/ru/03-content/reference-courses-20261112/')||sourceAllow.has(name)||qaDiagnosticApproved.has(name)||p1Edition.test(name)||p2TypesEdition.test(name)||p2ConditionsEdition.test(name)||p1Media.has(name)||p2TypesMedia.has(name)||p2ConditionsMedia.has(name)||/^courses\/clarity\/(?:lessons\/|courses\.json$|editorial-map\.json$)/.test(name)||/^courses\/cpp-clarity-r3\/(?:lessons\/|code\/|courses\.json$|setup\.(ru|en)\.json$)/.test(name)||/^review\/cpp-clarity-r3\//.test(name)||/^courses\/cpp\/gold\/(algorithms|basics)\//.test(name)||extendedGoldPaths.has(name)||/^(tests\/(helpers\/)?cpp-clarity-|tools\/(check|build)-cpp-clarity|docs\/ru\/03-content\/cpp-clarity-01\/)/.test(name),'Out of scope: '+name);
 const protectedAreas=['courses/1c-enterprise','courses/onec','courses/onec-education','server-access','cloudflare','sync','sandbox','project-studio','core/migrations','releases','entry-assets','runtime-packs'];
-for(const area of protectedAreas){const changed=git('diff','--name-only',base,'--',area).toString().trim().split('\n').filter(Boolean);for(const file of changed)assert.ok(contractApproved.has(file)||presentationOnly.has(file),'Protected area: '+file);}
+for(const area of protectedAreas){const changed=git('diff','--name-only',base,'--',area).toString().trim().split('\n').filter(Boolean);for(const file of changed)assert.ok(contractApproved.has(file)||presentationOnly.has(file)||referencePins.some(p=>p.path===file),'Protected area: '+file);}
 // Принятые материалы не редактируются при переносе в доступные offline-builder ресурсы.
-for await(const file of (await import('node:fs/promises')).glob('courses/cpp-clarity-r3/**/*')){if((await (await import('node:fs/promises')).stat(file)).isFile())assert.deepEqual(await readFile(file),await readFile(file.replace(/courses[\\/]cpp-clarity-r3/, 'review/cpp-clarity-r3')),'Accepted R3 resource: '+file);}
+for await(const file of (await import('node:fs/promises')).glob('courses/cpp-clarity-r3/**/*')){if((await (await import('node:fs/promises')).stat(file)).isFile())assertPreservedOrReference(file,await readFile(file),await readFile(file.replace(/courses[\\/]cpp-clarity-r3/, 'review/cpp-clarity-r3')),'Accepted R3 resource: '+file);}
 const current=JSON.parse(await readFile('courses/cpp/curriculum.json')),old=JSON.parse(git('show',base+':courses/cpp/curriculum.json'));
 assert.deepEqual(current,old);assert.equal(current.lessons.length,67);assert.equal(current.lessons.filter(x=>Number.isInteger(x.legacyIndex)).length,40);
 const catalog=JSON.parse(await readFile('courses/cpp/data/gold-laboratories.json')),oldCatalog=JSON.parse(git('show',base+':courses/cpp/data/gold-laboratories.json')),revised=new Set([...GOLD_ALGORITHM_LESSONS,...GOLD_BASICS_LESSONS]);

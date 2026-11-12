@@ -23,7 +23,7 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
  const en=locale==='en',say=(ru,eng)=>en?eng:ru,abort=new AbortController();let disposed=false,dialog=null,loadTicket=0;
  const active=()=>!disposed&&isCurrent(),scope=root.querySelector('.r3-lesson'),course=lesson.courseId;
  const explicit=new Set((lesson.terms||[]).filter(t=>typeof t==='string'));
- const index=(await resource('index.'+locale+'.json')).filter(t=>t.context===course||course!=='cpp'&&t.context==='onec-common').sort((a,b)=>Number(explicit.has(b.id))-Number(explicit.has(a.id)));
+ const index=(await resource('index.'+locale+'.json')).filter(t=>t.context===course||course!=='cpp'&&(t.context==='onec-common'||explicit.has(t.id))).sort((a,b)=>Number(explicit.has(b.id))-Number(explicit.has(a.id)));
  if(!active())return()=>{};
  // Старые форматы различаются: объекты C++ уже несут определение, 1С — ID.
  const localObjects=(lesson.terms||[]).filter(t=>t&&typeof t==='object'&&typeof t.term==='string');
