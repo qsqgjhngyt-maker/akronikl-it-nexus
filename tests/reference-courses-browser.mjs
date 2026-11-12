@@ -7,6 +7,7 @@ import {createHash} from 'node:crypto';
 import {clarityLocalFixture} from './helpers/cpp-clarity-local-fixture.mjs';
 import {staticMime} from '../pwa/static-mime.js';
 import {REFERENCE_IDS,referenceRouteFor} from '../core/reference-course-routes.mjs';
+import {runMasterReviewScenarios} from './reference-courses-review-browser.mjs';
 const out=path.resolve(process.env.NEXUS_REFERENCE_EVIDENCE),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);await mkdir(out,{recursive:true});
 const f=await clarityLocalFixture(path.join(out,'vault')),p=f.page,prefix='/releases/'+f.generation,checks=[],timings=[],metrics=[],screens=[],runs=[];let server,nativeBrowser,failure,coldPage;const coldEvents=[];
 const save=async()=>writeFile(path.join(out,'BROWSER_RESULT.json'),JSON.stringify({status:failure?'FAIL':'PASS',checks,timings,metrics,screens,runs,failure,physicalDevices:false,realAccounts:false,sourceCommit:JSON.parse(await readFile(path.join(frontend,'CLARITY_BUILD_SCOPE.json'))).sourceCommit},null,2));
@@ -52,6 +53,7 @@ async function inspect(page,id,locale,{editable=false}={}){
  console.log('UI PASS '+id+' '+locale);checks.push({id,locale,status:'PASS',inlineHelp:true,focusReturn:true,annotationIdempotent:true,codeUnchangedByHelp:true,widths:[1366,390,320],stages:3,visibleTopAndBottomNavigation:true,routeOrderAndReturn:true,routeEnd:!nextId,editable});
 }
 try{
+ if(!['--onec-only','--cold-only','--types-only'].some(flag=>process.argv.includes(flag)))checks.push(...await runMasterReviewScenarios(frontend,path.join(out,'master-review')));
  if(!process.argv.includes('--onec-only')&&!process.argv.includes('--cold-only')){
  for(const id of REFERENCE_IDS.filter(id=>id.startsWith('cpp.')&&(!process.argv.includes('--types-only')||id==='cpp.data-types')))for(const locale of ['ru','en']){const start=performance.now();await p.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'cpp',lesson:id,locale,stage:'explanation',learningRoute:'reference-start'}),{id,locale});await p.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"] [data-reference-open]').waitFor();timings.push({id,locale,ms:performance.now()-start});await inspect(p,id,locale,{editable:true})}
  await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.variables-scope&stage=practice&locale=ru');

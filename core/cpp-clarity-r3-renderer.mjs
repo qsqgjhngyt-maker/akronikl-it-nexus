@@ -34,7 +34,7 @@ function table(t){
  const wide=lesson.authored&&(t.columns.length>=3||state);
  const attributes=wide?` data-wide-table${state?'="state"':''} tabindex="0" role="region" aria-label="${esc(t.caption)}"`:'';
  const note=wide?`<p class="table-scroll-note">${say('Таблицу можно прокрутить вправо.','Scroll the table to see more.')}</p>`:'';
- return `${note}<div class="table-wrap"${attributes}><table><caption>${esc(t.caption)}</caption><thead><tr>${t.columns.map(x=>`<th scope="col">${esc(x)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
+ return `${note}<div class="table-wrap"${attributes}><table><caption>${esc(t.caption)}</caption>${t.kind==='timeline'?'<colgroup><col style="width:4em"><col></colgroup>':''}<thead><tr>${t.columns.map(x=>`<th scope="col">${esc(x)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
 function programFiles(files,label,after=''){
  if(!files)return '';
  const entries=Object.entries(files);
@@ -324,7 +324,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   const node=root.querySelector('[data-reference-assessment]');if(!node)return;
   node.hidden=!lesson.practice.runAssessment;if(node.hidden)return;
   const state=result?.state||'unrun';node.dataset.state=state;
-  const title={unrun:say('Не проверено: запустите текущую работу.','Not checked: run your current work.'),running:say('Выполняется текущая программа…','Running the current program…'),stale:say('Предыдущая проверка устарела: код, вход или редакция задания изменились. Запустите снова.','The previous check is stale: code, input or task revision changed. Run again.'),passed:say('Проверено для этого задания','Checked for this task'),failed:say('Проверка выявила отличие','The check found a difference')}[state];
+  const title={unrun:say('Не проверено: запустите текущую работу.','Not checked: run your current work.'),running:say('Выполняется текущая программа…','Running the current program…'),error:say('Текущий запуск не завершён','The current run did not complete'),stale:say('Предыдущая проверка устарела: код, вход или редакция задания изменились. Запустите снова.','The previous check is stale: code, input or task revision changed. Run again.'),passed:say('Проверено для этого задания','Checked for this task'),failed:say('Проверка выявила отличие','The check found a difference')}[state];
   node.innerHTML='<strong>'+esc(title)+'</strong>'+(result?.checks?'<p>'+result.passed+'/'+result.total+' · '+say('проверок вывода и завершения','output and exit checks')+'</p><dl>'+result.checks.map(c=>'<div><dt>'+say('Ожидалось','Expected')+'</dt><dd>'+esc(c.expected)+'</dd><dt>'+say('Получено','Actual')+'</dt><dd>'+esc(c.actual||say('(пусто)','(empty)'))+' · '+(c.ok?'✓':'×')+'</dd></div>').join('')+'</dl>':'')+(state==='failed'?'<p>'+say('Сравните ожидаемые строки с выводом; проверьте кавычки, имена и выражения. Ошибка компиляции означает, что новый код не выполнялся.','Compare expected lines with your output; check quotes, names and expressions. A compilation error means the new code did not run.')+'</p>':'')+'<p>'+say('«Сохранено» относится к файлу. «Проверено» относится только к показанным условиям. Объяснение решения и «Освоено» автоматически не оцениваются.','“Saved” describes the file. “Checked” covers only the shown conditions. Your reasoning and mastery are not graded automatically.')+'</p>';
  }
  function showResult(){if(!live())return;const r=draft().lastResult,node=root.querySelector('[data-r3-result]'),details=root.querySelector('[data-r3-snapshot]');if(!r){node.textContent=w.none;showAssessment(evaluateReferenceRun(lesson.practice.runAssessment,null));return;}let matches=false;try{if(studio&&r.inputSnapshot){const request=executionRequest(root.querySelector('#stdin')?.value||''),input={...request,languageId:CLARITY_COURSES[topicId].languageId,files:Object.entries(request.files).map(([path,content])=>({path,content}))};const digests=snapshotDigests(input);matches=digests.sourceDigest===r.sourceDigest&&digests.stdinDigest===r.stdinDigest;}}catch{}matches=matches&&r.contentRevision===contentRevision;showAssessment(evaluateReferenceRun(lesson.practice.runAssessment,r,{current:matches}));node.textContent=(r.kind==='external-self-report'?say('Сохранён самоотчёт о внешнем запуске.','External run self-report saved.'):say('Сохранён результат запуска C++. Это не оценка понимания.','C++ run result saved. This is not an assessment of understanding.'))+(r.inputSnapshot&&!matches?' '+w.stale:'');details.hidden=false;details.querySelector('pre').textContent=(r.inputSnapshot?.files.map(f=>f.path+'\n'+f.content).join('\n\n')||'')+'\n'+r.output.stdout+(r.output.stderr?'\n'+r.output.stderr:'');}
@@ -338,7 +338,33 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    if(!adapter){for(const node of host.querySelectorAll('button,input,textarea'))node.disabled=true;return;}
    if(cursor){ed.setSelectionRange(cursor.start,cursor.end,cursor.direction);ed.scrollTop=cursor.scrollTop;ed.scrollLeft=cursor.scrollLeft;}
    host.querySelector('#stdin')?.addEventListener('input',()=>{session.mark({work:true});showResult();});
-   host.querySelector('#runCode')?.addEventListener('click',async()=>{const button=host.querySelector('#runCode');if(button.disabled)return;button.disabled=true;showAssessment({state:'running'});try{session.mark({work:true});await session.flush();if(!live())return;const {createSandboxController}=await import('../sandbox/sandbox.js');if(!live())return;runtime??=createSandboxController({editor:ed,stdin:host.querySelector('#stdin'),output:host.querySelector('#output'),engine:host.querySelector('#engine'),status:host.querySelector('#sandboxStatus'),routeInfo:host.querySelector('#runtimeRoute'),locale,languageId:'cpp',codeStudio:{...studio,runtimeRequest:executionRequest},onCodeChange:()=>{},runObserver:createClarityRunObserver({session,topicId,onResult:showResult,onError:()=>{if(live())root.querySelector('[data-r3-result]').textContent=say('Запуск доступен, но его полный снимок не сохранён.','Execution is available, but its full snapshot was not saved.');}})});await runtime.run();}catch(error){if(session.error)status('error',error);}finally{if(live())button.disabled=false;}});
+   host.querySelector('#runCode')?.addEventListener('click',async()=>{
+    const button=host.querySelector('#runCode');if(button.disabled)return;
+    button.disabled=true;showAssessment({state:'running'});
+    const output=host.querySelector('#output');output.className='output';
+    output.textContent=say('Ожидаем результат текущего запуска…','Waiting for the current run result…');
+    root.querySelector('[data-r3-snapshot]').hidden=true;
+    root.querySelector('[data-r3-result]').textContent=say('Выполняется текущий запуск. Прежний результат к нему не относится.','The current run is in progress. The previous result does not apply to it.');
+    try{
+     session.mark({work:true});await session.flush();if(!live())return;
+     const {createSandboxController}=await import('../sandbox/sandbox.js');if(!live())return;
+     runtime??=createSandboxController({editor:ed,stdin:host.querySelector('#stdin'),output,engine:host.querySelector('#engine'),status:host.querySelector('#sandboxStatus'),routeInfo:host.querySelector('#runtimeRoute'),locale,languageId:'cpp',codeStudio:{...studio,runtimeRequest:executionRequest},onCodeChange:()=>{},runObserver:createClarityRunObserver({session,topicId,onResult:showResult,onError:()=>{
+      if(!live())return;showAssessment({state:'error'});
+      root.querySelector('[data-r3-result]').textContent=say('Запуск завершился, но его полный снимок не сохранён. Проверка этого запуска недоступна.','The run finished, but its full snapshot was not saved. This run cannot be checked.');
+     }})});
+     await runtime.run();
+    }catch(error){
+     if(!live())return;
+     const currentResultKnown=host.querySelector('[data-reference-assessment]')?.dataset.state==='failed';
+     if(!currentResultKnown)showAssessment({state:'error'});
+     const message=session.error?say('Не удалось сохранить работу перед запуском. Повторите сохранение; ваш код остаётся в редакторе.','Could not save your work before running. Retry saving; your code remains in the editor.'):say('Среда выполнения недоступна или запуск завершился ошибкой. Повторите запуск. Если ошибка повторяется, сохраните работу и обновите страницу.','The runtime is unavailable or the run failed. Try running again. If it keeps failing, save your work and reload the page.');
+     host.querySelector('#sandboxStatus').textContent=message;
+     // Исторический снимок остаётся в черновике, но не выдаётся за текущий вывод.
+     if(!output.classList.contains('error-output')){output.className='output error-output';output.textContent=message;}
+     if(!currentResultKnown)root.querySelector('[data-r3-result]').textContent=say('Результат текущего запуска не получен. Прежний результат не подтверждает эту попытку.','No result was obtained for the current run. The previous result does not validate this attempt.');
+     if(session.error)status('error',error);
+    }finally{if(live())button.disabled=false;}
+   });
    showResult();
   })();return readyEditor;
  }
