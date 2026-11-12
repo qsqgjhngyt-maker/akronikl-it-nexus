@@ -8,6 +8,8 @@ import {clarityLessons} from './helpers/cpp-clarity-programs.mjs';
 import {goldLessonRoute} from './helpers/gold-lesson-route.mjs';
 import {verifyResponse} from '../pwa/policy.js';
 import {staticMime} from '../pwa/static-mime.js';
+import {REFERENCE_IDS} from '../core/reference-course-routes.mjs';
+import {assertReferenceEdition} from './helpers/reference-course-contract.mjs';
 
 const out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE||'cpp-clarity-evidence');await mkdir(out,{recursive:true});
 const receipt=path.join(out,'PREVIEW_SERVER.json'),child=spawn(process.execPath,['tools/preview-cpp-clarity.mjs','--frontend',process.env.NEXUS_FRONTEND_DIR,'--port',process.env.NEXUS_PREVIEW_PORT||'63368','--receipt',receipt],{stdio:['ignore','pipe','pipe']});
@@ -39,7 +41,8 @@ try{
   if(g.lessonId==='cpp.programming-process'){await page.evaluate(({id,locale})=>{location.hash='#course=cpp&lesson='+id+'&locale='+locale+'&stage=practice'}, {id:g.lessonId,locale:g.locale});await page.locator('[data-r3-topic][lang="'+g.locale+'"]').waitFor();await page.locator('#editor').waitFor();assert.equal(await page.locator('#editor:enabled,#runCode:enabled').count(),0);const expected=await page.locator('[data-expected-output]').allTextContents();assert.ok(expected.includes('Welcome to the workshop!\n'));assert.match(await page.locator('.practice-card').first().textContent(),/workshop/i);observations.push({lessonId:g.lessonId,locale:g.locale,status:'PASS',pilot:true,url:page.url()});continue;}
   await page.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'cpp',lesson:id,locale,stage:'practice'}),{id:g.lessonId,locale:g.locale});
   await page.locator('[data-r3-topic="'+g.lessonId+'"][lang="'+g.locale+'"]').waitFor();
-  const block=page.locator('[data-r3-panel="practice"] [data-expected-output]').first();await block.scrollIntoViewIfNeeded();assert.equal(await block.textContent(),g.teachingEdition?.practice.cases[0].output||g.clarity.laboratory.cases[0].stdout);
+  const expected=REFERENCE_IDS.includes(g.lessonId)?assertReferenceEdition(g.lessonId,g.locale).practice.cases[0].output:g.teachingEdition?.practice.cases[0].output||g.clarity.laboratory.cases[0].stdout;
+  const block=page.locator('[data-r3-panel="practice"] [data-expected-output]').first();await block.scrollIntoViewIfNeeded();assert.equal(await block.textContent(),expected);
   assert.equal(await page.locator('#editor:enabled,#runCode:enabled,[data-answer]:enabled').count(),0,'Public preview keeps account/vault access boundaries');
   observations.push({lessonId:g.lessonId,locale:g.locale,stdout:await block.textContent(),url:page.url(),status:'PASS'});
   if(g.locale==='ru'&&['cpp.programming-process','cpp.first-cpp-program','cpp.pointers-references-addresses'].includes(g.lessonId)){
