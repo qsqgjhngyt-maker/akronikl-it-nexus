@@ -54,7 +54,7 @@ try{
    const {learningFlowMarkup}=await import(prefix+'/core/clarity-visuals.mjs');const audit=document.createElement('section');audit.dataset.flowAudit='';audit.innerHTML=flows.map(x=>learningFlowMarkup(x.flow)).join('');node.append(audit);await document.fonts.ready;
    const bad=[...audit.querySelectorAll('.flow-step')].filter(step=>{const b=step.getBoundingClientRect();return [...step.querySelectorAll(':scope>strong,:scope>p')].some(label=>{const r=document.createRange();r.selectNodeContents(label);return [...r.getClientRects()].some(t=>t.left<b.left-1||t.right>b.right+1||t.top<b.top-1||t.bottom>b.bottom+1);});}).map(n=>n.textContent);
    const count=audit.querySelectorAll('[data-wrapped-flow]').length;audit.remove();return {count,bad};
-  },{flows,prefix});assert.equal(result.count,flows.length);assert.deepEqual(result.bad,[]);await root.locator('#trace').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'flow-'+width+'.png')});records.push({name:'All long-label diagrams',width,count:flows.length,clippedLabels:0});
+  },{flows,prefix});assert.equal(result.count,flows.length);assert.deepEqual(result.bad,[]);await root.locator('[data-r3-panel="explanation"] .lesson-section').first().scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'flow-'+width+'.png')});records.push({name:'All long-label diagrams',width,count:flows.length,clippedLabels:0});
  }
  assert.deepEqual(errors,[]);console.log('PASS: 3 курса RU/EN,эталоны и вложенные файлы1366/320;все длинные схемы;своя работа и bytes эталона сохранены');
 }catch(e){failure={message:e.message,stack:String(e.stack).slice(0,2000)};process.exitCode=1;console.error(e);await page.screenshot({path:path.join(out,'FAIL.png'),fullPage:true}).catch(()=>{});}

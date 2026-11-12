@@ -15,7 +15,7 @@ export function annotateReferenceTerms(scope,entries,{limit=18}={}){
    if(m){const start=m.index+m[1].length;if(!best||start<best.start||start===best.start&&m[2].length>best.length)best={entry,start,length:m[2].length}}
   }}
   if(!best)continue;const b=doc.createElement('button');b.type='button';b.className='term-link reference-inline-term';b.dataset.referenceTerm=best.entry.id;
-  const middle=text.splitText(best.start),tail=middle.splitText(best.length);b.textContent=middle.data;b.setAttribute('aria-label',(scope.lang==='en'?'Explain: ':'Объяснить: ')+b.textContent);middle.replaceWith(b);used.add(best.entry.id);
+  const middle=text.splitText(best.start),tail=middle.splitText(best.length);b.textContent=middle.data;b.setAttribute('aria-label',(scope.closest('[lang]')?.lang==='en'?'Explain: ':'Объяснить: ')+b.textContent);middle.replaceWith(b);used.add(best.entry.id);
  }
  return used.size;
 }

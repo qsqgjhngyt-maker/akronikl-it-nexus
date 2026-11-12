@@ -85,7 +85,7 @@ try{
   assert.equal(await q.locator('.example-layout pre code').textContent(),prediction.code.source);
   assert.equal(await q.locator('[data-expected-output]').count(),0);
   await q.locator('[data-answer="predict"][value="1"]').check();
-  await q.locator('fieldset button').click();
+  await q.locator('fieldset button.btn:not([data-reference-term])').click();
   assert.ok((await q.locator('[data-feedback="predict"]').textContent()).endsWith(prediction.feedback));
   for(const question of l.selfcheck.filter(q=>q.id.startsWith('check-'))){
    const target=l.sections.find(s=>s.id===question.recall);

@@ -86,7 +86,7 @@ try{
   assert.equal(await form.locator('[data-expected-output]').count(),0);
   assert.deepEqual(await fileMap(form.locator('[data-program-file]')),q.code.files||{});
   await form.locator('[data-answer="predict"][value="1"]').check();
-  await form.locator('fieldset button').click();
+  await form.locator('fieldset button.btn:not([data-reference-term])').click();
   assert.equal(await form.locator('[data-feedback="predict"]').textContent(),q.feedback[1]);
   await lesson.locator('[data-stage="practice"]').click();
   const editor=lesson.locator('#editor');

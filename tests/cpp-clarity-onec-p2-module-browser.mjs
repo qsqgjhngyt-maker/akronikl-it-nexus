@@ -80,7 +80,7 @@ try{
   await stage(root,'practice');await root.locator('[data-course-progress] input[type="checkbox"]').check();await root.getByRole('button',{name:locale==='ru'?'Отметить выполненным по самоотчёту':'Mark complete by self-report',exact:true}).click();await root.locator('[data-course-progress]').getByText(locale==='ru'?/Сохранённая отметка прохождения есть/:/A saved completion mark exists/).waitFor();
   }else{
    // Принятый R3-пилот не имеет нового assessment: сохраняем прежний контракт, не создаём завершение.
-   for(const q of choices){const form=root.locator('[data-question="'+q.id+'"]');await form.locator('button').first().click();await saved(root);assert.ok((await root.locator('[data-feedback="'+q.id+'"]').textContent()).trim());}
+   for(const q of choices){const form=root.locator('[data-question="'+q.id+'"]');await form.locator('fieldset button.btn:not([data-reference-term])').click();await saved(root);assert.ok((await root.locator('[data-feedback="'+q.id+'"]').textContent()).trim());}
    const stored=await storedProgress(p);assert.equal(stored.lessons[id]?.completed,undefined);
   }
   await p.evaluate(async({prefix,locale})=>{controller.dispose();location.hash='#course=onec&locale='+locale;const host=document.createElement('main');host.id='app';document.querySelector('#app').replaceWith(host);const m=await import(prefix+'/courses/onec-education/integration.mjs');controller=m.mountOnecIntegration(host,{locale});await controller.ready;},{prefix,locale});assert.equal(Number((await p.locator('[data-progress]').textContent()).split('/')[0]),activeIds.indexOf(id));

@@ -39,8 +39,8 @@ try{
    assert.equal(await form.locator('pre code').textContent(),question.execution.source);
    if(typeof question.code==='object'&&question.execution.stdin)assert.equal(await form.locator('.example-layout p+pre').textContent(),question.execution.stdin);
   }
-  await p.locator('[data-answer="predict"][value="1"]').check();await p.locator('[data-question="predict"] fieldset button').click();assert.equal((await p.locator('[data-feedback="predict"]').textContent()).includes(q.feedback[1]),true);
-  await p.locator('[data-answer="predict"][value="0"]').check();await p.locator('[data-question="predict"] fieldset button').click();
+  await p.locator('[data-answer="predict"][value="1"]').check();await p.locator('[data-question="predict"] fieldset button.btn:not([data-reference-term])').click();assert.equal((await p.locator('[data-feedback="predict"]').textContent()).includes(q.feedback[1]),true);
+  await p.locator('[data-answer="predict"][value="0"]').check();await p.locator('[data-question="predict"] fieldset button.btn:not([data-reference-term])').click();
   const own=block+' '+id+' '+locale+' — собственное объяснение';await p.locator('[data-answer="explain"]').fill(own);await saved();await p.locator('[data-answer="explain"]').focus();
   await p.locator('[data-question="explain"] [data-recall]').click();await p.locator('dialog.r3-dialog[open]').waitFor();
   assert.ok(!(await p.locator('dialog.r3-dialog[open]').textContent()).includes(g.teachingEdition.referenceProgram));await p.keyboard.press('Escape');await p.locator('dialog.r3-dialog').waitFor({state:'detached'});assert.equal(await p.locator('[data-answer="explain"]').inputValue(),own);assert.ok(await p.locator('[data-answer="explain"]').evaluate(e=>e===document.activeElement));

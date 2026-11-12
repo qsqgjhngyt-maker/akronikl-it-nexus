@@ -50,7 +50,7 @@ try{
   assert.equal(await q.locator('.example-layout pre code').textContent(),prediction.code.source);
   assert.equal(await q.locator('[data-expected-output]').count(),0);
   await q.locator('[data-answer="predict"][value="1"]').check();
-  await q.locator('fieldset button').click();
+  await q.locator('fieldset button.btn:not([data-reference-term])').click();
   assert.ok((await q.locator('[data-feedback="predict"]').textContent()).endsWith(prediction.feedback));
   await root.locator('[data-stage="practice"]').click();
   const editor=root.locator('#editor'),practice=root.locator('[data-r3-panel="practice"]');
