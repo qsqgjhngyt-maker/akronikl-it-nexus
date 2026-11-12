@@ -57,7 +57,8 @@ export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
  scope.querySelectorAll('.course-controls a[href*="lesson="]').forEach(a=>a.remove());
  const help=document.createElement('nav');help.className='reference-help';help.setAttribute('aria-label',say('Помощь и обзор','Help and overview'));help.innerHTML=`<span data-reference-help class="reference-help"></span><button type="button" class="btn" data-reference-overview-open>${say('Эталонные уроки — проверка','Reference lessons — review')}</button>`;
  neighbours.after(help);
- if(route)help.insertAdjacentHTML('beforeend',referenceBadge(lesson.id,lesson.locale)+`<span>${say('Старт с нуля','Start from zero')} · ${idx+1}/${route.topics.length}</span>`);
+ help.insertAdjacentHTML('beforeend',referenceBadge(lesson.id,lesson.locale));
+ if(route)help.insertAdjacentHTML('beforeend',`<span>${say('Старт с нуля','Start from zero')} · ${idx+1}/${route.topics.length}</span>`);
  const toc=document.createElement('aside');toc.className='reference-toc';toc.setAttribute('aria-label',say('Содержание урока','Lesson contents'));
  const link=(id,text)=>{const a=document.createElement('a');a.href=url(lesson.id,'explanation',lesson.locale,id);a.textContent=text;return a};
  const title=document.createElement('strong');title.textContent=say('В этом уроке','In this lesson');toc.append(title);const nav=document.createElement('nav');toc.append(nav);

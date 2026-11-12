@@ -1,21 +1,21 @@
 # Просмотр и review эталонов
 
-Локальный адрес действует только на ПК Work/владельца. Он не доступен MASTER удалённо. Никакой публичный preview не создаётся. Точная финальная команда запуска и receipt должны сопровождать этот документ; порт47715 предназначен окончательной сборке.
+Локальный адрес действует только на ПК Work/владельца. Он не доступен MASTER удалённо. Никакой публичный preview не создаётся. Точная финальная команда запуска и receipt должны сопровождать этот документ; порт47717 предназначен окончательной сборке.
 
 Просмотр `/pilot` использует тот же renderer и исходные lesson IDs. Сохранение и запуск в нём отключены штатно, пока нет допустимого аккаунта/личной копии. Вход, рабочие данные и фиктивный серверный session не подключаются. Полный интерфейс с боковыми панелями проверяется через настоящий core/app с отдельными синтетическими QA-данными. Для практики C++ нужна своя штатная локальная учебная копия/вход; для1С — отдельная установленная учебная база с доступной лицензией. Браузер не исполняет BSL.
 
 ## Точные маршруты
 
-- `cpp.programming-process`: [RU](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.programming-process&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.programming-process&locale=en&stage=explanation&learningRoute=reference-start)
-- `cpp.first-cpp-program`: [RU](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.first-cpp-program&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.first-cpp-program&locale=en&stage=explanation&learningRoute=reference-start)
-- `cpp.data-types`: [RU](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.data-types&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.data-types&locale=en&stage=explanation&learningRoute=reference-start)
-- `cpp.variables-scope`: [RU](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.variables-scope&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=cpp&lesson=cpp.variables-scope&locale=en&stage=explanation&learningRoute=reference-start)
-- `onec.p1.architecture`: [RU](http://127.0.0.1:47715/pilot#course=onec&lesson=onec.p1.architecture&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=onec&lesson=onec.p1.architecture&locale=en&stage=explanation&learningRoute=reference-start)
-- `onec.p1.lifecycle`: [RU](http://127.0.0.1:47715/pilot#course=onec&lesson=onec.p1.lifecycle&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=onec&lesson=onec.p1.lifecycle&locale=en&stage=explanation&learningRoute=reference-start)
-- `onec.p2.topic-1`: [RU](http://127.0.0.1:47715/pilot#course=onec&lesson=onec.p2.topic-1&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=onec&lesson=onec.p2.topic-1&locale=en&stage=explanation&learningRoute=reference-start)
-- `1c-enterprise.a2.topic-1`: [RU](http://127.0.0.1:47715/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-1&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-1&locale=en&stage=explanation&learningRoute=reference-start)
-- `1c-enterprise.a2.topic-2`: [RU](http://127.0.0.1:47715/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-2&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-2&locale=en&stage=explanation&learningRoute=reference-start)
-- `1c-enterprise.a2.topic-3`: [RU](http://127.0.0.1:47715/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-3&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47715/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-3&locale=en&stage=explanation&learningRoute=reference-start)
+- `cpp.programming-process`: [RU](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.programming-process&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.programming-process&locale=en&stage=explanation&learningRoute=reference-start)
+- `cpp.first-cpp-program`: [RU](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.first-cpp-program&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.first-cpp-program&locale=en&stage=explanation&learningRoute=reference-start)
+- `cpp.data-types`: [RU](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.data-types&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.data-types&locale=en&stage=explanation&learningRoute=reference-start)
+- `cpp.variables-scope`: [RU](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.variables-scope&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=cpp&lesson=cpp.variables-scope&locale=en&stage=explanation&learningRoute=reference-start)
+- `onec.p1.architecture`: [RU](http://127.0.0.1:47717/pilot#course=onec&lesson=onec.p1.architecture&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=onec&lesson=onec.p1.architecture&locale=en&stage=explanation&learningRoute=reference-start)
+- `onec.p1.lifecycle`: [RU](http://127.0.0.1:47717/pilot#course=onec&lesson=onec.p1.lifecycle&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=onec&lesson=onec.p1.lifecycle&locale=en&stage=explanation&learningRoute=reference-start)
+- `onec.p2.topic-1`: [RU](http://127.0.0.1:47717/pilot#course=onec&lesson=onec.p2.topic-1&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=onec&lesson=onec.p2.topic-1&locale=en&stage=explanation&learningRoute=reference-start)
+- `1c-enterprise.a2.topic-1`: [RU](http://127.0.0.1:47717/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-1&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-1&locale=en&stage=explanation&learningRoute=reference-start)
+- `1c-enterprise.a2.topic-2`: [RU](http://127.0.0.1:47717/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-2&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-2&locale=en&stage=explanation&learningRoute=reference-start)
+- `1c-enterprise.a2.topic-3`: [RU](http://127.0.0.1:47717/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-3&locale=ru&stage=explanation&learningRoute=reference-start) · [EN](http://127.0.0.1:47717/pilot#course=1c-enterprise&lesson=1c-enterprise.a2.topic-3&locale=en&stage=explanation&learningRoute=reference-start)
 
 ## Сценарий учащегося
 
@@ -30,10 +30,13 @@
 Оценка тестировщика: смог ли человек без подсказки понять, куда нажать после этапа/урока. Work самостоятельно этот пользовательский критерий не закрывает. Технический PASS не заменяет понимание.
 
 
-Одна команда из корня репозитория (Node.js24 и готовая сборка в соседнем каталоге):
+Одна команда из распакованного review-пакета (Node.js24 и готовая сборка в соседнем каталоге):
 
 ```powershell
-node tools/preview-cpp-clarity.mjs --frontend "..\..\reference-courses-20261112\frontend-candidate-8" --pilot --port 47715
+node PREVIEW_TOOLS/preview-cpp-clarity.mjs --frontend "CANDIDATE" --pilot --port 47717
 ```
 
 Для воспроизводимой сборки: установить закреплённые server-access зависимости, задать NEXUS_FRONTEND_DIR на новый пустой каталог и выполнить `node tools/build-cpp-clarity-candidate.mjs`. NEXUS_FRONTEND_DIR не должен указывать на production или рабочую папку пользователя. Использовать точный исходный SHA из FILE_BINDINGS/CI_FINAL_RESULT. Готовая сборка и просмотр не включают1С,серверную сессию и чужие данные.
+
+
+Метка«Эталон · на проверке» показывается у всех10 IDs при входе из обычного курса и из эталонного маршрута. Начальный локальный preview сразу открывает reference-start; обычная программа сохраняет прежний порядок. Итоговый адрес — http://127.0.0.1:47717/pilot . Единственная команда из распакованного review-пакета — START_PREVIEW.cmd; точный SHA/сборка указаны в окончательном receipt,ранние build8/port47715 — только история.

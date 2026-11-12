@@ -51,7 +51,7 @@ await new Promise((resolve,reject)=>{server.once('error',async error=>{
   if(v.sourceCommit!==scope.sourceCommit||v.fingerprint!==fingerprint)throw Error('Порт занят другой версией. Закройте её окно запуска или выберите --port.');reused=true;resolve();
  }catch(e){reject(e)}
 });server.listen(port,'127.0.0.1',resolve)});
-const origin='http://127.0.0.1:'+(reused?port:server.address().port),url=origin+(args.includes('--academy')?'/offline.html#'+new URLSearchParams({course:'cpp',lesson:value('--lesson','cpp.data-types'),stage:'explanation',locale:value('--locale','ru'),...(value('--copy',null)?{copy:value('--copy',null)}:{})}):pilot?'/pilot#course=cpp&lesson=cpp.programming-process&stage=explanation&locale=ru':'/offline.html#course=cpp&lesson=cpp.programming-process');
+const origin='http://127.0.0.1:'+(reused?port:server.address().port),url=origin+(args.includes('--academy')?'/offline.html#'+new URLSearchParams({course:'cpp',lesson:value('--lesson','cpp.data-types'),stage:'explanation',locale:value('--locale','ru'),...(value('--copy',null)?{copy:value('--copy',null)}:{})}):pilot?'/pilot#course=cpp&lesson=cpp.programming-process&stage=explanation&locale=ru&learningRoute=reference-start':'/offline.html#course=cpp&lesson=cpp.programming-process');
 const result={origin,url,sourceCommit:scope.sourceCommit,generation,fingerprint,pid:process.pid,reused,localOnly:true,backend:'unavailable',userDataUsed:false};
 if(receipt){await mkdir(path.dirname(path.resolve(receipt)),{recursive:true});await writeFile(receipt,JSON.stringify(result,null,2)+'\n')}
 console.log(JSON.stringify(result));

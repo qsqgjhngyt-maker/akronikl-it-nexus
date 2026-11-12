@@ -49,6 +49,7 @@ try{
   await p.evaluate(({course,id,locale})=>location.hash='#'+new URLSearchParams({course,lesson:id,locale,stage:'explanation'}),{course:course.id,id:topic.id,locale});
   const lesson=p.locator('[data-r3-topic="'+topic.id+'"][lang="'+locale+'"]');await lesson.waitFor();
   assert.equal(await lesson.locator('[data-r3-panel="explanation"] h1').count(),1);
+  await lesson.locator('[data-reference-open]').waitFor();assert.equal(await lesson.locator('[data-reference-badge]').count(),REFERENCE_IDS.includes(topic.id)?1:0,'Badge is visible on a reference lesson through the full-course route too');
   assert.ok(await p.locator('#sidebar').isVisible());
   let linkAndButtonBoundaries=0;
   let labReference,practicumReferences=0;
