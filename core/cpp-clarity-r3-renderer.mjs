@@ -291,6 +291,11 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    ${stages.map(stage=>`<a data-stage="${stage}" aria-label="${esc(w[stage])}" href="${url(topicId,stage)}"><span>${stage==='selfcheck'&&locale==='ru'?'Само&shy;проверка':w[stage]}</span><span data-current-marker aria-hidden="true" hidden></span></a>`).join('')}
   </nav>
  </header><p data-r3-save role="status" aria-live="polite">${adapter?say('Ответы и работа сохраняются на этом устройстве.','Answers and work are saved on this device.'):(external?say('Просмотр материалов. Войдите в аккаунт, чтобы сохранять ответы и работу.','Read-only materials. Sign in to save answers and work.'):say('Просмотр материалов. Войдите в аккаунт или откройте личную копию C++, чтобы сохранять работу.','Read-only materials. Sign in or open your C++ local copy to save work.'))}</p><button class="btn" data-r3-retry hidden>${say('Повторить сохранение','Retry saving')}</button><button class="btn" data-r3-export hidden>${say('Скачать несохранённую работу','Download unsaved work')}</button>${stages.map(s=>`<section data-r3-panel="${s}" class="stage-body" tabindex="-1" ${s===route.stage?'':'hidden'}>${s==='explanation'?explanation():s==='selfcheck'?selfcheck():practice()}</section>`).join('')}<p>${w.notCompleted}</p></div>`;
+ // Поля ответа доступны только после подключения session, справки и первого showStage.
+ // Иначе ранний fill/ввод может прийти в ещё не принятый приложением экран.
+ const answerFieldsets=[...root.querySelectorAll('[data-question] fieldset')];
+ for(const fieldset of answerFieldsets)fieldset.disabled=true;
+ root.querySelector('.r3-lesson').setAttribute('aria-busy','true');
  const contextHeader=root.querySelector('.lesson-context');
  const shellHeader=document.querySelector('.topbar');
  const lessonElement=root.querySelector('.r3-lesson');
@@ -457,6 +462,8 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  if(!live()){dispose();return null;}
  if(lesson.practice.steps?.some(s=>s.figures?.length)){const {lessonFiguresMarkup}=await import('../courses/onec-education/lesson-media.mjs');if(!live()){dispose();return null;}for(const s of lesson.practice.steps){if(s.figures?.length)root.querySelector('[data-course-figures="'+CSS.escape(s.id)+'"]').innerHTML=lessonFiguresMarkup(s.figures,locale);}}
  await showStage(route.stage,requested.anchor,false);if(!live()){dispose();return null;}showResult();if(session&&initial?.draft&&!session.dirty)status('restored');
+ for(const fieldset of answerFieldsets)fieldset.disabled=false;
+ lessonElement.removeAttribute('aria-busy');lessonElement.dataset.r3Ready='true';
  return {get session(){return session;},dispose,
   async handleRoute(hash,nextLocale=locale){if(!live())return false;const p=new URLSearchParams(hash.slice(1));if((p.get('learningRoute')==='reference-start'?'reference-start':null)!==learningRoute||p.get('lesson')!==topicId||(p.get('course')||lesson.courseId)!==lesson.courseId||(p.get('locale')||nextLocale)!==locale)return false;const next=position(p);await showStage(next.stage,next.anchor);return true;},
   async prepareNavigation(){if(!live())return true;remember();const okay=!session||await session.prepareNavigation();if(!okay&&live())history.replaceState(null,'',acceptedHash||'#view=academy');return okay;}
