@@ -5,6 +5,8 @@ const jsonCache=new Map();
 async function resource(file){if(!jsonCache.has(file))jsonCache.set(file,fetch(new URL('../courses/reference/'+file,import.meta.url),{credentials:'omit'}).then(r=>{if(!r.ok)throw Error('REFERENCE_UNAVAILABLE');return r.json()}).catch(e=>{jsonCache.delete(file);throw e}));return jsonCache.get(file)}
 const safeUrl=url=>{try{const u=new URL(url);return u.protocol==='https:'?u.href:''}catch{return ''}};
 export function annotateReferenceTerms(scope,entries,{limit=18}={}){
+ if(scope.dataset.referenceAnnotated==='true')return scope.querySelectorAll('[data-reference-term]').length;
+ scope.dataset.referenceAnnotated='true';
  const doc=scope.ownerDocument,walker=doc.createTreeWalker(scope,4),texts=[],used=new Set([...scope.querySelectorAll('[data-reference-term]')].map(b=>b.dataset.referenceTerm));
  while(walker.nextNode())if(!walker.currentNode.parentElement.closest('a,button,pre,code,textarea,input,select,label,summary,dialog,script,style,[data-nexus-code-studio],[contenteditable]'))texts.push(walker.currentNode);
  for(const text of texts){if(used.size>=limit)break;let best;
