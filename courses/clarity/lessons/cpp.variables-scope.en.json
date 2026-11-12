@@ -1,391 +1,265 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "b1-author-v1",
   "id": "cpp.variables-scope",
   "courseId": "cpp",
   "moduleId": "cpp.section.cpp-basics",
   "course": "C++ programming",
   "module": "C++ Foundations",
   "locale": "en",
-  "title": "Variables: why one name can refer to different objects",
-  "goal": "Trace a changing stock count, distinguish a copy from its source, and explain what happens when a name is shadowed.",
+  "title": "Variables: names, values and where they can be used",
+  "goal": "Create a variable, rename it consistently, update its value and calculate a small total. Then explain a simple block boundary.",
   "prerequisites": [
     {
-      "text": "int, const, initialization, and output labels from the first block."
-    },
-    {
-      "text": "Reading sequential statements. A nested block needs neither if nor a loop."
+      "text": "The types lesson introduced int price = 120; and distinguished type from value. We develop that skill here. No input, branching, loops or pointers are needed."
     }
+  ],
+  "terms": [
+    "cpp-variable",
+    "cpp-identifier",
+    "cpp-initialization",
+    "cpp-assignment",
+    "cpp-literal",
+    "cpp-int",
+    "cpp-block",
+    "cpp-scope",
+    "cpp-arithmetic"
   ],
   "sections": [
     {
-      "id": "concept-1",
-      "title": "Changing a stock count step by step",
+      "id": "orientation",
+      "title": "Why give a number a name",
       "paragraphs": [
-        "int stock{10}; creates an object initialized to 10. stock = 7; changes that existing object rather than creating another stock. In assignment, the left side identifies the destination and the right side produces the new value. In int snapshot = stock;, a similar sign introduces the initial value of a new object.",
-        "Read statements top to bottom and record state after each. stock = stock - 3; reads the old stock, computes the difference, and stores it back. It is not the mathematical equation stock = stock − 3. These small values are safe, but range reasoning still applies."
+        "Three notebooks at 120 currency units cost 360. You could write 120 * 3 directly in an output statement. But changing the price in multiple places makes it easy to miss one. A name such as price stores one current value and gives it meaning for a reader. The program does not understand the word “price”: humans supply the relationship to currency.",
+        "A variable connects a valid name, a type and a stored value. It is not an algebra equation that automatically recalculates other variables whenever something changes. Statements execute in order. If total received a product earlier, updating price does not update total without another assignment."
       ]
     },
     {
-      "id": "concept-2",
-      "title": "A snapshot does not follow its source",
+      "id": "declaration",
+      "title": "Read int price = 120; part by part",
       "paragraphs": [
-        "There were 10 items in stock. We copied that count into snapshot and then reduced the stock to 7. Should the old snapshot also become 7?",
-        "Name the two objects first: stock holds the current count, while snapshot holds the count recorded earlier. Predict both numbers on the last line before opening the comparison."
+        "int selects an integer type. price is the variable identifier, or name. = in this declaration introduces the initial value. 120 is an integer literal; ; ends the declaration. The variable is created with value 120. Read the whole line as “create the int variable price with initial value 120”.",
+        "For first identifiers, start with a Latin letter and continue with Latin letters, digits or _. Do not start with a digit, include spaces or use a keyword such as int. Case matters: price and Price are different identifiers. This is a convenient starting subset of C++ naming rules, not a claim that only Latin letters are allowed. Avoid leading underscores because some such names are reserved to the implementation."
       ],
-      "prediction": [
-        "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    stock = 7;\n    std::cout << stock << ' ' << snapshot << '\\n';\n    return 0;\n}\n"
-      ],
-      "reveal": {
-        "title": "Compare your prediction and follow the steps",
-        "paragraphs": [
-          "int snapshot = stock; creates a second int holding the current value of the first. Changing stock later leaves snapshot unchanged. Equal values do not imply one object. We may label them S and C in a trace; these are symbolic identifiers rather than actual memory addresses.",
-          "Print both values after changing the original to test copying. Printing stock twice does not observe snapshot at all. References and pointers are introduced in lesson eleven; do not use them as an unexplained shortcut here.",
-          "What if snapshot = stock is added after stock = 7? That is a separate assignment: the snapshot becomes 7 at that statement."
-        ],
-        "tables": [
-          {
-            "caption": "Follow the difficult step",
-            "columns": [
-              "After statement",
-              "stock",
-              "snapshot"
-            ],
-            "rows": [
-              [
-                "int stock{10};",
-                "10",
-                "not created yet"
-              ],
-              [
-                "int snapshot = stock;",
-                "10",
-                "10"
-              ],
-              [
-                "stock = 7;",
-                "7",
-                "10"
-              ]
-            ]
-          }
-        ],
-        "code": {
-          "language": "cpp",
-          "source": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    stock = 7;\n    std::cout << stock << ' ' << snapshot << '\\n';\n    return 0;\n}\n",
-          "stdin": "",
-          "output": "7 10\n"
-        }
-      }
-    },
-    {
-      "id": "concept-3",
-      "title": "An inner block changes an outer count",
-      "paragraphs": [
-        "A standalone pair of braces can form a nested block inside main. Its statements execute in sequence. A name adjustment declared within is available after its declaration inside the block, but not after its closing brace. An outer count remains visible inside unless another count declaration hides it.",
-        "Distinguish block braces from the initializer in int count{10};. One groups statements and the other provides an initial value. Indentation highlights boundaries, but braces rather than whitespace define them."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int count{10};\n    {\n        int adjustment{3};\n        count = count - adjustment;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "7\n7\n"
-      }
-    },
-    {
-      "id": "concept-4",
-      "title": "Two objects named count: which name is visible?",
-      "paragraphs": [
-        "The inner int count{3}; creates another object. count = 4; affects that object rather than the outer count{10}. After leaving the block, lookup finds the outer name again with value 10. The outer object was neither destroyed nor restored from a backup.",
-        "Shadowing is allowed in the shown nested block but often makes debugging harder. Prefer distinct meaningful names such as totalCount and batchCount in normal work. The intentional example teaches recognition of the false claim that changing the inner count changed the outer one."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "10\n4\n10\n"
-      },
       "tables": [
         {
-          "caption": "Which objects exist during shadowing",
+          "caption": "Five parts of one line",
           "columns": [
-            "Location",
-            "Outer count",
-            "Inner count",
-            "Which count is visible"
+            "Part",
+            "Role here"
           ],
           "rows": [
             [
-              "Before block",
-              "10",
-              "absent",
-              "outer"
+              "int",
+              "Type"
             ],
             [
-              "After int count{3}",
-              "10",
-              "3",
-              "inner"
+              "price",
+              "A chosen valid identifier"
             ],
             [
-              "After count = 4",
-              "10",
-              "4",
-              "inner"
+              "=",
+              "Introduces the initializer in a declaration"
             ],
             [
-              "After block",
-              "10",
-              "lifetime ended",
-              "outer"
+              "120",
+              "Initial-value literal"
+            ],
+            [
+              ";",
+              "Ends the declaration"
             ]
           ]
         }
       ]
     },
     {
-      "id": "concept-5",
-      "title": "A hidden name does not end an object’s lifetime",
+      "id": "assignment",
+      "title": "Creating and updating are different actions",
       "paragraphs": [
-        "Scope concerns source regions and name lookup; lifetime concerns execution. The outer int still exists while control is in the inner block, even when its name is hidden. For the simple automatic ints here, lifetime begins after initialization and ends when their block is left. This is a bounded account of the current examples, not every C++ storage category.",
-        "Bytes potentially remaining somewhere do not make access after lifetime safe. We perform no such access and never read uninitialized values. The state table and block diagram are a language-level model, not a promise about physical stack placement."
-      ]
-    },
-    {
-      "id": "concept-6",
-      "title": "Finding the first mismatch in a trace",
-      "paragraphs": [
-        "Before running, record events such as stock created, beforeSale copied, stock changed, and block left. List existing objects, visible names, and values at each event. Compare printed checkpoints with the table. The first disagreement can expose a mistaken mental model rather than a compiler defect.",
-        "Distinguish repairing a program from correcting your prediction. Both are useful if the original hypothesis and actual output are retained. Preserve failed predictions in the record because they identify the confusion that was resolved."
-      ]
-    },
-    {
-      "id": "diagnose-outside-block",
-      "title": "Intentional: a name outside its block",
-      "paragraphs": [
-        "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
-        "localCount is unavailable after the block."
+        "Later, price = 70; assigns a new value to the existing variable. Do not repeat int: we are not creating another price in the same block. First evaluate the right side, then store it in the variable on the left. Thus count = count - 1; reduces the previous count by one. It is not a mathematical assertion that count equals itself minus one.",
+        "In the example, count remains 3. Before the price update, 120 * 3 gives 360; after price = 70, 70 * 3 gives 210. The program state has changed. Before continuing, identify which value changed and which stayed the same."
       ],
       "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    { int localCount{3}; }\n    std::cout << localCount << '\\n';\n}\n",
-        "stdin": "",
-        "expectCompileFailure": true
-      },
-      "deep": {
-        "title": "Why is shadowing not a restoration of the old value?",
-        "text": "The outer object does not disappear when execution enters the block. A new declaration adds another object and name lookup selects the inner one. After the block, the inner object’s lifetime ends and lookup finds the outer one again. The final 10 was neither recalculated nor restored from a snapshot.",
-        "sourceId": "cpp20-basic.scope.block"
+        "source": "#include <iostream>\n\nint main() {\n    int price = 120;\n    int count = 3;\n    std::cout << price * count << \"\\n\";\n    price = 70;\n    std::cout << price * count << \"\\n\";\n    return 0;\n}\n",
+        "output": "360\n210\n",
+        "language": "cpp"
+      }
+    },
+    {
+      "id": "rename",
+      "title": "Rename consistently",
+      "paragraphs": [
+        "Rename price to unitPrice in your own copy. Change the declaration and every use of that variable: both products and the assignment. Output should stay 360 and 210. We changed a name, not the data or calculation rule.",
+        "If you change only the declaration, the compiler will encounter the old unknown name price. Do not add another variable just to silence the error; find the inconsistent use. Replacing * with + compiles but gives 73 rather than 210 for 70 and 3. A naming error is found by compilation; the wrong operation is found by comparison with the task."
+      ]
+    },
+    {
+      "id": "scope",
+      "title": "Where a name is available",
+      "paragraphs": [
+        "Braces can enclose a separate block inside main. A local name declared in that block can be used after its declaration within its scope; it does not become available outside. In this example, delivery is read inside the extra braces and price in the surrounding main body. This is a first simple scope case; lifetime, pointers and complex shadowing are unnecessary here.",
+        "Moving the delivery output after the inner block makes that name unavailable there. The computation did not randomly forget a digit: the source uses a name outside its scope. Fix the location of the use, or deliberately declare the necessary variable in the surrounding block. Do not delete braces at random."
+      ],
+      "code": {
+        "source": "#include <iostream>\n\nint main() {\n    int price = 120;\n    {\n        int delivery = 5;\n        std::cout << delivery << \"\\n\";\n    }\n    std::cout << price << \"\\n\";\n    return 0;\n}\n",
+        "output": "5\n120\n",
+        "language": "cpp"
       }
     },
     {
       "id": "independent-work",
-      "title": "Now solve a different problem",
+      "title": "Now make a different calculation",
       "paragraphs": [
-        "Print before, inside, after, and snapshot. The sale is declared inside a block, outer stock changes, and beforeSale retains the initial value. In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
-        "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+        "Four kits were booked for class at 25 currency units each. One kit was cancelled. In the task, update count using count = count - 1; before calculating total. Expect three remaining kits and a total of 75. There is no hidden requirement to write a cancellation condition: the one cancellation is given.",
+        "After checking, explain the order of statements. If total is computed before reducing count, it stays 100 until explicitly recalculated. Correct output together with that explanation shows more than a matching number: you traced a state change. This finishes the starting route; you can then return to the full 67-topic programme."
       ]
+    }
+  ],
+  "practice": {
+    "title": "On your own: one cancellation",
+    "task": "Initially there are 4 kits at 25 each. One is cancelled. In your starter, reduce count by one before calculating total, then produce remaining=3 and total=75. Rename price consistently to unitPrice. No input or if is needed.",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    int price = 25;\n    int count = 4;\n    // TODO: одна отмена / one cancellation\n    int total = price * count;\n    std::cout << \"remaining=\" << count << \"\\n\";\n    std::cout << \"total=\" << total << \"\\n\";\n    return 0;\n}\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n\nint main() {\n    int unitPrice = 25;\n    int count = 4;\n    count = count - 1;\n    int total = unitPrice * count;\n    std::cout << \"remaining=\" << count << \"\\n\";\n    std::cout << \"total=\" << total << \"\\n\";\n    return 0;\n}\n"
+    },
+    "stdin": "",
+    "stdinNote": "Leave the input field empty: this task sets every value in the program.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "metadata": {},
+    "returnAnchor": "orientation",
+    "cases": [
+      {
+        "label": "Reference result",
+        "input": "",
+        "output": "remaining=3\ntotal=75\n"
+      }
+    ],
+    "criteria": [
+      "count is 3 after cancellation.",
+      "total is calculated after the count update and equals 75.",
+      "Renaming is consistent; initialization and assignment are explained."
+    ],
+    "hint": "count - 1 uses the previous count. Store that result before calculating total.",
+    "passport": {
+      "goal": "Update a value and calculate a new result.",
+      "start": "price=25, count=4; the starter calculates before cancellation.",
+      "where": "Your work in main.cpp.",
+      "knowledge": "Declaration, assignment, multiplication, output and identifiers.",
+      "change": "Add one assignment and rename every use of price.",
+      "inputs": "Values are already in the program; stdin is empty.",
+      "result": "remaining=3\ntotal=75",
+      "checks": "Run and compare both lines; explain statement order separately.",
+      "errors": "Total computed before cancellation; inconsistent rename.",
+      "recovery": "Undo the last edit; return to your own saved state without loading the reference into the editor."
+    },
+    "exercises": [
+      {
+        "task": "In your copy of the example, rename price to unitPrice and retain output 360/210.",
+        "criteria": "The name changes everywhere, while values and output remain the same."
+      }
+    ],
+    "runAssessment": {
+      "lines": [
+        "remaining=3",
+        "total=75"
+      ]
+    },
+    "steps": [],
+    "externalRoute": ""
+  },
+  "contentRevision": "reference-start-20261112-v1",
+  "authored": true,
+  "referenceEdition": true,
+  "reading": [
+    {
+      "id": "ppp3",
+      "author": "Bjarne Stroustrup",
+      "title": "Programming: Principles and Practice Using C++, 3rd edition",
+      "edition": "2024; publisher description and author guidance",
+      "section": "2024; publisher description and author guidance",
+      "url": "https://www.stroustrup.com/PPP3.html",
+      "purpose": "Beginner audience and foundational approach",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
+    },
+    {
+      "id": "draft",
+      "author": "WG21",
+      "title": "C++ working draft",
+      "edition": "[intro.execution], [basic.start.main], [dcl.init], [expr.mul]",
+      "section": "[intro.execution], [basic.start.main], [dcl.init], [expr.mul]",
+      "url": "https://eel.is/c++draft/",
+      "purpose": "Technical rules; the draft is not a beginner lesson",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
     }
   ],
   "selfcheck": [
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "In the shadowing example, the outer count is 10; the inner one starts at 3 and becomes 4. What is printed before, inside and after the block?",
+      "prompt": "What does = do in int price = 120;?",
       "options": [
-        "10\n4\n10\n",
-        "10\n4\n4\n",
-        "10\n3\n10\n"
+        "Introduces the initial value when creating the variable",
+        "Compares two values",
+        "Prints 120"
       ],
       "correct": 0,
-      "feedback": [
-        "Correct: the outer object kept 10 throughout the inner object’s lifetime.",
-        "The inner declaration created a different object. Assigning 4 did not access the outer count.",
-        "The inner count starts at 3, but it is assigned 4 before it is printed."
-      ],
-      "recall": "concept-4",
-      "code": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
-      "execution": {
-        "source": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "expected": "10\n4\n10\n",
-        "label": "predict",
-        "files": {
-          "main.cpp": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n"
-        },
-        "metadata": {
-          "entryFile": "main.cpp"
-        }
-      }
+      "feedback": "This is a declaration with initialization. The later price = 70; is assignment.",
+      "recall": "orientation"
     },
     {
       "id": "concept-0",
       "kind": "choice",
-      "prompt": "What does int copy = original; create?",
+      "prompt": "count=4; total=25*count; count=count-1; What value is already stored in total?",
       "options": [
-        "A separate object with the current value",
-        "Another name for the same object",
-        "A permanent formula link"
+        "75",
+        "100",
+        "3"
       ],
-      "correct": 0,
-      "feedback": "Copying an int does not create an alias.",
-      "recall": "concept-2"
+      "correct": 1,
+      "feedback": "total does not automatically recalculate after count changes.",
+      "recall": "orientation"
     },
     {
       "id": "concept-1",
       "kind": "choice",
-      "prompt": "Is a shadowed outer count necessarily destroyed?",
+      "prompt": "Where can delivery, declared in an inner block, be used?",
       "options": [
-        "Yes",
-        "No: the name is hidden and the object still exists",
-        "Only when zero"
+        "Anywhere in any file",
+        "Within its scope after the declaration",
+        "Only after its closing brace"
       ],
       "correct": 1,
-      "feedback": "Name lookup and lifetime are different concerns.",
-      "recall": "concept-4"
+      "feedback": "The surrounding code does not gain that local name.",
+      "recall": "orientation"
     },
     {
       "id": "concept-2",
       "kind": "choice",
-      "prompt": "adjustment is unavailable after the block. How can you repair the report?",
+      "prompt": "After renaming price to unitPrice, what must change?",
       "options": [
-        "Read arbitrary bytes",
-        "Print inside or retain the required result in an outer object",
-        "Remove the header"
+        "Only the declaration",
+        "The declaration and every use of that variable",
+        "Every numeric value"
       ],
       "correct": 1,
-      "feedback": "The repair must respect scope and lifetime.",
-      "recall": "concept-3"
+      "feedback": "The name must be consistent; the values can stay the same.",
+      "recall": "orientation"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
-      "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
-      "recall": "concept-4"
+      "prompt": "Read int price = 120;, distinguish initialization from assignment and explain the calculation order after cancelling one kit.",
+      "feedback": "Compare your explanation with the walkthrough; it is not graded automatically.",
+      "recall": "orientation"
     }
-  ],
-  "practice": {
-    "title": "A warehouse state journal",
-    "task": "Print before, inside, after, and snapshot. The sale is declared inside a block, outer stock changes, and beforeSale retains the initial value. In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
-    "kind": "cpp-console",
-    "environment": "C++20",
-    "files": [
-      {
-        "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    stock = stock - 5;\n    std::cout << \"after=\" << stock << '\\n';\n    return 0;\n}\n"
-      }
-    ],
-    "metadata": {
-      "entryFile": "main.cpp"
-    },
-    "stdin": "",
-    "returnAnchor": "concept-3",
-    "recall": "concept-3",
-    "cases": [
-      {
-        "label": "Main transfer task",
-        "input": "",
-        "output": "before=12\ninside=7\nafter=7\nsnapshot=12\n"
-      }
-    ],
-    "criteria": [
-      "The initial snapshot remains unchanged.",
-      "stock retains its new value after the block.",
-      "Describe names and lifetimes without invented addresses.",
-      "Preserve three actual traces and their original predictions.",
-      "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
-    ],
-    "hint": "In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
-    "steps": [
-      {
-        "where": "My independent work",
-        "action": "Predict every checkpoint.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My independent work",
-        "action": "Distinguish stock, beforeSale, and sold objects.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My independent work",
-        "action": "Complete output and compare with the trace.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My independent work",
-        "action": "Test sales of 0 and 12 from initial stock 12.",
-        "why": "",
-        "expected": ""
-      }
-    ]
-  },
-  "terms": [
-    {
-      "term": "Variable",
-      "definition": "In these examples a named typed object with state; mutation is allowed unless the object is const."
-    },
-    {
-      "term": "Assignment",
-      "definition": "Replacing the value of an existing object, as in stock = 7;."
-    },
-    {
-      "term": "Name scope",
-      "definition": "The program region in which a name can be found under language rules."
-    },
-    {
-      "term": "Object lifetime",
-      "definition": "The period in which an object exists during execution, rather than a source line or merely name visibility."
-    },
-    {
-      "term": "Shadowing",
-      "definition": "An inner declaration with the same name hides the outer declaration during lookup in that block."
-    }
-  ],
-  "sourceRefs": [
-    "CPP20-SCOPE",
-    "CPP20-LIFETIME",
-    "CPP20-INIT-GENERAL",
-    "CPP-GUIDELINES"
-  ],
-  "extras": {
-    "lessonId": "cpp.variables-scope",
-    "locale": "en",
-    "visualization": null,
-    "sourceRefs": [
-      "CPP20-SCOPE",
-      "CPP20-LIFETIME",
-      "CPP20-INIT-GENERAL",
-      "CPP-GUIDELINES"
-    ],
-    "laboratory": {}
-  },
-  "sourcePath": "courses\\cpp\\gold\\basics\\variables-scope.en.json",
-  "reading": [
-    {
-      "id": "cpp20-basic.scope.block",
-      "author": "ISO/IEC JTC1/SC22/WG21",
-      "title": "Working Draft, Standard for Programming Language C++",
-      "edition": "N4861, 2020",
-      "section": "[basic.scope.block]",
-      "language": "English",
-      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
-      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.scope.block"
-    },
-    {
-      "id": "cpp20-basic.life",
-      "author": "ISO/IEC JTC1/SC22/WG21",
-      "title": "Working Draft, Standard for Programming Language C++",
-      "edition": "N4861, 2020",
-      "section": "[basic.life]",
-      "language": "English",
-      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
-      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
-    }
-  ],
-  "authored": true
+  ]
 }

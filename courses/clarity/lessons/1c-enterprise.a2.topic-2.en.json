@@ -1,466 +1,287 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "enterprise-a2-topic-2-author-v1",
   "id": "1c-enterprise.a2.topic-2",
   "courseId": "1c-enterprise",
   "moduleId": "1c-enterprise.a2",
   "course": "1C:Enterprise Fundamentals and Configuration",
   "module": "Infobases and objects",
   "locale": "en",
-  "title": "Your first customer record: create, save and find it again",
-  "goal": "Create a customer in your own training infobase, reopen the saved record and distinguish editing it from creating another.",
+  "title": "A customer card: create, save and find it again",
+  "goal": "Create a training customer, find the saved card, rename it and distinguish its name, code and identity.",
   "prerequisites": [
     {
-      "text": "Install official training 1C:Enterprise and create a separate empty file infobase. The lab guide covers these steps.",
-      "setup": true
-    },
-    {
-      "text": "This lab needs no programming, Nexus Studio, source archive or Windows Sandbox. Its route includes preparing the simple catalog.",
-      "setup": true
+      "text": "Use your service from the previous lesson with Customers/Services/Requests commands. If they are absent, complete the previous preparation. No programming or coded reference handling is required."
     }
+  ],
+  "terms": [
+    "customer",
+    "list",
+    "card",
+    "field",
+    "catalog",
+    "save",
+    "search",
+    "code",
+    "reference"
   ],
   "sections": [
     {
       "id": "orientation",
-      "title": "From a familiar situation to a checkable question",
+      "title": "Why keep a customer record",
       "paragraphs": [
-        "A customer calls again. Creating a similarly named customer is easy, but splits history between two cards. Follow one record: enter a name, save, reopen and rename it. Matching text alone does not establish identity; its code and reference help track the saved card."
+        "The same customer may return to the workshop. Re-entering a name from memory can produce inconsistent spellings and lose the relationship between visits. The Customers catalog keeps customer records separately from future requests. A card is the window for one record. Today a fictional name is enough; no phone, address or personal information is needed.",
+        "A field is a place for one value in a card. Наименование is the human-readable customer name. This configuration assigns a code automatically when saving. Do not invent a code in advance or expect your code to equal a screenshot’s number."
       ]
-    },
-    {
-      "id": "platform-contract",
-      "title": "Where to act",
-      "paragraphs": [
-        "Use installed 1C:Enterprise. Designer is needed only to prepare the new empty target; enter cards and requests in the application. Nexus provides explanation, example, reference and your note; it neither transfers records into 1C nor observes unsaved fields. These manual tasks need no BSL or Code Studio."
-      ]
-    },
-    {
-      "id": "concept-0",
-      "title": "Why a service desk needs a customer catalog",
-      "paragraphs": [
-        "Imagine a dispatcher receiving service requests. Typing each customer name again invites spelling differences and accidental duplicates. A catalog lets you save a customer once and later select that record in requests. We are not creating requests yet: the small goal is a clear customer list with a record you can find after closing its window. All names in the exercise are fictional.",
-        "In 1C a catalog defines records of the same kind. Клиенты is the kind of data; «Учебный Север» is one particular catalog item. A developer defines the available properties in Designer. A user fills those properties for a particular item in 1C:Enterprise mode. Creating a catalog definition and entering a customer are therefore different activities in different modes.",
-        "A list form displays several customers; an item form, called a customer card in this lesson, displays one. Create (Создать) opens a new card. Double-clicking a saved row opens an existing one. This matters when correcting a name: selecting Create again starts another customer instead of correcting the saved record."
-      ]
-    },
-    {
-      "id": "main-function",
-      "title": "Reason before acting",
-      "paragraphs": [
-        "Before saving, you are editing a new card. After Save and close the row is available in the list. Reopening retrieves saved values rather than merely displaying the previous input.",
-        "Identify the infobase, list and particular record separately. A command, visible text and saved state are different things."
-      ],
-      "code": {
-        "language": "text",
-        "source": "Empty list → Создать → Наименование: Учебный Север → Записать и закрыть → reopen the saved row"
-      }
     },
     {
       "id": "example-1",
-      "title": "Example beside its observation",
+      "title": "From an empty form to a saved row",
       "paragraphs": [
-        "Before saving, you are editing a new card. After Save and close the row is available in the list. Reopening retrieves saved values rather than merely displaying the previous input."
+        "In Enterprise mode open Customers and clear search. Choose Create. Enter Учебный Север in Наименование and leave the code automatic. Choose Save and close. Find the row again and reopen it by double-click or the normal open command. This checks persistence, rather than merely text that was typed.",
+        "The example shows the sequence and expected observation. Merely reading it does not create a customer in your base. The independent task uses different fictional names. Do not copy somebody else’s result into your self-report as evidence."
       ],
       "code": {
-        "language": "text",
-        "source": "Empty list → Создать → Наименование: Учебный Север → Записать и закрыть → reopen the saved row",
-        "output": "The author created North, saved and renamed the same card; its reference and code persist. South is a separate record. The list shows two own training cards."
-      },
-      "tables": [
-        {
-          "caption": "Worked example: a new card becomes a saved record",
-          "columns": [
-            "Step / condition",
-            "Observation",
-            "Why"
-          ],
-          "rows": [
-            [
-              "Open Клиенты",
-              "0 rows initially",
-              "Use a new empty training infobase with search cleared."
-            ],
-            [
-              "Choose Создать",
-              "A new card opens",
-              "No saved list record has yet been confirmed."
-            ],
-            [
-              "Enter the description",
-              "Text is visible in the field",
-              "Typing does not replace the save command."
-            ],
-            [
-              "Choose Записать и закрыть",
-              "1 row in the list",
-              "Wait for the save result."
-            ],
-            [
-              "Reopen that row",
-              "The same description and code",
-              "Check that the saved card remains accessible."
-            ]
-          ]
-        },
-        {
-          "caption": "Edit an existing customer, then add a second",
-          "columns": [
-            "Step / condition",
-            "Observation",
-            "Why"
-          ],
-          "rows": []
-        }
-      ]
-    },
-    {
-      "id": "concept-1",
-      "title": "What Code and Description mean",
-      "paragraphs": [
-        "Our simple configuration has the standard Code (Код) and Description (Наименование) attributes. Description is text intended for people; enter «Учебный Север». Code helps distinguish rows. This lab uses automatic numbering, so leave the new code empty and inspect the value assigned when saving. Do not copy another record’s code or assume that every configuration uses the same numbering rules.",
-        "A visible field belongs to a form. An attribute is the data property whose value the field helps a user enter. For example, the Наименование field edits the Наименование attribute. The platform can generate forms for this simple catalog, so you need not design an entire window before entering the first record. A later lesson explains custom forms after you understand the user’s required actions.",
-        "Text visible in an open new card is not sufficient proof of durable saving. Choose Save and close (Записать и закрыть), wait for the list and check that a row appears. Open it again and inspect the value. Reopening distinguishes saved data from text that was merely displayed in an input. Do not close the entire application immediately after pressing Save without checking its result."
-      ]
-    },
-    {
-      "id": "predict",
-      "title": "Predict the result",
-      "paragraphs": [
-        "North is renamed “Training North — repair”. Do its existing requests need a new customer card?"
-      ],
-      "reveal": {
-        "title": "Check the reasoning",
-        "paragraphs": [
-          "No. Editing a saved card changes the display name of that record. The author experiment preserves its code and reference. Create would make another record; an identical name would not turn it into the old one."
-        ]
+        "source": "Клиенты → Создать → Наименование: Учебный Север → Записать и закрыть → найти → открыть",
+        "output": "The reopened card shows Учебный Север and its automatically assigned code.",
+        "language": "text"
       }
     },
     {
-      "id": "concept-2",
-      "title": "One record, a new description: avoid an accidental duplicate",
+      "id": "save",
+      "title": "Typed does not mean saved",
       "paragraphs": [
-        "A saved item has its own identity. A reference allows the application to point to that item; its displayed description is only a human-readable representation. Open the existing customer, change «Учебный Север» to «Учебный Север — ремонт» and save. You are editing the same card. In this lab confirm that its code is unchanged and no additional list row has appeared.",
-        "Create starts a different workflow: a new card becomes a separate record when saved. Calling it «Учебный Север» does not automatically combine it with another customer. Our simple training catalog deliberately does not enforce unique descriptions. Search and compare available attributes before adding a new customer. A real application’s duplicate detection rules are a separate design decision.",
-        "Similar row text alone cannot prove reference equality. For now use the observable difference: renaming an existing customer leaves one row with its previous code, whereas creating «Учебный Юг» adds a second row with its own code. Programming with references and documents comes later. This introductory lab requires no GUID inspection or service identifier processing."
+        "Before saving, the text may exist only in the open form. Closing and discarding changes is not saving. Our criterion therefore has two actions: save, then reopen the found row. If you forgot to save, return to the form and use its save action; do not create repeated copies through Create.",
+        "Search helps find rows by text. If a saved row is invisible, clear the earlier query, refresh the list and verify the base. Search does not delete records; it can temporarily hide nonmatching rows. One filtered list is not proof that a customer disappeared."
       ]
     },
     {
-      "id": "trace",
-      "title": "Context and transitions",
+      "id": "identity",
+      "title": "Rename a record or create another customer",
       "paragraphs": [
-        "Read the path and explain what changes at each step. The diagram does not operate the external application."
-      ],
-      "flow": {
-        "caption": "From a catalog definition to a saved record",
-        "nodes": [
-          {
-            "title": "Клиенты catalog",
-            "lines": [
-              "The Designer definition specifies item properties. No particular customer has yet been entered."
-            ]
-          },
-          {
-            "title": "New card",
-            "lines": [
-              "Create opens an item form. Entered text must still be saved."
-            ]
-          },
-          {
-            "title": "Save and close",
-            "lines": [
-              "The platform saves the item; its description and code appear in the list."
-            ]
-          },
-          {
-            "title": "Reopen that row",
-            "lines": [
-              "Reopening retrieves the saved values of that same card."
-            ]
-          }
-        ],
-        "alternative": [
-          "Клиенты catalog: The Designer definition specifies item properties. No particular customer has yet been entered.",
-          "New card: Create opens an item form. Entered text must still be saved.",
-          "Save and close: The platform saves the item; its description and code appear in the list.",
-          "Reopen that row: Reopening retrieves the saved values of that same card."
-        ],
-        "textLabel": "Read the diagram as text"
-      }
-    },
-    {
-      "id": "counterexample",
-      "title": "Check the explanation’s boundary",
-      "paragraphs": [
-        "In the customer-list search box enter “Несуществующий учебный клиент” (a deliberately nonexistent training name), then press Enter. Observe an empty list. Select the clear × at the right of the search box: both saved cards must reappear. Search hides rows; it does not delete records.",
-        "Cancel the unsaved new card. Double-click the existing row and edit it. If a duplicate was already saved, inspect which record you created; do not delete the original at random."
-      ]
-    },
-    {
-      "id": "concept-3",
-      "title": "An empty list, search and reopening",
-      "paragraphs": [
-        "An empty visible list does not always mean data loss. You may have opened another catalog or infobase, or retained a search filter. After renaming a customer, searching for its complete old description may no longer match it. Clear the search and inspect the full list. Sorting changes row order; filters change visible membership. Neither action alone creates or deletes customers.",
-        "To check saving, close 1C:Enterprise mode and reopen the same training infobase from the launcher. Verify its displayed name and directory. Open Клиенты, clear search and find both rows. Reopen each card. If both descriptions and their separate codes are present, the reopening check has succeeded. Preserve a screenshot containing only the fictional training data.",
-        "Nexus provides the route and stores your own completion report. It does not see the external 1C window and cannot automatically confirm that your card appeared. Preserve the actual infobase and observations separately. Use the platform’s .dt dump for backup and another new infobase for restoration checks. Creating a copy must not replace the original training work."
+        "Reopen the earlier card and change only its name to Учебный Север — сервис. Save and reopen. Its code remains the one you observed before renaming: the same record now has a new label. Creating another customer through Create is a different action. Identical names alone do not prove identical records.",
+        "A record has its own identity; 1C applications refer to it through a reference. The essential meaning is that a request selects a particular customer, not just similar text. No UUID study or BSL is required here. The code in this catalog and reopening help you navigate; a code is not globally unique across every infobase."
       ]
     },
     {
       "id": "independent-work",
-      "title": "A new independent task",
+      "title": "Two new customers for your service",
       "paragraphs": [
-        "In your prepared practice create “Training East”, save and reopen it. Record its actual code. Rename that same card to “Training East — service”. Separately create “Training West”. Close and reopen the list, find both records and compare East’s code before and after. Do not rename North from the worked example.",
-        "Record a prediction first. After your own attempt reveal the reference and compare the selected record as well as its number."
+        "Create Учебный Восток, save it and find it again. Note its actual code. Rename that same card to Учебный Восток — сервис. Then use Create separately for Учебный Запад. With search cleared, both records must be available; any example records you created remain as well.",
+        "Compare the results: East has a new label with its earlier code; West has a separate card. Explain why a future request cannot reliably choose a customer merely by a similar name. The next lesson uses your East record, so preserve your work rather than clearing the list."
       ]
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "On your own: East and West",
+    "task": "Create Учебный Восток, save and reopen it. Rename that same card to Учебный Восток — сервис. Separately create Учебный Запад. Find and open both, comparing their actual codes while preserving earlier example records.",
+    "environment": "Official installed 1C in a separate training infobase. Nexus shows the lesson and keeps an optional draft; it does not run this program.",
+    "externalRoute": "Follow the steps labelled by application. The self-report field records your external observation; it is not Nexus verification.",
+    "files": [],
+    "passport": {
+      "goal": "Save, find, rename and distinguish two records.",
+      "start": "Your service from the previous lesson; existing records remain.",
+      "where": "Enterprise → Customers.",
+      "knowledge": "List, card, field, save and search are explained above.",
+      "change": "Names of your new fictional customers; codes are automatic.",
+      "inputs": "Учебный Восток; Учебный Запад",
+      "result": "Renamed East with its earlier code, and a separate West.",
+      "checks": "Reopen both rows and keep your observation record.",
+      "errors": "Closing without saving, an old search, or creating instead of renaming.",
+      "recovery": "Discard an unsaved form edit and find the earlier record. Do not delete the base or earlier customers."
+    },
+    "steps": [
+      {
+        "where": "Enterprise → Customers",
+        "action": "Create and save East; reopen it and record its actual code.",
+        "why": "So the action has an observable, reproducible result.",
+        "expected": "East is found again."
+      },
+      {
+        "where": "Same card, then list",
+        "action": "Rename East, then create West separately. Clear search and open both cards.",
+        "why": "So the action has an observable, reproducible result.",
+        "expected": "Two distinct records and one changed label."
+      }
+    ],
+    "cases": [
+      {
+        "label": "After returning",
+        "input": "Open East and West from the list.",
+        "output": "East — service retains its previously observed code; West is separate. Your actual codes can differ from examples."
+      }
+    ],
+    "criteria": [
+      "Both cards were actually reopened.",
+      "Renaming was performed in the existing card.",
+      "Earlier records are preserved; real personal data was not used."
+    ],
+    "hint": "To rename, open the found row; Create begins a different customer.",
+    "returnAnchor": "orientation",
+    "setupGuide": true,
+    "referenceSolution": {
+      "language": "text",
+      "source": "Example comparison: East was created, saved and reopened. Record its actual code in your own notes. Renaming that card produces Учебный Восток — сервис with its earlier code. West is created separately with its own card and code. A name is a label; record identity remains. Both rows are available after clearing search, and earlier customers remain. Use codes from your base, not from this reference.",
+      "paragraphs": [
+        "A reference for reasoning and expected observation. It neither fills your record nor certifies completion."
+      ]
+    }
+  },
+  "contentRevision": "reference-start-20261112-v1",
+  "authored": true,
+  "referenceEdition": true,
+  "reading": [
+    {
+      "id": "platform",
+      "author": "1C LLC",
+      "title": "Practical Developer Guide",
+      "edition": "Creating an infobase; Module types",
+      "section": "Creating an infobase; Module types",
+      "url": "https://1c-dn.com/library/tutorials/practical_developer_guide_creating_an_infobase/",
+      "purpose": "Preparation of a separate infobase",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
     },
     {
-      "id": "native-place",
-      "title": "Actual training-service window",
-      "paragraphs": [
-        "The author checked actual CF loading into a new own infobase, saving and renaming customers, 30/45 requests, refusal without Customer and a separate new 20/55 experiment. All four records were compared after restarting; the worked pair is preserved. Three GUI captures show only their labelled states. Learner actions, installer, permissions, training build 1508 and complete manual entry of every form are not verified."
-      ],
-      "figures": [
-        {
-          "src": "media/tutorials/v2/a2-saved-customers-output.jpg",
-          "width": 1438,
-          "height": 753,
-          "sha256": "ed234c88097199f8594eeb82df68eaa9b994fe291d5834eddfd0ac396e0cb676",
-          "uiLocale": "ru",
-          "platformVersion": "8.3.27.2214",
-          "assetRoot": "clarity",
-          "alt": "Renamed North and separate South in the own catalog. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
-          "caption": "Renamed North and separate South in the own catalog. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
-          "callouts": []
-        }
-      ]
-    },
-    {
-      "id": "limits",
-      "title": "What the result establishes",
-      "paragraphs": [
-        "The author checked actual CF loading into a new own infobase, saving and renaming customers, 30/45 requests, refusal without Customer and a separate new 20/55 experiment. All four records were compared after restarting; the worked pair is preserved. Three GUI captures show only their labelled states. Learner actions, installer, permissions, training build 1508 and complete manual entry of every form are not verified.",
-        "Technical checks do not assess understanding. Distinguish your observations from unperformed steps. Training names, numbers and comments are fictional; no work data is required."
-      ]
+      "id": "syntax",
+      "author": "Фирма «1С»",
+      "title": "Синтакс-помощник",
+      "edition": "Контекст, методы и встроенный язык",
+      "section": "Контекст, методы и встроенный язык",
+      "url": "https://v8.1c.ru/platforma/sintaks-pomoshchnik/",
+      "purpose": "Native context and syntax help",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
     }
   ],
   "selfcheck": [
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "North is renamed “Training North — repair”. Do its existing requests need a new customer card?",
+      "prompt": "How do you check that an entered customer was actually saved?",
       "options": [
-        "No: edit the same record",
-        "Yes: the name creates a new reference",
-        "Yes: the old card is deleted"
+        "Look at text in an unsaved form",
+        "Save, find the row and reopen it",
+        "Write a Nexus note"
       ],
-      "correct": 0,
-      "feedback": "No. Editing a saved card changes the display name of that record. The author experiment preserves its code and reference. Create would make another record; an identical name would not turn it into the old one.",
-      "recall": "predict"
+      "correct": 1,
+      "feedback": "Reopening checks the persisted state.",
+      "recall": "orientation"
     },
     {
       "id": "check-0",
       "kind": "choice",
-      "prompt": "Where do you enter a particular customer’s description in this lab?",
+      "prompt": "Renaming the existing card necessarily creates another customer?",
       "options": [
-        "In the Name property of the configuration object.",
-        "In a new catalog item card in 1C:Enterprise mode.",
-        "In the Nexus Studio course selector."
+        "Yes",
+        "No, it can be the same record with a new label",
+        "The infobase always changes"
       ],
       "correct": 1,
-      "feedback": "The Клиенты definition describes the application. A user enters «Учебный Север» in the item card.",
-      "recall": "concept-0"
+      "feedback": "Creating another record differs from changing its name.",
+      "recall": "orientation"
     },
     {
       "id": "check-1",
       "kind": "choice",
-      "prompt": "How do you correct the description while keeping the existing record?",
+      "prompt": "After saving, a row is invisible under an earlier search. What is a safe first action?",
       "options": [
-        "Open its row, edit the description, save and check that its previous code remains.",
-        "Choose Create and enter the corrected description.",
-        "Rename the catalog in Designer."
+        "Delete the base",
+        "Clear search and verify the base",
+        "Create five identical customers"
       ],
-      "correct": 0,
-      "feedback": "Editing an existing card preserves its identity. Create starts another record.",
-      "recall": "concept-1"
+      "correct": 1,
+      "feedback": "Filtering can hide an existing row.",
+      "recall": "orientation"
     },
     {
       "id": "check-2",
       "kind": "choice",
-      "prompt": "After renaming, searching for the complete old description shows an empty list. What should you check first?",
+      "prompt": "Your code differs from an example. Is that necessarily wrong?",
       "options": [
-        "Whether the installed platform has stopped working.",
-        "Whether the whole configuration needs rebuilding.",
-        "Clear search, check the selected infobase and inspect the full list."
+        "Yes",
+        "No: record the actual automatically assigned code",
+        "Manually enter the example’s code"
       ],
-      "correct": 2,
-      "feedback": "A filter can hide an existing record. Empty visible results do not prove data deletion.",
-      "recall": "concept-2"
+      "correct": 1,
+      "feedback": "Observe identification rather than guessing a number.",
+      "recall": "orientation"
     },
     {
       "id": "transfer",
       "kind": "choice",
-      "prompt": "East has a new name; West looks similar. How do you choose the intended record?",
+      "prompt": "What does Create do instead of reopening East?",
       "options": [
-        "Open the intended row and check its code",
-        "Use only a similar name",
-        "Create a third card"
+        "Starts another record",
+        "Always renames East",
+        "Permanently clears search"
       ],
       "correct": 0,
-      "feedback": "East had my actual code before editing; renaming the same card preserved it. Reopening shows “Training East — service”. West was created separately, has a different code/reference and its own row. The author’s technical experiment additionally compares references: East before equals East after, and East differs from West. The learner UI exposes the code and reopened values; a name alone does not establish reference identity.",
-      "recall": "independent-work"
+      "feedback": "Open an existing card to rename it.",
+      "recall": "orientation"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "How did you distinguish the selected record, unsaved input and saved result? Give your own observation and the check’s limit.",
-      "feedback": "This free response is not graded automatically. Compare it with actual fields in your own infobase.",
-      "recall": "trace"
+      "prompt": "Explain name, observed code and customer identity using your rename and separate creation.",
+      "feedback": "Compare your explanation with the walkthrough; it is not graded automatically.",
+      "recall": "orientation"
     }
   ],
-  "practice": {
-    "kind": "installed-1c",
-    "title": "Your first customer record: create, save and find it again",
-    "task": "In your prepared practice create “Training East”, save and reopen it. Record its actual code. Rename that same card to “Training East — service”. Separately create “Training West”. Close and reopen the list, find both records and compare East’s code before and after. Do not rename North from the worked example.",
-    "environment": "Primary workflow: normally installed official training 1C, a separate new file infobase, Designer only for preparation and 1C:Enterprise for customer cards. No code, Studio or Sandbox required.",
-    "externalRoute": "Installed official training 1C",
-    "setupGuide": true,
-    "files": [],
-    "referenceSolution": {
-      "language": "text",
-      "source": "East had my actual code before editing; renaming the same card preserved it. Reopening shows “Training East — service”. West was created separately, has a different code/reference and its own row. The author’s technical experiment additionally compares references: East before equals East after, and East differs from West. The learner UI exposes the code and reopened values; a name alone does not establish reference identity.",
-      "files": {
-        "Observation.txt": "East had my actual code before editing; renaming the same card preserved it. Reopening shows “Training East — service”. West was created separately, has a different code/reference and its own row. The author’s technical experiment additionally compares references: East before equals East after, and East differs from West. The learner UI exposes the code and reopened values; a name alone does not establish reference identity."
-      },
-      "paragraphs": [
-        "This is a reasoning reference, not an automatic completion certificate. Opening it does not replace your note."
-      ]
-    },
-    "returnAnchor": "trace",
-    "cases": [
-      {
-        "label": "New independent work",
-        "input": "In your prepared practice create “Training East”, save and reopen it. Record its actual code. Rename that same card to “Training East — service”. Separately create “Training West”. Close and reopen the list, find both records and compare East’s code before and after. Do not rename North from the worked example.",
-        "output": "East had my actual code before editing; renaming the same card preserved it. Reopening shows “Training East — service”. West was created separately, has a different code/reference and its own row. The author’s technical experiment additionally compares references: East before equals East after, and East differs from West. The learner UI exposes the code and reopened values; a name alone does not establish reference identity."
-      }
-    ],
-    "criteria": [
-      "Name the own infobase, exact records and observations after reopening.",
-      "The new task preserves the worked example; only intended fields change.",
-      "An expected refusal is not reported as a successful save; unperformed steps are explicit."
-    ],
-    "hint": "No. Editing a saved card changes the display name of that record. The author experiment preserves its code and reference. Create would make another record; an identical name would not turn it into the old one.",
-    "steps": [
-      {
-        "id": "own-1",
-        "title": "Create East",
-        "where": "Customers in own practice",
-        "action": "Create “Training East”, save and close, reopen that row and note its code.",
-        "why": "Check a particular saved state.",
-        "expected": "Name and actual code are read after saving."
-      },
-      {
-        "id": "own-2",
-        "title": "Edit the same record",
-        "where": "Open East card",
-        "action": "Change only the name to “Training East — service”. Save, close and reopen the row.",
-        "why": "Check a particular saved state.",
-        "expected": "New name, same code."
-      },
-      {
-        "id": "own-3",
-        "title": "Create another record",
-        "where": "Customers list",
-        "action": "Use Create to save “Training West”. Compare its code with East’s.",
-        "why": "Check a particular saved state.",
-        "expected": "Two distinct cards, not two versions of a name."
-      },
-      {
-        "id": "own-4",
-        "title": "Find again",
-        "where": "Reopened list; Nexus",
-        "action": "Clear search and find both cards. Note your codes and explain why a matching name does not replace selecting a record.",
-        "why": "Check a particular saved state.",
-        "expected": "Saved values are distinguished from unsaved input."
-      }
-    ]
-  },
-  "terms": [
-    "catalog",
-    "catalog-item",
-    "attribute",
-    "form",
-    "reference",
-    "designer",
-    "infobase",
-    "enterprise-mode"
-  ],
-  "sourcePath": "courses/1c-enterprise/lessons/en/a2-references.json",
   "assessment": {
-    "contentRevision": "enterprise-a2-topic-2-author-v1",
+    "contentRevision": "reference-start-20261112-v1",
+    "sharedRefs": [],
     "quiz": [
       {
-        "question": "North is renamed “Training North — repair”. Do its existing requests need a new customer card?",
+        "question": "How do you check that an entered customer was actually saved?",
         "options": [
-          "No: edit the same record",
-          "Yes: the name creates a new reference",
-          "Yes: the old card is deleted"
-        ],
-        "correct": 0,
-        "explanation": "No. Editing a saved card changes the display name of that record. The author experiment preserves its code and reference. Create would make another record; an identical name would not turn it into the old one."
-      },
-      {
-        "question": "Where do you enter a particular customer’s description in this lab?",
-        "options": [
-          "In the Name property of the configuration object.",
-          "In a new catalog item card in 1C:Enterprise mode.",
-          "In the Nexus Studio course selector."
+          "Look at text in an unsaved form",
+          "Save, find the row and reopen it",
+          "Write a Nexus note"
         ],
         "correct": 1,
-        "explanation": "The Клиенты definition describes the application. A user enters «Учебный Север» in the item card."
+        "explanation": "Reopening checks the persisted state."
       },
       {
-        "question": "How do you correct the description while keeping the existing record?",
+        "question": "Renaming the existing card necessarily creates another customer?",
         "options": [
-          "Open its row, edit the description, save and check that its previous code remains.",
-          "Choose Create and enter the corrected description.",
-          "Rename the catalog in Designer."
+          "Yes",
+          "No, it can be the same record with a new label",
+          "The infobase always changes"
+        ],
+        "correct": 1,
+        "explanation": "Creating another record differs from changing its name."
+      },
+      {
+        "question": "After saving, a row is invisible under an earlier search. What is a safe first action?",
+        "options": [
+          "Delete the base",
+          "Clear search and verify the base",
+          "Create five identical customers"
+        ],
+        "correct": 1,
+        "explanation": "Filtering can hide an existing row."
+      },
+      {
+        "question": "Your code differs from an example. Is that necessarily wrong?",
+        "options": [
+          "Yes",
+          "No: record the actual automatically assigned code",
+          "Manually enter the example’s code"
+        ],
+        "correct": 1,
+        "explanation": "Observe identification rather than guessing a number."
+      },
+      {
+        "question": "What does Create do instead of reopening East?",
+        "options": [
+          "Starts another record",
+          "Always renames East",
+          "Permanently clears search"
         ],
         "correct": 0,
-        "explanation": "Editing an existing card preserves its identity. Create starts another record."
-      },
-      {
-        "question": "After renaming, searching for the complete old description shows an empty list. What should you check first?",
-        "options": [
-          "Whether the installed platform has stopped working.",
-          "Whether the whole configuration needs rebuilding.",
-          "Clear search, check the selected infobase and inspect the full list."
-        ],
-        "correct": 2,
-        "explanation": "A filter can hide an existing record. Empty visible results do not prove data deletion."
-      },
-      {
-        "question": "East has a new name; West looks similar. How do you choose the intended record?",
-        "options": [
-          "Open the intended row and check its code",
-          "Use only a similar name",
-          "Create a third card"
-        ],
-        "correct": 0,
-        "explanation": "East had my actual code before editing; renaming the same card preserved it. Reopening shows “Training East — service”. West was created separately, has a different code/reference and its own row. The author’s technical experiment additionally compares references: East before equals East after, and East differs from West. The learner UI exposes the code and reopened values; a name alone does not establish reference identity."
+        "explanation": "Open an existing card to rename it."
       }
     ]
-  },
-  "reading": [
-    {
-      "id": "official-8327",
-      "title": "1C:Enterprise Developer Guide 8.3.27",
-      "author": "1C Company",
-      "edition": "8.3.27",
-      "section": "Catalogs, documents and forms",
-      "language": "English",
-      "purpose": "Optional clarification after your attempt; required steps are provided in the lesson.",
-      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
-    }
-  ],
-  "authored": true,
-  "authoringPath": "courses/clarity/authoring/1c-enterprise.a2.topic-2.en.json"
+  }
 }

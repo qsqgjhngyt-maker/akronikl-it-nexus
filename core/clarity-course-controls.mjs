@@ -1,5 +1,6 @@
 // Явные действия ученика используют существующие отметки/попытки.
 // Смена раздела, runtime PASS и самоотчёт не создают завершение автоматически.
+import {REFERENCE_IDS} from './reference-course-routes.mjs';
 export function mountCourseControls(root,{lesson,adapter,session,isCurrent,onSaved=()=>{}}){
  const en=lesson.locale==='en',say=(ru,enText)=>en?enText:ru,control=new AbortController();
  const host=root.querySelector('[data-course-progress]'),check=root.querySelector('[data-course-checkpoint]');
@@ -9,6 +10,9 @@ export function mountCourseControls(root,{lesson,adapter,session,isCurrent,onSav
  const status=document.createElement('p');status.setAttribute('role','status');host.append(status);
  function render(){if(!isCurrent())return;const value=entry();status.textContent=(value.completed?say('Сохранённая отметка прохождения есть. ','A saved completion mark exists. '):say('Урок ещё не отмечен пройденным. ','No completion mark yet. '))+(Array.isArray(value.attempts)?say('Сохранённых попыток: ','Saved attempts: ')+value.attempts.length+'. ':'')+say('Это ваш учёт работы, а не подтверждение понимания преподавателем.','This records your work; it is not a teacher’s assessment of understanding.');}
  render();
+ if(REFERENCE_IDS.includes(lesson.id)){
+  const note=document.createElement('p');note.dataset.referencePriorProgress='';note.textContent=say('Прежние попытки и личные отметки сохранены. Они не являются проверкой нового задания этой редакции.','Earlier attempts and personal marks are retained. They do not verify the new task in this edition.');host.prepend(note);
+ }
  if(cpp&&adapter.progress){button(host,say('Изменить мою отметку прохождения','Change my completion mark'),()=>adapter.progress(old=>({completed:!old.completed})));}
  if(!cpp&&lesson.assessment&&adapter.recordAttempt&&adapter.complete){
   const qs=lesson.selfcheck.filter(q=>q.kind!=='free');

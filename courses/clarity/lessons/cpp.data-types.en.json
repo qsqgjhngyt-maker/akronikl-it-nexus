@@ -1,520 +1,320 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "types-author-v1",
   "id": "cpp.data-types",
   "courseId": "cpp",
   "moduleId": "cpp.section.cpp-basics",
   "course": "C++ programming",
   "module": "C++ Foundations",
   "locale": "en",
-  "title": "Data types: where did half a minute go?",
-  "goal": "Choose a type that fits the meaning of your data, explain division results, and check that your program stores the value the task actually needs.",
+  "title": "Data types: where half a minute goes",
+  "goal": "Distinguish whole, fractional, text and Boolean values, read a simple declaration and preserve the fractional part of an average.",
   "prerequisites": [
     {
-      "text": "You have met main, std::cout, variables and number literals in the preceding lessons. New library expressions are explained here."
+      "text": "You have already changed a std::cout message. Type, value and variable are introduced here before you need them. Input, loops, pointers and advanced numeric limits are not required."
     }
+  ],
+  "terms": [
+    "cpp-int",
+    "cpp-double",
+    "cpp-char",
+    "cpp-bool",
+    "cpp-string",
+    "cpp-variable",
+    "cpp-initialization",
+    "cpp-division",
+    "cpp-library"
   ],
   "sections": [
     {
-      "id": "division",
-      "title": "Two journeys, two answers",
+      "id": "orientation",
+      "title": "The same digits can mean different things",
       "paragraphs": [
-        "Two journeys took 14 and 17 minutes. Their average lies halfway between them: 15.5 minutes. Let us write double average = (14 + 17) / 2;. What value do you expect average to hold?",
-        "Before running anything, compare the two expressions below. Both start with the same sum, 31. Only the divisor changes. Predict both results, then open the explanation."
-      ],
-      "prediction": [
-        "double first = 31 / 2;",
-        "double second = 31 / 2.0;"
-      ],
-      "reveal": {
-        "title": "Check your prediction: when did half a minute disappear?",
-        "paragraphs": [
-          "C++ first adds two integers, producing 31 of type int. In the first expression the divisor, 2, is also an int. Integer division discards the fractional part and produces 15. Only then is that result stored in a double. The destination can hold a fraction, but it cannot recover one already discarded.",
-          "In the second expression 2.0 has type double. Before division, 31 is converted to double, and the operation produces 15.5. In the table, 15.0 describes the stored value; default output could display it as 15. In the program below, std::fixed and std::setprecision(1), provided by <iomanip>, request one digit after the decimal point. They change formatting, not the calculation.",
-          "For the number of complete groups of ten in 37 parts, 37 / 10 gives the answer we need: 3. For the average of two shifts that produced 18 and 19 parts, we need 18.5: (18 + 19) / 2.0. The question determines which result is useful. Division by zero is invalid. With negative integers the fractional part is also discarded towards zero: -31 / 2 gives -15."
-        ],
-        "tables": [
-          {
-            "caption": "31 / 2 → 15 → 15.0; 31 / 2.0 → 15.5 → 15.5",
-            "columns": [
-              "Expression",
-              "C++ division result",
-              "Stored in double"
-            ],
-            "rows": [
-              [
-                "31 / 2",
-                "15 (int)",
-                "15.0"
-              ],
-              [
-                "31 / 2.0",
-                "15.5 (double)",
-                "15.5"
-              ]
-            ]
-          }
-        ],
-        "code": {
-          "language": "cpp",
-          "source": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    double first = (14 + 17) / 2;\n    double second = (14 + 17) / 2.0;\n    std::cout << std::fixed << std::setprecision(1);\n    std::cout << \"integer division: \" << first << \"\\n\";\n    std::cout << \"real division: \" << second << \"\\n\";\n}\n",
-          "stdin": "",
-          "output": "integer division: 15.0\nreal division: 15.5\n"
-        }
-      }
-    },
-    {
-      "id": "meaning",
-      "title": "What do we want to store?",
-      "paragraphs": [
-        "Set the journeys aside for a moment. A class registration record needs a participant count, a room label, a registration flag and a table length. We can print all four, but they mean different things and support different operations. A type describes the values an object can hold and the operations available for it.",
-        "Use int for a small whole-number count; it can also hold negative values. Use bool for a yes-or-no flag, written true or false. A char can hold a single Latin label such as 'B'. It is one code unit, not an arbitrary character from every alphabet or a room name. Use double for a measured length such as 2.5 metres. Put the unit in a name such as lengthMeters: double does not know about metres.",
-        "In this task counts range from 0 to 1000 and lengths from 0 to 100 metres. These are task limits, not type limits. unsigned int holds non-negative integers, but does not check that our subtraction makes sense. A normally positive count is not by itself a reason to use it. signed int and int name the same type."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int itemCount{12};\n    unsigned int shelfCount{3};\n    double lengthMeters{2.5};\n    char category{'A'};\n    bool ready{true};\n    std::cout << itemCount << ' ' << shelfCount << ' ' << lengthMeters << '\\n';\n    std::cout << category << ' ' << ready << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "12 3 2.5\nA 1\n"
-      }
-    },
-    {
-      "id": "initialisation",
-      "title": "Give the value a starting point",
-      "paragraphs": [
-        "Imagine a labelled box that has not yet been given a value. Writing int count; inside main does not let us read count as zero. Printing it would not be a safe experiment. Initialisation gives an object its starting value when it is created.",
-        "int count{12}; starts count at 12. These braces enclose an initial value, not a function body. int count = 12; also starts at 12. Empty braces in int count{}; give zero, while bool ready{}; gives false. In our next program they print as 0 and 0.",
-        "Braces provide a useful check: int count{2.5}; is rejected because this narrowing conversion would lose the fraction. That is an intentionally invalid line, not runnable starter code. Decide whether you mean two whole units or two and a half; the latter needs a floating-point type such as double."
+        "One journey took 17 minutes, another 20. To find their average duration, add the times and divide by two. On paper, 37 divided by 2 is 18.5 minutes. Half a minute is 30 seconds, not an amount we decided to discard. Let us see why a program might show 18 instead.",
+        "A value is particular data, such as 17, 18.5 or the text \"route\". A type determines permitted values and the rules for operations on them. Whole numbers suit a passenger count, fractional numbers an average duration, and text a name. Ask not only which digits are written, but what the data means and which rules apply."
       ]
     },
     {
-      "id": "auto",
-      "title": "What auto actually chooses",
+      "id": "division",
+      "title": "Two divisions side by side",
       "paragraphs": [
-        "Now consider auto whole = 31 / 2;. auto asks the compiler to deduce the type from the initial expression. The type of 31 / 2 is int, so whole is an int. The type of 31 / 2.0 is double, so fraction is a double. auto does not infer your intention or repair a lost fraction.",
-        "Once declared, the type does not change with later assignments. For example, auto length = 2.5; creates a double. The simple form with = used here requires an initial expression. We will not generalise this to every complex declaration yet. Predict the four numbers printed by the following program, then check them."
+        "In the first line, 17, 20 and 2 are integer literals: values written directly in source. Parentheses group the sum first. Integer division produces an integer quotient with the fractional part discarded, so the result is 18. This is truncation, not rounding to the nearest number. Our positive average has lost exactly 0.5 minutes.",
+        "The second line writes the divisor as 2.0, a double literal, so division produces the fractional result 18.5. C++ uses a decimal point even in a Russian-language lesson. Predict whether storing the already computed integer 18 in a fractional variable will restore the missing half. It will not: the fraction was lost during the earlier operation."
       ],
       "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int count{};\n    bool ready{};\n    auto whole = 31 / 2;\n    auto fraction = 31 / 2.0;\n    std::cout << count << \" \" << ready << \"\\n\";\n    std::cout << whole << \" \" << fraction << \"\\n\";\n}\n",
-        "stdin": "",
-        "output": "0 0\n15 15.5\n"
-      }
-    },
-    {
-      "id": "approximation",
-      "title": "When a fraction is an approximation",
-      "paragraphs": [
-        "Using double preserved half a minute. That does not mean every fraction is stored exactly. In a common binary floating-point format, 0.5 is exact but 0.1 must be approximated. float, double and long double have finite precision and range. long double need not provide more precision than double on every implementation.",
-        "Adding 0.1 + 0.2 can produce a value slightly different from 0.3. Short output can hide the difference. For this experiment with numbers near one, we will accept an absolute error of at most 0.000001. This is our chosen criterion, not a universal accuracy guarantee for double.",
-        "std::abs from <cmath> takes the magnitude of the difference, ignoring its sign. <= means “no greater than” and produces a bool. A printed 1 says this particular check passed; it does not prove that all fractions are exact. Very large or very small values need a separately justified criterion. Money is often represented in integer minor units, with a checked range."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <cmath>\n\nint main() {\n    double measured{0.1 + 0.2};\n    double target{0.3};\n    double error = std::abs(measured - target);\n    std::cout << (error <= 0.000001) << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "1\n"
+        "source": "#include <iostream>\n\nint main() {\n    std::cout << (17 + 20) / 2 << \"\\n\";\n    std::cout << (17 + 20) / 2.0 << \"\\n\";\n    return 0;\n}\n",
+        "output": "18\n18.5\n",
+        "language": "cpp"
       },
-      "deep": {
-        "title": "Why is 0.5 exact in binary while 0.1 is approximate?",
-        "text": "In ordinary binary notation a half is 0.1₂, just as a tenth is 0.1₁₀ in decimal. A decimal tenth needs a repeating binary expansion, much as 1/3 needs repeating decimal digits. A finite storage format retains a finite approximation. That explains representation error; losing a half in 31 / 2 has a different cause: integer division. Explain the difference in your own words.",
-        "sourceId": "goldberg"
-      }
+      "tables": [
+        {
+          "caption": "What happens before output",
+          "columns": [
+            "Expression",
+            "Operation and result"
+          ],
+          "rows": [
+            [
+              "(17 + 20) / 2",
+              "Integer division → 18"
+            ],
+            [
+              "(17 + 20) / 2.0",
+              "Division involving double → 18.5"
+            ]
+          ]
+        }
+      ]
     },
     {
-      "id": "size",
-      "title": "How much space does a value take?",
+      "id": "initialisation",
+      "title": "Giving a value a name",
       "paragraphs": [
-        "Can we find out how much space an int takes? sizeof(int) reports its size in C++ bytes. The parentheses contain a type; no variable needs to be created. sizeof(char) is always 1. The number of bits per such byte is CHAR_BIT from <climits>; C++ does not promise exactly eight on every implementation.",
-        "The integer types short, int, long and long long have non-decreasing sizes, and neighbouring sizes may be equal. Observing sizeof(int) == 4 on your run is therefore a measurement, not a rule for all compilers. sizeof(void*) measures a pointer type; using addresses belongs to the later pointers and references lesson."
+        "A literal is enough for one observation. If a number is used in several places, a name is useful. A variable is named storage for a value of a particular type. A labelled-box picture can help you remember name and contents, but it is not a physical box or a rule about memory size.",
+        "The line int price = 120; introduces a variable. int is an integer type; price is a valid author-chosen name; 120 is the initial value written as an integer literal; = introduces the initializer here; ; ends the declaration. Creating the variable with an initial value is initialization. The next lesson distinguishes this from updating an existing variable. For now, this is enough to read first and second in the task."
+      ]
+    },
+    {
+      "id": "meaning",
+      "title": "Choosing a type by meaning",
+      "paragraphs": [
+        "int stores whole numbers, such as a journey count. double stores floating-point numbers and suits our average duration. std::string stores a text string and needs the <string> header. char stores one unit of character representation; our first exercise uses the single Latin label 'B'. Text \"route\" uses double quotes; the single label 'B' uses single quotes.",
+        "bool stores a Boolean value: true or false. For “is the route open?” it is clearer than an arbitrary number. By default std::cout displays true as 1 and false as 0. That is an output convention, not a reason to replace true with the text \"1\". First decide what data you need, then choose how to express it."
+      ],
+      "tables": [
+        {
+          "caption": "Data for a route display",
+          "columns": [
+            "Meaning",
+            "Type and example declaration"
+          ],
+          "rows": [
+            [
+              "Journey count",
+              "int trips = 2;"
+            ],
+            [
+              "Average duration",
+              "double minutes = 18.5;"
+            ],
+            [
+              "Name",
+              "std::string label = \"route\";"
+            ],
+            [
+              "Latin label",
+              "char zone = 'B';"
+            ],
+            [
+              "Open?",
+              "bool open = true;"
+            ]
+          ]
+        }
       ]
     },
     {
       "id": "limits",
-      "title": "Finding the limits of a type",
+      "title": "Types also have limits",
       "paragraphs": [
-        "Size alone does not tell us the limits. Include <limits> and read std::numeric_limits<int>::max() in pieces: <int> selects the type, :: selects its information, and max() obtains its upper bound. You use a library facility here; you do not need to write your own template or function. lowest() gives the lowest finite value.",
-        "For double, min() means the smallest positive normalised value, not the most negative value; use lowest() for the lower bound. is_signed tells whether the type supports negative values. For char that depends on the implementation.",
-        "digits counts significant digits, excluding a sign digit, in the base given by radix. For integers radix is 2: these are binary digits, not printed decimal digits or bytes. int must represent at least -32767 through 32767. Ask the library for your implementation’s limits; do not overflow a signed integer to discover them."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <limits>\n\nint main() {\n    std::cout << std::numeric_limits<int>::is_signed << '\\n';\n    std::cout << (std::numeric_limits<int>::max() >= 32767) << '\\n';\n    std::cout << (std::numeric_limits<int>::lowest() <= -32767) << '\\n';\n    std::cout << (std::numeric_limits<unsigned int>::lowest() == 0) << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "1\n1\n1\n1\n"
-      }
-    },
-    {
-      "id": "environment",
-      "title": "Language guarantees and measurements",
-      "paragraphs": [
-        "The four ones in the property-check example mean four true statements. >= means “at least”, <= means “at most”, and == tests equality. These are comparisons of properties, not four sizes.",
-        "The next passport prints actual measurements. Record where you ran it: the pinned browser Clang/WASM environment or your desktop toolchain. Clang is the compiler; WebAssembly (WASM) is the browser execution format. The shown output belongs to that browser environment. A phone and a computer may use the same WASM compiler: matching output does not measure their native machine models."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <climits>\n#include <limits>\n\nint main() {\n    std::cout << \"char_bytes=\" << sizeof(char) << '\\n';\n    std::cout << \"char_bits=\" << CHAR_BIT << '\\n';\n    std::cout << \"int_bytes=\" << sizeof(int) << '\\n';\n    std::cout << \"long_bytes=\" << sizeof(long) << '\\n';\n    std::cout << \"long_long_bytes=\" << sizeof(long long) << '\\n';\n    std::cout << \"pointer_bytes=\" << sizeof(void*) << '\\n';\n    std::cout << \"char_signed=\" << std::numeric_limits<char>::is_signed << '\\n';\n    std::cout << \"int_digits=\" << std::numeric_limits<int>::digits << '\\n';\n    std::cout << \"int_max=\" << std::numeric_limits<int>::max() << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "char_bytes=1\nchar_bits=8\nint_bytes=4\nlong_bytes=4\nlong_long_bytes=8\npointer_bytes=4\nchar_signed=1\nint_digits=31\nint_max=2147483647\n"
-      }
-    },
-    {
-      "id": "independent-work",
-      "title": "Build your own data passport",
-      "paragraphs": [
-        "Your independent task uses a different setting: full boxes of parts and average shift production. Practice has the task and a separate starter. Before running it, explain which calculation needs only a whole-number result and which must retain a fraction.",
-        "Then build an environment passport following the example: the size and bounds of int, the size of long, CHAR_BIT and digits. Separate “language guarantee” from “measurement on my run”. Propose four class-registration fields too: participant count, room label, registration flag and table length. Give each a type, unit, range and initial value. This checks the whole lesson, not just division."
+        "Do not assume int has the same size and range in every environment. The standard sets minimum requirements; exact limits depend on the implementation. Our small durations, between 0 and 1000 minutes, are safe for these examples. The reference explains how to investigate limits later; measuring the entire environment is not part of this first task.",
+        "double does not represent every decimal fraction exactly. Here 18.5 is straightforward because a half is representable. That does not justify ignoring precision for all money or time calculations. Also, char does not mean any visible letter in any writing system; encoding comes later. We explicitly restrict this label to one Latin letter."
       ]
+    },
+    {
+      "id": "predict",
+      "title": "Change, predict, check",
+      "paragraphs": [
+        "First change only 20 to 21 in your copy of the expression. Predict 19 and 19. Integer division happens to lose no fraction here because 38 divides evenly by two. Agreement in one case does not mean integer division always suits averages. Restore the original number and explain 18 versus 18.5.",
+        "The task below uses different journeys: 18 and 23 minutes. Obtain 20.5, set the name and read the remaining fields. Choose an expression rather than replacing the average with a ready-made answer. The automatic check compares observable output; your explanation should identify the divisor type before division."
+      ]
+    }
+  ],
+  "practice": {
+    "title": "On your own: a new route display",
+    "task": "Two journeys took 18 and 23 minutes. Complete your starter: average must calculate a fractional average, and label must store route. The other fields are already supplied: zone is B and open is true. Produce the four labelled lines shown in the criteria. No input, conditions or loops are needed.",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <string>\n\nint main() {\n    int first = 18;\n    int second = 23;\n    double average = 0.0;\n    std::string label = \"\";\n    char zone = 'B';\n    bool open = true;\n    std::cout << \"minutes=\" << average << \"\\n\";\n    std::cout << \"label=\" << label << \"\\n\";\n    std::cout << \"zone=\" << zone << \"\\n\";\n    std::cout << \"open=\" << open << \"\\n\";\n    return 0;\n}\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <string>\n\nint main() {\n    int first = 18;\n    int second = 23;\n    double average = (first + second) / 2.0;\n    std::string label = \"route\";\n    char zone = 'B';\n    bool open = true;\n    std::cout << \"minutes=\" << average << \"\\n\";\n    std::cout << \"label=\" << label << \"\\n\";\n    std::cout << \"zone=\" << zone << \"\\n\";\n    std::cout << \"open=\" << open << \"\\n\";\n    return 0;\n}\n"
+    },
+    "stdin": "",
+    "stdinNote": "Leave the input field empty: this task sets every value in the program.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "metadata": {},
+    "returnAnchor": "orientation",
+    "cases": [
+      {
+        "label": "Reference result",
+        "input": "",
+        "output": "minutes=20.5\nlabel=route\nzone=B\nopen=1\n"
+      }
+    ],
+    "criteria": [
+      "The average is calculated with an expression rather than a copied answer.",
+      "Output is minutes=20.5, label=route, zone=B, open=1 on separate lines.",
+      "Explain int/double, text/a single label and the Boolean value."
+    ],
+    "hint": "For a fractional average, the divisor matters before computation.",
+    "passport": {
+      "goal": "Choose data types and preserve a fractional average.",
+      "start": "main.cpp supplies first, second, zone and open; complete average and label.",
+      "where": "Your Nexus work editor, main.cpp.",
+      "knowledge": "All five types, declarations and division were explained in this lesson.",
+      "change": "The expression after = for average and the label string.",
+      "inputs": "18 and 23 minutes are in the source; leave stdin empty.",
+      "result": "minutes=20.5\nlabel=route\nzone=B\nopen=1",
+      "checks": "Run and compare all four lines, then explain the divisor type.",
+      "errors": "Divisor 2 instead of 2.0; unquoted text; using char for route.",
+      "recovery": "Undo the edit; view the original numbers and starter separately."
+    },
+    "exercises": [
+      {
+        "task": "Predict both results for 17 and 21 before running, then compare with 17 and 20.",
+        "criteria": "19/19 versus 18/18.5: an evenly divisible sum can hide the wrong division choice."
+      }
+    ],
+    "runAssessment": {
+      "lines": [
+        "minutes=20.5",
+        "label=route",
+        "zone=B",
+        "open=1"
+      ]
+    },
+    "steps": [],
+    "externalRoute": ""
+  },
+  "contentRevision": "reference-start-20261112-v1",
+  "authored": true,
+  "referenceEdition": true,
+  "reading": [
+    {
+      "id": "ppp3",
+      "author": "Bjarne Stroustrup",
+      "title": "Programming: Principles and Practice Using C++, 3rd edition",
+      "edition": "2024; publisher description and author guidance",
+      "section": "2024; publisher description and author guidance",
+      "url": "https://www.stroustrup.com/PPP3.html",
+      "purpose": "Beginner audience and foundational approach",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
+    },
+    {
+      "id": "draft",
+      "author": "WG21",
+      "title": "C++ working draft",
+      "edition": "[intro.execution], [basic.start.main], [dcl.init], [expr.mul]",
+      "section": "[intro.execution], [basic.start.main], [dcl.init], [expr.mul]",
+      "url": "https://eel.is/c++draft/",
+      "purpose": "Technical rules; the draft is not a beginner lesson",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
     }
   ],
   "selfcheck": [
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "What is stored by double result = 31 / 2;?",
+      "prompt": "What does (17 + 20) / 2 produce?",
       "options": [
-        "15",
-        "15.5",
-        "Compilation error"
+        "18.5",
+        "18",
+        "19"
       ],
-      "correct": 0,
-      "feedback": [
-        "Correct: both operands are integers. Division produces 15 before storage in double.",
-        "The double destination does not change division already performed on two ints. The fraction is lost before storage.",
-        "Converting int to double here is valid. The mistake is in the average calculation, not the syntax."
-      ],
-      "recall": "division"
+      "correct": 1,
+      "feedback": "Both division operands are integers. The fractional part is discarded.",
+      "recall": "orientation"
     },
     {
       "id": "types-0",
       "kind": "choice",
-      "prompt": "Which statement is a portable guarantee?",
+      "prompt": "Will double average = (17 + 20) / 2; restore the half-minute?",
       "options": [
-        "sizeof(int) == 4",
-        "sizeof(char) == 1",
-        "sizeof(void*) == 8"
+        "Yes: double appears on the left",
+        "No: integer division happens before storage",
+        "Yes: the compiler guesses the intention"
       ],
       "correct": 1,
-      "feedback": "A C++ byte is defined through char; the other sizes depend on implementation. CHAR_BIT gives the bit count.",
-      "recall": "size"
+      "feedback": "The destination variable does not change the expression already evaluated. Use a fractional divisor.",
+      "recall": "orientation"
     },
     {
       "id": "types-1",
       "kind": "choice",
-      "prompt": "What type is deduced in auto length = 2.5;?",
+      "prompt": "Which type suits a name of several letters?",
       "options": [
-        "int",
-        "double",
-        "It changes on every run"
+        "char",
+        "bool",
+        "std::string"
       ],
-      "correct": 1,
-      "feedback": "The unsuffixed 2.5 literal has type double; auto deduces a type rather than enabling dynamic type changes.",
-      "recall": "auto"
+      "correct": 2,
+      "feedback": "Use std::string and the <string> header for text.",
+      "recall": "orientation"
     },
     {
       "id": "types-2",
       "kind": "choice",
-      "prompt": "What does numeric_limits<int>::digits measure?",
+      "prompt": "Which type suits “is the route open?”",
       "options": [
-        "The number of decimal output digits",
-        "The number of significant binary digits excluding a sign digit",
-        "The size of main.cpp"
+        "bool",
+        "char",
+        "Always std::string"
       ],
-      "correct": 1,
-      "feedback": "Integer radix is 2. Distinguish significant digits from sizeof and display formatting.",
-      "recall": "limits"
+      "correct": 0,
+      "feedback": "A Boolean has the values true/false.",
+      "recall": "orientation"
     },
     {
       "id": "types-3",
       "kind": "choice",
-      "prompt": "Why does min() not replace lowest() for double?",
+      "prompt": "What suits the single Latin label B?",
       "options": [
-        "For floating-point types min() means the smallest positive normalized value",
-        "double has no negative values",
-        "They always return the same number"
+        "char zone = 'B';",
+        "int zone = \"B\";",
+        "bool zone = \"B\";"
       ],
       "correct": 0,
-      "feedback": "lowest() gives the lowest finite bound; floating-point min() has a different contract.",
-      "recall": "limits"
+      "feedback": "This task uses a single-quoted char for one Latin label.",
+      "recall": "orientation"
     },
     {
       "id": "types-4",
       "kind": "choice",
-      "prompt": "What does stdout=1 in the tolerance example fail to prove?",
+      "prompt": "Can int always be assumed to have the same size?",
       "options": [
-        "That this check passed on this target",
-        "That every decimal fraction is represented exactly",
-        "That the comparison produced true"
+        "Yes, from its name",
+        "No, an implementation chooses within standard requirements",
+        "Yes, if it is printed with cout"
       ],
       "correct": 1,
-      "feedback": "A small error within this tolerance does not imply exact representation of all values.",
-      "recall": "approximation"
+      "feedback": "Our small values are safe; that is not a universal size guarantee.",
+      "recall": "orientation"
     },
     {
       "id": "initial-value",
       "kind": "choice",
-      "prompt": "Which declaration gives zero, and why?",
+      "prompt": "What is 120 in int price = 120;?",
       "options": [
-        "int count;",
-        "int count{};",
-        "int count{2.5};"
+        "An identifier",
+        "An integer literal supplying the initial value",
+        "A header"
       ],
       "correct": 1,
-      "feedback": [
-        "An uninitialised local int must not be read. Zero is not promised.",
-        "The empty initializer {} gives zero to this scalar type.",
-        "This braced conversion from double to int is narrowing and is rejected."
-      ],
-      "recall": "initialisation"
+      "feedback": "price is the name, int the type, and 120 the written value.",
+      "recall": "orientation"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Why is a whole number the complete answer for full boxes, while the average must retain a fraction? Identify the operand types and the point where division happens. Explain your bool, char and initial values, then attach your passport and your conclusion about tolerance.",
-      "feedback": "boxes=5 means five full boxes; the remaining three parts do not fill a sixth. average=23.5 retains the fraction in an average; it does not claim that a shift manufactured half a physical part. The explanation identifies both operand types before division. Storing a result in double cannot repair integer division. Every variable is initialised. B is a single Latin label and true is a flag. Limit part counts to 0…1000. Label the passport with the execution environment. sizeof(char)==1 is guaranteed; the measured sizeof(int) is an observation. Explain digits and the difference between lowest() and min() for double. For 0.1+0.2, justify the chosen tolerance 0.000001 and explain why a passing comparison does not prove exact storage of every fraction.",
-      "recall": "division"
+      "prompt": "Explain where the half-minute was lost and why changing only the destination variable type cannot restore it. Name the types of the other fields.",
+      "feedback": "Compare your explanation with the walkthrough; it is not graded automatically.",
+      "recall": "orientation"
     }
-  ],
-  "practice": {
-    "title": "Workshop: full boxes and average production",
-    "task": "A workshop packs 53 parts into boxes of 10. Two shifts produced 22 and 25 parts. Print the number of full boxes and the average production per shift. The station label is B and the station is open. Complete your own starter, then explain your type choices and build an environment passport. No keyboard input is needed.",
-    "kind": "cpp-console",
-    "environment": "C++20",
-    "files": [
-      {
-        "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    int parts{53};\n    int firstShift{22};\n    int secondShift{25};\n    char station{'B'};\n    bool open{true};\n    // TODO: choose expressions for these two values.\n    int fullBoxes{};\n    double average{};\n    std::cout << \"boxes=\" << fullBoxes << \"\\n\";\n    std::cout << \"average=\" << average << \"\\n\";\n    std::cout << \"station=\" << station << \"\\n\";\n    std::cout << \"open=\" << open << \"\\n\";\n}\n"
-      }
-    ],
-    "metadata": {},
-    "stdin": "",
-    "returnAnchor": "division",
-    "cases": [
-      {
-        "label": "Expected output",
-        "input": "",
-        "output": "boxes=5\naverage=23.5\nstation=B\nopen=1\n"
-      }
-    ],
-    "criteria": [
-      "boxes=5 means five full boxes; the remaining three parts do not fill a sixth.",
-      "average=23.5 retains the fraction in an average; it does not claim that a shift manufactured half a physical part.",
-      "The explanation identifies both operand types before division. Storing a result in double cannot repair integer division.",
-      "Every variable is initialised. B is a single Latin label and true is a flag. Limit part counts to 0…1000.",
-      "Label the passport with the execution environment. sizeof(char)==1 is guaranteed; the measured sizeof(int) is an observation. Explain digits and the difference between lowest() and min() for double.",
-      "For 0.1+0.2, justify the chosen tolerance 0.000001 and explain why a passing comparison does not prove exact storage of every fraction."
-    ],
-    "hint": "Recall the two journey expressions: the expression type matters before storage. Measure sizes in your passport instead of guessing them.",
-    "steps": [
-      {
-        "where": "main.cpp",
-        "action": "A workshop packs 53 parts into boxes of 10. Two shifts produced 22 and 25 parts. Print the number of full boxes and the average production per shift. The station label is B and the station is open. Complete your own starter, then explain your type choices and build an environment passport. No keyboard input is needed.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Environment passport",
-        "action": "Then build an environment passport following the example: the size and bounds of int, the size of long, CHAR_BIT and digits. Separate “language guarantee” from “measurement on my run”. Propose four class-registration fields too: participant count, room label, registration flag and table length. Give each a type, unit, range and initial value. This checks the whole lesson, not just division.",
-        "why": "",
-        "expected": ""
-      }
-    ],
-    "recall": "division"
-  },
-  "terms": [
-    {
-      "term": "Type",
-      "definition": "Rules for an object’s values and operations; a type does not necessarily encode domain units."
-    },
-    {
-      "term": "Initialization",
-      "definition": "Providing an initial value when an object is created. Here every object is explicitly initialized."
-    },
-    {
-      "term": "Range",
-      "definition": "The set of representable values: a finite numeric type cannot hold every mathematical number."
-    },
-    {
-      "term": "Target environment",
-      "definition": "The environment for which a program is built, including type representation and library; browser Clang/WASM is one particular target."
-    },
-    {
-      "term": "sizeof",
-      "definition": "An operator reporting size in C++ bytes. sizeof(char) is 1; CHAR_BIT gives the number of bits in such a byte."
-    },
-    {
-      "term": "numeric_limits",
-      "definition": "A standard-library facility exposing arithmetic-type properties of the selected implementation."
-    },
-    {
-      "term": "Tolerance",
-      "definition": "An acceptable error chosen for a task, not a universal guarantee of double accuracy."
-    }
-  ],
-  "sourceRefs": [
-    "CPP20-TYPES",
-    "CPP20-INIT",
-    "CPP20-LIMITS",
-    "CPP20-SIZEOF",
-    "CPP20-AUTO",
-    "CPP-GUIDELINES"
-  ],
-  "extras": {
-    "lessonId": "cpp.data-types",
-    "locale": "en",
-    "visualization": null,
-    "sourceRefs": [
-      "CPP20-TYPES",
-      "CPP20-INIT",
-      "CPP20-LIMITS",
-      "CPP20-SIZEOF",
-      "CPP20-AUTO",
-      "CPP-GUIDELINES"
-    ],
-    "blockPracticum": {
-      "title": "Practicum A: a panel batch report",
-      "label": "FIRST-BLOCK PRACTICUM",
-      "starterLabel": "Starter with an explained unit conversion",
-      "challenge": "Build a reproducible report for 4 panels of 125 cm: category A, approved true, 500 cm, and 5 m. Preserve evidence for the four introductory skills.",
-      "readiness": "Begin when you can explain the main scaffold, choose unit-bearing names, distinguish const/constexpr, and initialize simple types. Division by the double factor is supplied as an explained scaffold before the conversions lesson.",
-      "skills": [
-        {
-          "lessonId": "cpp.first-cpp-program",
-          "title": "Build and output checks"
-        },
-        {
-          "lessonId": "cpp.tokens-identifiers-keywords",
-          "title": "Precise names with units"
-        },
-        {
-          "lessonId": "cpp.comments-constants-literals",
-          "title": "Constants and explanatory comments"
-        },
-        {
-          "lessonId": "cpp.data-types",
-          "title": "Types and initialization"
-        }
-      ],
-      "requirements": [
-        "stdin is empty: initial quantities are explicit and explained.",
-        "Five lines: category=A, approved=1, length_cm=500, length_m=5, cm_per_m=100.",
-        "panelCount is bounded to 0…100 and panelLengthCm to 0…1000: the product is at most 100000; long long covers this range. long long is a two-word integer type name; the rest of the declaration uses the same syntax.",
-        "The reference variants use whole meters: 0 panels and 8 panels of 125 cm. General rounding and full input parsing are outside this task."
-      ],
-      "milestones": [
-        "Write the contract and independent calculation before coding.",
-        "Add a character label, flag, reason comment, and missing output lines.",
-        "Check the main and two changed scenarios.",
-        "Attach a target report and rubric-based self-review."
-      ],
-      "walkthrough": [
-        "Count × centimeters per panel gives total centimeters. Division by the double factor produces a floating-point result. For our small values the conversion is exact; general rules follow later.",
-        "Choose long long for the product: its guaranteed range covers 100000. The minimum range of int alone does not promise this. Reason about bounds before running instead of experimenting with overflow.",
-        "constexpr double centimetersPerMeter{100.0}; stores the fixed factor as a floating-point value. It is used both in the calculation and in the report. Compared with the earlier constexpr int declaration, only the selected type and literal have changed."
-      ],
-      "starterCode": "#include <iostream>\n\nint main() {\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    // Scaffold: the double factor makes the division floating-point.\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    return 0;\n}\n",
-      "starterExpectedStdout": "length_cm=500\nlength_m=5\n",
-      "referenceCode": "#include <iostream>\n\nint main() {\n    // Each complete panel contributes the same whole-centimeter length.\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    char category{'A'};\n    bool approved{true};\n    std::cout << \"category=\" << category << '\\n';\n    std::cout << \"approved=\" << approved << '\\n';\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    std::cout << \"cm_per_m=\" << centimetersPerMeter << '\\n';\n    return 0;\n}\n",
-      "cases": [
-        {
-          "stdin": "",
-          "stdout": "category=A\napproved=1\nlength_cm=500\nlength_m=5\ncm_per_m=100\n"
-        }
-      ],
-      "verificationVariants": [
-        {
-          "id": "zero-panels",
-          "replace": [
-            {
-              "from": "const long long panelCount{4};",
-              "to": "const long long panelCount{0};"
-            }
-          ],
-          "stdin": "",
-          "stdout": "category=A\napproved=1\nlength_cm=0\nlength_m=0\ncm_per_m=100\n"
-        },
-        {
-          "id": "eight-panels",
-          "replace": [
-            {
-              "from": "const long long panelCount{4};",
-              "to": "const long long panelCount{8};"
-            }
-          ],
-          "stdin": "",
-          "stdout": "category=A\napproved=1\nlength_cm=1000\nlength_m=10\ncm_per_m=100\n"
-        }
-      ],
-      "artifacts": [
-        "main.cpp with meaningful names and one reason comment.",
-        "A table of expected and actual stdout for three scenarios.",
-        "A target report distinguishing guarantees from observations.",
-        "A self-review and one diagnosed defect with a repeat check."
-      ],
-      "rubric": [
-        {
-          "criterion": "Contract and build",
-          "points": 2,
-          "complete": "All five fields and a successful build",
-          "partial": "Partly satisfied, with incomplete evidence or explanation.",
-          "missing": "No verifiable result for this criterion."
-        },
-        {
-          "criterion": "Names and units",
-          "points": 2,
-          "complete": "Roles and cm/m are consistent",
-          "partial": "Partly satisfied, with incomplete evidence or explanation.",
-          "missing": "No verifiable result for this criterion."
-        },
-        {
-          "criterion": "Constants and comment",
-          "points": 2,
-          "complete": "The factor is explained and used in the calculation",
-          "partial": "Partly satisfied, with incomplete evidence or explanation.",
-          "missing": "No verifiable result for this criterion."
-        },
-        {
-          "criterion": "Types and bounds",
-          "points": 2,
-          "complete": "Initial values and ranges are justified",
-          "partial": "Partly satisfied, with incomplete evidence or explanation.",
-          "missing": "No verifiable result for this criterion."
-        },
-        {
-          "criterion": "Checks and target",
-          "points": 2,
-          "complete": "Three scenarios and an actual target report are attached",
-          "partial": "Partly satisfied, with incomplete evidence or explanation.",
-          "missing": "No verifiable result for this criterion."
-        }
-      ],
-      "completionRule": "Self-review: 8 of 10 with no zero for contract, types, or checks. This is an editorial rubric, not an automatic score, gate, or proof of mastery of all Module 2.",
-      "verification": "manual-output-comparison"
-    },
-    "laboratory": {}
-  },
-  "sourcePath": "courses\\cpp\\gold\\basics\\data-types.en.json",
-  "reading": [
-    {
-      "id": "goldberg",
-      "author": "David Goldberg",
-      "title": "What Every Computer Scientist Should Know About Floating-Point Arithmetic",
-      "edition": "1991; ACM Computing Surveys, 23(1), pp. 5–48",
-      "section": "Rounding Error / Floating-point Formats",
-      "language": "EN",
-      "url": "https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html",
-      "purpose": "Why decimal fractions may need approximation. Public authorised reprint hosted by Oracle; our explanation is original and contains no quotations."
-    },
-    {
-      "id": "cpp-draft",
-      "author": "ISO/IEC JTC1/SC22/WG21",
-      "title": "Working Draft, Standard for Programming Language C++",
-      "edition": "N4861 (2020), C++20 draft",
-      "section": "[expr.mul], [dcl.init.list], [dcl.spec.auto], [expr.sizeof], [numeric.limits]",
-      "language": "EN",
-      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul",
-      "purpose": "Precise division rules and access to the draft standard. The main lesson already explains the rules required for the task."
-    }
-  ],
-  "authored": true
+  ]
 }

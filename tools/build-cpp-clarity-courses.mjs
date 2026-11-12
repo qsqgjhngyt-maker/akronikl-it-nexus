@@ -126,3 +126,9 @@ await write('courses/clarity/courses.json',catalog);
 await write('courses/clarity/editorial-map.json',{contentRevision:'clarity-courses-v1',formatAcceptedByOwner:'2026-11-05',status:'IMPLEMENTED CONTENT CANDIDATE — understanding not measured',topics:audit});
 await writeFile('core/clarity-course-registry.mjs','// Только канонические темы. Получено из программ действующих курсов; PLANNED не включены.\nexport const CLARITY_COURSES = Object.freeze('+JSON.stringify(registry)+');\n');
 console.log(JSON.stringify({courses:catalog.map(c=>({id:c.id,topics:c.topics.length})),adapted:audit.length,preservedPilots:pilots.size,locales:2}));
+
+// Разрешённые эталоны заменяют только свои десять редакций, без массовой переписи.
+const {buildReferenceCourses}=await import('./build-reference-courses.mjs');
+await buildReferenceCourses();
+for(const id of (await import('../core/reference-course-routes.mjs')).REFERENCE_IDS){const q=await read('courses/reference/authoring/'+id+'.ru.json');registry[id].contentRevision=q.contentRevision;}
+await writeFile('core/clarity-course-registry.mjs','// Только канонические темы. Получено из программ действующих курсов; PLANNED не включены.\nexport const CLARITY_COURSES = Object.freeze('+JSON.stringify(registry)+');\n');

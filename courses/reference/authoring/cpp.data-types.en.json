@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "id": "cpp.data-types",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Data types: where half a minute goes",
+  "goal": "Distinguish whole, fractional, text and Boolean values, read a simple declaration and preserve the fractional part of an average.",
+  "prerequisites": [
+    {
+      "text": "You have already changed a std::cout message. Type, value and variable are introduced here before you need them. Input, loops, pointers and advanced numeric limits are not required."
+    }
+  ],
+  "terms": [
+    "cpp-int",
+    "cpp-double",
+    "cpp-char",
+    "cpp-bool",
+    "cpp-string",
+    "cpp-variable",
+    "cpp-initialization",
+    "cpp-division",
+    "cpp-library"
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The same digits can mean different things",
+      "paragraphs": [
+        "One journey took 17 minutes, another 20. To find their average duration, add the times and divide by two. On paper, 37 divided by 2 is 18.5 minutes. Half a minute is 30 seconds, not an amount we decided to discard. Let us see why a program might show 18 instead.",
+        "A value is particular data, such as 17, 18.5 or the text \"route\". A type determines permitted values and the rules for operations on them. Whole numbers suit a passenger count, fractional numbers an average duration, and text a name. Ask not only which digits are written, but what the data means and which rules apply."
+      ]
+    },
+    {
+      "id": "division",
+      "title": "Two divisions side by side",
+      "paragraphs": [
+        "In the first line, 17, 20 and 2 are integer literals: values written directly in source. Parentheses group the sum first. Integer division produces an integer quotient with the fractional part discarded, so the result is 18. This is truncation, not rounding to the nearest number. Our positive average has lost exactly 0.5 minutes.",
+        "The second line writes the divisor as 2.0, a double literal, so division produces the fractional result 18.5. C++ uses a decimal point even in a Russian-language lesson. Predict whether storing the already computed integer 18 in a fractional variable will restore the missing half. It will not: the fraction was lost during the earlier operation."
+      ],
+      "code": {
+        "source": "#include <iostream>\n\nint main() {\n    std::cout << (17 + 20) / 2 << \"\\n\";\n    std::cout << (17 + 20) / 2.0 << \"\\n\";\n    return 0;\n}\n",
+        "output": "18\n18.5\n",
+        "language": "cpp"
+      },
+      "tables": [
+        {
+          "caption": "What happens before output",
+          "columns": [
+            "Expression",
+            "Operation and result"
+          ],
+          "rows": [
+            [
+              "(17 + 20) / 2",
+              "Integer division → 18"
+            ],
+            [
+              "(17 + 20) / 2.0",
+              "Division involving double → 18.5"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "initialisation",
+      "title": "Giving a value a name",
+      "paragraphs": [
+        "A literal is enough for one observation. If a number is used in several places, a name is useful. A variable is named storage for a value of a particular type. A labelled-box picture can help you remember name and contents, but it is not a physical box or a rule about memory size.",
+        "The line int price = 120; introduces a variable. int is an integer type; price is a valid author-chosen name; 120 is the initial value written as an integer literal; = introduces the initializer here; ; ends the declaration. Creating the variable with an initial value is initialization. The next lesson distinguishes this from updating an existing variable. For now, this is enough to read first and second in the task."
+      ]
+    },
+    {
+      "id": "meaning",
+      "title": "Choosing a type by meaning",
+      "paragraphs": [
+        "int stores whole numbers, such as a journey count. double stores floating-point numbers and suits our average duration. std::string stores a text string and needs the <string> header. char stores one unit of character representation; our first exercise uses the single Latin label 'B'. Text \"route\" uses double quotes; the single label 'B' uses single quotes.",
+        "bool stores a Boolean value: true or false. For “is the route open?” it is clearer than an arbitrary number. By default std::cout displays true as 1 and false as 0. That is an output convention, not a reason to replace true with the text \"1\". First decide what data you need, then choose how to express it."
+      ],
+      "tables": [
+        {
+          "caption": "Data for a route display",
+          "columns": [
+            "Meaning",
+            "Type and example declaration"
+          ],
+          "rows": [
+            [
+              "Journey count",
+              "int trips = 2;"
+            ],
+            [
+              "Average duration",
+              "double minutes = 18.5;"
+            ],
+            [
+              "Name",
+              "std::string label = \"route\";"
+            ],
+            [
+              "Latin label",
+              "char zone = 'B';"
+            ],
+            [
+              "Open?",
+              "bool open = true;"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Types also have limits",
+      "paragraphs": [
+        "Do not assume int has the same size and range in every environment. The standard sets minimum requirements; exact limits depend on the implementation. Our small durations, between 0 and 1000 minutes, are safe for these examples. The reference explains how to investigate limits later; measuring the entire environment is not part of this first task.",
+        "double does not represent every decimal fraction exactly. Here 18.5 is straightforward because a half is representable. That does not justify ignoring precision for all money or time calculations. Also, char does not mean any visible letter in any writing system; encoding comes later. We explicitly restrict this label to one Latin letter."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Change, predict, check",
+      "paragraphs": [
+        "First change only 20 to 21 in your copy of the expression. Predict 19 and 19. Integer division happens to lose no fraction here because 38 divides evenly by two. Agreement in one case does not mean integer division always suits averages. Restore the original number and explain 18 versus 18.5.",
+        "The task below uses different journeys: 18 and 23 minutes. Obtain 20.5, set the name and read the remaining fields. Choose an expression rather than replacing the average with a ready-made answer. The automatic check compares observable output; your explanation should identify the divisor type before division."
+      ]
+    }
+  ],
+  "practice": {
+    "title": "On your own: a new route display",
+    "task": "Two journeys took 18 and 23 minutes. Complete your starter: average must calculate a fractional average, and label must store route. The other fields are already supplied: zone is B and open is true. Produce the four labelled lines shown in the criteria. No input, conditions or loops are needed.",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <string>\n\nint main() {\n    int first = 18;\n    int second = 23;\n    double average = 0.0;\n    std::string label = \"\";\n    char zone = 'B';\n    bool open = true;\n    std::cout << \"minutes=\" << average << \"\\n\";\n    std::cout << \"label=\" << label << \"\\n\";\n    std::cout << \"zone=\" << zone << \"\\n\";\n    std::cout << \"open=\" << open << \"\\n\";\n    return 0;\n}\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <string>\n\nint main() {\n    int first = 18;\n    int second = 23;\n    double average = (first + second) / 2.0;\n    std::string label = \"route\";\n    char zone = 'B';\n    bool open = true;\n    std::cout << \"minutes=\" << average << \"\\n\";\n    std::cout << \"label=\" << label << \"\\n\";\n    std::cout << \"zone=\" << zone << \"\\n\";\n    std::cout << \"open=\" << open << \"\\n\";\n    return 0;\n}\n"
+    },
+    "stdin": "",
+    "stdinNote": "Leave the input field empty: this task sets every value in the program.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "metadata": {},
+    "returnAnchor": "orientation",
+    "cases": [
+      {
+        "label": "Reference result",
+        "input": "",
+        "output": "minutes=20.5\nlabel=route\nzone=B\nopen=1\n"
+      }
+    ],
+    "criteria": [
+      "The average is calculated with an expression rather than a copied answer.",
+      "Output is minutes=20.5, label=route, zone=B, open=1 on separate lines.",
+      "Explain int/double, text/a single label and the Boolean value."
+    ],
+    "hint": "For a fractional average, the divisor matters before computation.",
+    "passport": {
+      "goal": "Choose data types and preserve a fractional average.",
+      "start": "main.cpp supplies first, second, zone and open; complete average and label.",
+      "where": "Your Nexus work editor, main.cpp.",
+      "knowledge": "All five types, declarations and division were explained in this lesson.",
+      "change": "The expression after = for average and the label string.",
+      "inputs": "18 and 23 minutes are in the source; leave stdin empty.",
+      "result": "minutes=20.5\nlabel=route\nzone=B\nopen=1",
+      "checks": "Run and compare all four lines, then explain the divisor type.",
+      "errors": "Divisor 2 instead of 2.0; unquoted text; using char for route.",
+      "recovery": "Undo the edit; view the original numbers and starter separately."
+    },
+    "exercises": [
+      {
+        "task": "Predict both results for 17 and 21 before running, then compare with 17 and 20.",
+        "criteria": "19/19 versus 18/18.5: an evenly divisible sum can hide the wrong division choice."
+      }
+    ],
+    "runAssessment": {
+      "lines": [
+        "minutes=20.5",
+        "label=route",
+        "zone=B",
+        "open=1"
+      ]
+    },
+    "steps": [],
+    "externalRoute": ""
+  },
+  "contentRevision": "reference-start-20261112-v1",
+  "authored": true,
+  "referenceEdition": true,
+  "reading": [
+    {
+      "id": "ppp3",
+      "author": "Bjarne Stroustrup",
+      "title": "Programming: Principles and Practice Using C++, 3rd edition",
+      "edition": "2024; publisher description and author guidance",
+      "section": "2024; publisher description and author guidance",
+      "url": "https://www.stroustrup.com/PPP3.html",
+      "purpose": "Beginner audience and foundational approach",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
+    },
+    {
+      "id": "draft",
+      "author": "WG21",
+      "title": "C++ working draft",
+      "edition": "[intro.execution], [basic.start.main], [dcl.init], [expr.mul]",
+      "section": "[intro.execution], [basic.start.main], [dcl.init], [expr.mul]",
+      "url": "https://eel.is/c++draft/",
+      "purpose": "Technical rules; the draft is not a beginner lesson",
+      "language": "EN/RU",
+      "checkedAt": "2026-11-12"
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does (17 + 20) / 2 produce?",
+      "options": [
+        "18.5",
+        "18",
+        "19"
+      ],
+      "correct": 1,
+      "feedback": "Both division operands are integers. The fractional part is discarded.",
+      "recall": "orientation"
+    },
+    {
+      "id": "types-0",
+      "kind": "choice",
+      "prompt": "Will double average = (17 + 20) / 2; restore the half-minute?",
+      "options": [
+        "Yes: double appears on the left",
+        "No: integer division happens before storage",
+        "Yes: the compiler guesses the intention"
+      ],
+      "correct": 1,
+      "feedback": "The destination variable does not change the expression already evaluated. Use a fractional divisor.",
+      "recall": "orientation"
+    },
+    {
+      "id": "types-1",
+      "kind": "choice",
+      "prompt": "Which type suits a name of several letters?",
+      "options": [
+        "char",
+        "bool",
+        "std::string"
+      ],
+      "correct": 2,
+      "feedback": "Use std::string and the <string> header for text.",
+      "recall": "orientation"
+    },
+    {
+      "id": "types-2",
+      "kind": "choice",
+      "prompt": "Which type suits “is the route open?”",
+      "options": [
+        "bool",
+        "char",
+        "Always std::string"
+      ],
+      "correct": 0,
+      "feedback": "A Boolean has the values true/false.",
+      "recall": "orientation"
+    },
+    {
+      "id": "types-3",
+      "kind": "choice",
+      "prompt": "What suits the single Latin label B?",
+      "options": [
+        "char zone = 'B';",
+        "int zone = \"B\";",
+        "bool zone = \"B\";"
+      ],
+      "correct": 0,
+      "feedback": "This task uses a single-quoted char for one Latin label.",
+      "recall": "orientation"
+    },
+    {
+      "id": "types-4",
+      "kind": "choice",
+      "prompt": "Can int always be assumed to have the same size?",
+      "options": [
+        "Yes, from its name",
+        "No, an implementation chooses within standard requirements",
+        "Yes, if it is printed with cout"
+      ],
+      "correct": 1,
+      "feedback": "Our small values are safe; that is not a universal size guarantee.",
+      "recall": "orientation"
+    },
+    {
+      "id": "initial-value",
+      "kind": "choice",
+      "prompt": "What is 120 in int price = 120;?",
+      "options": [
+        "An identifier",
+        "An integer literal supplying the initial value",
+        "A header"
+      ],
+      "correct": 1,
+      "feedback": "price is the name, int the type, and 120 the written value.",
+      "recall": "orientation"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain where the half-minute was lost and why changing only the destination variable type cannot restore it. Name the types of the other fields.",
+      "feedback": "Compare your explanation with the walkthrough; it is not graded automatically.",
+      "recall": "orientation"
+    }
+  ]
+}
