@@ -198,8 +198,7 @@ try{
    await root.locator('[data-r3-panel="explanation"]:visible').waitFor();
    assert.ok((await root.locator('.topic-marker').textContent()).trim().endsWith((56+index)+'/67'));
    if(index+1<GOLD_EVENT_LESSONS.length){
-    await root.locator('[data-action="tools"]').click();
-    await root.locator('.course-controls').getByRole('link',{name:locale==='ru'?'Следующая тема →':'Next topic →',exact:true}).click();
+    await root.locator('.reference-lesson-neighbours [data-reference-next-lesson]').click();
    }
   }
  }
