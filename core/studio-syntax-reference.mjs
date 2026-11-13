@@ -10,8 +10,10 @@ function cardsFor(locale){
   return cache.get(locale);
 }
 const css=`
-.studio-syntax-tools{display:flex;gap:10px;align-items:center;margin:12px 0}
-.studio-syntax-tools .btn{min-height:44px;white-space:normal}
+.studio-syntax-tools.lesson-floating{top:auto;right:20px;bottom:calc(94px + env(safe-area-inset-bottom,0px));margin:0}
+.studio-syntax-tools .quick-action{width:auto;height:auto;min-height:44px;padding:0 13px;white-space:normal}
+.studio-syntax-tools .quick-action span{display:inline}
+.studio-syntax-tools:has([aria-expanded=true]){display:none}
 .studio-syntax-open[data-studio-workspace]{grid-template-columns:minmax(0,1fr) minmax(280px,360px)!important;align-items:start}
 .studio-syntax-open>.ps-side{grid-column:1/-1}
 .studio-syntax-dock{position:sticky;top:90px;scroll-margin-top:100px;min-width:0;max-height:calc(100dvh - 110px);display:grid;grid-template-rows:auto auto minmax(0,1fr);border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden;color:var(--text)}
@@ -40,8 +42,8 @@ export function mountStudioSyntaxReference(studio,locale='ru'){
   if(!workspace||studio.dataset.language!=='cpp')return()=>{};
   const en=locale==='en',say=(ru,eng)=>en?eng:ru,abort=new AbortController(),options={signal:abort.signal};
   const editor=studio.querySelector('#editor');
-  const tools=document.createElement('div');tools.className='studio-syntax-tools';
-  tools.innerHTML=`<style>${css}</style><button type="button" class="btn" data-studio-syntax-toggle aria-controls="studioSyntaxReference" aria-expanded="false">{ } ${say('Справочник C++','C++ reference')}</button>`;
+  const tools=document.createElement('div');tools.className='lesson-floating studio-syntax-tools';
+  tools.innerHTML=`<style>${css}</style><button type="button" class="quick-action" data-studio-syntax-toggle aria-label="${say('Справочник синтаксиса C++','C++ syntax reference')}" aria-controls="studioSyntaxReference" aria-expanded="false">{ } <span>${say('Синтаксис','Syntax')}</span></button>`;
   workspace.before(tools);
   const dock=document.createElement('aside');dock.id='studioSyntaxReference';dock.className='studio-syntax-dock';dock.hidden=true;dock.lang=en?'en':'ru';dock.setAttribute('aria-labelledby','studioSyntaxTitle');
   dock.innerHTML=`<header><h2 id="studioSyntaxTitle">${say('Синтаксис C++','C++ syntax')}</h2><button type="button" class="icon-btn" data-syntax-close aria-label="${say('Закрыть справочник','Close reference')}">×</button></header><div class="drawer-search"><label for="studioSyntaxSearch">${say('Найти конструкцию или термин','Find syntax or a term')}</label><input id="studioSyntaxSearch" type="search" autocomplete="off" placeholder="${say('Например: for, ввод, double','For example: for, input, double')}"><p role="status" aria-live="polite" data-syntax-status></p></div><div class="drawer-scroll" data-syntax-list tabindex="0" role="region" aria-label="${say('Карточки синтаксиса C++','C++ syntax cards')}"></div>`;
