@@ -11,22 +11,9 @@ export const referenceCourseStyles=`
  .r3-lesson .reference-continuation .primary{background:#a5e7de;color:#102b35;font-weight:700;min-height:44px;white-space:normal}
  .r3-lesson .reference-continuation p{font-size:.85rem;line-height:1.5;margin:0}
  .r3-lesson .reference-continuation>a{padding:10px;border:1px solid #6888a6;border-radius:8px;overflow-wrap:anywhere}
- .r3-lesson dialog.reference-dialog{position:fixed;inset:12px 12px 12px auto;margin:0;width:min(460px,calc(100vw - 24px));height:calc(100dvh - 24px);max-width:none;max-height:none;box-sizing:border-box;display:grid;grid-template-rows:auto auto minmax(0,1fr);padding:0;overflow:hidden;background:#0b1929;color:#edf5ff;border:1px solid #607d98;border-radius:16px;box-shadow:-12px 0 40px #02081166;font-size:15px;line-height:1.6}
- .r3-lesson dialog.reference-dialog:not([open]){display:none}
- .r3-lesson dialog.reference-dialog::backdrop{background:#02081140}
- .reference-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #486377}
- .reference-dialog>header h2{margin:0;font-size:1.15rem;line-height:1.4}
- .reference-dialog button{min-height:44px;white-space:normal}
- .reference-dialog [data-reference-close]{flex-shrink:0}
- .reference-drawer-search{padding:12px 16px;border-bottom:1px solid #486377}
- .r3-lesson dialog.reference-dialog input{width:100%;box-sizing:border-box;margin-top:6px;padding:10px;background:#071522;color:#edf5ff;border:1px solid #8da7c1;border-radius:6px;font:inherit;font-size:16px}
- .reference-drawer-search [role=status]{margin:6px 0 0;color:#b8c9dc;font-size:.85rem}
- .reference-drawer-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 16px 24px;scrollbar-gutter:stable}
- .reference-drawer-body nav{display:grid;gap:6px}
- .reference-drawer-body nav button{text-align:left;width:100%;padding:9px 12px}
- .reference-drawer-body article{min-width:0;overflow-wrap:anywhere}
- .reference-drawer-body h3{font-size:1.15rem;margin:14px 0 8px}.reference-drawer-body h4{margin:16px 0 6px}.reference-drawer-body p{margin:6px 0 12px}
- .r3-lesson dialog.reference-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.85rem;padding:12px}
+ .term-drawer.reference-dialog .reference-syntax{padding:0;margin:10px 0;border:0;font-size:13px}
+ .term-drawer.reference-dialog .reference-syntax h4{font-size:13px;margin:12px 0 6px}
+ .term-drawer.reference-dialog .reference-syntax pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;padding:12px;font-size:12px}
  .r3-lesson .reference-inline-term{font:inherit;color:#a8eee2;border:0;border-bottom:1px dotted #a8eee2;padding:0;background:transparent;cursor:pointer;display:inline;text-align:inherit}
  .reference-overview{padding:18px;border:1px solid #607d98;border-radius:12px;background:#0b1929;color:#e7f0fc;margin:16px 0;overflow-wrap:anywhere}
  .reference-overview li{padding:8px 0}.reference-overview a{color:#a8eee2}.reference-overview small{overflow-wrap:anywhere}
@@ -50,7 +37,7 @@ export const referenceCourseStyles=`
   .r3-lesson .reference-toc{grid-row:1}
   .r3-lesson .lesson-map-wrap{display:none}
  }
- @media(max-width:720px){.r3-lesson dialog.reference-dialog{inset:8px 8px 8px auto;width:calc(100vw - 16px);height:calc(100dvh - 16px);border-radius:12px}.r3-lesson .reference-continuation{display:grid}.r3-lesson .reference-assessment{padding:10px}}
+ @media(max-width:720px){.r3-lesson .reference-continuation{display:grid}.r3-lesson .reference-assessment{padding:10px}}
 `;
 export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
  const scope=root.querySelector('.r3-lesson'),en=lesson.locale==='en',say=(r,e)=>en?e:r,abort=new AbortController();let disposed=false,observer=null,currentSection=null;
