@@ -14,6 +14,7 @@ const css=`
 .studio-syntax-tools .quick-action{width:auto;height:auto;min-height:44px;padding:0 13px;white-space:normal}
 .studio-syntax-tools .quick-action span{display:inline}
 .studio-syntax-tools:has([aria-expanded=true]){display:none}
+@media(max-width:760px){.studio-syntax-tools.lesson-floating{bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
 .studio-syntax-open[data-studio-workspace]{grid-template-columns:minmax(0,1fr) minmax(280px,360px)!important;align-items:start}
 .studio-syntax-open>.ps-side{grid-column:1/-1}
 .studio-syntax-dock{position:sticky;top:90px;scroll-margin-top:100px;min-width:0;max-height:calc(100dvh - 110px);display:grid;grid-template-rows:auto auto minmax(0,1fr);border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden;color:var(--text)}
