@@ -1,11 +1,13 @@
+import {mountStudioSyntaxReference} from './studio-syntax-reference.mjs';
 let dispose=()=>{};
 export function bindNexusStudioUi(locale='ru'){
   dispose();
-  const abort=new AbortController(),observers=[];
-  dispose=()=>{abort.abort();observers.forEach(observer=>observer.disconnect())};
+  const abort=new AbortController(),observers=[],cleanup=[];
+  dispose=()=>{abort.abort();observers.forEach(observer=>observer.disconnect());cleanup.forEach(fn=>fn())};
   const en=locale==='en',options={signal:abort.signal};
   const studio=document.querySelector('[data-nexus-code-studio]');
   if(studio){
+    cleanup.push(mountStudioSyntaxReference(studio,locale));
     const graphicsWorkspace=Boolean(studio.closest('[data-nexus-project-studio][data-graphics-workshop]'));
     const button=studio.querySelector('[data-studio-files]'),tree=studio.querySelector('#codeFileTree');
     const setOpen=open=>{
