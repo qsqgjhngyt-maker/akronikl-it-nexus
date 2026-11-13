@@ -1,4 +1,4 @@
-import {lessonNavigationPlan,referenceBadge,referenceOverviewMarkup,referenceHref} from './reference-course-routes.mjs';
+import {lessonNavigationPlan,referenceBadge} from './reference-course-routes.mjs';
 export const referenceCourseStyles=`
  .r3-lesson[data-r3-topic]{background:#0b1929;overflow-wrap:anywhere}
  @media(max-width:720px){.r3-lesson nav.reference-help{display:grid;grid-template-columns:1fr 1fr;gap:6px}.r3-lesson nav.reference-help [data-reference-help]{display:contents}.r3-lesson nav.reference-help button{font-size:.8rem;line-height:1.4;min-height:44px;white-space:normal;padding:8px}.r3-lesson nav.reference-help .reference-badge{grid-column:1/-1;justify-self:start}.r3-lesson [data-tour-invitation]{font-size:.75rem}}
@@ -11,13 +11,22 @@ export const referenceCourseStyles=`
  .r3-lesson .reference-continuation .primary{background:#a5e7de;color:#102b35;font-weight:700;min-height:44px;white-space:normal}
  .r3-lesson .reference-continuation p{font-size:.85rem;line-height:1.5;margin:0}
  .r3-lesson .reference-continuation>a{padding:10px;border:1px solid #6888a6;border-radius:8px;overflow-wrap:anywhere}
- .r3-lesson .reference-dialog{width:min(1000px,94vw);box-sizing:border-box}
- .r3-lesson .reference-dialog input,.reference-overview textarea{width:100%;box-sizing:border-box;padding:10px;background:#071522;color:#edf5ff;border:1px solid #8da7c1;border-radius:6px;font:inherit}
- .reference-dialog-grid{display:grid;grid-template-columns:minmax(160px,.65fr) minmax(0,2fr);gap:22px}
- .reference-dialog-grid nav{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}
- .reference-dialog-grid nav button{text-align:left;white-space:normal;flex-shrink:0}
- .reference-dialog-grid article{min-width:0;overflow-wrap:anywhere}
- .r3-lesson .reference-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere}
+ .r3-lesson .reference-dialog{position:fixed;inset:12px 12px 12px auto;margin:0;width:min(460px,calc(100vw - 24px));height:calc(100dvh - 24px);max-width:none;max-height:none;box-sizing:border-box;display:grid;grid-template-rows:auto auto minmax(0,1fr);padding:0;overflow:hidden;background:#0b1929;color:#edf5ff;border:1px solid #607d98;border-radius:16px;box-shadow:-12px 0 40px #02081166;font-size:15px;line-height:1.6}
+ .r3-lesson .reference-dialog:not([open]){display:none}
+ .r3-lesson .reference-dialog::backdrop{background:#02081140}
+ .reference-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #486377}
+ .reference-dialog>header h2{margin:0;font-size:1.15rem;line-height:1.4}
+ .reference-dialog button{min-height:44px;white-space:normal}
+ .reference-dialog [data-reference-close]{flex-shrink:0}
+ .reference-drawer-search{padding:12px 16px;border-bottom:1px solid #486377}
+ .r3-lesson .reference-dialog input{width:100%;box-sizing:border-box;margin-top:6px;padding:10px;background:#071522;color:#edf5ff;border:1px solid #8da7c1;border-radius:6px;font:inherit;font-size:16px}
+ .reference-drawer-search [role=status]{margin:6px 0 0;color:#b8c9dc;font-size:.85rem}
+ .reference-drawer-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 16px 24px;scrollbar-gutter:stable}
+ .reference-drawer-body nav{display:grid;gap:6px}
+ .reference-drawer-body nav button{text-align:left;width:100%;padding:9px 12px}
+ .reference-drawer-body article{min-width:0;overflow-wrap:anywhere}
+ .reference-drawer-body h3{font-size:1.15rem;margin:14px 0 8px}.reference-drawer-body h4{margin:16px 0 6px}.reference-drawer-body p{margin:6px 0 12px}
+ .r3-lesson .reference-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.85rem;padding:12px}
  .r3-lesson .reference-inline-term{font:inherit;color:#a8eee2;border:0;border-bottom:1px dotted #a8eee2;padding:0;background:transparent;cursor:pointer;display:inline;text-align:inherit}
  .reference-overview{padding:18px;border:1px solid #607d98;border-radius:12px;background:#0b1929;color:#e7f0fc;margin:16px 0;overflow-wrap:anywhere}
  .reference-overview li{padding:8px 0}.reference-overview a{color:#a8eee2}.reference-overview small{overflow-wrap:anywhere}
@@ -41,7 +50,7 @@ export const referenceCourseStyles=`
   .r3-lesson .reference-toc{grid-row:1}
   .r3-lesson .lesson-map-wrap{display:none}
  }
- @media(max-width:720px){.reference-dialog-grid{grid-template-columns:minmax(0,1fr)}.reference-dialog-grid nav{max-height:24vh}.r3-lesson .reference-dialog{padding:16px}.r3-lesson .reference-continuation{display:grid}.r3-lesson .reference-assessment{padding:10px}}
+ @media(max-width:720px){.r3-lesson .reference-dialog{inset:8px 8px 8px auto;width:calc(100vw - 16px);height:calc(100dvh - 16px);border-radius:12px}.r3-lesson .reference-continuation{display:grid}.r3-lesson .reference-assessment{padding:10px}}
 `;
 export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
  const scope=root.querySelector('.r3-lesson'),en=lesson.locale==='en',say=(r,e)=>en?e:r,abort=new AbortController();let disposed=false,observer=null,currentSection=null;
@@ -49,13 +58,13 @@ export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
  const plan=lessonNavigationPlan(lesson.id,catalog,{referenceMode,locale:lesson.locale}),{route,index:idx}=plan;
  const neighbours=document.createElement('nav');neighbours.className='reference-lesson-neighbours';neighbours.setAttribute('aria-label',say('Между уроками','Between lessons'));
  function lessonLink(target,previous=false){const a=document.createElement('a');a.className='btn';a.href=url(target.id,'explanation');a.dataset[previous?'referencePreviousLesson':'referenceNextLesson']='';a.textContent=previous?say('← Предыдущий урок: ','← Previous lesson: ')+target.title:say('Следующий урок: ','Next lesson: ')+target.title+' →';return a;}
- function overviewButton(){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.referenceOverviewOpen='';b.dataset.referenceRouteEnd='';b.textContent=say('Конец маршрута · Вернуться к обзору →','End of route · Return to overview →');return b;}
+ function routeEndLink(){const a=document.createElement('a');a.className='btn';a.dataset.referenceRouteEnd='';a.href='#course='+lesson.courseId;a.textContent=say('Конец маршрута · К программе курса →','End of route · Back to course outline →');return a;}
  if(plan.previous)neighbours.append(lessonLink(plan.previous,true));
- if(plan.next)neighbours.append(lessonLink(plan.next));else if(route)neighbours.append(overviewButton());else{const a=document.createElement('a');a.className='btn';a.href='#course='+lesson.courseId;a.textContent=say('Конец курса · Открыть программу →','End of course · Open outline →');neighbours.append(a);}
+ if(plan.next)neighbours.append(lessonLink(plan.next));else if(route)neighbours.append(routeEndLink());else{const a=document.createElement('a');a.className='btn';a.href='#course='+lesson.courseId;a.textContent=say('Конец курса · Открыть программу →','End of course · Open outline →');neighbours.append(a);}
  scope.querySelector('.lesson-context').after(neighbours);
  // Удаляем прежние дублирующие переходы из скрытого меню, не меняя программу курса.
  scope.querySelectorAll('.course-controls a[href*="lesson="]').forEach(a=>a.remove());
- const help=document.createElement('nav');help.className='reference-help';help.setAttribute('aria-label',say('Помощь и обзор','Help and overview'));help.innerHTML=`<span data-reference-help class="reference-help"></span><button type="button" class="btn" data-reference-overview-open>${say('Эталонные уроки — проверка','Reference lessons — review')}</button>`;
+ const help=document.createElement('nav');help.className='reference-help';help.setAttribute('aria-label',say('Помощь','Help'));help.innerHTML=`<span data-reference-help class="reference-help"></span>`;
  neighbours.after(help);
  help.insertAdjacentHTML('beforeend',referenceBadge(lesson.id,lesson.locale));
  if(route)help.insertAdjacentHTML('beforeend',`<span>${say('Старт с нуля','Start from zero')} · ${idx+1}/${route.topics.length}</span>`);
@@ -73,7 +82,7 @@ export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
   const footer=document.createElement('nav');footer.className='reference-continuation';footer.dataset.referenceContinuation=stage;footer.setAttribute('aria-label',say('Продолжение обучения','Continue learning'));let action;
   if(stage!=='practice'){action=document.createElement('a');action.href=url(lesson.id,stage==='explanation'?'selfcheck':'practice');action.textContent=stage==='explanation'?say('Дальше: самопроверка →','Next: self-check →'):say('Перейти к практике →','Go to practice →');}
   else if(plan.next)action=lessonLink(plan.next);
-  else if(route)action=overviewButton();
+  else if(route)action=routeEndLink();
   else{action=document.createElement('a');action.href='#course='+lesson.courseId;action.textContent=say('Конец курса · Вернуться к программе →','End of course · Return to outline →');}
   action.className='btn primary';action.dataset.referenceContinue='';footer.append(action);
   if(stage==='practice'){const note=document.createElement('p');note.textContent=say('Переход не выставляет «Освоено». Сохраните и объясните свою работу.','Continuing does not mark mastery. Keep and explain your own work.');footer.append(note);}panel.append(footer);
@@ -82,6 +91,6 @@ export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
   const top=scope.querySelector('.lesson-context').getBoundingClientRect().bottom+24,sections=lesson.sections.map(s=>root.querySelector('#'+CSS.escape(s.id))).filter(Boolean);let chosen=sections[0];for(const s of sections)if(s.getBoundingClientRect().top<=top)chosen=s;if(chosen?.id!==currentSection){currentSection=chosen?.id;for(const a of nav.querySelectorAll('a')){if(new URLSearchParams(a.hash.slice(1)).get('at')===currentSection)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current')}}
  }
  let frame=0;const schedule=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;update()})};addEventListener('scroll',schedule,{passive:true,signal:abort.signal});addEventListener('resize',schedule,{signal:abort.signal});observer=new MutationObserver(schedule);observer.observe(scope,{subtree:true,attributes:true,attributeFilter:['hidden']});
- root.addEventListener('click',event=>{if(!active())return;const button=event.target.closest('[data-reference-overview-open]');if(button){const d=document.createElement('dialog');d.className='r3-dialog';d.setAttribute('aria-label',say('Эталонные уроки — проверка','Reference lessons — review'));const close=document.createElement('button');close.type='button';close.className='btn';close.textContent=say('Закрыть','Close');close.onclick=()=>d.close();d.append(close);d.insertAdjacentHTML('beforeend',referenceOverviewMarkup(lesson.locale));scope.append(d);d.onclose=()=>{d.remove();if(active())button.focus({preventScroll:true})};d.querySelector('[data-reference-review-download]').onclick=()=>{const note=d.querySelector('textarea').value;const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify({kind:'review-not-progress',lessonId:lesson.id,locale:lesson.locale,notes:note},null,2)],{type:'application/json'}));a.href=u;a.download='reference-review.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};d.showModal()}},{signal:abort.signal});schedule();
+ schedule();
  return()=>{disposed=true;abort.abort();observer.disconnect();cancelAnimationFrame(frame);scope.querySelectorAll('dialog').forEach(d=>d.close())};
 }
