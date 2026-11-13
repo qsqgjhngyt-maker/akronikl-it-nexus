@@ -1,0 +1,701 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p2-conditions-author-v1",
+  "id": "onec.p2.topic-3",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "BSL fundamentals",
+  "locale": "en",
+  "title": "Conditions: choose an action and check boundaries",
+  "goal": "Explain the first matching branch from a trace and implement a new request-duration rule.",
+  "prerequisites": [
+    {
+      "text": "The value-types lesson: distinguish number and string. Know how to save one training handler, update your infobase and read client messages.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "Zero fits two comparisons",
+      "paragraphs": [
+        "A request says 0 minutes. It needs a separate “no time spent” classification. Zero also satisfies “less than or equal to 60”. Checking short duration first would select “Short” and lose the special meaning of zero.",
+        "The previous lesson separated a value’s type from its admissibility. Here the input is already a known integer number of minutes. We need to choose an action, trace that choice, change one line, and then implement a different rule for a new request."
+      ]
+    },
+    {
+      "id": "rule",
+      "title": "State the rule first",
+      "paragraphs": [
+        "The worked example accepts integer values from 0 through 1440. Values below 0 or above 1440 produce Недопустимо (invalid). Zero produces Без затрат (no time spent); 1…60 produces Короткая (short); 61…1440 produces Длинная (long). Every integer input has exactly one result.",
+        "A comparison has a Boolean result: true or false. Если tests that result. A true condition runs its statement group, and this chain does not proceed to later ИначеЕсли clauses. Иначе handles the remaining case, when no earlier check matched.",
+        "Numeric type and whole minutes are preconditions of this task. The example checks the range; it does not parse arbitrary text or validate fractional input."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Trace the first choice for zero",
+      "paragraphs": [
+        "This is the complete startup handler. Keep one such handler in your training infobase. Минуты receives 0; each branch assigns a string to Класс; one Сообщить runs after КонецЕсли.",
+        "The rejection check is false: zero is neither below zero nor above 1440. Минуты = 0 is true, so the program selects Без затрат. Inside a condition, = compares values; the statement Минуты = 0; assigns a value.",
+        "“Not evaluated” differs from false. The comparison 0 <= 60 would be true, but execution never reaches it. The output beside the program is the actual result of this complete handler in the training platform."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Минуты = 0;\n    Если Минуты < 0 Или Минуты > 1440 Тогда\n        Класс = \"Недопустимо\";\n    ИначеЕсли Минуты = 0 Тогда\n        Класс = \"Без затрат\";\n    ИначеЕсли Минуты <= 60 Тогда\n        Класс = \"Короткая\";\n    Иначе\n        Класс = \"Длинная\";\n    КонецЕсли;\n    Сообщить(Класс);\nКонецПроцедуры\n",
+        "output": "Без затрат"
+      },
+      "tables": [
+        {
+          "caption": "Trace for 0",
+          "columns": [
+            "Check",
+            "Result",
+            "Action"
+          ],
+          "rows": [
+            [
+              "0 < 0 Или 0 > 1440",
+              "False",
+              "Continue to the next check"
+            ],
+            [
+              "0 = 0",
+              "True",
+              "Assign Без затрат to Класс"
+            ],
+            [
+              "0 <= 60",
+              "Not evaluated",
+              "An earlier branch already matched"
+            ],
+            [
+              "Сообщить(Класс)",
+              "Без затрат",
+              "One message after the chain"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Change only the input: predict first",
+      "paragraphs": [
+        "Replace 0 with 61 in the first statement of the handler body. Keep the rest of the complete example. Before running it, write the expected message and the checks that the value will pass through.",
+        "Decide whether the zero check can be true and whether 61 belongs to the group through 60. Then reveal the reasoning and compare it with your trace."
+      ],
+      "prediction": [
+        "Минуты = 61;"
+      ],
+      "reveal": {
+        "title": "Compare your prediction with the reasoning",
+        "paragraphs": [
+          "61 is in range, is not zero, and is not ≤60. All three checks are false, so Иначе runs and assigns Длинная.",
+          "The ≤60 comparison is actually evaluated here. For zero in the previous example, it was skipped."
+        ]
+      }
+    },
+    {
+      "id": "variation",
+      "title": "The complete program for 61 minutes",
+      "paragraphs": [
+        "Run this version and compare Длинная with your prediction. Restore 0 and you will get Без затрат again. One changed input changes the route while the branch order stays the same.",
+        "Explain more than the matching word. Identify where the routes for 0 and 61 diverge: the zero check selects a branch only for the first value."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Минуты = 61;\n    Если Минуты < 0 Или Минуты > 1440 Тогда\n        Класс = \"Недопустимо\";\n    ИначеЕсли Минуты = 0 Тогда\n        Класс = \"Без затрат\";\n    ИначеЕсли Минуты <= 60 Тогда\n        Класс = \"Короткая\";\n    Иначе\n        Класс = \"Длинная\";\n    КонецЕсли;\n    Сообщить(Класс);\nКонецПроцедуры\n",
+        "output": "Длинная"
+      },
+      "tables": [
+        {
+          "caption": "How 61 reaches Иначе",
+          "columns": [
+            "Check",
+            "Result",
+            "Next"
+          ],
+          "rows": [
+            [
+              "61 < 0 Или 61 > 1440",
+              "False",
+              "Check zero"
+            ],
+            [
+              "61 = 0",
+              "False",
+              "Check the limit at 60"
+            ],
+            [
+              "61 <= 60",
+              "False",
+              "Choose Иначе"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "decision-map",
+      "title": "See the route in the flowchart",
+      "paragraphs": [
+        "Read the diamonds from top to bottom. A “yes” answer exits to the right and then to the common end; “no” continues to the next comparison. The diagram labels summarize the rule: Invalid means Недопустимо, No cost means Без затрат, Short means Короткая, and Long means Длинная.",
+        "Follow 0 and then 61. Once zero exits through No cost, it has no further route to ≤60. The same paths are available as plain text below the diagram."
+      ],
+      "flowchart": {
+        "caption": "One selected branch, then the common end",
+        "input": "Minutes",
+        "decisions": [
+          {
+            "condition": "<0 or >1440",
+            "branch": "yes",
+            "output": "Invalid"
+          },
+          {
+            "condition": "= 0",
+            "branch": "yes",
+            "output": "No cost"
+          },
+          {
+            "condition": "≤ 60",
+            "branch": "yes",
+            "output": "Short"
+          }
+        ],
+        "fallback": "Long",
+        "paths": [
+          "−1 and 1441 make the first condition true → rejection, Недопустимо.",
+          "0 makes the first condition false and the zero check true → Без затрат. The ≤60 check is skipped.",
+          "60 is valid, nonzero and ≤60 → Короткая.",
+          "61 and 1440 make all three checks false → Else, Длинная."
+        ],
+        "layout": "roomy"
+      }
+    },
+    {
+      "id": "wrong-order",
+      "title": "Correct comparisons in the wrong order",
+      "paragraphs": [
+        "This version swaps two checks. Range rejection is still first, but ≤60 now appears before zero. Identify the statement that will classify 0.",
+        "The training platform actually displays Короткая. The zero comparison is valid on its own, but execution never reaches it. This counterexample explains the defect more precisely than merely saying that order matters.",
+        "Restore the order in your copy and repeat 0. The independent task will also need a special zero case, with a different limit for short processing."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Минуты = 0;\n    Если Минуты < 0 Или Минуты > 1440 Тогда\n        Класс = \"Недопустимо\";\n    ИначеЕсли Минуты <= 60 Тогда\n        Класс = \"Короткая\";\n    ИначеЕсли Минуты = 0 Тогда\n        Класс = \"Без затрат\";\n    Иначе\n        Класс = \"Длинная\";\n    КонецЕсли;\n    Сообщить(Класс);\nКонецПроцедуры\n",
+        "output": "Короткая"
+      }
+    },
+    {
+      "id": "and-or",
+      "title": "И, Или and Не ask different questions",
+      "paragraphs": [
+        "Rejection is required when either limit is violated: Минуты < 0 Или Минуты > 1440. For −1 the first part is true and the second is false; Или is true. For 1441 the parts are reversed, and rejection is still required.",
+        "Replacing Или with И would require both violations at once. A number cannot be below 0 and above 1440 simultaneously, so that check would stop detecting out-of-range values.",
+        "И is useful when both parts are required: Минуты >= 0 И Минуты <= 1440 describes being inside the interval. Не reverses a Boolean result; Не (Минуты >= 0 И Минуты <= 1440) describes being outside it. Parentheses preserve the intended group.",
+        "True and false in the table are logical results, rather than literal messages produced by the program."
+      ],
+      "tables": [
+        {
+          "caption": "Two ways to combine comparisons",
+          "columns": [
+            "A",
+            "B",
+            "A И B",
+            "A Или B"
+          ],
+          "rows": [
+            [
+              "True",
+              "True",
+              "True",
+              "True"
+            ],
+            [
+              "True",
+              "False",
+              "False",
+              "True"
+            ],
+            [
+              "False",
+              "True",
+              "False",
+              "True"
+            ],
+            [
+              "False",
+              "False",
+              "False",
+              "False"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "boundaries",
+      "title": "Check where the result changes",
+      "paragraphs": [
+        "A typical value such as 30 does not expose <60 in place of ≤60. Input 60 does: the correct program prints Короткая, whereas the changed program prints Длинная. Both results were obtained in the native check.",
+        "Adjacent inputs check opposite sides of a boundary. −1/0 checks the start of the range; 0/1 checks special zero; 60/61 checks short duration; 1440/1441 checks the upper limit. Fill in your prediction before running.",
+        "For each defect, save the input and the first check that diverged. This gives you evidence for explaining your own solution."
+      ],
+      "tables": [
+        {
+          "caption": "Worked-example boundaries",
+          "columns": [
+            "Minutes",
+            "Message",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "-1",
+              "Недопустимо",
+              "Below the range"
+            ],
+            [
+              "0",
+              "Без затрат",
+              "Separate zero branch"
+            ],
+            [
+              "1",
+              "Короткая",
+              "First short value"
+            ],
+            [
+              "60",
+              "Короткая",
+              "Last short value"
+            ],
+            [
+              "61",
+              "Длинная",
+              "First long value"
+            ],
+            [
+              "1440",
+              "Длинная",
+              "Last valid value"
+            ],
+            [
+              "1441",
+              "Недопустимо",
+              "Above the range"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to put the complete handler",
+      "paragraphs": [
+        "Nexus can display the example and hold a separate draft. Installed training 1C executes BSL. Open your separate training infobase in Designer, right-click its configuration root, and choose «Открыть модуль приложения» (Open application module).",
+        "Save the previous exercise as a separate file. The complete program above already includes Процедура and КонецПроцедуры; replace one previous training handler with it. Save with Ctrl+S, update the database configuration with F7, and start the client with F5.",
+        "The genuine screenshot shows this main0. Its editor text was checked against the complete handler. The practical steps below identify Nexus, Designer, client, and result-recording actions separately."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/onec-p2-conditions-designer-main.jpg",
+          "assetRoot": "clarity",
+          "width": 1426,
+          "height": 746,
+          "sha256": "e384d680501be0139dbf0fd358c3b0b59881c59fd201f3e4a05bfe7a9d233e26",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "alt": "Own NexusP2Conditions20261108 training infobase in Designer: the complete main0 handler has input 0, a separate zero branch, and one Сообщить after КонецЕсли.",
+          "caption": "Designer: 1 marks the own training configuration root; 2 marks the complete main0 handler. This is the worked example source, rather than the independent solution.",
+          "callouts": [
+            {
+              "number": 1,
+              "x": 0.01,
+              "y": 0.22,
+              "width": 0.15,
+              "height": 0.04
+            },
+            {
+              "number": 2,
+              "x": 0.2,
+              "y": 0.17,
+              "width": 0.37,
+              "height": 0.29
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new rule for a new request",
+      "paragraphs": [
+        "The rule now changes. МинутыЗаявки is a known integer number of minutes, with a valid window of 0…180. Zero means Без затрат (no time spent); 1…30 means Срочно (urgent); 31…180 means Обычно (normal); outside the window requires Ошибка (error).",
+        "Make your decision table before writing code. The starter provides 31; you write the branches. Each run must produce one message after selecting the status.",
+        "The limits 60 and 1440 belong to the worked example. This task needs a different short-duration threshold and upper limit. Save your own version before opening the reference."
+      ]
+    },
+    {
+      "id": "independent-map",
+      "title": "Compare the new task flowchart with yours",
+      "paragraphs": [
+        "“Minutes” in this diagram means the value of МинутыЗаявки in the starter. Trace 31 first and then 0. Identify the diamond after which zero already has its exit.",
+        "Trace all seven inputs: −1, 0, 1, 30, 31, 180, 181. If your route gives zero Urgent or omits rejection for 181, correct the diagram before implementing it. Plain-text paths are available below."
+      ],
+      "flowchart": {
+        "caption": "New request rule: exit after the first matching branch",
+        "input": "Minutes",
+        "decisions": [
+          {
+            "condition": "<0 or >180",
+            "branch": "yes",
+            "output": "Error"
+          },
+          {
+            "condition": "= 0",
+            "branch": "yes",
+            "output": "No cost"
+          },
+          {
+            "condition": "≤ 30",
+            "branch": "yes",
+            "output": "Urgent"
+          }
+        ],
+        "fallback": "Normal",
+        "paths": [
+          "−1 violates the lower limit → Ошибка (error); later checks are skipped.",
+          "0 is in range → zero → Без затрат (no time spent); ≤30 is not checked.",
+          "1 and 30 are valid, nonzero and ≤30 → Срочно (urgent).",
+          "31 and 180 are valid, nonzero and >30 → Обычно (normal).",
+          "181 violates the upper limit → Ошибка (error)."
+        ],
+        "layout": "roomy"
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Find the first difference in the trace",
+      "paragraphs": [
+        "If zero gets Срочно, check whether ≤30 appears before the separate zero case. If 30 gets Обычно, compare <30 and ≤30. If −1 or 181 is accepted as a request, inspect the connective in the rejection condition.",
+        "The deliberately wrong И version produced Срочно for −1 and Обычно for 181 in the native check. Those outputs expose a defect: the new rule requires Ошибка for both.",
+        "If no message appears, first check syntax errors, the handler name, and the database update. For a successful run, compare prediction with observation and name the first divergent check. Technical execution and your explanation are assessed separately."
+      ]
+    },
+    {
+      "id": "native-observation",
+      "title": "Connect the program, output and explanation",
+      "paragraphs": [
+        "The complete main0 without diagnostic additions produced one Без затрат message in the training client. The complete independent reference with 31 produced one Обычно. These runs used the new sources, rather than reusing an earlier lab’s result.",
+        "The screenshot below shows the worked example with zero. For your own work, save input, prediction, actual message, and the first selected branch. Explain the matching observations in your own words."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/onec-p2-conditions-main-output.jpg",
+          "assetRoot": "clarity",
+          "width": 1438,
+          "height": 753,
+          "sha256": "7e0b321fd9b86ac4957b0817d6528b8ccf3b48c917565cc95219183ab262c0a9",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "alt": "Actual 1C:Enterprise window for the own NexusP2Conditions20261108 infobase: its message area shows one Без затрат line for the complete main0.",
+          "caption": "1C:Enterprise: 1 marks the actual Без затрат message for 0; 2 marks the own training infobase name. Compare it with the worked-example trace.",
+          "callouts": [
+            {
+              "number": 1,
+              "x": 0.005,
+              "y": 0.84,
+              "width": 0.99,
+              "height": 0.1
+            },
+            {
+              "number": 2,
+              "x": 0.06,
+              "y": 0.002,
+              "width": 0.25,
+              "height": 0.035
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Only Минуты changes from 0 to 61 in the complete example. Which message results?",
+      "options": [
+        "Длинная",
+        "Короткая",
+        "Недопустимо"
+      ],
+      "correct": 0,
+      "feedback": "61 is valid, nonzero and not ≤60. All three checks are false, so Иначе selects Длинная.",
+      "recall": "variation"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does the shown chain select for 0?",
+      "options": [
+        "Short",
+        "Invalid",
+        "No time spent"
+      ],
+      "correct": 2,
+      "feedback": "Zero is checked before <=60.",
+      "recall": "example-1"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Why is “Минуты < 0 И Минуты > 1440” unsuitable for rejection?",
+      "options": [
+        "A number cannot violate both limits simultaneously",
+        "И always means Или",
+        "1440 is a string"
+      ],
+      "correct": 0,
+      "feedback": "One violated limit suffices, so use Или.",
+      "recall": "and-or"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Which inputs best expose a wrong inclusive boundary at 60?",
+      "options": [
+        "30 and 45",
+        "60 and 61",
+        "10 and 20"
+      ],
+      "correct": 1,
+      "feedback": "Adjacent values lie on opposite sides of the boundary.",
+      "recall": "boundaries"
+    },
+    {
+      "id": "new-range",
+      "kind": "choice",
+      "prompt": "In the new task, Или in the rejection check is replaced by И. What does the incorrect program display for 181?",
+      "options": [
+        "Ошибка",
+        "Срочно",
+        "Обычно"
+      ],
+      "correct": 2,
+      "feedback": "181 <0 is false and 181 >180 is true; И is false. Zero and ≤30 are also false, so the incorrect program selects Обычно. The rule requires Ошибка.",
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Use your trace to explain why zero skips the next check. Give counterexamples for the wrong order and wrong И. For the new request, identify both sides of a boundary and the first selected branch.",
+      "feedback": "The free answer is not graded automatically. Check the sequence, special zero, both range limits, and the actual observations from your own work.",
+      "recall": "decision-map"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Request window: your own 0…180 rule",
+    "task": "For a known integer МинутыЗаявки, implement: 0 → Без затрат; 1…30 → Срочно; 31…180 → Обычно; outside 0…180 → Ошибка. Display one message after selecting the status. Start with 31, then independently check −1, 0, 1, 30, 180, 181. Save prediction, observation, and the reason for the first selected branch.",
+    "environment": "Installed training 1C:Enterprise8.3, an own separate infobase, and the application module with one ПриНачалеРаботыСистемы. Nexus holds a separate draft; 1C executes BSL.",
+    "externalRoute": "Own training infobase → Designer → configuration root → Open application module",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "МодульУправляемогоПриложения.bsl",
+        "language": "bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    МинутыЗаявки = 31;\n    // TODO: choose one status using the new 0..180 rule and display one message.\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыЗаявки = 31;\n    Если МинутыЗаявки < 0 Или МинутыЗаявки > 180 Тогда\n        Статус = \"Ошибка\";\n    ИначеЕсли МинутыЗаявки = 0 Тогда\n        Статус = \"Без затрат\";\n    ИначеЕсли МинутыЗаявки <= 30 Тогда\n        Статус = \"Срочно\";\n    Иначе\n        Статус = \"Обычно\";\n    КонецЕсли;\n    Сообщить(Статус);\nКонецПроцедуры\n",
+      "paragraphs": [
+        "Reject values outside 0…180 first. Among valid values, select zero separately, then the group through 30. Remaining values31…180 get Обычно.",
+        "For zero, execution never reaches ≤30. Или detects either range violation; И would require both violations simultaneously.",
+        "The input is assumed to be known whole minutes. This source does not parse arbitrary text or separately validate fractional values. Your trace explanation is assessed separately from matching messages."
+      ]
+    },
+    "returnAnchor": "decision-map",
+    "cases": [
+      {
+        "label": "Below the window: −1",
+        "input": "МинутыЗаявки = -1;",
+        "output": "Ошибка"
+      },
+      {
+        "label": "Special zero",
+        "input": "МинутыЗаявки = 0;",
+        "output": "Без затрат"
+      },
+      {
+        "label": "First urgent value",
+        "input": "МинутыЗаявки = 1;",
+        "output": "Срочно"
+      },
+      {
+        "label": "Last urgent value",
+        "input": "МинутыЗаявки = 30;",
+        "output": "Срочно"
+      },
+      {
+        "label": "First normal value",
+        "input": "МинутыЗаявки = 31;",
+        "output": "Обычно"
+      },
+      {
+        "label": "Upper valid boundary",
+        "input": "МинутыЗаявки = 180;",
+        "output": "Обычно"
+      },
+      {
+        "label": "Above the upper boundary",
+        "input": "МинутыЗаявки = 181;",
+        "output": "Ошибка"
+      }
+    ],
+    "criteria": [
+      "Complete the starter with your own solution; replace31 with one integer for each run.",
+      "Each run produces exactly one message. 0 gives Без затрат;1 and30 give Срочно;31 and180 give Обычно;−1 and181 give Ошибка.",
+      "Separate zero before the general ≤30 check, include30 and180, and detect either range violation.",
+      "Keep separate prediction and actual message for all seven cases, and identify the first divergent step of a wrong version.",
+      "Add two integer inputs outside the supplied table and explain the selected status.",
+      "Save your source and reasoning; opening the example or reference does not verify authorship."
+    ],
+    "hint": "Check the range, then special zero, then the limit at30. After the first matching branch, display one selected-status message.",
+    "steps": [
+      {
+        "id": "p2-conditions-predict",
+        "title": "Predict the new task",
+        "where": "Nexus → Practice → separate BSL draft",
+        "action": "Before running, record a prediction table for −1/0/1/30/31/180/181 in comments. Save earlier code separately and open the starter as new work.",
+        "why": "Prediction should be independent of the observed message.",
+        "expected": "Seven expected statuses are recorded before execution."
+      },
+      {
+        "id": "p2-conditions-locate",
+        "title": "Locate your own module",
+        "where": "Designer → own training configuration root → right-click → Open application module",
+        "action": "Open your own separate training infobase. Save the previous exercise in a separate file and confirm that this infobase’s application module is open.",
+        "why": "The source and execution must belong to the same training infobase.",
+        "expected": "The intended training infobase application module is visible."
+      },
+      {
+        "id": "p2-conditions-write",
+        "title": "Write your own branches",
+        "where": "Designer → application module editor → ПриНачалеРаботыСистемы",
+        "action": "Implement your0…180 rule in one complete handler. Select Статус in the branches and place one Сообщить after КонецЕсли. Save your version before viewing the reference.",
+        "why": "Each input needs one selected status.",
+        "expected": "Your program is ready for initial31, with one handler."
+      },
+      {
+        "id": "p2-conditions-run",
+        "title": "Obtain the actual message",
+        "where": "Designer: Ctrl+S → F7 → F5; then 1C:Enterprise → Messages",
+        "action": "Save the module, update your database configuration, and start the client. Read the message for31 and compare it with the prediction.",
+        "why": "The installed platform executes the code.",
+        "expected": "One Обычно line for31."
+      },
+      {
+        "id": "p2-conditions-record",
+        "title": "Repeat boundaries and save observations",
+        "where": "Result recording: your BSL file with prediction/observation comments; the source executes in 1C:Enterprise",
+        "action": "Repeat all seven inputs, changing only the value. In your file comments, save input, prediction, actual result and first selected branch; add two inputs of your own.",
+        "why": "The table separates observed execution from copied expectations.",
+        "expected": "You have the source, seven observations, two own cases, and an explanation of order."
+      }
+    ]
+  },
+  "terms": [
+    "variable",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p2-conditions.json",
+  "assessment": {
+    "contentRevision": "onec-p2-conditions-author-v1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.a2p2.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Only Минуты changes from 0 to 61 in the complete example. Which message results?",
+        "options": [
+          "Длинная",
+          "Короткая",
+          "Недопустимо"
+        ],
+        "correct": 0,
+        "explanation": "61 is valid, nonzero and not ≤60. All three checks are false, so Иначе selects Длинная."
+      },
+      {
+        "question": "What does the shown chain select for 0?",
+        "options": [
+          "Short",
+          "Invalid",
+          "No time spent"
+        ],
+        "correct": 2,
+        "explanation": "Zero is checked before <=60."
+      },
+      {
+        "question": "Why is “Минуты < 0 И Минуты > 1440” unsuitable for rejection?",
+        "options": [
+          "A number cannot violate both limits simultaneously",
+          "И always means Или",
+          "1440 is a string"
+        ],
+        "correct": 0,
+        "explanation": "One violated limit suffices, so use Или."
+      },
+      {
+        "question": "Which inputs best expose a wrong inclusive boundary at 60?",
+        "options": [
+          "30 and 45",
+          "60 and 61",
+          "10 and 20"
+        ],
+        "correct": 1,
+        "explanation": "Adjacent values lie on opposite sides of the boundary."
+      },
+      {
+        "question": "In the new task, Или in the rejection check is replaced by И. What does the incorrect program display for 181?",
+        "options": [
+          "Ошибка",
+          "Срочно",
+          "Обычно"
+        ],
+        "correct": 2,
+        "explanation": "181 <0 is false and 181 >180 is true; И is false. Zero and ≤30 are also false, so the incorrect program selects Обычно. The rule requires Ошибка."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-if-8327",
+      "title": "Conditional statements in 1C script",
+      "author": "1C Company",
+      "edition": "1C:Enterprise Developer Guide8.3.27",
+      "section": "4.6.5.1",
+      "language": "English",
+      "purpose": "Check the execution rule for ElsIf and Else. The explanation and traces in this lesson are sufficient for the task.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    },
+    {
+      "id": "official-1c-style",
+      "title": "Language structures and condition formatting",
+      "author": "1C International",
+      "edition": "1C:Enterprise Development Standards",
+      "section": "General application development practices, 1–4",
+      "language": "English",
+      "purpose": "Check canonical keyword spelling and condition formatting after completing your work.",
+      "url": "https://kb.1ci.com/1C_Enterprise_Platform/Guides/Developer_Guides/1C_Enterprise_Development_Standards/Code_conventions/Using_1C_Enterprise_language_structures/General_1C_Enterprise_application_development_practices/?language=en"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p2.topic-3.en.json"
+}

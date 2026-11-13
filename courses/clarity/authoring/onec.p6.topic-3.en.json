@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P6",
+  "id": "onec.p6.topic-3",
+  "locale": "en",
+  "revision": "onec-p6-topic-3-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p6-turnovers.json",
+    "sha256": "ff52bec3f4c9888c3baa4efb6a86dc364df3b571d5ec43375852a8a7fd265155"
+  },
+  "title": "Turnover: which minutes belong to the period",
+  "goal": "Compare virtual-table75 with two actual 30/45 movements.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P5. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A customer has two posted requests.75 is correct for one period, but not necessarily for every report. Specify the time range and customer before adding rows.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Accumulation without a balance",
+      "paragraphs": [
+        "Delivered services often need volume during a period, not an end-of-day obligation. A turnover register stores numeric facts for aggregation by dimensions. Do not invent receipt/expense semantics merely because balance registers are familiar. First ask whether the resource has a meaningful balance and explain it concretely.",
+        "Reuse turnover register Трудозатраты from module 5. Preparation creates an own 30/45 set; posting runs its existing handler. Минуты receives document ДлительностьМинут without renaming the populated header."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Add only the missing part of your own setup",
+      "paragraphs": [
+        "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+        "Verify Трудозатраты Turnovers with Клиент/Минуты and ЗаявкаУслуги recorder. Reuse module 5 posting handler without changing register kind.",
+        "Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists, do not add another definition:retain it and append only the new function. Do not load a full CF over your work."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытОборотовТрудозатрат() Экспорт\n    Набор = НовыйНаборРегистров(30,45); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ Т.МинутыОборот КАК Минуты ИЗ РегистрНакопления.Трудозатраты.Обороты(&Начало,&Конец,,Клиент = &Клиент) КАК Т\");\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,3)); Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Итог = Запрос.Выполнить().Выгрузить();\n    Сырые = Новый Запрос(\"ВЫБРАТЬ Т.Регистратор ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\"); Сырые.УстановитьПараметр(\"Клиент\",Набор.Клиент); Строки = Сырые.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,10,1)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,10,2)); Раньше = Запрос.Выполнить().Выгрузить();\n    Возврат Новый Структура(\"ОборотВерный,ДваРегистратора,ПустойПериод,Клиент\",Итог.Количество() = 1 И Итог[0].Минуты = 75,Строки.Количество() = 2,Раньше.Количество() = 0,Набор.Клиент);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "Two own requests of 30 and 45 are posted on the same day. The Обороты virtual table returns 75 for that customer and period. A separate raw query confirms two recorders. An earlier empty period has no matching rows.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытОборотовТрудозатрат();\n    Сообщить(\"Оборот75 минут: \" + Строка(Результат.ОборотВерный));\n    Сообщить(\"Два регистратора: \" + Строка(Результат.ДваРегистратора));\n    Сообщить(\"Другой период пустой: \" + Строка(Результат.ПустойПериод));\nКонецПроцедуры\n",
+        "output": "Оборот75 минут: Да\nДва регистратора: Да\nДругой период пустой: Да",
+        "files": {
+          "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытОборотовТрудозатрат() Экспорт\n    Набор = НовыйНаборРегистров(30,45); Первая = Набор.Первая.ПолучитьОбъект(); Вторая = Набор.Вторая.ПолучитьОбъект();\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ Т.МинутыОборот КАК Минуты ИЗ РегистрНакопления.Трудозатраты.Обороты(&Начало,&Конец,,Клиент = &Клиент) КАК Т\");\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,3)); Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент);\n    Итог = Запрос.Выполнить().Выгрузить();\n    Сырые = Новый Запрос(\"ВЫБРАТЬ Т.Регистратор ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Клиент = &Клиент\"); Сырые.УстановитьПараметр(\"Клиент\",Набор.Клиент); Строки = Сырые.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,10,1)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,10,2)); Раньше = Запрос.Выполнить().Выгрузить();\n    Возврат Новый Структура(\"ОборотВерный,ДваРегистратора,ПустойПериод,Клиент\",Итог.Количество() = 1 И Итог[0].Минуты = 75,Строки.Количество() = 2,Раньше.Количество() = 0,Набор.Клиент);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытОборотовТрудозатрат();\n    Сообщить(\"Оборот75 минут: \" + Строка(Результат.ОборотВерный));\n    Сообщить(\"Два регистратора: \" + Строка(Результат.ДваРегистратора));\n    Сообщить(\"Другой период пустой: \" + Строка(Результат.ПустойПериод));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation and reason"
+          ],
+          "rows": [
+            [
+              "Documents",
+              "30/45 — Own references retained."
+            ],
+            [
+              "Posting",
+              "Two movements — Recorders explain provenance."
+            ],
+            [
+              "Turnover",
+              "Own customer/period — 75."
+            ],
+            [
+              "Reconcile",
+              "Resource and sources — Independent checks."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Interval and granularity",
+      "paragraphs": [
+        "A weekly 60-minute turnover differs from a 20-minute closing obligation. Specify boundaries and grouping. One document with two services may create two records, so movement count differs from document count. Count recorder identities when the question asks for documents.",
+        "The virtual Обороты table accepts begin/end and Клиент=&Клиент. It represents computed platform totals, not a stored table containing 75. The full code selects МинутыОборот as Минуты."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "The second request is moved to the following day, beyond the end boundary. Should the first day include its 40 minutes?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. Customer matching and period membership are both required. A document’s existence does not add its movements to every time window."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "A repeat does not create another fact",
+      "paragraphs": [
+        "Reposting replaces the current recorder’s set. Appending without replacement makes report volume grow after every correction. Test one two-line document, repost, line change and reversal. Reconcile by service and grand total while preserving document sources.",
+        "Verify 75 and two source-register rows filtered by your customer. An earlier empty period has no turnover. Exact endpoint events require an explicit inclusion policy; these movements lie inside a day and do not prove every time-boundary combination."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The worked 30+45 total follows filtering. In the independent task 20 and 40 fall into different windows, so two distinct queries are required.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "First",
+            "lines": [
+              "30"
+            ]
+          },
+          {
+            "title": "Second",
+            "lines": [
+              "45"
+            ]
+          },
+          {
+            "title": "Period / customer",
+            "lines": [
+              "filter"
+            ]
+          },
+          {
+            "title": "Turnover",
+            "lines": [
+              "75"
+            ]
+          }
+        ],
+        "alternative": [
+          "First: 30",
+          "Second: 45",
+          "Period / customer: filter",
+          "Turnover: 75"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Filtering the customer but leaving the period too wide yields 60 instead of 20. The arithmetic can be correct while answering a different question. Check boundaries instead of adjusting arithmetic to the desired number.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Empty periods and boundaries",
+      "paragraphs": [
+        "Test an empty period and records exactly at agreed boundaries. Including a whole final day must follow an explicit rule, not accidental parameter precision. Do not change document dates to force a match: correct the report condition in a separate copy.",
+        "The 46 mutation gives 76 instead of 75 while retaining two recorders. Test count and resource separately. Labor turnover is not remaining obligations: those are distinct questions/registers."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Create and post new requests of 20 minutes on 2 November 12:00 and 40 minutes on 3 November 12:00. The 2 November 00:00→3 November 00:00 window must return 20; ending on 4 November 00:00 must return 60. Another new customer without movements must not inherit that turnover.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p6-turnovers-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "92a84c35e7b9227068df2dd765600d4e49f79c4a140b5be78b20acf91e93c23d",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain why a correct overall sum does not establish correct period and customer filtering."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "The second request is moved to the following day, beyond the end boundary. Should the first day include its 40 minutes?",
+      "options": [
+        "No:it falls outside the selected period",
+        "Yes:it is the same customer",
+        "Yes:the document exists"
+      ],
+      "correct": 0,
+      "feedback": "No. Customer matching and period membership are both required. A document’s existence does not add its movements to every time window.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Трудозатраты measures",
+      "options": [
+        "Labor turnover",
+        "Password balance",
+        "License balance"
+      ],
+      "correct": 0,
+      "feedback": "Reuse turnover register Трудозатраты from module 5. Preparation creates an own 30/45 set; posting runs its existing handler. Минуты receives document ДлительностьМинут without renaming the populated header.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "The Минуты alias changes",
+      "options": [
+        "Resource meaning",
+        "Result column name",
+        "Stored data"
+      ],
+      "correct": 1,
+      "feedback": "The virtual Обороты table accepts begin/end and Клиент=&Клиент. It represents computed platform totals, not a stored table containing 75. The full code selects МинутыОборот as Минуты.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Two recorders alone establish",
+      "options": [
+        "Correct totals",
+        "No possible defects",
+        "The checked source count only"
+      ],
+      "correct": 2,
+      "feedback": "Verify 75 and two source-register rows filtered by your customer. An earlier empty period has no turnover. Exact endpoint events require an explicit inclusion policy; these movements lie inside a day and do not prove every time-boundary combination.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "How do you investigate 60 instead of 20 in the report?",
+      "options": [
+        "Compare movement timestamps and window parameters",
+        "Subtract 40 without checking",
+        "Change an older request’s duration"
+      ],
+      "correct": 0,
+      "feedback": "Explain why a correct overall sum does not establish correct period and customer filtering.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Turnover: which minutes belong to the period",
+    "task": "Create and post new requests of 20 minutes on 2 November 12:00 and 40 minutes on 3 November 12:00. The 2 November 00:00→3 November 00:00 window must return 20; ending on 4 November 00:00 must return 60. Another new customer without movements must not inherit that turnover.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытРазныхПериодов() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытРазныхПериодов();\n    Сообщить(\"За2 ноября: \" + Строка(Результат.Узкий));\n    Сообщить(\"За2 и3 ноября: \" + Строка(Результат.Широкий));\n    Сообщить(\"Другой клиент без оборота: \" + Строка(Результат.ДругойПустой));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытРазныхПериодов() Экспорт\n    Набор = НовыйНаборРегистров(20,40);\n    Первая = Набор.Первая.ПолучитьОбъект(); Первая.Дата = Дата(2026,11,2,12,0,0);\n    Вторая = Набор.Вторая.ПолучитьОбъект(); Вторая.Дата = Дата(2026,11,3,12,0,0);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ Т.МинутыОборот КАК Минуты ИЗ РегистрНакопления.Трудозатраты.Обороты(&Начало,&Конец,,Клиент = &Клиент) КАК Т\");\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,3));\n    Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент); Узкий = Запрос.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,4)); Широкий = Запрос.Выполнить().Выгрузить();\n    Другой = Справочники.Клиенты.СоздатьЭлемент(); Другой.Наименование = \"P6 другой период\"; Другой.Записать();\n    Запрос.УстановитьПараметр(\"Клиент\",Другой.Ссылка); Чужой = Запрос.Выполнить().Выгрузить();\n    Возврат Новый Структура(\"Узкий,Широкий,ДругойПустой\",Узкий[0].Минуты,Широкий[0].Минуты,Чужой.Количество() = 0);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытРазныхПериодов() Экспорт\n    Набор = НовыйНаборРегистров(20,40);\n    Первая = Набор.Первая.ПолучитьОбъект(); Первая.Дата = Дата(2026,11,2,12,0,0);\n    Вторая = Набор.Вторая.ПолучитьОбъект(); Вторая.Дата = Дата(2026,11,3,12,0,0);\n    Первая.Записать(РежимЗаписиДокумента.Проведение); Вторая.Записать(РежимЗаписиДокумента.Проведение);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ Т.МинутыОборот КАК Минуты ИЗ РегистрНакопления.Трудозатраты.Обороты(&Начало,&Конец,,Клиент = &Клиент) КАК Т\");\n    Запрос.УстановитьПараметр(\"Начало\",Дата(2026,11,2)); Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,3));\n    Запрос.УстановитьПараметр(\"Клиент\",Набор.Клиент); Узкий = Запрос.Выполнить().Выгрузить();\n    Запрос.УстановитьПараметр(\"Конец\",Дата(2026,11,4)); Широкий = Запрос.Выполнить().Выгрузить();\n    Другой = Справочники.Клиенты.СоздатьЭлемент(); Другой.Наименование = \"P6 другой период\"; Другой.Записать();\n    Запрос.УстановитьПараметр(\"Клиент\",Другой.Ссылка); Чужой = Запрос.Выполнить().Выгрузить();\n    Возврат Новый Структура(\"Узкий,Широкий,ДругойПустой\",Узкий[0].Минуты,Широкий[0].Минуты,Чужой.Количество() = 0);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытРазныхПериодов();\n    Сообщить(\"За2 ноября: \" + Строка(Результат.Узкий));\n    Сообщить(\"За2 и3 ноября: \" + Строка(Результат.Широкий));\n    Сообщить(\"Другой клиент без оборота: \" + Строка(Результат.ДругойПустой));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "20 and 40 on different days; one customer and a separate control customer.",
+        "output": "За2 ноября: 20\nЗа2 и3 ноября: 60\nДругой клиент без оборота: Да"
+      }
+    ],
+    "criteria": [
+      "Labelled results:20, 60, Да.",
+      "Periods use exact moments; the second request at 12:00 is outside the first window.",
+      "Explain why a correct overall sum does not establish correct period and customer filtering."
+    ],
+    "hint": "The worked 30+45 total follows filtering. In the independent task 20 and 40 fall into different windows, so two distinct queries are required.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work. Verify Трудозатраты Turnovers with Клиент/Минуты and ЗаявкаУслуги recorder. Reuse module 5 posting handler without changing register kind.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "Prior work is retained; the required metadata objects and relationships are defined."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions. Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists,do not add another definition:retain it and append only the new function. Do not load a full CF over your work.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits",
+    "platform-contract": "platform-contract"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Accumulation without a balance",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Interval and granularity",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "A repeat does not create another fact",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Empty periods and boundaries",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p6-topic-3-author-v1",
+    "quiz": [
+      {
+        "question": "The second request is moved to the following day, beyond the end boundary. Should the first day include its 40 minutes?",
+        "options": [
+          "No:it falls outside the selected period",
+          "Yes:it is the same customer",
+          "Yes:the document exists"
+        ],
+        "correct": 0,
+        "explanation": "No. Customer matching and period membership are both required. A document’s existence does not add its movements to every time window."
+      },
+      {
+        "question": "Трудозатраты measures",
+        "options": [
+          "Labor turnover",
+          "Password balance",
+          "License balance"
+        ],
+        "correct": 0,
+        "explanation": "Reuse turnover register Трудозатраты from module 5. Preparation creates an own 30/45 set; posting runs its existing handler. Минуты receives document ДлительностьМинут without renaming the populated header."
+      },
+      {
+        "question": "The Минуты alias changes",
+        "options": [
+          "Resource meaning",
+          "Result column name",
+          "Stored data"
+        ],
+        "correct": 1,
+        "explanation": "The virtual Обороты table accepts begin/end and Клиент=&Клиент. It represents computed platform totals, not a stored table containing 75. The full code selects МинутыОборот as Минуты."
+      },
+      {
+        "question": "Two recorders alone establish",
+        "options": [
+          "Correct totals",
+          "No possible defects",
+          "The checked source count only"
+        ],
+        "correct": 2,
+        "explanation": "Verify 75 and two source-register rows filtered by your customer. An earlier empty period has no turnover. Exact endpoint events require an explicit inclusion policy; these movements lie inside a day and do not prove every time-boundary combination."
+      },
+      {
+        "question": "How do you investigate 60 instead of 20 in the report?",
+        "options": [
+          "Compare movement timestamps and window parameters",
+          "Subtract 40 without checking",
+          "Change an older request’s duration"
+        ],
+        "correct": 0,
+        "explanation": "Explain why a correct overall sum does not establish correct period and customer filtering."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS + MAIN GUI OBSERVATION PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "turnovers-main",
+      "turnovers-independent"
+    ],
+    "scope": "10 прямых вызовов неизменённых экспортных функций из управляемого клиента: пять основных примеров и пять самостоятельных решений. Общий модуль имеет Сервер/Вызов сервера, Privileged=false. Это не широкая матрица и не оценка понимания.",
+    "studentAuthorshipVerified": false,
+    "GUIcases": [
+      "turnovers-main"
+    ],
+    "plainStandaloneHandlerGUI": false
+  }
+}

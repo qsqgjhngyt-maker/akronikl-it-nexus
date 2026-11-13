@@ -455,5 +455,460 @@
     ],
     "correctIndex": 0
   },
-  "locale": "en"
+  "locale": "en",
+  "teachingEdition": {
+    "revision": "b4-author-v1",
+    "title": "Sorting: contracts, stability and invariants",
+    "goal": "Sort records with duplicate keys and track what happens to their original indices.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–3: validated input, functions, vector, records, references and lifetimes."
+      },
+      {
+        "text": "Direct learning dependencies: cpp.algorithm-complexity. New constructs are explained before the task."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "The complete sorting contract",
+        "paragraphs": [
+          "Four requests with keys 2, 1, 2, 1 have arrival tags 0, 1, 2, 3. After sorting, the requests with key 1 must remain in order 1, 3.",
+          "For ascending integers, the result must be ordered and contain every original value with the same multiplicity. The second condition preserves the multiset. Replacing all items with zero can pass an order check but is not sorting. Records must retain their associated fields too: a key cannot be detached from its name or ID.",
+          "The lab automatically assigns each record an original position. key determines order while original makes rearrangements observable. n=0 is valid and prints an empty line. Reject out-of-range, missing or extra data before reporting a result; a partial output would otherwise resemble a successfully sorted collection."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "A comparison predicate defines the order",
+        "paragraphs": [
+          "For our integers, a<b means “a should precede b”. Strictness requires that an item never precede itself. Transitivity connects three values: a<b and b<c imply a<c. Tied keys mean neither precedes the other. General library sorting requires a strict weak order, rather than an arbitrary function returning bool.",
+          "a<=b is not strict: tied values make it true in both directions. Do not pass it to a standard sort as an experiment; violating a library precondition is unsafe. Check the wrong rule separately as a relation on a small table. Shifting tied elements in insertion sort is a different, safely observable experiment about stability.",
+          "Compare the keys. The original index records how the algorithm treated ties."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Bubble: a finalized suffix",
+        "paragraphs": [
+          "Scan left to right, swapping neighbors when the right key is smaller. After a pass, a maximum of the processed prefix is at its right end. The next pass can stop one position earlier because a suffix contains finalized maxima. The termination variant is the length of the unfinished region, which decreases after each pass.",
+          "Without early exit, neighbor comparisons total n(n−1)/2 even on sorted input. A changed flag can stop after a swap-free pass; reset it before each pass. Strict comparisons and adjacent swaps preserve tied-record order. For an empty vector, guard with end>1 instead of computing an unprotected size−1.",
+          "After one bubble pass on [3, 1, 2, 1], the rightmost value is 3. Further passes can inspect only the prefix before it."
+        ]
+      },
+      {
+        "id": "example-3",
+        "title": "Bubble sort with early stopping",
+        "paragraphs": [
+          "After a pass with no swaps the loop can stop. Follow the flag that distinguishes this pass from earlier ones."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\nint main() {\n    std::vector<int> a{3, 1, 2, 1};\n    for (std::size_t end = a.size(); end > 1; --end) {\n        bool swapped = false;\n        for (std::size_t j = 1; j < end; ++j) {\n            if (a[j] < a[j - 1]) {\n                int x = a[j];\n                a[j] = a[j - 1];\n                a[j - 1] = x;\n                swapped = true;\n            }\n        }\n        if (!swapped) {\n            break;\n        }\n    }\n    for (std::size_t i = 0; i < a.size(); ++i) {\n        if (i) {\n            std::cout << ' ';\n        }\n        std::cout << a[i];\n    }\n    std::cout << '\\n';\n}",
+          "stdin": "",
+          "output": "1 1 2 3\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Selection: minima on the left",
+        "paragraphs": [
+          "At step i, find best, the position of a minimum key in [i,n), then swap records a[i] and a[best]. The invariant says positions before i contain their final smallest elements. The inner search does not mutate the array; the outer step finalizes one position. Trace best separately before doing the swap.",
+          "This version uses quadratic minimum-search comparisons in both best and worst cases. At most n−1 nontrivial swaps are needed, though the shown code also assigns when best==i. Ordinary selection sort is unstable: swapping first and last in (2,A),(2,B),(1,C) places B before A. Fewer swaps alone do not make it best for every record type.",
+          "A minimum-selection swap can move one equal key past another. For [2:0, 2:1, 1:2], the first swap leaves 2:1 ahead of 2:0."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Selection: a different invariant",
+        "paragraphs": [
+          "On the first step, 1 swaps with 3. Check which prefix is already in its final position."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\nint main() {\n    std::vector<int> a{3, 1, 2};\n    for (std::size_t i = 0; i < a.size(); ++i) {\n        std::size_t best = i;\n        for (std::size_t j = i + 1; j < a.size(); ++j) {\n            if (a[j] < a[best]) {\n                best = j;\n            }\n        }\n        int saved = a[i];\n        a[i] = a[best];\n        a[best] = saved;\n    }\n    for (int x : a) {\n        std::cout << x << ' ';\n    }\n    std::cout << '\\n';\n}",
+          "stdin": "",
+          "output": "1 2 3 \n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Insertion: a sorted prefix",
+        "paragraphs": [
+          "Before step i, [0,i) is sorted. Copy a[i] into saved, then shift larger keys right until the insertion position is found. saved is necessary because shifting overwrites its original cell. After assigning a[j]=saved, [0,i+1) is sorted and contains the same multiset of records.",
+          "Test j>0 before reading a[j−1], protecting the left boundary. Stop shifting on equal keys so the new item stays after earlier ties; this gives stability. For sorted input with n≥1, there are n−1 key comparisons; reverse distinct input needs n(n−1)/2 shifts. Near-sortedness benefits insertion much more than selection.",
+          "At step i the records to the left are sorted. Take record i out, make room by shifting, then insert it."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Stability and multiple keys",
+        "paragraphs": [
+          "Stability does not make every input permutation produce the same result: tied keys retain that particular input order. If you need “score, then ID”, specify both keys. For equal-time events, retaining arrival order may be a domain requirement that an extra name sort would violate.",
+          "Distinguish the library promises used in the next lesson: ordinary sort does not guarantee stability, while stable_sort does. Neither removes comparator requirements. First trace labels A and B manually, then state what your ranking needs and which test distinguishes the implementations.",
+          "The condition previous.key > current.key leaves an earlier record ahead of a new one when keys tie."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Insertion with original-position labels",
+        "paragraphs": [
+          "Walk through one insertion at a time. Watch whether 1:3 moves past 1:1."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <vector>\nstruct Item {\n    int key;\n    int original;\n};\nint main() {\n    std::vector<Item> a{{2, 0}, {1, 1}, {2, 2}, {1, 3}};\n    for (std::size_t i = 1; i < a.size(); ++i) {\n        Item saved = a[i];\n        std::size_t j = i;\n        while (j > 0 && saved.key < a[j - 1].key) {\n            a[j] = a[j - 1];\n            --j;\n        }\n        a[j] = saved;\n    }\n    for (const Item &x : a) {\n        std::cout << x.key << ':' << x.original << ' ';\n    }\n    std::cout << '\\n';\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Reveal the output and walkthrough",
+          "paragraphs": [
+            "Keys are sorted and both groups of equal records keep their arrival order. The demonstration prints a trailing space, while the independent task places separators only between pairs."
+          ],
+          "tables": [
+            {
+              "caption": "What happens at each step",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "Why"
+              ],
+              "rows": [
+                [
+                  "Insert 1:1",
+                  "2:0",
+                  "1:1 2:0",
+                  "Record 2:0 shifts right."
+                ],
+                [
+                  "Insert 2:2",
+                  "1:1 2:0",
+                  "1:1 2:0 2:2",
+                  "The equal 2:0 stays to the left."
+                ],
+                [
+                  "Insert 1:3",
+                  "1:1 2:0 2:2",
+                  "1:1 1:3 2:0 2:2",
+                  "Both twos shift, and the scan stops at 1:1."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <vector>\nstruct Item {\n    int key;\n    int original;\n};\nint main() {\n    std::vector<Item> a{{2, 0}, {1, 1}, {2, 2}, {1, 3}};\n    for (std::size_t i = 1; i < a.size(); ++i) {\n        Item saved = a[i];\n        std::size_t j = i;\n        while (j > 0 && saved.key < a[j - 1].key) {\n            a[j] = a[j - 1];\n            --j;\n        }\n        a[j] = saved;\n    }\n    for (const Item &x : a) {\n        std::cout << x.key << ':' << x.original << ' ';\n    }\n    std::cout << '\\n';\n}",
+            "stdin": "",
+            "output": "1:1 1:3 2:0 2:2 \n"
+          }
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Checking a sort independently",
+        "paragraphs": [
+          "Check neighboring order, then length and value frequencies; for a stable version also check original order inside each tied-key group. Distinct-only data cannot test stability. Empty, singleton, equal, reverse, sorted and duplicate-containing inputs represent different classes, not decorative variations of one example.",
+          "For a small collection, independently write the expected result. Later we add a library oracle and property checks, but comparing two functions with the same defect is not independence. Input permutation and sorting twice provide useful extra checks. They strengthen tests without replacing invariants and boundary reasoning.",
+          "Check three observations: keys are ordered, original tags survive, and tags increase within each tied key."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Choosing an implementation and the task boundary",
+        "paragraphs": [
+          "Manual sorts here teach state, invariants and cost. Normal development should first consider an appropriate library algorithm. Selection depends on size, data structure, comparison/move cost and stability requirements. Success on 32 items is not evidence for the fastest algorithm on large logs.",
+          "Submit stable insertion source, a one-pass trace, expected and actual cases, and a worst-case shift argument. As an extension, add bubble’s early exit without changing its contract. The next lesson separates a container from traversal through iterators and introduces standard algorithms as composable tools.",
+          "Use insertion sort for this task and explain which inputs make it shift the most records."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "In the lab, assign tags from input positions. Try keys 3, 1, 3, 0 and check that both threes keep their relative index order.",
+          "Tag 3, 1, 3, 0 with their original indices."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Which key:index pairs does the program print after all insertions?",
+        "options": [
+          "1:1 1:3 2:0 2:2 \n",
+          "1:3 1:1 2:2 2:0",
+          "1:1 2:0 1:3 2:2"
+        ],
+        "correct": 0,
+        "feedback": "The shift uses >, so 1:1 stays before 1:3 and 2:0 stays before 2:2.",
+        "code": {
+          "source": "#include <iostream>\n#include <vector>\nstruct Item {\n    int key;\n    int original;\n};\nint main() {\n    std::vector<Item> a{{2, 0}, {1, 1}, {2, 2}, {1, 3}};\n    for (std::size_t i = 1; i < a.size(); ++i) {\n        Item saved = a[i];\n        std::size_t j = i;\n        while (j > 0 && saved.key < a[j - 1].key) {\n            a[j] = a[j - 1];\n            --j;\n        }\n        a[j] = saved;\n    }\n    for (const Item &x : a) {\n        std::cout << x.key << ':' << x.original << ' ';\n    }\n    std::cout << '\\n';\n}",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <vector>\nstruct Item {\n    int key;\n    int original;\n};\nint main() {\n    std::vector<Item> a{{2, 0}, {1, 1}, {2, 2}, {1, 3}};\n    for (std::size_t i = 1; i < a.size(); ++i) {\n        Item saved = a[i];\n        std::size_t j = i;\n        while (j > 0 && saved.key < a[j - 1].key) {\n            a[j] = a[j - 1];\n            --j;\n        }\n        a[j] = saved;\n    }\n    for (const Item &x : a) {\n        std::cout << x.key << ':' << x.original << ' ';\n    }\n    std::cout << '\\n';\n}",
+          "stdin": "",
+          "expected": "1:1 1:3 2:0 2:2 \n"
+        },
+        "recall": "example-1"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Stable insertion shifts…",
+        "options": [
+          "Only strictly greater keys",
+          "All equal keys",
+          "Arbitrary items"
+        ],
+        "correct": 0,
+        "feedback": "Equality must not reverse the original order.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "The invariant before iteration i?",
+        "options": [
+          "The whole array is sorted",
+          "Prefix [0,i) is sorted and contains the original records",
+          "The suffix is empty"
+        ],
+        "correct": 1,
+        "feedback": "Insertion extends the prefix by one item.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Ordinary selection…",
+        "options": [
+          "Is always stable",
+          "Is always linear",
+          "Can break stability by a distant swap"
+        ],
+        "correct": 2,
+        "feedback": "Equivalent keys can jump past each other.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Best-case insertion with early search termination?",
+        "options": [
+          "Linear comparisons",
+          "Necessarily quadratic",
+          "Zero checks for every n"
+        ],
+        "correct": 0,
+        "feedback": "On sorted input each next item stays in place immediately.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Checking is_sorted alone misses…",
+        "options": [
+          "Every inversion",
+          "Losing or duplicating a value",
+          "Every order error"
+        ],
+        "correct": 1,
+        "feedback": "Also check permutation and required stability.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Why would is_sorted miss a swap of two records with key 2? What test catches it?",
+        "feedback": "The keys stay ordered. Check increasing original indices within each equal-key group.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Laboratory: Sorting: contracts, stability and invariants",
+      "task": "Read n in 0…32 and exactly n keys in −9999…9999. Assign zero-based original indices. Use stable insertion sort by key. Print key:index separated by single spaces and a newline; an empty array yields an empty line. Invalid input or an extra token produces only invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <vector>\n\nstruct Item {\n    int key;\n    int original;\n};\n\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 32) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<Item> records;\n    for (int i = 0; i < n; ++i) {\n        int key;\n        if (!(std::cin >> key) || key < -9999 || key > 9999) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        records.push_back({key, i});\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    // TODO: Insert each record into the sorted prefix and preserve the\n    // order of ties.\n    for (std::size_t i = 0; i < records.size(); ++i) {\n        if (i != 0) {\n            std::cout << ' ';\n        }\n        std::cout << records[i].key << ':' << records[i].original;\n    }\n    std::cout << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "4 3 1 3 0",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "0",
+          "output": "\n"
+        },
+        {
+          "label": "Case 2",
+          "input": "1 7",
+          "output": "7:0\n"
+        },
+        {
+          "label": "First substantive run",
+          "input": "4 3 1 3 0",
+          "output": "0:3 1:1 3:0 3:2\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "3 -2 -2 1",
+          "output": "-2:0 -2:1 1:2\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "4 4 3 2 1",
+          "output": "1:3 2:2 3:1 4:0\n"
+        },
+        {
+          "label": "Case 6",
+          "input": "4 1 2 3 4",
+          "output": "1:0 2:1 3:2 4:3\n"
+        },
+        {
+          "label": "Case 7",
+          "input": "4 5 5 5 5",
+          "output": "5:0 5:1 5:2 5:3\n"
+        },
+        {
+          "label": "Case 8",
+          "input": "3 9999 -9999 0",
+          "output": "-9999:1 0:2 9999:0\n"
+        },
+        {
+          "label": "Case 9",
+          "input": "32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0",
+          "output": "0:31 1:30 2:29 3:28 4:27 5:26 6:25 7:24 8:23 9:22 10:21 11:20 12:19 13:18 14:17 15:16 16:15 17:14 18:13 19:12 20:11 21:10 22:9 23:8 24:7 25:6 26:5 27:4 28:3 29:2 30:1 31:0\n"
+        },
+        {
+          "label": "Input error · 10",
+          "input": "-1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 11",
+          "input": "33",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 12",
+          "input": "2 1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 13",
+          "input": "1 10000",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 14",
+          "input": "2 1 x",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 15",
+          "input": "1 0 tail",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 16",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "The initial row is 3:0 1:1 3:2 0:3.",
+        "Output is 0:3 1:1 3:0 3:2.",
+        "Indices 0…3 in order, then an empty line, then invalid.",
+        "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
+      ],
+      "hint": "The keys stay ordered. Check increasing original indices within each equal-key group.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Tag 3, 1, 3, 0 with their original indices.",
+          "why": "Without tags the two threes are indistinguishable.",
+          "expected": "The initial row is 3:0 1:1 3:2 0:3."
+        },
+        {
+          "where": "In my program",
+          "action": "Complete insertion sort and run with input 4 3 1 3 0.",
+          "why": "The duplicate key tests the shift condition.",
+          "expected": "Output is 0:3 1:1 3:0 3:2."
+        },
+        {
+          "where": "After running",
+          "action": "Check 4 5 5 5 5, then 0 and 2 1.",
+          "why": "This exposes stability, an empty row and incomplete input.",
+          "expected": "Indices 0…3 in order, then an empty line, then invalid."
+        }
+      ],
+      "recall": "example-1",
+      "starterRevision": "b4-starter-v1",
+      "starterObservation": {
+        "case": 2,
+        "stdout": "3:0 1:1 3:2 0:3\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-sort",
+        "title": "C++20 [alg.sorting]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[alg.sorting]",
+        "language": "English",
+        "purpose": "Consult the C++20 requirements in [alg.sorting] after working through the examples.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/alg.sorting"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "example-3",
+      "3": "example-2",
+      "4": "example-1",
+      "5": "concept-7"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "The complete sorting contract",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "A comparison predicate defines the order",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Bubble: a finalized suffix",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Selection: minima on the left",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Insertion: a sorted prefix",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Stability and multiple keys",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Checking a sort independently",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Choosing an implementation and the task boundary",
+        "anchor": "concept-8"
+      }
+    ]
+  }
 }

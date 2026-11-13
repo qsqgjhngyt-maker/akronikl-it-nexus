@@ -1,0 +1,451 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p11-topic-4-author-v1",
+  "id": "onec.p11.topic-4",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Integrations and background operations",
+  "locale": "en",
+  "title": "A batch finished: where should a stopped run resume?",
+  "goal": "Design a repeatable background job with observable state and safe cancellation.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P10. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "Work stops after the first batch. An accepted batch does not disappear. Distinguish its boundary from the next step and check that retrying the end never advances beyond the total.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Own copy, common module and separate caller",
+      "paragraphs": [
+        "Continue your own training copy after P10. Preserve a DT backup and previous sources, restore into a separate new infobase and verify its path. Preserve prior work and records.",
+        "Put functions in server common module УчебныйОбмен: Server/Server call enabled, Client, Global, Privileged disabled. Данные.bsl and Приложение.bsl belong to different modules. Append only missing definitions and retain one copy of each helper.",
+        "Preserve the previous application handler first. Remove only the added startup call after one experiment. Your UUIDs and own process port may differ from the author’s observation."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "A schedule is not success",
+      "paragraphs": [
+        "Scheduled jobs trigger procedures; background execution has its own lifecycle and errors. Define input, batch, commit boundary and state. “Every minute” does not mean the prior cycle finished. Prevent overlap by key or handle it through an idempotent design.",
+        "The complete runnable fragment is a manual batch-boundary handler, not a scheduled server job. For 12 items/batch5 it yields 5, 10, 12 and remains 12 at completion. Pass position explicitly so future persisted progress can survive calls independently of a form."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor.",
+        "This is a manually called handler and a boundary check. Do not create a scheduled job for this example. An in-memory local position is not yet a durable process checkpoint."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ОдинПакет(Знач Позиция,Размер,Всего) Экспорт\n    Если ТипЗнч(Позиция) <> Тип(\"Число\") Или ТипЗнч(Размер) <> Тип(\"Число\") Или ТипЗнч(Всего) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужны числа\"; КонецЕсли;\n    Если Позиция < 0 Или Размер < 1 Или Всего < Позиция Или Цел(Позиция) <> Позиция Или Цел(Размер) <> Размер Или Цел(Всего) <> Всего Тогда ВызватьИсключение \"Неверная граница пакета\"; КонецЕсли;\n    Возврат Мин(Позиция + Размер,Всего);\nКонецФункции\n\nФункция ОпытРучногоОбработчика() Экспорт\n    Первая = ОдинПакет(0,5,12); Вторая = ОдинПакет(Первая,5,12); Третья = ОдинПакет(Вторая,5,12); ПовторКонца = ОдинПакет(Третья,5,12);\n    Отказ = Ложь; Попытка ОдинПакет(0,0,12); Исключение Отказ = Истина; КонецПопытки;\n    Возврат Новый Структура(\"ГраницыВерны,НольОтклонен\",Первая = 5 И Вторая = 10 И Третья = 12 И ПовторКонца = 12,Отказ);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "For 12 items and batch size 5, the manually called handler yields positions 5, 10, 12 and 12 again. Size 0 is refused before a loop. This executes the actual BSL boundary algorithm, not a server schedule. Its flags establish only those properties.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытРучногоОбработчика();\n    Сообщить(\"Границы5,10,12,12 верны: \" + Строка(Р.ГраницыВерны));\n    Сообщить(\"Размер0 отклонён: \" + Строка(Р.НольОтклонен));\nКонецПроцедуры\n",
+        "output": "Границы5,10,12,12 верны: Да\nРазмер0 отклонён: Да",
+        "files": {
+          "Данные.bsl": "Функция ОдинПакет(Знач Позиция,Размер,Всего) Экспорт\n    Если ТипЗнч(Позиция) <> Тип(\"Число\") Или ТипЗнч(Размер) <> Тип(\"Число\") Или ТипЗнч(Всего) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужны числа\"; КонецЕсли;\n    Если Позиция < 0 Или Размер < 1 Или Всего < Позиция Или Цел(Позиция) <> Позиция Или Цел(Размер) <> Размер Или Цел(Всего) <> Всего Тогда ВызватьИсключение \"Неверная граница пакета\"; КонецЕсли;\n    Возврат Мин(Позиция + Размер,Всего);\nКонецФункции\n\nФункция ОпытРучногоОбработчика() Экспорт\n    Первая = ОдинПакет(0,5,12); Вторая = ОдинПакет(Первая,5,12); Третья = ОдинПакет(Вторая,5,12); ПовторКонца = ОдинПакет(Третья,5,12);\n    Отказ = Ложь; Попытка ОдинПакет(0,0,12); Исключение Отказ = Истина; КонецПопытки;\n    Возврат Новый Структура(\"ГраницыВерны,НольОтклонен\",Первая = 5 И Вторая = 10 И Третья = 12 И ПовторКонца = 12,Отказ);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытРучногоОбработчика();\n    Сообщить(\"Границы5,10,12,12 верны: \" + Строка(Р.ГраницыВерны));\n    Сообщить(\"Размер0 отклонён: \" + Строка(Р.НольОтклонен));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Step",
+            "Observation and meaning"
+          ],
+          "rows": [
+            [
+              "Input",
+              "12 items/batch5 — Position 0."
+            ],
+            [
+              "Progress",
+              "5 → 10 → 12 — Bounded by end."
+            ],
+            [
+              "Repeat/reject",
+              "12 → 12; size 0 — Stable end,zero rejected."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Batches bound work",
+      "paragraphs": [
+        "Use bounded batches with explicit progress and a persisted continuation point. One long transaction over all history blocks others and complicates recovery. Commit the continuation point with batch results. After failure, retries must neither skip unfinished items nor duplicate accepted ones.",
+        "ОдинПакет validates numeric integer inputs, nonnegative position and size≥1. Zero size could otherwise loop without progress. This function neither reads the course nor creates accounts or Nexus background jobs."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "After position 12 with total 12, should another batch reach 17?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. The end is a valid stable state, not an instruction to create more items. An explicit position supports reasoning about resumption; reliably storing it with a batch’s effect still needs separate persistence and testing."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Observability and cancellation",
+      "paragraphs": [
+        "Distinguish queued, running, succeeded, failed, cancelled. A processed counter is not committed success. Check cancellation between safe batches; it does not roll back already committed work. LogjobID, stage, counters and safe error details rather than secrets or full exchange copies.",
+        "Append the source to a server module and run ОпытРучногоОбработчика normally. Two assertions check boundaries and zero-size rejection. In another copy add a synthetic operationId, position, status, reason log without document contents or secrets."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The diagram shows the worked handler’s boundaries. The independent task changes total size, batch size and stop point. Actual scheduled execution, overlapping runs and process crashes remain separate NOT RUN scenarios.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Start",
+            "lines": [
+              "0 / 12"
+            ]
+          },
+          {
+            "title": "Batch 1",
+            "lines": [
+              "5 / 12"
+            ]
+          },
+          {
+            "title": "Batch 2",
+            "lines": [
+              "10 / 12"
+            ]
+          },
+          {
+            "title": "End",
+            "lines": [
+              "12 / 12"
+            ]
+          }
+        ],
+        "alternative": [
+          "Start: 0 / 12",
+          "Batch 1: 5 / 12",
+          "Batch 2: 10 / 12",
+          "End: 12 / 12"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Allowing size 0 can prevent progress, or cancellation is described as rolling back an accepted batch. Cancellation between steps stops new actions but does not itself restore the pre-batch state.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Make environment and tests explicit",
+      "paragraphs": [
+        "File and server deployments have different job behavior; training limits may prevent the exercise. Test normal batches, mid-batch failure, retry, overlap and cancellation in a permitted stand. Manually invoking a function tests its algorithm, not actual scheduled execution. Record those evidence separately.",
+        "Actual scheduling needs a supported licensed environment, own job metadata and an observed scheduled start. On a single-user training edition use the manual path and mark scheduling NOT RUN. Closing UI does not cancel an accepted server batch; cancellation needs a separate tested policy."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "New task: 7 items, batch size 3. Complete the first step to position 3, manually request a stop between batches and confirm position 3 remains. Resume from that explicit position: 6, then 7; retrying the end yields 7. Identify what exists only in memory here.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p11-jobs-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "9180cd9c54116c0efaf38bd18074ac464e4cdb8e6c47fab43ff2334fdd192102",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "caption": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "Only the described training paths are established. Real HTTPS services, arbitrary URLs, concurrent first delivery, crash recovery, background queues and scheduling remain NOT RUN. Technical observations, self-report and learner understanding are separate.",
+        "Explain which state and effects need atomic persistence for actual crash resumption."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "After position 12 with total 12, should another batch reach 17?",
+      "options": [
+        "No: the result is capped by total size",
+        "Yes: the full size is always added",
+        "Yes: retrying the end creates more work"
+      ],
+      "correct": 0,
+      "feedback": "No. The end is a valid stable state, not an instruction to create more items. An explicit position supports reasoning about resumption; reliably storing it with a batch’s effect still needs separate persistence and testing.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does a manual call prove scheduling?",
+      "options": [
+        "No",
+        "Yes",
+        "After 12 items"
+      ],
+      "correct": 0,
+      "feedback": "Observe the triggering mechanism.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "The continuation point is committed",
+      "options": [
+        "Forever before work",
+        "With the consistent batch result",
+        "Only in UI"
+      ],
+      "correct": 1,
+      "feedback": "Otherwise work can be skipped or duplicated.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "DoesCancelafter commit roll back everything?",
+      "options": [
+        "Always",
+        "For every job",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "Committed effects differ from cancelling future work.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Does a cancel button itself roll back an accepted batch?",
+      "options": [
+        "No: an explicit policy and test are needed",
+        "Yes: cancellation always removes every result",
+        "Yes: hiding the form suffices"
+      ],
+      "correct": 0,
+      "feedback": "Explain which state and effects need atomic persistence for actual crash resumption.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain positions 3, 3, 6, 7, 7 and separately identify what is missing for recovery after process termination.",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "A batch finished: where should a stopped run resume?",
+    "task": "New task: 7 items, batch size 3. Complete the first step to position 3, manually request a stop between batches and confirm position 3 remains. Resume from that explicit position: 6, then 7; retrying the end yields 7. Identify what exists only in memory here.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныйОбмен",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ОдинПакет(Знач Позиция,Размер,Всего) Экспорт\n    Если ТипЗнч(Позиция) <> Тип(\"Число\") Или ТипЗнч(Размер) <> Тип(\"Число\") Или ТипЗнч(Всего) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужны числа\"; КонецЕсли;\n    Если Позиция < 0 Или Размер < 1 Или Всего < Позиция Или Цел(Позиция) <> Позиция Или Цел(Размер) <> Размер Или Цел(Всего) <> Всего Тогда ВызватьИсключение \"Неверная граница пакета\"; КонецЕсли;\n    Возврат Мин(Позиция + Размер,Всего);\nКонецФункции\n\nФункция ОпытОстановкиМеждуПакетами() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытОстановкиМеждуПакетами();\n    Сообщить(\"После первого пакета: \" + Строка(Р.ПервыйПакет));\n    Сообщить(\"После ручной остановки: \" + Строка(Р.ПослеОстановки));\n    Сообщить(\"После продолжения: \" + Строка(Р.ПослеПродолжения));\n    Сообщить(\"Конец работы: \" + Строка(Р.Конец));\n    Сообщить(\"Повтор конца: \" + Строка(Р.ПовторКонца));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОдинПакет(Знач Позиция,Размер,Всего) Экспорт\n    Если ТипЗнч(Позиция) <> Тип(\"Число\") Или ТипЗнч(Размер) <> Тип(\"Число\") Или ТипЗнч(Всего) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужны числа\"; КонецЕсли;\n    Если Позиция < 0 Или Размер < 1 Или Всего < Позиция Или Цел(Позиция) <> Позиция Или Цел(Размер) <> Размер Или Цел(Всего) <> Всего Тогда ВызватьИсключение \"Неверная граница пакета\"; КонецЕсли;\n    Возврат Мин(Позиция + Размер,Всего);\nКонецФункции\n\nФункция ОпытОстановкиМеждуПакетами() Экспорт\n    // Ручные вызовы: позиции в памяти, не расписание и не доказанный crash recovery.\n    Позиция = ОдинПакет(0,3,7); СохранённаяПозиция = Позиция;\n    ОтменаЗапрошена = Истина;\n    Если Не ОтменаЗапрошена Тогда Позиция = ОдинПакет(Позиция,3,7); КонецЕсли;\n    ПослеОстановки = Позиция;\n    ПослеПродолжения = ОдинПакет(СохранённаяПозиция,3,7);\n    КонецРаботы = ОдинПакет(ПослеПродолжения,3,7);\n    ПовторКонца = ОдинПакет(КонецРаботы,3,7);\n    Возврат Новый Структура(\"ПервыйПакет,ПослеОстановки,ПослеПродолжения,Конец,ПовторКонца\",СохранённаяПозиция,ПослеОстановки,ПослеПродолжения,КонецРаботы,ПовторКонца);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОдинПакет(Знач Позиция,Размер,Всего) Экспорт\n    Если ТипЗнч(Позиция) <> Тип(\"Число\") Или ТипЗнч(Размер) <> Тип(\"Число\") Или ТипЗнч(Всего) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужны числа\"; КонецЕсли;\n    Если Позиция < 0 Или Размер < 1 Или Всего < Позиция Или Цел(Позиция) <> Позиция Или Цел(Размер) <> Размер Или Цел(Всего) <> Всего Тогда ВызватьИсключение \"Неверная граница пакета\"; КонецЕсли;\n    Возврат Мин(Позиция + Размер,Всего);\nКонецФункции\n\nФункция ОпытОстановкиМеждуПакетами() Экспорт\n    // Ручные вызовы: позиции в памяти, не расписание и не доказанный crash recovery.\n    Позиция = ОдинПакет(0,3,7); СохранённаяПозиция = Позиция;\n    ОтменаЗапрошена = Истина;\n    Если Не ОтменаЗапрошена Тогда Позиция = ОдинПакет(Позиция,3,7); КонецЕсли;\n    ПослеОстановки = Позиция;\n    ПослеПродолжения = ОдинПакет(СохранённаяПозиция,3,7);\n    КонецРаботы = ОдинПакет(ПослеПродолжения,3,7);\n    ПовторКонца = ОдинПакет(КонецРаботы,3,7);\n    Возврат Новый Структура(\"ПервыйПакет,ПослеОстановки,ПослеПродолжения,Конец,ПовторКонца\",СохранённаяПозиция,ПослеОстановки,ПослеПродолжения,КонецРаботы,ПовторКонца);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытОстановкиМеждуПакетами();\n    Сообщить(\"После первого пакета: \" + Строка(Р.ПервыйПакет));\n    Сообщить(\"После ручной остановки: \" + Строка(Р.ПослеОстановки));\n    Сообщить(\"После продолжения: \" + Строка(Р.ПослеПродолжения));\n    Сообщить(\"Конец работы: \" + Строка(Р.Конец));\n    Сообщить(\"Повтор конца: \" + Строка(Р.ПовторКонца));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "Total 7, size 3, manual stop after the first step, then resumption.",
+        "output": "После первого пакета: 3\nПосле ручной остановки: 3\nПосле продолжения: 6\nКонец работы: 7\nПовтор конца: 7"
+      }
+    ],
+    "criteria": [
+      "Labelled positions: 3, 3, 6, 7, 7. Stopping does not roll back the first accepted step.",
+      "This is a manual algorithm and in-memory position; no background queue, schedule or established process recovery is claimed.",
+      "Explain which state and effects need atomic persistence for actual crash resumption."
+    ],
+    "hint": "The diagram shows the worked handler’s boundaries. The independent task changes total size, batch size and stop point. Actual scheduled execution, overlapping runs and process crashes remain separate NOT RUN scenarios.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныйОбмен",
+        "action": "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p11-jobs.json",
+  "assessment": {
+    "contentRevision": "onec-p11-topic-4-author-v1",
+    "quiz": [
+      {
+        "question": "After position 12 with total 12, should another batch reach 17?",
+        "options": [
+          "No: the result is capped by total size",
+          "Yes: the full size is always added",
+          "Yes: retrying the end creates more work"
+        ],
+        "correct": 0,
+        "explanation": "No. The end is a valid stable state, not an instruction to create more items. An explicit position supports reasoning about resumption; reliably storing it with a batch’s effect still needs separate persistence and testing."
+      },
+      {
+        "question": "Does a manual call prove scheduling?",
+        "options": [
+          "No",
+          "Yes",
+          "After 12 items"
+        ],
+        "correct": 0,
+        "explanation": "Observe the triggering mechanism."
+      },
+      {
+        "question": "The continuation point is committed",
+        "options": [
+          "Forever before work",
+          "With the consistent batch result",
+          "Only in UI"
+        ],
+        "correct": 1,
+        "explanation": "Otherwise work can be skipped or duplicated."
+      },
+      {
+        "question": "DoesCancelafter commit roll back everything?",
+        "options": [
+          "Always",
+          "For every job",
+          "No"
+        ],
+        "correct": 2,
+        "explanation": "Committed effects differ from cancelling future work."
+      },
+      {
+        "question": "Does a cancel button itself roll back an accepted batch?",
+        "options": [
+          "No: an explicit policy and test are needed",
+          "Yes: cancellation always removes every result",
+          "Yes: hiding the form suffices"
+        ],
+        "correct": 0,
+        "explanation": "Explain which state and effects need atomic persistence for actual crash resumption."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p11.topic-4.en.json"
+}

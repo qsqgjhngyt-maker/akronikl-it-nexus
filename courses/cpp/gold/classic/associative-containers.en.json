@@ -575,5 +575,432 @@
     "completionRule": "Manual acceptance: every mandatory case passes, at least 8/10, no zero for correctness or testing, and a defense of the learner’s own solution. A completed flag is not automatic mastery assessment.",
     "verification": "manual-output-comparison"
   },
-  "locale": "en"
+  "locale": "en",
+  "teachingEdition": {
+    "revision": "b4-author-v1",
+    "title": "Associative containers and data-structure choice",
+    "goal": "Count word frequencies and check whether looking up a missing word changes the key set.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–3: validated input, functions, vector, records, references and lifetimes."
+      },
+      {
+        "text": "Direct learning dependencies: cpp.search-linear-binary, cpp.structures. New constructs are explained before the task."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Keys, mapped values and uniqueness",
+        "paragraphs": [
+          "Two occurrences of pear occupy one entry with count 2. A set records membership, and a map also keeps the count.",
+          "A set stores keys; a map associates each key with a mapped value. In a frequency index, the word is the key and its occurrence count is the value. Repetition updates the count rather than adding a distinct key. Record-ID uniqueness is a separate domain rule: equal amounts may be allowed while duplicate IDs are not.",
+          "A map element resembles a pair: first is the key and second the mapped value. const auto& entry reads without copying; const auto& [word,count] names the parts through a structured binding. Do not mutate a map key in place because it would break lookup organization. Changing a key needs an explicit erase/insert design or another documented operation."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Ordered map and set",
+        "paragraphs": [
+          "std::map and std::set keep keys under their comparator’s order. Lookup, insertion and erasure have logarithmic guarantees under their contracts. Balanced trees are common implementations, but the public interface does not require knowing a particular balancing scheme. Ordered traversal is useful when the report actually needs it.",
+          "Ordered-container uniqueness uses comparator equivalence: neither a precedes b nor b precedes a. This need not equal an arbitrary user-defined operator==. Our integers and ASCII strings use compatible ordinary ordering. Do not make lookup case-insensitive while insertion follows another order.",
+          "std::map iterates keys in comparator order. Here that puts apple before pear even if the input order differs."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Unordered containers: hash and equality",
+        "paragraphs": [
+          "unordered_map and unordered_set use hashing to organize lookup and equality to distinguish keys. Different keys can share a hash: a collision does not permit dropping one record. Many operations have constant-like average cost in element count under appropriate conditions; their worst case can be linear.",
+          "Equivalent keys must have equal hashes, and the chosen rules must stay consistent. Hashing and comparing strings inspect content, so O(1) in key count does not mean independence from string length. The lab bounds ASCII keys to twelve bytes, keeping input and comparison assumptions explicit.",
+          "The hash helps choose where to look. Equal hashes still require comparing the keys themselves."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "A read must not silently insert",
+        "paragraphs": [
+          "counts[word] inserts a missing key with a value-initialized mapped value. For int with the standard allocator that is zero, making ++counts[word] useful for counting. But counts[\"missing\"]==0 mutates the container even though it looks like a read. Use find and compare with end when asking whether a key exists, preserving map size.",
+          "end must not be dereferenced here either. Check the result before reading second. at can report absence with an exception; this runtime is not the EH teaching environment, so the lab uses explicit find. Distinguish a missing key from an existing mapped zero, which can represent a different domain state.",
+          "Counting with ++counts[word] should create a key on its first occurrence. Use find to ask whether a key exists."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "A lookup without insertion and an ordered report",
+        "paragraphs": [
+          "Before running, predict the number of entries after the second pear and after looking up absent."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}"
+        ],
+        "predictionInput": "pear apple pear",
+        "reveal": {
+          "title": "Reveal the output and walkthrough",
+          "paragraphs": [
+            "apple:1 pear:2 are pairs, 2 is the number of unique keys, and 1 marks the absence of absent."
+          ],
+          "tables": [
+            {
+              "caption": "What happens at each step",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "Why"
+              ],
+              "rows": [
+                [
+                  "Read pear, then apple",
+                  "∅",
+                  "pear:1, apple:1",
+                  "The first occurrence creates an entry."
+                ],
+                [
+                  "Read the second pear",
+                  "pear:1",
+                  "pear:2",
+                  "The existing key's value changes."
+                ],
+                [
+                  "Look up absent",
+                  "size = 2",
+                  "size = 2, missing = 1",
+                  "find does not insert an entry. The report prints keys in order."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}",
+            "stdin": "pear apple pear",
+            "output": "apple:1 pear:2 | 2 1\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Invalidation is container-specific",
+        "paragraphs": [
+          "Do not transfer vector rules to unordered_map without checking its contract. Rehash reorganizes buckets and invalidates iterators, while references and pointers to surviving elements remain valid under that operation’s rules. Erasure invalidates access to the erased item. reserve can rehash, so an earlier iterator is not automatically safe afterward.",
+          "Before iterating while inserting, determine whether rehash can occur; collecting changes separately is often simpler. A user catalogue can keep stable IDs and repeat find instead of storing iterators long-term. Valid iterators alone do not prevent logically stale data: an index must match the current dataset version.",
+          "Growth of an unordered_map can invalidate old iterators through rehashing. Obtain a fresh iterator for the next lookup."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Collisions and a testing scaffold",
+        "paragraphs": [
+          "The supplied SameHash returns zero for every int, forcing collisions while equality still distinguishes keys. operator()(int) const makes its object callable so the container can obtain a hash value. Reading this scaffold is sufficient here; designing generic hash libraries belongs to a later module.",
+          "Check insertion, lookup of every key and erasure of one key. The experiment demonstrates collision correctness; it neither measures production performance nor makes the intentionally poor hash appropriate. A container hash is not a cryptographic primitive or a promise against adversarial input.",
+          "In the SameHash example every hash is equal. The sum 1240 shows that values for all 16 distinct keys were found."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "A collision does not mean losing a key",
+        "paragraphs": [
+          "Predict the size after removing key 7. Collisions affect lookup, and the keys remain distinct."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <unordered_map>\n#include <cstddef>\nstruct SameHash {\n    std::size_t operator()(int) const { return 0; }\n};\nint main() {\n    std::unordered_map<int, int, SameHash> m;\n    for (int n = 0; n < 16; ++n) {\n        m.emplace(n, n * n);\n    }\n    int sum = 0;\n    for (int n = 0; n < 16; ++n) {\n        auto p = m.find(n);\n        if (p == m.end() || p->second != n * n) {\n            return 2;\n        }\n        sum += p->second;\n    }\n    m.erase(7);\n    std::cout << sum << ' ' << m.size() << ' ' << (m.find(7) == m.end())\n              << '\\n';\n}",
+          "stdin": "",
+          "output": "1240 15 1\n"
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Deterministic reports and catalogue reconciliation",
+        "paragraphs": [
+          "Do not expect stable unordered traversal across libraries, runs or rehashing. For a report, copy pairs into a vector and sort by key, or use an ordered map. Storage, lookup and presentation can use different structures; that is an explicit architectural boundary, not merely duplication for prettier stdout.",
+          "The cumulative practicum compares catalogues over a union of keys. For each ID distinguish old-only, new-only and both; compare values in the last case. find does not manufacture the absent side. Validate both inputs before reporting, or a malformed second catalogue can falsely resemble mass deletion.",
+          "For the report, transfer the pairs into an ordered map or sort a separate key list."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Choose by workload and check independently",
+        "paragraphs": [
+          "List insertions, point queries, range queries and ordered reports in the workload. A small immutable dataset can favor a sorted vector over a tree or hash; frequent mutation changes the tradeoff. Include preparation, memory, key length and worst-case guarantees rather than relying on an O(1) slogan.",
+          "Test emptiness, repeated keys, different insertion orders, invalid words and duplicate IDs. Compare frequencies with an independent scan of the original list. Save an explicitly ordered report. Next, a reproducible data generator will show why a seed alone does not make a whole experiment portable.",
+          "Reorder the words in the input. The frequencies and report lines should stay the same."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "In the lab, validate word format before printing. Report one entry per line, without the demonstration's extra flag.",
+          "Count b a b c a b by hand."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What does the same code print for pear pear apple pear?",
+        "options": [
+          "apple:1 pear:3 | 2 1\n",
+          "pear:3 apple:1 | 2 1",
+          "absent:0 apple:1 pear:3 | 3 0"
+        ],
+        "correct": 0,
+        "feedback": "The third pear increments the existing count, find does not insert absent, and std::map puts apple first.",
+        "code": {
+          "source": "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}",
+          "stdin": "pear pear apple pear"
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main() {\n    std::unordered_map<std::string, int> counts;\n    std::unordered_set<std::string> seen;\n    std::string word;\n    while (std::cin >> word) {\n        ++counts[word];\n        seen.insert(word);\n    }\n    auto before = counts.size();\n    bool missing = counts.find(\"absent\") == counts.end();\n    if (counts.size() != before || seen.size() != counts.size()) {\n        return 2;\n    }\n    std::map<std::string, int> ordered(counts.begin(), counts.end());\n    std::set<std::string> keys(seen.begin(), seen.end());\n    for (const auto &[word, count] : ordered) {\n        std::cout << word << ':' << count << ' ';\n    }\n    std::cout << \"| \" << keys.size() << ' ' << missing << '\\n';\n}",
+          "stdin": "pear pear apple pear",
+          "expected": "apple:1 pear:3 | 2 1\n"
+        },
+        "recall": "example-1"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "How to look up without insertion? ",
+        "options": [
+          "find",
+          "operator[]",
+          "clear"
+        ],
+        "correct": 0,
+        "feedback": "find does not create a missing key.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Equal hashes imply…",
+        "options": [
+          "The same key",
+          "A possible collision",
+          "A necessary container error"
+        ],
+        "correct": 1,
+        "feedback": "Equivalence is checked separately.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "For a deterministic unordered_map report…",
+        "options": [
+          "Rely on a seed",
+          "Increase bucket_count",
+          "Sort the keys or pairs"
+        ],
+        "correct": 2,
+        "feedback": "Traversal order is not a portable contract.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Worst-case unordered_map lookup? ",
+        "options": [
+          "Linear in element count",
+          "Always constant",
+          "Always logarithmic"
+        ],
+        "correct": 0,
+        "feedback": "Collisions may concentrate elements in one bucket.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "rehash preserves…",
+        "options": [
+          "All existing iterators",
+          "References to retained elements",
+          "The former traversal order"
+        ],
+        "correct": 1,
+        "feedback": "Iterators invalidate while element references and pointers remain valid.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "What changes if you replace the absent lookup with a read of counts[\"absent\"]?",
+        "feedback": "The [] access inserts absent with value 0. Size becomes 3 and the size check makes the demonstration fail.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Laboratory: Associative containers and data-structure choice",
+      "task": "Read n in 0…64 and exactly n words containing a…z with length 1…12. Count frequencies and print word count on separate lines in lexical order. For n=0 print empty. Bounds violations, malformed or extra input produce only invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <algorithm>\n#include <map>\n#include <string>\n#include <vector>\n\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 64) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<std::string> words;\n    for (int i = 0; i < n; ++i) {\n        std::string word;\n        if (!(std::cin >> word) || word.size() > 12 ||\n            !std::all_of(word.begin(), word.end(),\n                         [](char ch) { return ch >= 'a' && ch <= 'z'; })) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        words.push_back(word);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    if (words.empty()) {\n        std::cout << \"empty\\n\";\n        return 0;\n    }\n    std::map<std::string, int> counts;\n    // TODO: Add each word to the map and increment its count for every\n    // occurrence.\n    for (const auto &[word, count] : counts) {\n        std::cout << word << ' ' << count << '\\n';\n    }\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "3 pear apple pear",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "0",
+          "output": "empty\n"
+        },
+        {
+          "label": "Case 2",
+          "input": "1 pear",
+          "output": "pear 1\n"
+        },
+        {
+          "label": "First substantive run",
+          "input": "3 pear apple pear",
+          "output": "apple 1\npear 2\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "6 b a b c a b",
+          "output": "a 2\nb 3\nc 1\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "64 same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same",
+          "output": "same 64\n"
+        },
+        {
+          "label": "Input error · 6",
+          "input": "65",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 7",
+          "input": "-1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 8",
+          "input": "1 Upper",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 9",
+          "input": "1 abc123",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 10",
+          "input": "1 abcdefghijklm",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 11",
+          "input": "2 one",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 12",
+          "input": "0 tail",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 13",
+          "input": "1 a-b",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "In lexicographic order, a 2, b 3, c 1.",
+        "Lines apple 1 and pear 2.",
+        "The empty set gives empty, and both other inputs give invalid.",
+        "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
+      ],
+      "hint": "The [] access inserts absent with value 0. Size becomes 3 and the size check makes the demonstration fail.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Count b a b c a b by hand.",
+          "why": "Repeated words verify that an existing value increases.",
+          "expected": "In lexicographic order, a 2, b 3, c 1."
+        },
+        {
+          "where": "In my program",
+          "action": "Implement the counter and run 3 pear apple pear.",
+          "why": "The first word in the input should be second in the report.",
+          "expected": "Lines apple 1 and pear 2."
+        },
+        {
+          "where": "After running",
+          "action": "Compare 0, 1 Upper and 0 tail.",
+          "why": "A valid empty set is distinguishable from rejection.",
+          "expected": "The empty set gives empty, and both other inputs give invalid."
+        }
+      ],
+      "recall": "example-1",
+      "starterRevision": "b4-starter-v1",
+      "starterObservation": {
+        "case": 2,
+        "stdout": "",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-unordered",
+        "title": "C++20 [unord.req]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[unord.req]",
+        "language": "English",
+        "purpose": "Consult the C++20 requirements in [unord.req] after working through the examples.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/unord.req"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-2",
+      "3": "example-1",
+      "4": "example-2",
+      "5": "concept-7"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Keys, mapped values and uniqueness",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Ordered map and set",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Unordered containers: hash and equality",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "A read must not silently insert",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Invalidation is container-specific",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Collisions and a testing scaffold",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Deterministic reports and catalogue reconciliation",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Choose by workload and check independently",
+        "anchor": "concept-8"
+      }
+    ]
+  }
 }

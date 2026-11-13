@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p6-topic-4-author-v1",
+  "id": "onec.p6.topic-4",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Registers and accounting models",
+  "locale": "en",
+  "title": "A posting: the amount does not establish direction",
+  "goal": "Create an original chart/register and reread amount and both sides of one synthetic entry.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P5. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "The register contains 100. Is that enough to call a training posting correct? Check amount, debit, credit, and recorder together.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Equality of sides is an invariant",
+      "paragraphs": [
+        "The teaching model records 100 as a debit to one account and credit to another. Equal aggregate debits/credits do not prove correct account selection; operation meaning and analytics matter. This is not real accounting or tax advice; regulated rules are outside this synthetic example.",
+        "Create an actual chart of accounts named УчебныеСчета and an accounting register named УчебныеПроводки. Select that chart, enable correspondence and add balance resource Сумма: Number(15,2), recorded by ЗаявкаУслуги. This is not an array model. The screenshot in this lesson shows actual messages from the worked function; verify the metadata separately using the preparation steps."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Add only the missing part of your own setup",
+      "paragraphs": [
+        "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+        "Charts of accounts → УчебныеСчета, code 9/name25. Accounting registers → УчебныеПроводки: this chart, Correspondence enabled, Сумма Number 15, 2 Balance resource; ЗаявкаУслуги recorder. Include in УчебнаяСлужба.",
+        "Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists, do not add another definition:retain it and append only the new function. Do not load a full CF over your work."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытУчебнойПроводки() Экспорт\n    Набор = НовыйНаборРегистров(); Суффикс = Лев(Строка(Новый УникальныйИдентификатор),8);\n    Дебет = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Дебет.Код = \"Д\" + Суффикс; Дебет.Наименование = \"Учебный дебет\"; Дебет.Вид = ВидСчета.Активный; Дебет.Записать();\n    Кредит = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Кредит.Код = \"К\" + Суффикс; Кредит.Наименование = \"Учебный кредит\"; Кредит.Вид = ВидСчета.Пассивный; Кредит.Записать();\n    Записи = РегистрыБухгалтерии.УчебныеПроводки.СоздатьНаборЗаписей(); Записи.Отбор.Регистратор.Установить(Набор.Первая);\n    Проводка = Записи.Добавить(); Проводка.Период = Дата(2026,11,2,15,0,0); Проводка.СчетДт = Дебет.Ссылка; Проводка.СчетКт = Кредит.Ссылка; Проводка.Сумма = 100; Записи.Записать(Истина);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ П.СчетДт, П.СчетКт, П.Сумма ИЗ РегистрБухгалтерии.УчебныеПроводки КАК П ГДЕ П.Регистратор = &Документ\"); Запрос.УстановитьПараметр(\"Документ\",Набор.Первая); Таблица = Запрос.Выполнить().Выгрузить();\n    ВернаСумма = Таблица.Количество() = 1 И Таблица[0].Сумма = 100;\n    ВерныСчета = Таблица.Количество() = 1 И Таблица[0].СчетДт = Дебет.Ссылка И Таблица[0].СчетКт = Кредит.Ссылка И Дебет.Ссылка <> Кредит.Ссылка;\n    Возврат Новый Структура(\"ВернаСумма,ВерныСчета,Регистратор\",ВернаСумма,ВерныСчета,Набор.Первая);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "Two distinct training accounts and one 100 posting are created for an own document. One result checks the amount; another checks the exact debit and credit references. The same amount with swapped accounts is a different claim.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытУчебнойПроводки();\n    Сообщить(\"Сумма100 верна: \" + Строка(Результат.ВернаСумма));\n    Сообщить(\"Дебет и кредит верны: \" + Строка(Результат.ВерныСчета));\nКонецПроцедуры\n",
+        "output": "Сумма100 верна: Да\nДебет и кредит верны: Да",
+        "files": {
+          "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытУчебнойПроводки() Экспорт\n    Набор = НовыйНаборРегистров(); Суффикс = Лев(Строка(Новый УникальныйИдентификатор),8);\n    Дебет = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Дебет.Код = \"Д\" + Суффикс; Дебет.Наименование = \"Учебный дебет\"; Дебет.Вид = ВидСчета.Активный; Дебет.Записать();\n    Кредит = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Кредит.Код = \"К\" + Суффикс; Кредит.Наименование = \"Учебный кредит\"; Кредит.Вид = ВидСчета.Пассивный; Кредит.Записать();\n    Записи = РегистрыБухгалтерии.УчебныеПроводки.СоздатьНаборЗаписей(); Записи.Отбор.Регистратор.Установить(Набор.Первая);\n    Проводка = Записи.Добавить(); Проводка.Период = Дата(2026,11,2,15,0,0); Проводка.СчетДт = Дебет.Ссылка; Проводка.СчетКт = Кредит.Ссылка; Проводка.Сумма = 100; Записи.Записать(Истина);\n    Запрос = Новый Запрос(\"ВЫБРАТЬ П.СчетДт, П.СчетКт, П.Сумма ИЗ РегистрБухгалтерии.УчебныеПроводки КАК П ГДЕ П.Регистратор = &Документ\"); Запрос.УстановитьПараметр(\"Документ\",Набор.Первая); Таблица = Запрос.Выполнить().Выгрузить();\n    ВернаСумма = Таблица.Количество() = 1 И Таблица[0].Сумма = 100;\n    ВерныСчета = Таблица.Количество() = 1 И Таблица[0].СчетДт = Дебет.Ссылка И Таблица[0].СчетКт = Кредит.Ссылка И Дебет.Ссылка <> Кредит.Ссылка;\n    Возврат Новый Структура(\"ВернаСумма,ВерныСчета,Регистратор\",ВернаСумма,ВерныСчета,Набор.Первая);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытУчебнойПроводки();\n    Сообщить(\"Сумма100 верна: \" + Строка(Результат.ВернаСумма));\n    Сообщить(\"Дебет и кредит верны: \" + Строка(Результат.ВерныСчета));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation and reason"
+          ],
+          "rows": [
+            [
+              "Metadata",
+              "Own chart/register — Correspondence enabled."
+            ],
+            [
+              "Accounts",
+              "Two distinct codes — References identified."
+            ],
+            [
+              "Write",
+              "Own recorder,100 — One entry."
+            ],
+            [
+              "Reread",
+              "Amount and both sides — Independent claims."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Chart of accounts and register",
+      "paragraphs": [
+        "The chart defines accounts and analytic settings; the accounting register stores movements. They are different objects. A full native exercise requires an original teaching chart/register, not a copied proprietary configuration. An array ofdebit/credit pairs teaches an invariant but does not execute an accounting register.",
+        "The function creates two own accounts with different codes and one 100-unit record for its own document. Units are educational, not enterprise accounting advice. A query rereads СчетДт/СчетКт/Сумма filtered by this recorder."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Debit and credit are swapped while the amount remains 250. Will the intended-direction check pass?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. Direction is defined by the СчетДт / СчетКт roles. Having both references and the expected amount is insufficient; each reference must occupy the intended field."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Analytics refine meaning",
+      "paragraphs": [
+        "An account can have customer/service analytics under the model. Missing analytics can preserve overall equality while misallocating customers. Add two customers with equal amounts and verify identities. This distinguishes formal side equality from correct accounting meaning.",
+        "Amount 100 and both account references are separate checks. Balanced sides do not establish correct business account selection. This minimal example adds no subaccounts/extra analytics; those require their own explicit design and checks, not a statutory-accounting claim."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "This diagram checks the worked example; it does not depict money transfers. One row, amount100, and expected references in debit/credit roles must hold together. These are this training function’s assertions, not automatic grading of learner work."
+      ],
+      "flowchart": {
+        "layout": "roomy",
+        "caption": "Check the worked posting",
+        "input": "Record",
+        "decisions": [
+          {
+            "condition": "1 row?",
+            "branch": "no",
+            "output": "Reject"
+          },
+          {
+            "condition": "100?",
+            "branch": "no",
+            "output": "Reject"
+          },
+          {
+            "condition": "Dr/Cr?",
+            "branch": "no",
+            "output": "Reject"
+          }
+        ],
+        "fallback": "Confirmed",
+        "paths": [
+          "All three conditions are required; a matching amount cannot repair swapped accounts."
+        ]
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Comparing only the set of two accounts or the amount misses a swap. Compare the debit to the expected debit and the credit to the expected credit.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Reversal and repeats remain explainable",
+      "paragraphs": [
+        "Post a synthetic operation, reconcile sides/recorder, repeat and reverse. Debit and credit effects must change consistently. Explicitly label evidence as a BSL model, a real register or theoretical analysis. An unavailable permitted stand does not turn the first into actual register execution.",
+        "A compilable 101 mutation fails the independent 100 expectation. Repeating/reversing own-recorder effects needs its own case and must preserve other sets. Never use a real bookkeeping base; retain own accounts/document and do not clear the register for appearance."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Create another own account pair and two 250 postings under different own documents. Use the intended roles in the first and deliberately swap them in the second. Expect amount 250, correct directionДа, and acceptance of the reversed postingНет.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p6-accounting-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "ece4152309eaa96a4acf61a25abf2866a98a9246f62d4bd9120b52577d8f50c1",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain why matching amounts do not establish direction. This is a mechanism model, not production accounting."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Debit and credit are swapped while the amount remains 250. Will the intended-direction check pass?",
+      "options": [
+        "No:the references occupy different roles",
+        "Yes:the amount matches",
+        "Yes:the accounts exist"
+      ],
+      "correct": 0,
+      "feedback": "No. Direction is defined by the СчетДт / СчетКт roles. Having both references and the expected amount is insufficient; each reference must occupy the intended field.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "A chart of accounts stores",
+      "options": [
+        "Accounts and their properties",
+        "All movements instead of a register",
+        "Passwords"
+      ],
+      "correct": 0,
+      "feedback": "Create actual ChartOfAccounts.УчебныеСчета and AccountingRegister.УчебныеПроводки. Select that chart, enable correspondence and add balance resource Сумма: Number(15,2), recorded by ЗаявкаУслуги. This is not an array model. Screenshots show original metadata creation, not third-party configuration.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Does 100 alone prove correct accounts?",
+      "options": [
+        "Always",
+        "No, references/meaning separately",
+        "By form colour"
+      ],
+      "correct": 1,
+      "feedback": "The function creates two own accounts with different codes and one 100-unit record for its own document. Units are educational, not enterprise accounting advice. A query rereads СчетДт/СчетКт/Сумма filtered by this recorder.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Our outcome is",
+      "options": [
+        "Statutory enterprise bookkeeping",
+        "JS emulation",
+        "A real teaching record of a bounded model"
+      ],
+      "correct": 2,
+      "feedback": "Amount 100 and both account references are separate checks. Balanced sides do not establish correct business account selection. This minimal example adds no subaccounts/extra analytics; those require their own explicit design and checks, not a statutory-accounting claim.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What detects swapped accounts?",
+      "options": [
+        "Compare СчетДт and СчетКт separately with their expectations",
+        "Only amount 250",
+        "The number of account cards"
+      ],
+      "correct": 0,
+      "feedback": "Explain why matching amounts do not establish direction. This is a mechanism model, not production accounting.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "A posting: the amount does not establish direction",
+    "task": "Create another own account pair and two 250 postings under different own documents. Use the intended roles in the first and deliberately swap them in the second. Expect amount 250, correct directionДа, and acceptance of the reversed postingНет.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытНаправленияПроводки() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытНаправленияПроводки();\n    Сообщить(\"Одинаковая сумма: \" + Строка(Результат.Сумма));\n    Сообщить(\"Заданные дебет и кредит: \" + Строка(Результат.ВерноеНаправление));\n    Сообщить(\"Переставленные подходят: \" + Строка(Результат.ОбратноеПодходит));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытНаправленияПроводки() Экспорт\n    Набор = НовыйНаборРегистров(); Суффикс = Лев(Строка(Новый УникальныйИдентификатор),8);\n    Дебет = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Дебет.Код = \"Д\" + Суффикс; Дебет.Наименование = \"P6 новый дебет\"; Дебет.Вид = ВидСчета.Активный; Дебет.Записать();\n    Кредит = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Кредит.Код = \"К\" + Суффикс; Кредит.Наименование = \"P6 новый кредит\"; Кредит.Вид = ВидСчета.Пассивный; Кредит.Записать();\n    Для Индекс = 0 По 1 Цикл\n        Записи = РегистрыБухгалтерии.УчебныеПроводки.СоздатьНаборЗаписей();\n        Записи.Отбор.Регистратор.Установить(?(Индекс = 0,Набор.Первая,Набор.Вторая));\n        Проводка = Записи.Добавить(); Проводка.Период = Дата(2026,11,2,15,0,0); Проводка.Сумма = 250;\n        Проводка.СчетДт = ?(Индекс = 0,Дебет.Ссылка,Кредит.Ссылка);\n        Проводка.СчетКт = ?(Индекс = 0,Кредит.Ссылка,Дебет.Ссылка); Записи.Записать(Истина);\n    КонецЦикла;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ П.СчетДт,П.СчетКт,П.Сумма ИЗ РегистрБухгалтерии.УчебныеПроводки КАК П ГДЕ П.Регистратор = &Документ\");\n    Запрос.УстановитьПараметр(\"Документ\",Набор.Первая); Верная = Запрос.Выполнить().Выгрузить()[0];\n    Запрос.УстановитьПараметр(\"Документ\",Набор.Вторая); Обратная = Запрос.Выполнить().Выгрузить()[0];\n    Возврат Новый Структура(\"Сумма,ВерноеНаправление,ОбратноеПодходит\",Верная.Сумма,\n        Верная.СчетДт = Дебет.Ссылка И Верная.СчетКт = Кредит.Ссылка,\n        Обратная.СчетДт = Дебет.Ссылка И Обратная.СчетКт = Кредит.Ссылка);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытНаправленияПроводки() Экспорт\n    Набор = НовыйНаборРегистров(); Суффикс = Лев(Строка(Новый УникальныйИдентификатор),8);\n    Дебет = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Дебет.Код = \"Д\" + Суффикс; Дебет.Наименование = \"P6 новый дебет\"; Дебет.Вид = ВидСчета.Активный; Дебет.Записать();\n    Кредит = ПланыСчетов.УчебныеСчета.СоздатьСчет(); Кредит.Код = \"К\" + Суффикс; Кредит.Наименование = \"P6 новый кредит\"; Кредит.Вид = ВидСчета.Пассивный; Кредит.Записать();\n    Для Индекс = 0 По 1 Цикл\n        Записи = РегистрыБухгалтерии.УчебныеПроводки.СоздатьНаборЗаписей();\n        Записи.Отбор.Регистратор.Установить(?(Индекс = 0,Набор.Первая,Набор.Вторая));\n        Проводка = Записи.Добавить(); Проводка.Период = Дата(2026,11,2,15,0,0); Проводка.Сумма = 250;\n        Проводка.СчетДт = ?(Индекс = 0,Дебет.Ссылка,Кредит.Ссылка);\n        Проводка.СчетКт = ?(Индекс = 0,Кредит.Ссылка,Дебет.Ссылка); Записи.Записать(Истина);\n    КонецЦикла;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ П.СчетДт,П.СчетКт,П.Сумма ИЗ РегистрБухгалтерии.УчебныеПроводки КАК П ГДЕ П.Регистратор = &Документ\");\n    Запрос.УстановитьПараметр(\"Документ\",Набор.Первая); Верная = Запрос.Выполнить().Выгрузить()[0];\n    Запрос.УстановитьПараметр(\"Документ\",Набор.Вторая); Обратная = Запрос.Выполнить().Выгрузить()[0];\n    Возврат Новый Структура(\"Сумма,ВерноеНаправление,ОбратноеПодходит\",Верная.Сумма,\n        Верная.СчетДт = Дебет.Ссылка И Верная.СчетКт = Кредит.Ссылка,\n        Обратная.СчетДт = Дебет.Ссылка И Обратная.СчетКт = Кредит.Ссылка);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытНаправленияПроводки();\n    Сообщить(\"Одинаковая сумма: \" + Строка(Результат.Сумма));\n    Сообщить(\"Заданные дебет и кредит: \" + Строка(Результат.ВерноеНаправление));\n    Сообщить(\"Переставленные подходят: \" + Строка(Результат.ОбратноеПодходит));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "Two distinct recorders;the same 250;intended and reversed direction.",
+        "output": "Одинаковая сумма: 250\nЗаданные дебет и кредит: Да\nПереставленные подходят: Нет"
+      }
+    ],
+    "criteria": [
+      "Labelled results:250, Да, Нет. The final Нет is the expected detection of swapped roles.",
+      "Each query filters its recorder; accounts are distinguished by references.",
+      "Explain why matching amounts do not establish direction. This is a mechanism model, not production accounting."
+    ],
+    "hint": "The diagram separates fields of one record, rather than showing successive money transfers.α and β are illustrative references, not actual account numbers.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work. Charts of accounts → УчебныеСчета, code 9/name25. Accounting registers → УчебныеПроводки: this chart, Correspondence enabled, Сумма Number 15,2 Balance resource; ЗаявкаУслуги recorder. Include in УчебнаяСлужба.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "Prior work is retained; the required metadata objects and relationships are defined."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions. Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists,do not add another definition:retain it and append only the new function. Do not load a full CF over your work.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "register",
+    "recorder",
+    "dimension",
+    "resource",
+    "reference",
+    "transaction",
+    "posting",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p6-accounting.json",
+  "assessment": {
+    "contentRevision": "onec-p6-topic-4-author-v1",
+    "quiz": [
+      {
+        "question": "Debit and credit are swapped while the amount remains 250. Will the intended-direction check pass?",
+        "options": [
+          "No:the references occupy different roles",
+          "Yes:the amount matches",
+          "Yes:the accounts exist"
+        ],
+        "correct": 0,
+        "explanation": "No. Direction is defined by the СчетДт / СчетКт roles. Having both references and the expected amount is insufficient; each reference must occupy the intended field."
+      },
+      {
+        "question": "A chart of accounts stores",
+        "options": [
+          "Accounts and their properties",
+          "All movements instead of a register",
+          "Passwords"
+        ],
+        "correct": 0,
+        "explanation": "Create actual ChartOfAccounts.УчебныеСчета and AccountingRegister.УчебныеПроводки. Select that chart, enable correspondence and add balance resource Сумма: Number(15,2), recorded by ЗаявкаУслуги. This is not an array model. Screenshots show original metadata creation, not third-party configuration."
+      },
+      {
+        "question": "Does 100 alone prove correct accounts?",
+        "options": [
+          "Always",
+          "No, references/meaning separately",
+          "By form colour"
+        ],
+        "correct": 1,
+        "explanation": "The function creates two own accounts with different codes and one 100-unit record for its own document. Units are educational, not enterprise accounting advice. A query rereads СчетДт/СчетКт/Сумма filtered by this recorder."
+      },
+      {
+        "question": "Our outcome is",
+        "options": [
+          "Statutory enterprise bookkeeping",
+          "JS emulation",
+          "A real teaching record of a bounded model"
+        ],
+        "correct": 2,
+        "explanation": "Amount 100 and both account references are separate checks. Balanced sides do not establish correct business account selection. This minimal example adds no subaccounts/extra analytics; those require their own explicit design and checks, not a statutory-accounting claim."
+      },
+      {
+        "question": "What detects swapped accounts?",
+        "options": [
+          "Compare СчетДт and СчетКт separately with their expectations",
+          "Only amount 250",
+          "The number of account cards"
+        ],
+        "correct": 0,
+        "explanation": "Explain why matching amounts do not establish direction. This is a mechanism model, not production accounting."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p6.topic-4.en.json"
+}

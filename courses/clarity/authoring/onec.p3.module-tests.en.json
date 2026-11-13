@@ -1,0 +1,496 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P3",
+  "id": "onec.p3.module-tests",
+  "locale": "en",
+  "revision": "onec-p3-module-tests-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p3-contracts.json",
+    "sha256": "ecc00e837c1976ab350012e367a03aeee38bcee686d73227e325a7aef9141c40"
+  },
+  "title": "Function tests: compare an expectation and notice a faulty copy",
+  "goal": "Derive independent expectations, test valid and rejected paths, and demonstrate sensitivity to a specific error.",
+  "prerequisites": [
+    {
+      "text": "Complete BSL fundamentals: variables, types, conditions, and loops. Know how to preserve a separate source and run your training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "Why this task matters",
+      "paragraphs": [
+        "A “tests passed” message compares nothing by itself. You need an independently calculated expectation, an actual value, and an action on mismatch. Check both the function and whether the test can fail on a known faulty copy.",
+        "Read the worked example and predict a changed input. The independent task uses a different contract. Save the previous training source before replacing a module; a personal Nexus mark is not an assessment of your explanation."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "A test asks a question with an observable answer",
+      "paragraphs": [
+        "An “all good” message does not compare anything. ПроверитьРавно accepts the actual value, an independently calculated expectation and a case name. A mismatch raises an exception and prevents the success message. The case name identifies the broken agreement.",
+        "Calculate 600 for 30 minutes at 1200 per hour independently. Calling the same formula twice would allow the same error on both sides. Keep the business example separate from the implementation that must satisfy it."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "The complete worked example and its result",
+      "paragraphs": [
+        "Three numeric assertions and a separate rejection assertion run before the four-check message. The expectations 600/0/1200 come from manual reasoning; another call to the same function does not establish a correct expectation.",
+        "Match code and result by each statement’s role. Explain matching output through inputs, execution order, and state; one observed run does not check every possible variant."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас)\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n\nПроцедура ПроверитьРавно(Факт, Ожидание, Название)\n    Если Факт <> Ожидание Тогда\n        ВызватьИсключение \"Не пройдено: \" + Название;\n    КонецЕсли;\nКонецПроцедуры\n\nПроцедура ПриНачалеРаботыСистемы()\n    ПроверитьРавно(Стоимость(30, 1200), 600, \"полчаса\");\n    ПроверитьРавно(Стоимость(0, 1200), 0, \"ноль минут\");\n    ПроверитьРавно(Стоимость(60, 1200), 1200, \"час\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Стоимость(-1, 1200);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"отрицательная длительность отвергнута\");\n    Результат = 4;\n    Сообщить(\"Пройдены четыре учебные проверки\");\nКонецПроцедуры\n",
+        "output": "Пройдены четыре учебные проверки"
+      }
+    },
+    {
+      "id": "concept-1",
+      "title": "A small table checks different rules",
+      "paragraphs": [
+        "Three numeric cases cover an ordinary calculation, allowed zero and a full hour. They do not cover every input or rounding rule. A one-hour case alone cannot expose every unit or rounding error. Choose additional cases from the contract, such as one minute or a fractional rate.",
+        "For the negative input, the rejection flag begins false, becomes true only on an exception, and is asserted afterward. An exception anywhere in a large program is not equivalent to the intended rejection. This exercise deliberately isolates one invalid call; professional tests also identify the expected rejection reason."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace the important transitions",
+      "paragraphs": [
+        "A successful run concerns these inputs and this source only. A faulty test can print the same message. Keep a separate faulty copy, identify the first diverging case, and rerun after restoration without changing expectations.",
+        "Before the next statement, record state separately from messages already displayed. This finds the first divergence rather than guessing from the final line."
+      ],
+      "tables": [
+        {
+          "caption": "Worked-example state",
+          "columns": [
+            "Step or value",
+            "Role and observation"
+          ],
+          "rows": [
+            [
+              "Стоимость(30,1200)",
+              "600=600"
+            ],
+            [
+              "Стоимость(0,1200)",
+              "0=0"
+            ],
+            [
+              "Стоимость(60,1200)",
+              "1200=1200"
+            ],
+            [
+              "Стоимость(-1,1200)",
+              "Rejection observed"
+            ],
+            [
+              "После утверждений",
+              "Final count4"
+            ]
+          ],
+          "kind": "state"
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction before revealing",
+      "paragraphs": [
+        "Replace divisor 60 with 30. What should the first half-hour test do?",
+        "Write your answer before revealing it. Identify the changed input and unchanged rule, then compare with the changed example."
+      ],
+      "reveal": {
+        "title": "Check the prediction",
+        "paragraphs": [
+          "Match the changed values with the same rule. This checks transfer rather than memorisation of the previous final line."
+        ],
+        "code": {
+          "language": "bsl",
+          "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас)\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 30, 2);\nКонецФункции\n\nПроцедура ПроверитьРавно(Факт, Ожидание, Название)\n    Если Факт <> Ожидание Тогда\n        ВызватьИсключение \"Не пройдено: \" + Название;\n    КонецЕсли;\nКонецПроцедуры\n\nПроцедура ПриНачалеРаботыСистемы()\n    ПроверитьРавно(Стоимость(30, 1200), 600, \"полчаса\");\n    ПроверитьРавно(Стоимость(0, 1200), 0, \"ноль минут\");\n    ПроверитьРавно(Стоимость(60, 1200), 1200, \"час\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Стоимость(-1, 1200);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"отрицательная длительность отвергнута\");\n    Результат = 4;\n    Сообщить(\"Пройдены четыре учебные проверки\");\nКонецПроцедуры\n",
+          "output": "Rejection: Не пройдено: полчаса"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Prove the test can fail",
+      "paragraphs": [
+        "Preserve the working source. In a separate copy change division by 60 to division by 30. The source can still compile, but the first result becomes 1200 instead of 600. The “полчаса” case must stop execution and the final success message must not appear.",
+        "Restore the original formula and rerun the entire set. If the incorrect copy passes, verify the module and database update, assertion execution and success-message placement. Do not change the expected 600 to 1200 merely to obtain green output."
+      ]
+    },
+    {
+      "id": "counterexample",
+      "title": "A faulty variant and its first divergence",
+      "paragraphs": [
+        "The faulty Остаток adds instead of subtracting. Emptying ПроверитьРавно makes it print the six-check success message anyway. This is an intentional false green, not a fix. The test must notice the faulty copy before the final message.",
+        "Keep the faulty variant separately. Restore the working version and repeat the positive case. Do not change an expectation merely because the program printed something else."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция Остаток(Знач Лимит, Знач Занято)\n    Если ТипЗнч(Лимит) <> Тип(\"Число\") Или ТипЗнч(Занято) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Лимит < 0 Или Занято < 0 Или Занято > Лимит Тогда\n        ВызватьИсключение \"Неверный резерв\";\n    КонецЕсли;\n    Возврат Лимит + Занято;\nКонецФункции\n\nПроцедура ПроверитьРавно(Факт, Ожидание, Название)\n    // Намеренно пустое утверждение: это неверный тест.\nКонецПроцедуры\n\nПроцедура ПриНачалеРаботыСистемы()\n    ПроверитьРавно(Остаток(90, 20), 70, \"занята часть\");\n    ПроверитьРавно(Остаток(90, 0), 90, \"нет резерва\");\n    ПроверитьРавно(Остаток(90, 90), 0, \"всё занято\");\n    ПроверитьРавно(Остаток(0, 0), 0, \"нулевой лимит\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Остаток(-1, 0);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"отрицательный лимит\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Остаток(90, 91);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"резерв больше лимита\");\n    Результат = 6;\n    Сообщить(\"Пройдены шесть учебных проверок\");\nКонецПроцедуры\n"
+      }
+    },
+    {
+      "id": "concept-3",
+      "title": "State the scope of the evidence",
+      "paragraphs": [
+        "This function neither reads database records nor depends on an open form or writes documents. Small isolated inputs can therefore test it. Rights, document persistence, UI and concurrent access require different scenarios in an appropriate environment.",
+        "Preserve the source, case table, successful result, incorrect copy and observed failure. A Nexus self-report stores the learner’s statement. Local execution alone is not server grading, proof of authorship or an official certificate."
+      ]
+    },
+    {
+      "id": "algorithm",
+      "title": "See the values and direction",
+      "paragraphs": [
+        "The diagram unfolds the selected sequence. Labels do not replace code: match each transition to a statement and record what remains unchanged.",
+        "The diamond compares expected and actual values. A mismatch raises an exception before the final message. A match permits the next case; the complete set succeeds only after its last assertion. An empty assertion removes this decision itself."
+      ],
+      "flowchart": {
+        "layout": "roomy",
+        "caption": "Different paths have different outcomes",
+        "input": "Pair",
+        "decisions": [
+          {
+            "condition": "Equal?",
+            "branch": "no",
+            "output": "Reject"
+          }
+        ],
+        "fallback": "Next",
+        "paths": [
+          "The faulty Остаток adds instead of subtracting. Emptying ПроверитьРавно makes it print the six-check success message anyway. This is an intentional false green, not a fix. The test must notice the faulty copy before the final message.",
+          "Test another function, Остаток(Лимит, Занято). Independently expect70 for90/20,90 for90/0,0 for90/90, and0 for0/0. Separately require rejection of−1/0 and90/91: six checks. Replace subtraction with addition in a copy; the first case must fail. Restore the source and rerun all six without changing expectations."
+        ]
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a different independent task",
+      "paragraphs": [
+        "Test another function, Остаток(Лимит, Занято). Independently expect 70 for 90/20,90 for 90/0,0 for 90/90, and 0 for 0/0. Separately require rejection of−1/0 and 90/91: six checks. Replace subtraction with addition in a copy; the first case must fail. Restore the source and rerun all six without changing expectations.",
+        "The worked example is not a ready solution to this task. Use a separate starter; reveal the reference on request after your own attempt. Viewing it must not replace saved or unsaved work."
+      ]
+    },
+    {
+      "id": "independent-trace",
+      "title": "How to check transfer",
+      "paragraphs": [
+        "Run all six cases with numeric expectations independent of the implementation.",
+        "Label each control input, expected observation, and reason in advance. Use rejection where the contract requires it; do not turn an unknown result into a convenient zero."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The exact work location in 1C",
+      "paragraphs": [
+        "Three numeric assertions and a separate rejection assertion run before the four-check message. The expectations 600/0/1200 come from manual reasoning; another call to the same function does not establish a correct expectation.",
+        "In your separate training infobase, save the source, update the database configuration, and launch a new session from Designer. Distinguish the editor, saved configuration, and running version; an old session does not prove the new text ran."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-tests-main-designer.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "20f1ccfe4cbc17e4afb3dfe6e4a80fbd8c166cd5cbcc804c3412ee120d75f7f0",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "caption": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "native-observation",
+      "title": "Compare the observation with your explanation",
+      "paragraphs": [
+        "The addition fault fails at«занята часть»; the faulty copy does not reach the final success message.",
+        "The source and expected messages accompany the explanation. Actual images of the complete worked example come from a separate training infobase; they are not your run or proof of your authorship. Record your independent work separately."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-tests-main-client.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "41dbba4ca1e17a93b8877b10e53b04fd85eeae1fe66a7237eb23222242337a6f",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "caption": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What is established and what still needs explanation",
+      "paragraphs": [
+        "The suite does not test the UI, permissions, concurrent writes, or all real-number values. The deliberate mutant checks sensitivity to one specific fault. Authorship and understanding remain separate from a green technical result.",
+        "Before marking completion, explain one changed input of your own. A technical pass, matching messages, and your completion mark are different facts; understanding is discussed through explanation and transfer."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Replace divisor 60 with 30. What should the first half-hour test do?",
+      "options": [
+        "Stop:1200 differs from 600",
+        "Pass: the source compiles",
+        "Change the expectation to 1200"
+      ],
+      "correct": 0,
+      "feedback": "Compare the prediction with the unchanged rule and explain the first important transition.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Where should expected 600 come from?",
+      "options": [
+        "Another call to the tested function",
+        "An independent business example",
+        "The incorrect actual output"
+      ],
+      "correct": 1,
+      "feedback": "The expectation must be independent of implementation.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What should the division-by-30 copy produce?",
+      "options": [
+        "Success",
+        "Automatic expectation changes",
+        "A failed first check"
+      ],
+      "correct": 2,
+      "feedback": "The test must notice the incorrect copy.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What does a successful local set establish?",
+      "options": [
+        "These cases for this source",
+        "Complete assessment of every skill",
+        "All users’ permissions"
+      ],
+      "correct": 0,
+      "feedback": "Evidence is limited to executed scenarios.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "A faulty function and empty ПроверитьРавно printed success. What was established?",
+      "options": [
+        "Only the printed string; assertions may be empty",
+        "Correctness for all inputs",
+        "Full learner certification"
+      ],
+      "correct": 0,
+      "feedback": "The faulty Остаток adds instead of subtracting. Emptying ПроверитьРавно makes it print the six-check success message anyway. This is an intentional false green, not a fix. The test must notice the faulty copy before the final message.",
+      "recall": "counterexample"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain one changed case of your own: input, important transition, actual result, and limits of the conclusion.",
+      "feedback": "This answer is not graded automatically. Compare it with the trace and your own work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Function tests: compare an expectation and notice a faulty copy",
+    "task": "Test another function, Остаток(Лимит, Занято). Independently expect 70 for 90/20,90 for 90/0,0 for 90/90, and 0 for 0/0. Separately require rejection of−1/0 and 90/91: six checks. Replace subtraction with addition in a copy; the first case must fail. Restore the source and rerun all six without changing expectations.",
+    "environment": "Installed training 1C8.3 and your separate file infobase. Nexus stores a draft; actual BSL runs in the platform.",
+    "setupGuide": true,
+    "externalRoute": "Own training infobase → Designer → root → Открыть модуль приложения",
+    "files": [
+      {
+        "path": "Приложение.bsl",
+        "content": "Функция Остаток(Знач Лимит, Знач Занято)\n    Если ТипЗнч(Лимит) <> Тип(\"Число\") Или ТипЗнч(Занято) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Лимит < 0 Или Занято < 0 Или Занято > Лимит Тогда\n        ВызватьИсключение \"Неверный резерв\";\n    КонецЕсли;\n    Возврат Лимит - Занято;\nКонецФункции\n\nПроцедура ПроверитьРавно(Факт, Ожидание, Название)\n    Если Факт <> Ожидание Тогда\n        ВызватьИсключение \"Не пройдено: \" + Название;\n    КонецЕсли;\nКонецПроцедуры\n\nПроцедура ПриНачалеРаботыСистемы()\n    // TODO: add six independent assertions and test a faulty copy.\n    ВызватьИсключение \"TODO: добавьте утверждения\";\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция Остаток(Знач Лимит, Знач Занято)\n    Если ТипЗнч(Лимит) <> Тип(\"Число\") Или ТипЗнч(Занято) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Лимит < 0 Или Занято < 0 Или Занято > Лимит Тогда\n        ВызватьИсключение \"Неверный резерв\";\n    КонецЕсли;\n    Возврат Лимит - Занято;\nКонецФункции\n\nПроцедура ПроверитьРавно(Факт, Ожидание, Название)\n    Если Факт <> Ожидание Тогда\n        ВызватьИсключение \"Не пройдено: \" + Название;\n    КонецЕсли;\nКонецПроцедуры\n\nПроцедура ПриНачалеРаботыСистемы()\n    ПроверитьРавно(Остаток(90, 20), 70, \"занята часть\");\n    ПроверитьРавно(Остаток(90, 0), 90, \"нет резерва\");\n    ПроверитьРавно(Остаток(90, 90), 0, \"всё занято\");\n    ПроверитьРавно(Остаток(0, 0), 0, \"нулевой лимит\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Остаток(-1, 0);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"отрицательный лимит\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Остаток(90, 91);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"резерв больше лимита\");\n    Результат = 6;\n    Сообщить(\"Пройдены шесть учебных проверок\");\nКонецПроцедуры\n",
+      "paragraphs": [
+        "The reference opens on request. Compare state, rejection, and reasoning as well as the final line. Your editor is not replaced."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "Control case 1",
+        "input": "Four numeric assertions: (90, 20), (90, 0), (90, 90), (0, 0); two rejections: (-1, 0), (90, 91).",
+        "output": "Пройдены шесть учебных проверок"
+      },
+      {
+        "label": "Control case 2",
+        "input": "In a separate faulty copy, replace «Лимит - Занято» with «Лимит + Занято»; keep the expectations unchanged.",
+        "output": "Rejection: Не пройдено: занята часть"
+      }
+    ],
+    "criteria": [
+      "Run all six cases with numeric expectations independent of the implementation.",
+      "The addition fault fails at«занята часть»; the faulty copy does not reach the final success message.",
+      "Preserve two distinct sources, the observed rejection, and the restored successful run; a message alone is not evidence."
+    ],
+    "hint": "A successful run concerns these inputs and this source only. A faulty test can print the same message. Keep a separate faulty copy, identify the first diverging case, and rerun after restoration without changing expectations.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → own prediction",
+        "action": "Test another function, Остаток(Лимит, Занято). Independently expect70 for90/20,90 for90/0,0 for90/90, and0 for0/0. Separately require rejection of−1/0 and90/91: six checks. Replace subtraction with addition in a copy; the first case must fail. Restore the source and rerun all six without changing expectations.",
+        "why": "An expectation must precede the observation.",
+        "expected": "Inputs and expectations are recorded."
+      },
+      {
+        "where": "Own training infobase → Designer → root → Открыть модуль приложения",
+        "action": "Save the previous source separately. Keep functions outside one ПриНачалеРаботыСистемы handler in the complete source.",
+        "why": "Keep versions and contexts distinct.",
+        "expected": "The infobase, module, and preserved previous version are known."
+      },
+      {
+        "where": "Module editor → function and ПриНачалеРаботыСистемы",
+        "action": "Complete the TODO contract. Do not nest a function declaration inside the procedure.",
+        "why": "Declaration and invocation have different locations.",
+        "expected": "Your complete source is ready to check."
+      },
+      {
+        "where": "Designer → Ctrl+S → F7 → F5 → client messages",
+        "action": "Update your own infobase and read the new run for each case.",
+        "why": "Nexus does not execute this BSL.",
+        "expected": "Actual messages or a precise rejection are available."
+      },
+      {
+        "where": "Result recording → BSL file and Nexus → self-report",
+        "action": "Save the source and a prediction/fact/explanation table, including the faulty copy.",
+        "why": "Matching output does not establish understanding.",
+        "expected": "Facts and your explanation are distinct."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-language-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Script: modules, methods, collections, and exceptions",
+      "language": "English",
+      "purpose": "Look up syntax after your independent work; the lesson contains the required steps.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "scope": "limits"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "A test asks a question with an observable answer",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "A small table checks different rules",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Prove the test can fail",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "State the scope of the evidence",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p3-module-tests-author-v1",
+    "quiz": [
+      {
+        "question": "Replace divisor 60 with 30. What should the first half-hour test do?",
+        "options": [
+          "Stop:1200 differs from 600",
+          "Pass: the source compiles",
+          "Change the expectation to 1200"
+        ],
+        "correct": 0,
+        "explanation": "Compare the prediction with the unchanged rule and explain the first important transition."
+      },
+      {
+        "question": "Where should expected 600 come from?",
+        "options": [
+          "Another call to the tested function",
+          "An independent business example",
+          "The incorrect actual output"
+        ],
+        "correct": 1,
+        "explanation": "The expectation must be independent of implementation."
+      },
+      {
+        "question": "What should the division-by-30 copy produce?",
+        "options": [
+          "Success",
+          "Automatic expectation changes",
+          "A failed first check"
+        ],
+        "correct": 2,
+        "explanation": "The test must notice the incorrect copy."
+      },
+      {
+        "question": "What does a successful local set establish?",
+        "options": [
+          "These cases for this source",
+          "Complete assessment of every skill",
+          "All users’ permissions"
+        ],
+        "correct": 0,
+        "explanation": "Evidence is limited to executed scenarios."
+      },
+      {
+        "question": "A faulty function and empty ПроверитьРавно printed success. What was established?",
+        "options": [
+          "Only the printed string; assertions may be empty",
+          "Correctness for all inputs",
+          "Full learner certification"
+        ],
+        "correct": 0,
+        "explanation": "The faulty Остаток adds instead of subtracting. Emptying ПроверитьРавно makes it print the six-check success message anyway. This is an intentional false green, not a fix. The test must notice the faulty copy before the final message."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE QA AUTOMATED PASS + PLAIN HANDLER GUI PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "tests-main",
+      "tests-one-minute",
+      "tests-wrong-divisor",
+      "tests-independent",
+      "tests-independent-wrong-plus",
+      "tests-wrong-empty-assertion"
+    ],
+    "scope": "42 неизменных тела/функции проверены в отдельных серверных QA common modules. 10 полных не обёрнутых обработчиков выполнены отдельно в исходном клиентском контексте и дали фактические сообщения. Тексты пяти основных обработчиков и общего метода дополнительно сверены в Конфигураторе. Файловая база не доказывает сетевой сервер или права произвольного пользователя.",
+    "studentAuthorshipVerified": false,
+    "GUIcases": [
+      "tests-main",
+      "tests-independent"
+    ]
+  }
+}

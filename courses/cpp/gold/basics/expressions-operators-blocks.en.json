@@ -17,7 +17,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Expressions and operators: grouping, values, and clear steps",
-  "lead": "Break a formula into operands, predict the result, and rewrite a dense line as verifiable intermediate calculations.",
+  "lead": "Compare two expressions and see how parentheses change grouping.",
   "why": "Similar-looking formulas can describe different calculations. Precedence determines grouping rather than a universal execution order. The distinction prevents later mistakes involving state changes.",
   "objectives": [
     "Identify operands, operator, type, and value in a simple expression.",
@@ -316,5 +316,473 @@
       "They convert int to double"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Compare two expressions and see how parentheses change grouping.",
+    "prerequisites": [
+      "You know addition, multiplication and declarations."
+    ],
+    "model": [
+      "An expression computes a value: 2+3*4 produces a number. Multiplication has higher precedence: first 3*4=12, then 2+12=14. Parentheses explicitly group operations: (2+3)*4 gives 20.",
+      "Braces group statements into a block and limit local names. They do not replace arithmetic parentheses. Precedence defines grouping; it is not a general execution-order rule for all side effects. Avoid modifying one variable several times in a complex expression."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Compare two expressions and see how parentheses change grouping.",
+      "code": "#include <iostream>\n\nint main() {\n    int a = 2 + 3 * 4;\n    int b = (2 + 3) * 4;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "14 20\n",
+      "trace": [
+        {
+          "line": "3 * 4",
+          "before": "3; 4",
+          "after": "12",
+          "why": "This subexpression performs the multiplication in a."
+        },
+        {
+          "line": "2 + 12",
+          "before": "2; 12",
+          "after": "a: 14",
+          "why": "Completed the calculation of a."
+        },
+        {
+          "line": "(2+3) * 4",
+          "before": "5 × 4",
+          "after": "b: 20",
+          "why": "Parentheses changed the grouping."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace both occurrences of 4 with 5; explain why the results differ.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int a = 2 + 3 * 4;\n    int b = (2 + 3) * 4;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "17 25\n",
+      "hints": [
+        "The first expression starts with 3×5.",
+        "The second starts with 2+3, then multiplication by 5."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int a = 2 + 3 * 5;\n    int b = (2 + 3) * 5;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "17 25\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Compute 10-2*3 and (10-2)*3. Name the first operation for each result.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "4 24\n"
+        }
+      ],
+      "rubric": [
+        "Compare the output with the readable reference case below.",
+        "Explain each change using the objects or operations in this topic.",
+        "In 10-2*3, 2*3 runs first and the result is 4. In (10-2)*3, 10-2 gives 8 first, then the result is 24. Removing parentheses changes 24 to 4; indentation does not."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int a = 10 - 2 * 3;\n    int b = (10 - 2) * 3;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Compare two expressions and see how parentheses change grouping.",
+      "steps": [
+        "Compute 10-2*3 and (10-2)*3. Name the first operation for each result.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Removing b’s parentheses changes 20 to 14; changing indentation does not.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b1-author-v1",
+    "title": "Expressions: what problem do the parentheses describe?",
+    "goal": "Break a formula into meaningful quantities, keep track of units, and distinguish grouping from evaluation order.",
+    "prerequisites": [
+      {
+        "text": "Initialized ints, copying, assignment, and nested blocks."
+      },
+      {
+        "text": "Arithmetic of small integers. Multiple state changes in one complex expression are unnecessary here."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "The quantities behind a calculation",
+        "paragraphs": [
+          "In count * unitPriceCents the names are operands and * multiplies them. When both are int and the result is representable, the expression also has type int. An expression need not mutate its operands: reading two values and producing a result differs from assignment.",
+          "int total = count * unitPriceCents; initializes total from the expression. std::cout << total; observes the value. This separates domain calculation, storage, and formatting. Annotate units: items × cents per item = cents."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "One line, two different expression trees",
+        "paragraphs": [
+          "One reader gets 14 from 2 + 3 * 4, while another gets 20. They are reading two different formulas, not choosing different calculation speeds.",
+          "Before opening the result, insert the parentheses you believe are implied. If 2 and 3 are added before multiplication, does that change the problem? Compare the two expressions through their intermediate values."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int ordinary = 2 + 3 * 4;\n    int grouped = (2 + 3) * 4;\n    std::cout << ordinary << ' ' << grouped << '\\n';\n    return 0;\n}\n"
+        ],
+        "reveal": {
+          "title": "Compare your prediction and follow the steps",
+          "paragraphs": [
+            "2 + 3 * 4 groups multiplication inside addition: it corresponds to 2 + (3 * 4), giving 14. (2 + 3) * 4 explicitly selects another calculation and gives 20. Parentheses do not request speed; they specify expression structure.",
+            "At this level + and − group left: 20 - 5 - 3 means (20 - 5) - 3, not 20 - (5 - 3). You need not memorize the entire operator table now. Apply the levels in use and add parentheses that clarify intention. Parentheses cannot rescue a domain formula that was chosen incorrectly.",
+            "Replace only the multiplier 4 with 5 in both formulas. Predict 17 and 25, then explain which intermediate value changed."
+          ],
+          "tables": [
+            {
+              "caption": "Follow the difficult step",
+              "columns": [
+                "Expression",
+                "Intermediate value",
+                "Result"
+              ],
+              "rows": [
+                [
+                  "2 + 3 * 4",
+                  "3 * 4 = 12",
+                  "2 + 12 = 14"
+                ],
+                [
+                  "(2 + 3) * 4",
+                  "2 + 3 = 5",
+                  "5 * 4 = 20"
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int ordinary = 2 + 3 * 4;\n    int grouped = (2 + 3) * 4;\n    std::cout << ordinary << ' ' << grouped << '\\n';\n    return 0;\n}\n",
+            "stdin": "",
+            "output": "14 20\n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Grouping does not determine every evaluation order",
+        "paragraphs": [
+          "The tree 2 + (3 * 4) describes value dependencies. It does not establish that the left operand always executes first in arbitrary C++. Our calculations have no changing operands, so stdout does not expose this distinction yet.",
+          "Increment and complex calls come later. Keep one understandable effect in its own statement. We do not run i++ + ++i as a puzzle: this style obscures sequencing rules and can have undefined behavior. Experimenting does not make a dangerous expression valid."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Naming the goods cost and delivery charge",
+        "paragraphs": [
+          "unitPriceCents * count + shippingCents can be split into goodsCents and totalCents. Goods and shipping can then be checked separately. This does not create a dynamically linked formula: each statement computes its value when executed, as in the variables lesson.",
+          "Keep types and statement dependencies and do not introduce hidden rounding. The demonstrated split preserves the bounded integer calculation. Arbitrary rearrangements of floating-point operations can change rounding; this is not permission for every algebraic rewrite."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int unitPriceCents{125};\n    int count{4};\n    int shippingCents{50};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "total_cents=550\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Block boundaries and expression parentheses",
+        "paragraphs": [
+          "A nested block can limit temporary names. If a result is needed outside, declare and initialize the outer result first, then assign the calculation to it inside. Declaring another result inside hides the outer object rather than updating it.",
+          "Expression parentheses (a + b) and block braces { ... } have different roles. State what is grouped: formula operands or statements and scope. This is more useful than mechanically adding brackets everywhere."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Checking that clearer code preserves the result",
+        "paragraphs": [
+          "Before editing, record the contract and several data sets. After extracting intermediate quantities compare the whole stdout and explain each stage in domain terms. Agreement only at zero price is a weak test that may fail to distinguish formulas.",
+          "The diagram shows one selected grouping. It is not a parser and does not establish arbitrary program evaluation order. The laboratory needs source, checks, and an equivalence explanation rather than merely an attractive tree screenshot."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    std::cout << (20 - 5 - 3) << ' ' << (20 - (5 - 3)) << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "12 18\n"
+        }
+      },
+      {
+        "id": "diagnose-incomplete-expression",
+        "title": "Intentional: missing right operand",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "+ has no right operand. Restore the expression rather than guessing another type."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int total = 2 + ;\n    std::cout << total << '\\n';\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        },
+        "deep": {
+          "title": "Why do parentheses not guarantee every action’s order?",
+          "text": "Parentheses describe which values an operator combines. Rules about when each operand is evaluated are separate. With operands that merely read small numbers, this distinction does not alter the result. With side effects, separate the actions into statements rather than guessing from the expression tree.",
+          "sourceId": "cpp20-expr"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Now solve a different problem",
+        "paragraphs": [
+          "Extract goodsCents while preserving total_cents output. State the type and unit of each intermediate result. For a 120-cent item, quantity 3 and a single 40-cent delivery charge, explain goodsCents and totalCents separately. Why does (unitPriceCents + shippingCents) * count model a different charge? Check one item and zero delivery charge.",
+          "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What are 2 + 3 * 5 and (2 + 3) * 5, in that order?",
+        "options": [
+          "17 25",
+          "25 25",
+          "17 17"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes: the first expression multiplies 3; the second multiplies the sum 5.",
+          "The first groups as 2 + (3 * 5), not (2 + 3) * 5.",
+          "In the second expression the whole parenthesised sum is multiplied by 5."
+        ],
+        "recall": "concept-2",
+        "code": "#include <iostream>\n\nint main() {\n    int ordinary = 2 + 3 * 5;\n    int grouped = (2 + 3) * 5;\n    std::cout << ordinary << ' ' << grouped << '\\n';\n    return 0;\n}\n",
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int ordinary = 2 + 3 * 5;\n    int grouped = (2 + 3) * 5;\n    std::cout << ordinary << ' ' << grouped << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "expected": "17 25\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int ordinary = 2 + 3 * 5;\n    int grouped = (2 + 3) * 5;\n    std::cout << ordinary << ' ' << grouped << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What do parentheses specify in (a + b) * c?",
+        "options": [
+          "Grouping",
+          "Mandatory acceleration",
+          "A new double type"
+        ],
+        "correct": 0,
+        "feedback": "Parentheses define expression structure.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "What is 18 - 6 - 2?",
+        "options": [
+          "14",
+          "10",
+          "18"
+        ],
+        "correct": 1,
+        "feedback": "Left grouping gives (18 − 6) − 2 = 10.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Does a grouping tree establish every C++ operand evaluation order?",
+        "options": [
+          "Yes",
+          "No, these are different rules",
+          "Only on a phone"
+        ],
+        "correct": 1,
+        "feedback": "The tree describes value dependencies; sequencing is a separate concern.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "For a 120-cent item, quantity 3 and a single 40-cent delivery charge, explain goodsCents and totalCents separately. Why does (unitPriceCents + shippingCents) * count model a different charge? Check one item and zero delivery charge.",
+        "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "recall": "concept-4"
+      }
+    ],
+    "practice": {
+      "title": "A readable order formula",
+      "task": "Extract goodsCents while preserving total_cents output. State the type and unit of each intermediate result. For a 120-cent item, quantity 3 and a single 40-cent delivery charge, explain goodsCents and totalCents separately. Why does (unitPriceCents + shippingCents) * count model a different charge? Check one item and zero delivery charge.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{40};\n    int totalCents = unitPriceCents * count + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "",
+      "returnAnchor": "concept-4",
+      "recall": "concept-4",
+      "cases": [
+        {
+          "label": "Main transfer task",
+          "input": "",
+          "output": "total_cents=400\n"
+        }
+      ],
+      "criteria": [
+        "The formula represents one-time shipping.",
+        "No unnecessary state changes inside expressions.",
+        "Three cases are recorded with expectations.",
+        "Precedence is distinguished from evaluation order.",
+        "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
+      ],
+      "hint": "For a 120-cent item, quantity 3 and a single 40-cent delivery charge, explain goodsCents and totalCents separately. Why does (unitPriceCents + shippingCents) * count model a different charge? Check one item and zero delivery charge.",
+      "steps": [
+        {
+          "where": "My independent work",
+          "action": "Derive 3 × 120 + 40 = 400 by hand.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Extract goods cost and then total cost.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Compare before/after for the baseline and two variants.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Explain the bounded-integer assumptions behind the demonstrated rewrite.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-expr",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr"
+      },
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      },
+      {
+        "id": "cpp20-expr.add",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.add]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.add"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{40};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{40};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "total_cents=400\n",
+        "label": "independent",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{40};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{1};\n    int shippingCents{40};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "total_cents=160\n",
+        "label": "one-item",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{1};\n    int shippingCents{40};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{0};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "total_cents=360\n",
+        "label": "free-shipping",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{0};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-2",
+      "3": "concept-3",
+      "4": "concept-4"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      }
+    ],
+    "starterExpected": "total_cents=400\n"
   }
 }

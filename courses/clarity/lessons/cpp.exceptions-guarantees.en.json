@@ -1,0 +1,597 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b5-author-v1",
+  "id": "cpp.exceptions-guarantees",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.oop",
+  "course": "C++ programming",
+  "module": "Object-Oriented Programming",
+  "locale": "en",
+  "title": "Exceptions and error guarantees",
+  "goal": "Check exception cleanup and state preservation before committing a change.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
+    },
+    {
+      "text": "Direct prerequisites: cpp.composition-inheritance-polymorphism"
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Two ways to report an error",
+      "paragraphs": [
+        "Store prepares a replacement sequence and may fail before commitment. Observe the retained sequence and remaining resource count.",
+        "A bool or explicit result type works for an expected rejection that a caller should examine immediately. An exception transfers control to a matching handler along the call stack. Choose according to the contract and the layer able to handle the problem. This is not a division into good and bad errors, or a reason to throw at every if statement.",
+        "std::runtime_error and std::invalid_argument are standard exception types declared by stdexcept. A throw starts an exceptional path and ordinary execution after that point stops. A try block surrounds the operation and catch receives a matching error object. This lesson injects controlled failures instead of relying on accidental memory exhaustion, making results reproducible."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Matching a handler",
+      "paragraphs": [
+        "catch(const std::exception& e) observes an exception through a const reference, avoiding copying and slicing. Put a specific handler before its general base handler, otherwise the general one accepts the exception first. catch(...) accepts any type without exposing a typed object and therefore needs an explicit handling policy.",
+        "Do not catch everything merely to print success: that hides failure from the caller. Decide whether handling retries an operation, reports rejection or propagates the exception. what() is useful diagnostically, but its wording is not always stable for tests. These contracts compare application-defined messages rather than implementation-specific library wording.",
+        "const std::exception& accepts a derived exception by reference. A specific handler can distinguish its dynamic type."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Stack unwinding and RAII",
+      "paragraphs": [
+        "As control transfers from throw to a matching handler, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output.",
+        "If construction fails, the complete object's destructor is not invoked, but already constructed members are destroyed. Resources should therefore enter RAII ownership immediately. Throwing from a destructor during unwinding can cause terminate. The teaching owners use nonthrowing cleanup; recoverable export failures belong to an explicit operation before destruction.",
+        "Guard lives inside try. Unwinding destroys it and decrements active before catch."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Guard cleanup before the handler",
+      "paragraphs": [
+        "Before revealing, decide whether active in the handler is 1 or already 0."
+      ],
+      "prediction": [
+        "#include <iostream>\n#include <stdexcept>\nstruct Guard {\n    int &active;\n    explicit Guard(int &n) : active(n) { ++active; }\n    Guard(const Guard &) = delete;\n    Guard &operator=(const Guard &) = delete;\n    ~Guard() { --active; }\n};\nint main() {\n    int active = 0;\n    try {\n        Guard g{active};\n        throw std::runtime_error(\"stop\");\n    } catch (const std::exception &) {\n        std::cout << \"caught \" << active << '\\n';\n    }\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal the output and walkthrough",
+        "paragraphs": [
+          "caught 0 observes handler entry and zero after unwinding. Store's contents are checked separately for the strong guarantee."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Construct Guard",
+                "active = 0",
+                "active = 1",
+                "The resource is acquired."
+              ],
+              [
+                "Throw",
+                "active = 1",
+                "active = 0",
+                "The destructor runs before catch."
+              ],
+              [
+                "Enter catch",
+                "active = 0",
+                "caught 0",
+                "Output observes the cleaned-up state."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <stdexcept>\nstruct Guard {\n    int &active;\n    explicit Guard(int &n) : active(n) { ++active; }\n    Guard(const Guard &) = delete;\n    Guard &operator=(const Guard &) = delete;\n    ~Guard() { --active; }\n};\nint main() {\n    int active = 0;\n    try {\n        Guard g{active};\n        throw std::runtime_error(\"stop\");\n    } catch (const std::exception &) {\n        std::cout << \"caught \" << active << '\\n';\n    }\n}\n",
+          "stdin": "",
+          "output": "caught 0\n"
+        }
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "Three guarantee levels",
+      "paragraphs": [
+        "The basic guarantee preserves invariants and avoids resource leaks, while allowing state to change after failure. The strong guarantee additionally promises no observable state change on failure. A nonthrowing guarantee promises that no exception escapes the operation. A guarantee is meaningful only when its operation boundary and observable properties are specified.",
+        "The strong guarantee does not roll back the outside world. Restoring a vector cannot erase a message already sent or a line already printed. Store's guarantee concerns values_. Its caller prints status after the operation finishes. The project's Board guarantee is distinct from exporting a report to a file.",
+        "The strong guarantee requires the original state after failure. Compare Store's sum before and after the controlled throw."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Prepare and commit",
+      "paragraphs": [
+        "Store::replace first copies the current vector into candidate, then appends nine. All potentially throwing preparation happens without changing values_. The injected throw is also before commit. A final swap of these vector<int> objects with their ordinary allocator does not throw and replaces state. The temporary then cleans up the former contents.",
+        "With mode zero the sum becomes twelve. With mode one it remains three and active returns to zero. In a richer model, test the strong guarantee by comparing the entire observable snapshot rather than just a sum: distinct data can have equal sums. The final project also checks task count and the exact report.",
+        "Prepare {1,2,9} in a separate vector. Until swap runs, Store holds the original {1,2}."
+      ],
+      "tables": [
+        {
+          "kind": "state",
+          "caption": "Relationships and state",
+          "columns": [
+            "Point",
+            "Store and candidate"
+          ],
+          "rows": [
+            [
+              "prepare",
+              "Store {1,2}, candidate {1,2,9}."
+            ],
+            [
+              "fail before swap",
+              "Store {1,2}; unwinding cleans up the candidate."
+            ],
+            [
+              "swap",
+              "Store {1,2,9}; the old sequence is cleaned up with the candidate."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Rethrowing and noexcept",
+      "paragraphs": [
+        "A bare throw; inside catch propagates the current exception while preserving its dynamic type. throw e; can create a new base copy and lose derived information. The second example catches out_of_range through a base reference, rethrows and reaches a specific outer handler. The type actually crosses two call levels.",
+        "noexcept is an interface promise rather than a recovery mechanism. If an exception escapes such a function, terminate is invoked; an ordinary outer catch cannot rescue the violation. Do not run termination as an ordinary lesson example. Test safe boundaries instead: a domain operation throws before commit and main handles it while exposing preserved state.",
+        "throw; propagates the same exception. throw e can copy only a base part and lose the derived type."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Rethrowing preserves the type",
+      "paragraphs": [
+        "Follow out_of_range through outer and check whether its type survives."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <stdexcept>\nvoid inner() { throw std::out_of_range(\"index\"); }\nvoid outer() {\n    try {\n        inner();\n    } catch (const std::exception &) {\n        throw;\n    }\n}\nint main() {\n    try {\n        outer();\n    } catch (const std::out_of_range &) {\n        std::cout << \"typed\\n\";\n    }\n}\n",
+        "stdin": "",
+        "output": "typed\n"
+      }
+    },
+    {
+      "id": "concept-7",
+      "title": "Runtime and honest results",
+      "paragraphs": [
+        "This lesson needs a runtime with genuine standard exception support. Code Studio uses Clang/WASI with EH; native execution alone does not prove browser execution. Verification compiles and runs the same sources through both paths. Printing caught without executing throw/catch would not demonstrate exception support.",
+        "If an older browser reports a provider limitation, that is not a learner error on the throw line. Do not rewrite exceptions as return codes to claim this outcome. A compatible browser update and a separate native run provide different evidence. Offline compilation must first be prepared through the normal flow; an available lesson text alone does not ensure it.",
+        "The browser must actually catch the exception and run the destructor. The same source and observed active test this."
+      ]
+    },
+    {
+      "id": "concept-8",
+      "title": "Laboratory and cumulative practice",
+      "paragraphs": [
+        "Save both laboratory runs: successful replacement and failure before commit. Record state before and after, plus resource counts. Explain why moving throw after swap would destroy the strong guarantee even if no resource leaked. This is a safe reasoning counterexample; the working implementation should retain its original promise.",
+        "The cumulative practicum combines a virtual strategy with an exception for an invalid argument. After rejection, saved remains seven. Add your own preservation check and explain the caller's policy. Templates come next. They do not have exceptions as a hard prerequisite, although they follow them in the module's teaching sequence.",
+        "Compare a full Store snapshot. An equal sum can conceal changed values or order."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Place the potentially failing step before commitment and check both modes, including cleanup.",
+        "Draw the original Store and its separate candidate."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What active state does the handler observe?",
+      "options": [
+        "caught 0\n",
+        "caught 1",
+        "stop"
+      ],
+      "correct": 0,
+      "feedback": "Guard is local to try. Its destructor decrements active before catch.",
+      "code": {
+        "source": "#include <iostream>\n#include <stdexcept>\nstruct Guard {\n    int &active;\n    explicit Guard(int &n) : active(n) { ++active; }\n    Guard(const Guard &) = delete;\n    Guard &operator=(const Guard &) = delete;\n    ~Guard() { --active; }\n};\nint main() {\n    int active = 0;\n    try {\n        Guard g{active};\n        throw std::runtime_error(\"stop\");\n    } catch (const std::exception &) {\n        std::cout << \"caught \" << active << '\\n';\n    }\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <stdexcept>\nstruct Guard {\n    int &active;\n    explicit Guard(int &n) : active(n) { ++active; }\n    Guard(const Guard &) = delete;\n    Guard &operator=(const Guard &) = delete;\n    ~Guard() { --active; }\n};\nint main() {\n    int active = 0;\n    try {\n        Guard g{active};\n        throw std::runtime_error(\"stop\");\n    } catch (const std::exception &) {\n        std::cout << \"caught \" << active << '\\n';\n    }\n}\n",
+        "stdin": "",
+        "expected": "caught 0\n"
+      },
+      "recall": "example-1"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What releases Guard during throw?",
+      "options": [
+        "Its destructor during stack unwinding.",
+        "catch deletes every address automatically.",
+        "The resource was never created."
+      ],
+      "correct": 0,
+      "feedback": "Transfer to a matching handler unwinds the exited scope and destroys the fully constructed Guard. Its destructor releases the resource before catch; the handler does not automatically delete arbitrary addresses.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does the strong guarantee promise?",
+      "options": [
+        "The operation never throws.",
+        "No change to specified state on failure.",
+        "Every external effect is rolled back."
+      ],
+      "correct": 1,
+      "feedback": "The strong guarantee concerns specified observable state at the operation boundary. The call may throw, but failure preserves that state; already performed external effects are not automatically undone.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Does a bare throw; preserve dynamic type?",
+      "options": [
+        "No; it always creates exception.",
+        "No; the type always becomes int.",
+        "Yes; it propagates the current exception."
+      ],
+      "correct": 2,
+      "feedback": "A bare throw propagates the current exception without creating a new base copy. throw e can copy the static base portion and therefore lose the derived exception type.",
+      "recall": "concept-6"
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "Does native execution prove browser EH?",
+      "options": [
+        "No; separate real browser execution is required.",
+        "Yes; compilers are always identical.",
+        "Yes; a caught string suffices."
+      ],
+      "correct": 0,
+      "feedback": "Native and browser runtimes use different compilers, ABIs and execution mechanisms. Browser EH requires a real throw/catch through its Worker, not a native success or a preprinted word.",
+      "recall": "concept-7"
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "Does swap undo an already sent message?",
+      "options": [
+        "Yes; swap rolls back the world.",
+        "No; external effects have a separate contract.",
+        "Yes; if the vector is empty."
+      ],
+      "correct": 1,
+      "feedback": "swap exchanges the specified objects' state but cannot retract a message or write already performed. Separate such effects from prepare/commit or give them their own recovery protocol.",
+      "recall": "concept-5"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "What breaks if the controlled throw moves after swap?",
+      "feedback": "Store already holds {1,2,9}, so its sum after rejection is 12 instead of 3. The original state is lost.",
+      "recall": "independent-work"
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Exceptions and error guarantees",
+    "task": "Read mode=0…1. Store starts with {1,2}; replace prepares a copy with nine appended and throws runtime_error before swap when mode is one. Guard tracks a resource. After the attempt print ok or rejected, current Store sum and active. Invalid input: invalid. Zero gives ok 12 0; one gives rejected 3 0.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <vector>\n#include <stdexcept>\nstruct Guard {\n    int &active;\n    explicit Guard(int &n) : active(n) { ++active; }\n    Guard(const Guard &) = delete;\n    Guard &operator=(const Guard &) = delete;\n    ~Guard() { --active; }\n};\nclass Store {\n    std::vector<int> values_{1, 2};\n\n  public:\n    void replace(bool fail, int &active) {\n        Guard g{active};\n        auto candidate = values_;\n        // TODO: Prepare the candidate's new value, then perform the\n        // controlled failure when fail is true.\n        // TODO: Commit the candidate only after all potentially failing\n        // operations.\n    }\n    int sum() const {\n        int n = 0;\n        for (int x : values_) {\n            n += x;\n        }\n        return n;\n    }\n};\nint main() {\n    int mode;\n    if (!(std::cin >> mode) || mode < 0 || mode > 1) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Store s;\n    int active = 0;\n    try {\n        s.replace(mode == 1, active);\n        std::cout << \"ok \";\n    } catch (const std::runtime_error &) {\n        std::cout << \"rejected \";\n    }\n    std::cout << s.sum() << ' ' << active << '\\n';\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "1",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0",
+        "output": "ok 12 0\n"
+      },
+      {
+        "label": "First substantive run",
+        "input": "1",
+        "output": "rejected 3 0\n"
+      },
+      {
+        "label": "Input error · 3",
+        "input": "-1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 4",
+        "input": "2",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 5",
+        "input": "x",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 6",
+        "input": "1 0",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 7",
+        "input": "0.5",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Input error · 8",
+        "input": "",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Store {1,2}, candidate {1,2,9}.",
+      "Output rejected 3 0.",
+      "Output ok 12 0.",
+      "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
+    ],
+    "hint": "Store already holds {1,2,9}, so its sum after rejection is 12 instead of 3. The original state is lost.",
+    "steps": [
+      {
+        "where": "Before running",
+        "action": "Draw the original Store and its separate candidate.",
+        "why": "Identify the state that must be retained.",
+        "expected": "Store {1,2}, candidate {1,2,9}."
+      },
+      {
+        "where": "In my program",
+        "action": "Complete preparation, throw and swap, then run 1.",
+        "why": "Failure before swap tests the strong guarantee.",
+        "expected": "Output rejected 3 0."
+      },
+      {
+        "where": "After running",
+        "action": "Run 0 and compare Store and active.",
+        "why": "Success commits the candidate and releases temporary resources.",
+        "expected": "Output ok 12 0."
+      }
+    ],
+    "recall": "example-1",
+    "starterRevision": "b5-starter-v1",
+    "starterObservation": {
+      "case": 1,
+      "stdout": "ok 3 0\n",
+      "exitCode": 0
+    }
+  },
+  "terms": [
+    {
+      "term": "Exception",
+      "definition": "Transfer of control with an error object to a matching handler."
+    },
+    {
+      "term": "Throw",
+      "definition": "An expression initiating an exceptional path or rethrowing an exception."
+    },
+    {
+      "term": "Catch handler",
+      "definition": "An exception handler selected by type-matching rules."
+    },
+    {
+      "term": "Stack unwinding",
+      "definition": "Cleanup of constructed automatic objects in exited scopes."
+    },
+    {
+      "term": "Basic guarantee",
+      "definition": "Preservation of invariants without resource leaks after failure."
+    },
+    {
+      "term": "Strong guarantee",
+      "definition": "No observable change to the specified state after failure."
+    },
+    {
+      "term": "Commit",
+      "definition": "The final step publishing prepared replacement state."
+    },
+    {
+      "term": "Rethrow",
+      "definition": "A bare throw; propagates the current exception and preserves its type."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP20-EXCEPT"
+  ],
+  "extras": {
+    "lessonId": "cpp.exceptions-guarantees",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Exceptions and error guarantees",
+      "description": "A stepwise textual model; actual execution happens in Code Studio.",
+      "steps": [
+        {
+          "title": "Two ways to report an error",
+          "description": "A bool or explicit result type works for an expected rejection that a caller should examine immediately. An exception transfers control to a matching handler along the call stack. Choose according to the contract and the layer able to handle the problem. This is not a division into good and bad errors, or a reason to throw at every if statement."
+        },
+        {
+          "title": "Matching a handler",
+          "description": "catch(const std::exception& e) observes an exception through a const reference, avoiding copying and slicing. Put a specific handler before its general base handler, otherwise the general one accepts the exception first. catch(...) accepts any type without exposing a typed object and therefore needs an explicit handling policy."
+        },
+        {
+          "title": "Stack unwinding and RAII",
+          "description": "As control transfers from throw to a matching handler, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output."
+        },
+        {
+          "title": "Prepare and commit",
+          "description": "Store::replace first copies the current vector into candidate, then appends nine. All potentially throwing preparation happens without changing values_. The injected throw is also before commit. A final swap of these vector<int> objects with their ordinary allocator does not throw and replaces state. The temporary then cleans up the former contents."
+        },
+        {
+          "title": "Runtime and honest results",
+          "description": "This lesson needs a runtime with genuine standard exception support. Code Studio uses Clang/WASI with EH; native execution alone does not prove browser execution. Verification compiles and runs the same sources through both paths. Printing caught without executing throw/catch would not demonstrate exception support."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-CLASS",
+      "CPP20-EXCEPT"
+    ],
+    "blockPracticum": {
+      "referenceCode": "#include <iostream>\n#include <memory>\n#include <stdexcept>\nstruct Rule {virtual int apply(int n)const=0;virtual ~Rule()=default;};\nstruct Double final:Rule {int apply(int n)const override{if(n<0||n>100)throw std::out_of_range(\"value\");return n*2;}};\nint main(){int n;if(!(std::cin>>n)){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::unique_ptr<Rule> policy=std::make_unique<Double>();int saved=7;\n try{int candidate=policy->apply(n);saved=candidate;std::cout<<\"ok \";}catch(const std::out_of_range&){std::cout<<\"rejected \";}\n std::cout<<saved<<'\\n';}\n",
+      "cases": [
+        {
+          "stdin": "0",
+          "stdout": "ok 0\n"
+        },
+        {
+          "stdin": "1",
+          "stdout": "ok 2\n"
+        },
+        {
+          "stdin": "100",
+          "stdout": "ok 200\n"
+        },
+        {
+          "stdin": "-1",
+          "stdout": "rejected 7\n"
+        },
+        {
+          "stdin": "101",
+          "stdout": "rejected 7\n"
+        },
+        {
+          "stdin": "x",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 2",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ],
+      "title": "Cumulative practicum: Strategy rejection without value loss",
+      "challenge": "Read exactly one int n. Polymorphic Double throws out_of_range outside 0…100. Change initial saved=7 only after successful apply. Print ok/rejected and saved; malformed input: invalid.",
+      "starterCode": "#include <iostream>\n#include <memory>\n#include <stdexcept>\nstruct Rule {virtual int apply(int)const=0;virtual ~Rule()=default;};\nstruct Double final:Rule {int apply(int n)const override{/* TODO: reject outside 0..100 before doubling */return n;}};\nint main(){/* TODO: parse, own Rule, prepare candidate, then update saved */std::cout<<\"pending\\n\";}\n",
+      "starterExpectedStdout": "pending\n",
+      "milestones": [
+        "Restate the contract and distinguish malformed input from domain rejection.",
+        "Trace Guard before entering catch.",
+        "Distinguish basic, strong and nonthrowing guarantees."
+      ],
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "Valid input and exact output format.",
+          "complete": "Fully support this criterion with source, an actual case and reasoning: Valid input and exact output format.",
+          "partial": "Partially implemented, but an independent case or explanation is missing.",
+          "missing": "The criterion is unmet or the observed behaviour violates its contract."
+        },
+        {
+          "points": 2,
+          "criterion": "Invariant after a successful operation.",
+          "complete": "Fully support this criterion with source, an actual case and reasoning: Invariant after a successful operation.",
+          "partial": "Partially implemented, but an independent case or explanation is missing.",
+          "missing": "The criterion is unmet or the observed behaviour violates its contract."
+        },
+        {
+          "points": 2,
+          "criterion": "State preservation on rejection.",
+          "complete": "Fully support this criterion with source, an actual case and reasoning: State preservation on rejection.",
+          "partial": "Partially implemented, but an independent case or explanation is missing.",
+          "missing": "The criterion is unmet or the observed behaviour violates its contract."
+        },
+        {
+          "points": 2,
+          "criterion": "Boundaries and an independent test case.",
+          "complete": "Fully support this criterion with source, an actual case and reasoning: Boundaries and an independent test case.",
+          "partial": "Partially implemented, but an independent case or explanation is missing.",
+          "missing": "The criterion is unmet or the observed behaviour violates its contract."
+        },
+        {
+          "points": 2,
+          "criterion": "Source, actual results and reasoning.",
+          "complete": "Fully support this criterion with source, an actual case and reasoning: Source, actual results and reasoning.",
+          "partial": "Partially implemented, but an independent case or explanation is missing.",
+          "missing": "The criterion is unmet or the observed behaviour violates its contract."
+        }
+      ],
+      "artifacts": [
+        "Source",
+        "Actual-run table",
+        "Invariant and rejection explanation"
+      ],
+      "completionRule": "Evidence supports every mandatory criterion; manual assessment without automatic credit.",
+      "skills": [
+        {
+          "lessonId": "cpp.raii-smart-pointers",
+          "title": "RAII and smart pointers"
+        },
+        {
+          "lessonId": "cpp.value-copy-move",
+          "title": "Value semantics, copying and moving"
+        },
+        {
+          "lessonId": "cpp.composition-inheritance-polymorphism",
+          "title": "Composition, inheritance and polymorphism"
+        },
+        {
+          "lessonId": "cpp.exceptions-guarantees",
+          "title": "Exceptions and error guarantees"
+        }
+      ],
+      "label": "CUMULATIVE PRACTICUM",
+      "readiness": "Start after completing the listed laboratories. Attempt your own solution before comparing the reference.",
+      "requirements": [
+        "Read exactly one int n. Polymorphic Double throws out_of_range outside 0…100. Change initial saved=7 only after successful apply. Print ok/rejected and saved; malformed input: invalid.",
+        "Preserve your previous code in a separate project or saved copy before replacement.",
+        "Compare exit status, stdout and specified files rather than merely the absence of a red message."
+      ],
+      "walkthrough": [
+        "unique_ptr<Rule> owns Double and uses virtual destruction.",
+        "For n=101 the strategy throws before candidate is computed. saved remains seven.",
+        "saved is assigned only after a successful apply; catch reports rejection."
+      ]
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\oop\\exceptions-guarantees.en.json",
+  "reading": [
+    {
+      "id": "cpp20-class",
+      "title": "C++20 [class]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[class]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [class] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+    },
+    {
+      "id": "cpp20-except",
+      "title": "C++20 [except]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[except]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [except] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/except"
+    }
+  ],
+  "authored": true
+}

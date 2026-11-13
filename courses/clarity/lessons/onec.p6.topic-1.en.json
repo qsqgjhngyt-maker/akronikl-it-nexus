@@ -1,0 +1,458 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p6-topic-1-author-v1",
+  "id": "onec.p6.topic-1",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Registers and accounting models",
+  "locale": "en",
+  "title": "A rate as of a date: the newest record is not always the answer",
+  "goal": "Write two own tariff facts and verify before, at and before the first boundary.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P5. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "Today the rate is 150, but the work occurred on 14 November. Which historical rate applies? Begin with “as of which date”, rather than the last row in a list.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Facts by key",
+      "paragraphs": [
+        "An information register suits rates by service and time. Service is a dimension, rate a resource, and period adds history. An attribute stores extra description rather than replacing the key. Start from “which rate applied toS1 atD”; one current card price cannot answer the historical question.",
+        "Create independent day-periodic information register ТарифыУслуг: Услуга: CatalogRef.Услуги dimension and Тариф: Number(15,2) resource. Период is its platform period field, not a second custom date. The card’s ТарифЗаЧас is distinct and unchanged; this exercise implements no automatic costing."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Add only the missing part of your own setup",
+      "paragraphs": [
+        "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+        "Information registers → ТарифыУслуг: Independent, Day periodicity; Услуга: CatalogRef.Услуги dimension; Тариф: Number 15, 2 resource. Include in УчебнаяСлужба.",
+        "Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists, do not add another definition:retain it and append only the new function. Do not load a full CF over your work."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ОпытИсторииТарифа() Экспорт\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная история тарифа\"; Услуга.Записать();\n    Первая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи(); Первая.Период = Дата(2026,11,1); Первая.Услуга = Услуга.Ссылка; Первая.Тариф = 100; Первая.Записать();\n    Вторая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи(); Вторая.Период = Дата(2026,11,15); Вторая.Услуга = Услуга.Ссылка; Вторая.Тариф = 150; Вторая.Записать();\n    Отбор = Новый Структура(\"Услуга\",Услуга.Ссылка);\n    До = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,14),Отбор);\n    НаГранице = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,15),Отбор);\n    Раньше = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,10,31),Отбор);\n    Возврат Новый Структура(\"ДоВерно,ГраницаВерна,РаньшеНет,Услуга\",До.Количество() = 1 И До[0].Тариф = 100,НаГранице.Количество() = 1 И НаГранице[0].Тариф = 150,Раньше.Количество() = 0,Услуга.Ссылка);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "One new service has 100 from 1 November and 150 from 15 November. The slice on 14 November returns 100, and on 15 November returns 150. Before the first record there is no matching value:an empty slice does not imply a zero rate.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытИсторииТарифа();\n    Сообщить(\"До изменения тариф100: \" + Строка(Результат.ДоВерно));\n    Сообщить(\"На границе тариф150: \" + Строка(Результат.ГраницаВерна));\n    Сообщить(\"До первой записи пусто: \" + Строка(Результат.РаньшеНет));\nКонецПроцедуры\n",
+        "output": "До изменения тариф100: Да\nНа границе тариф150: Да\nДо первой записи пусто: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытИсторииТарифа() Экспорт\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная история тарифа\"; Услуга.Записать();\n    Первая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи(); Первая.Период = Дата(2026,11,1); Первая.Услуга = Услуга.Ссылка; Первая.Тариф = 100; Первая.Записать();\n    Вторая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи(); Вторая.Период = Дата(2026,11,15); Вторая.Услуга = Услуга.Ссылка; Вторая.Тариф = 150; Вторая.Записать();\n    Отбор = Новый Структура(\"Услуга\",Услуга.Ссылка);\n    До = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,14),Отбор);\n    НаГранице = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,15),Отбор);\n    Раньше = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,10,31),Отбор);\n    Возврат Новый Структура(\"ДоВерно,ГраницаВерна,РаньшеНет,Услуга\",До.Количество() = 1 И До[0].Тариф = 100,НаГранице.Количество() = 1 И НаГранице[0].Тариф = 150,Раньше.Количество() = 0,Услуга.Ссылка);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытИсторииТарифа();\n    Сообщить(\"До изменения тариф100: \" + Строка(Результат.ДоВерно));\n    Сообщить(\"На границе тариф150: \" + Строка(Результат.ГраницаВерна));\n    Сообщить(\"До первой записи пусто: \" + Строка(Результат.РаньшеНет));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation and reason"
+          ],
+          "rows": [
+            [
+              "Facts",
+              "Nov 1=100, Nov 15=150 — Own service."
+            ],
+            [
+              "Before",
+              "Nov 14 — 100."
+            ],
+            [
+              "Boundary",
+              "Nov 15 — 150."
+            ],
+            [
+              "Earlier",
+              "Oct 31 — Empty, not zero."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Periodicity limits distinguishable states",
+      "paragraphs": [
+        "Two records for one service in one period follow the key policy. Daily periodicity cannot distinguish two intraday changes under the same key. Do not substitute current time just to bypass a collision. Choose required precision and test exactly at a rate-change boundary.",
+        "The function creates an own service and facts November 1=100 and 15=150. СрезПоследних filtered by its reference returns 100 on 14 and 150 on 15. It selects current state per key rather than summing 250, without including other services."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Can the 14 November result use 150 because it is the newer row?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. СрезПоследних selects the latest value effective at the requested moment, within the service filter. “Latest” removes neither the time boundary nor the dimension filter."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "A slice is not a sum of prices",
+      "paragraphs": [
+        "Between changes, use the latest applicable rate rather than summing history. SliceLast represents state at a time; record sets represent history. Explicitly return absence or reject when no prior rate exists. Automatic zero can resemble a free service and hide missing data.",
+        "Before the first fact there are no rows. Missing and zero tariffs differ and need an explicit calculation policy. Day periodicity does not distinguish two changes inside the same day/key; a different requirement needs different periodicity/key design."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The diagram compares lookup moments rather than four register records. There are two actual changes; the other nodes are questions asked of that history.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "First record",
+            "lines": [
+              "1 Nov /100"
+            ]
+          },
+          {
+            "title": "Second record",
+            "lines": [
+              "15 Nov /150"
+            ]
+          },
+          {
+            "title": "Slice 14 Nov",
+            "lines": [
+              "100"
+            ]
+          },
+          {
+            "title": "Slice 15 Nov",
+            "lines": [
+              "150"
+            ]
+          }
+        ],
+        "alternative": [
+          "First record: 1 Nov /100",
+          "Second record: 15 Nov /150",
+          "Slice 14 Nov: 100",
+          "Slice 15 Nov: 150"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Removing the service filter and taking the first result can produce a plausible rate belonging to another service. Use the own service’s unique reference even when display names match.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Test history at boundary dates",
+      "paragraphs": [
+        "Set rate 100 fromD1 and 150 fromD2. Expect absence beforeD1, 100 betweenD1/D2, and 150 at the agreed inclusiveD2 boundary. Reopen and verify. Repeating the same keys must not increase count; editing copy rates must preserve the source.",
+        "A compilable 151 mutation fails the independent 150 boundary expectation. This uses an actual register, not a browser array. Each run creates a new own service; retain the function/protocol and remove the startup call."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Create another new service:600 from 1 November and 900 from 15 November. Retrieve its rates on 14 and 15 November. Create another service with no history and verify its slice is empty. Preserve older services and rates.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p6-information-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "4b8a390beb5d1ebd3a947173c888f08808bcb80e4910174fcfee860e443cc2d4",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain how no history differs from a zero rate and why another service’s row is invalid."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Can the 14 November result use 150 because it is the newer row?",
+      "options": [
+        "No:that rate starts on 15 November",
+        "Yes:the lookup date has no effect",
+        "Yes:if the row is visible in the list"
+      ],
+      "correct": 0,
+      "feedback": "No. СрезПоследних selects the latest value effective at the requested moment, within the service filter. “Latest” removes neither the time boundary nor the dimension filter.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Last slice selects",
+      "options": [
+        "Current fact per key",
+        "Sum of all prices",
+        "Course name"
+      ],
+      "correct": 0,
+      "feedback": "Create independent day-periodic information register ТарифыУслуг: Услуга: CatalogRef.Услуги dimension and Тариф: Number(15,2) resource. Период is its platform period field, not a second custom date. The card’s ТарифЗаЧас is distinct and unchanged; this exercise implements no automatic costing.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Before the first fact expect",
+      "options": [
+        "Necessarily zero",
+        "No rows",
+        "A future price"
+      ],
+      "correct": 1,
+      "feedback": "The function creates an own service and facts November 1=100 and 15=150. СрезПоследних filtered by its reference returns 100 on 14 and 150 on 15. It selects current state per key rather than summing 250, without including other services.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Two changes in one day with Day periodicity",
+      "options": [
+        "Are always distinguished by seconds",
+        "Need no design",
+        "Need a revised periodicity/key"
+      ],
+      "correct": 2,
+      "feedback": "Before the first fact there are no rows. Missing and zero tariffs differ and need an explicit calculation policy. Day periodicity does not distinguish two changes inside the same day/key; a different requirement needs different periodicity/key design.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What preserves the meaning of a historical rate?",
+      "options": [
+        "The slice date and service-reference filter",
+        "Only sorting the list",
+        "The newest catalog card"
+      ],
+      "correct": 0,
+      "feedback": "Explain how no history differs from a zero rate and why another service’s row is invalid.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "A rate as of a date: the newest record is not always the answer",
+    "task": "Create another new service:600 from 1 November and 900 from 15 November. Retrieve its rates on 14 and 15 November. Create another service with no history and verify its slice is empty. Preserve older services and rates.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ОпытСрезаДругойУслуги() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСрезаДругойУслуги();\n    Сообщить(\"Тариф14 ноября: \" + Строка(Результат.До));\n    Сообщить(\"Тариф15 ноября: \" + Строка(Результат.НаГранице));\n    Сообщить(\"Другая услуга без истории: \" + Строка(Результат.ДругаяПустая));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытСрезаДругойУслуги() Экспорт\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"P6 новая история\"; Услуга.Записать();\n    Первая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи();\n    Первая.Период = Дата(2026,11,1); Первая.Услуга = Услуга.Ссылка; Первая.Тариф = 600; Первая.Записать();\n    Вторая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи();\n    Вторая.Период = Дата(2026,11,15); Вторая.Услуга = Услуга.Ссылка; Вторая.Тариф = 900; Вторая.Записать();\n    Отбор = Новый Структура(\"Услуга\",Услуга.Ссылка);\n    До = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,14),Отбор);\n    НаГранице = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,15),Отбор);\n    Другая = Справочники.Услуги.СоздатьЭлемент(); Другая.Наименование = \"P6 без истории\"; Другая.Записать();\n    Чужой = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,15),Новый Структура(\"Услуга\",Другая.Ссылка));\n    Возврат Новый Структура(\"До,НаГранице,ДругаяПустая\",До[0].Тариф,НаГранице[0].Тариф,Чужой.Количество() = 0);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытСрезаДругойУслуги() Экспорт\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"P6 новая история\"; Услуга.Записать();\n    Первая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи();\n    Первая.Период = Дата(2026,11,1); Первая.Услуга = Услуга.Ссылка; Первая.Тариф = 600; Первая.Записать();\n    Вторая = РегистрыСведений.ТарифыУслуг.СоздатьМенеджерЗаписи();\n    Вторая.Период = Дата(2026,11,15); Вторая.Услуга = Услуга.Ссылка; Вторая.Тариф = 900; Вторая.Записать();\n    Отбор = Новый Структура(\"Услуга\",Услуга.Ссылка);\n    До = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,14),Отбор);\n    НаГранице = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,15),Отбор);\n    Другая = Справочники.Услуги.СоздатьЭлемент(); Другая.Наименование = \"P6 без истории\"; Другая.Записать();\n    Чужой = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,15),Новый Структура(\"Услуга\",Другая.Ссылка));\n    Возврат Новый Структура(\"До,НаГранице,ДругаяПустая\",До[0].Тариф,НаГранице[0].Тариф,Чужой.Количество() = 0);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСрезаДругойУслуги();\n    Сообщить(\"Тариф14 ноября: \" + Строка(Результат.До));\n    Сообщить(\"Тариф15 ноября: \" + Строка(Результат.НаГранице));\n    Сообщить(\"Другая услуга без истории: \" + Строка(Результат.ДругаяПустая));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "One service 600→900;14 and 15November. Another service without records.",
+        "output": "Тариф14 ноября: 600\nТариф15 ноября: 900\nДругая услуга без истории: Да"
+      }
+    ],
+    "criteria": [
+      "Labelled results:600, 900, Да; they represent distinct observations.",
+      "Each slice uses the intended service’s actual reference and an explicit date.",
+      "Explain how no history differs from a zero rate and why another service’s row is invalid."
+    ],
+    "hint": "The diagram compares lookup moments rather than four register records. There are two actual changes; the other nodes are questions asked of that history.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work. Information registers → ТарифыУслуг: Independent, Day periodicity; Услуга: CatalogRef.Услуги dimension; Тариф: Number 15,2 resource. Include in УчебнаяСлужба.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "Prior work is retained; the required metadata objects and relationships are defined."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions. Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists,do not add another definition:retain it and append only the new function. Do not load a full CF over your work.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "register",
+    "recorder",
+    "dimension",
+    "resource",
+    "reference",
+    "transaction",
+    "posting",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p6-information.json",
+  "assessment": {
+    "contentRevision": "onec-p6-topic-1-author-v1",
+    "quiz": [
+      {
+        "question": "Can the 14 November result use 150 because it is the newer row?",
+        "options": [
+          "No:that rate starts on 15 November",
+          "Yes:the lookup date has no effect",
+          "Yes:if the row is visible in the list"
+        ],
+        "correct": 0,
+        "explanation": "No. СрезПоследних selects the latest value effective at the requested moment, within the service filter. “Latest” removes neither the time boundary nor the dimension filter."
+      },
+      {
+        "question": "Last slice selects",
+        "options": [
+          "Current fact per key",
+          "Sum of all prices",
+          "Course name"
+        ],
+        "correct": 0,
+        "explanation": "Create independent day-periodic information register ТарифыУслуг: Услуга: CatalogRef.Услуги dimension and Тариф: Number(15,2) resource. Период is its platform period field, not a second custom date. The card’s ТарифЗаЧас is distinct and unchanged; this exercise implements no automatic costing."
+      },
+      {
+        "question": "Before the first fact expect",
+        "options": [
+          "Necessarily zero",
+          "No rows",
+          "A future price"
+        ],
+        "correct": 1,
+        "explanation": "The function creates an own service and facts November 1=100 and 15=150. СрезПоследних filtered by its reference returns 100 on 14 and 150 on 15. It selects current state per key rather than summing 250, without including other services."
+      },
+      {
+        "question": "Two changes in one day with Day periodicity",
+        "options": [
+          "Are always distinguished by seconds",
+          "Need no design",
+          "Need a revised periodicity/key"
+        ],
+        "correct": 2,
+        "explanation": "Before the first fact there are no rows. Missing and zero tariffs differ and need an explicit calculation policy. Day periodicity does not distinguish two changes inside the same day/key; a different requirement needs different periodicity/key design."
+      },
+      {
+        "question": "What preserves the meaning of a historical rate?",
+        "options": [
+          "The slice date and service-reference filter",
+          "Only sorting the list",
+          "The newest catalog card"
+        ],
+        "correct": 0,
+        "explanation": "Explain how no history differs from a zero rate and why another service’s row is invalid."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p6.topic-1.en.json"
+}

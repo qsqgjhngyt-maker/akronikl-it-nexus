@@ -1,0 +1,467 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P8",
+  "id": "onec.p8.topic-4",
+  "locale": "en",
+  "revision": "onec-p8-4-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p8-async.json",
+    "sha256": "134529c7edb3843e10b116c232be4f97227c8f828916980e633dfec6375d85a9"
+  },
+  "title": "The reply arrived later: which intention does it confirm?",
+  "goal": "Accept current intent, cancel No and reject stale answers without persisting a document.",
+  "prerequisites": [
+    {
+      "text": "onec.p7; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "A question before observation",
+      "paragraphs": [
+        "While a Yes/No question is open, the user can change minutes or start another request. A Yes alone is insufficient: it must match the current version and the same data snapshot."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Continuations run later",
+      "paragraphs": [
+        "An asynchronous dialog returns control before the user answers. Decision-dependent logic belongs in its continuation rather than the next line as if synchronous. Meanwhile, the form may close, data may change or another request may start. Include those states in the operation contract.",
+        "УчебноеПодтверждение increments ВерсияЗапроса and captures minutes. ПоказатьВопрос yields to the UI; ОписаниеОповещения calls ПослеПодтверждения later. Reaching the line after opening a dialog does not mean an answer exists."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Continue your own form",
+      "paragraphs": [
+        "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work.",
+        "In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "In the form editor create the command ПоказатьПродолжение, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link ПроверитьПовтор similarly for the independent task.",
+        "Worked setup: open your own saved 30-minute request. For buffer/directive observations set 77 without saving; the callback command sets 90 and version 2 itself. The server experiment explicitly supplies 90, 1441, and the string “90”."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "Methods for the worked experiment",
+      "paragraphs": [
+        "Only methods needed for this experiment are shown. If a previous topic already added a method, retain its single definition. The course retains the original complete module."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура УчебноеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    Оповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Проверить часы без записи документа?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеПодтверждения(Ответ,Снимок) Экспорт\n    Если Ответ <> КодВозвратаДиалога.Да Тогда ИтогОпыта = \"Отменено\"; Возврат; КонецЕсли;\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    ИтогОпыта = Строка(ЧасыНаСервере(Снимок.Минуты));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The client command and its actual output",
+      "paragraphs": [
+        "ПоказатьПродолжение calls the real callback directly for No, stale Yes, and current Yes. Results are cancellation, stale intention, and 1.5. The callback also prints 1.5 itself; that extra message is not another calculation. The database remains 30. Direct calls check BSL branches; use УчебноеПодтверждение separately to interact with the actual dialog."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "&НаКлиенте\nПроцедура ПоказатьПродолжение(Команда) Экспорт\n    ВерсияЗапроса = 2;\n    Объект.ДлительностьМинут = 90;\n    ПослеПодтверждения(КодВозвратаДиалога.Нет,Новый Структура(\"Версия,Минуты\",2,90));\n    Сообщить(\"Нет: \" + ИтогОпыта);\n    ПослеПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",1,90));\n    Сообщить(\"Старое Да: \" + ИтогОпыта);\n    ПослеПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",2,90));\n    Сообщить(\"Текущее Да: \" + ИтогОпыта);\n    Сообщить(\"В базе: \" + Строка(СверитьБуфер().ВБазе));\nКонецПроцедуры\n",
+        "output": "Нет: Отменено\nСтарое Да: Устаревшее намерение\n1,5\nТекущее Да: 1,5\nВ базе: 30",
+        "files": {
+          "Форма.bsl": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура УчебноеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    Оповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Проверить часы без записи документа?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеПодтверждения(Ответ,Снимок) Экспорт\n    Если Ответ <> КодВозвратаДиалога.Да Тогда ИтогОпыта = \"Отменено\"; Возврат; КонецЕсли;\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    ИтогОпыта = Строка(ЧасыНаСервере(Снимок.Минуты));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n",
+          "Команда.bsl": "&НаКлиенте\nПроцедура ПоказатьПродолжение(Команда) Экспорт\n    ВерсияЗапроса = 2;\n    Объект.ДлительностьМинут = 90;\n    ПослеПодтверждения(КодВозвратаДиалога.Нет,Новый Структура(\"Версия,Минуты\",2,90));\n    Сообщить(\"Нет: \" + ИтогОпыта);\n    ПослеПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",1,90));\n    Сообщить(\"Старое Да: \" + ИтогОпыта);\n    ПослеПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",2,90));\n    Сообщить(\"Текущее Да: \" + ИтогОпыта);\n    Сообщить(\"В базе: \" + Строка(СверитьБуфер().ВБазе));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "From action to observation",
+          "columns": [
+            "Action",
+            "Observation and reason"
+          ],
+          "rows": [
+            [
+              "Request",
+              "Generation 2, minutes 90 — Intent snapshot."
+            ],
+            [
+              "No",
+              "Rejected answer — Cancelled."
+            ],
+            [
+              "Stale Yes",
+              "Generation 1/changed minutes — Rejected."
+            ],
+            [
+              "Current Yes",
+              "Generation 2,90 — 1.5, no write."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Bind confirmation to intent",
+      "paragraphs": [
+        "Preserve request identity and the confirmed snapshot. Before acting, check form and intent validity. An old Yes must not authorize a new request; double-clicking must not create a duplicate. Use explicit pending, accepted, or cancelled state instead of one flag that conflates attempts.",
+        "No sets Cancelled immediately. Yes permits calculation only when request generation and current minutes match the snapshot. An old confirmation for 77 must not act after editing 90 or starting another request. The snapshot contains intent data, never credentials."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Predict before running",
+      "paragraphs": [
+        "Should a stale Yes execute the new version’s action?"
+      ],
+      "reveal": "No. Confirmation belongs to a specific intention. A Yes does not establish that its version or minutes are still current. This experiment never saves a document and makes no claim about cancelling an already accepted remote action."
+    },
+    {
+      "id": "concept-2",
+      "title": "Cancellation has observable effects",
+      "paragraphs": [
+        "No, dialog close and form cancellation must not initiate a write. Once a server operation has committed, local UI cancel need not reverse it: show actual state and a verification route. A closed window does not prove server-effect cancellation. Distinguish timeout and environment unavailability.",
+        "Even acceptance only computes hours; no document write occurs. Check cancellation using the result and persisted 30. In a real remote operation closing a dialog does not revoke an already accepted server effect: use an operation ID and reconcile outcome."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Follow the source and action boundary",
+      "paragraphs": [
+        "The diagram follows the worked callback. The independent task additionally checks whether the version was already handled."
+      ],
+      "flowchart": {
+        "layout": "roomy",
+        "caption": "Worked continuation: from reply to calculation",
+        "input": "Reply and snapshot",
+        "decisions": [
+          {
+            "condition": "Reply is Yes?",
+            "branch": "no",
+            "output": "Cancelled"
+          },
+          {
+            "condition": "Same version?",
+            "branch": "no",
+            "output": "Stale"
+          },
+          {
+            "condition": "Same minutes?",
+            "branch": "no",
+            "output": "Stale"
+          }
+        ],
+        "fallback": "Calculate hours",
+        "paths": [
+          "The diagram follows the worked callback. The independent task additionally checks whether the version was already handled."
+        ]
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "The mistake this experiment distinguishes",
+      "paragraphs": [
+        "Removing the version check lets an old reply authorise new state. Without duplicate protection, the same current callback can also repeat a calculation. The independent task checks both boundaries explicitly."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Tests control event ordering",
+      "paragraphs": [
+        "TestYes, No, double-click, response after close and two replies arriving in reverse order. Tie each to its ownIDand state. One fast success does not test asynchrony: use a controlled delay in a safe stand and verify no late write. An explanatory event diagram is not BSL execution.",
+        "Manually test Yes/No through the actual dialog. Separately invoke the exported continuation with current/stale versions and changed minutes to reproduce event ordering. That executes real BSL branches but does not prove a physical dialog click. Report these evidence types separately."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new independent task",
+      "paragraphs": [
+        "Preserve the old callback and add ПослеНовогоПодтверждения. With version 9 and 150 minutes, reject version 8; the first current Yes calculates 2.5 once; its duplicate returns “Уже обработано” without recalculation. Add numeric form attributes ОбработаннаяВерсия and РасчетовОпыта. A current No cancels without calculating; a stale No must not cancel the new intention. No document is saved.",
+        "Preserve your prediction and code before viewing the reference. The worked example does not solve this new task. Viewing its files does not replace your work."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The actual training 1C window",
+      "paragraphs": [
+        "The yellow area is the installed 1C interface; the Nexus lesson remains matte. A command driver calls the same managed form, without a real account or other infobases."
+      ],
+      "figures": [
+        {
+          "height": 753,
+          "src": "media/tutorials/v2/p8-async-main-output.jpg",
+          "sha256": "9396f7dd21b25e0bcbe2d991cf47b2abf3dbc170d476d47fae3d694cebb6c370",
+          "sourcePngSha256": "1b1824797c1695edd90c2d479b18ab034ddffbc4ef5b4e124d1172da4e99c966",
+          "width": 1438,
+          "id": "async-main",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "alt": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "caption": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What was established and what you explain",
+      "paragraphs": [
+        "A local file infobase establishes the chosen branches and contexts, not network latency, clustering, all permissions, or learner understanding. Record direct callbacks and physical dialog interaction separately.",
+        "Distinguish a direct callback invocation, dialog interaction, and a remote operation’s result; do not substitute one for another."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Should a stale Yes execute the new version’s action?",
+      "options": [
+        "No — version and snapshot must match",
+        "Yes — every Yes is identical",
+        "Yes — if the window looks the same"
+      ],
+      "correct": 0,
+      "feedback": "No. Confirmation belongs to a specific intention. A Yes does not establish that its version or minutes are still current. This experiment never saves a document and makes no claim about cancelling an already accepted remote action.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "After ShowQuestion the answer",
+      "options": [
+        "Is already certain",
+        "Arrives later in the continuation",
+        "Is always Yes"
+      ],
+      "correct": 1,
+      "feedback": "The dialog is asynchronous.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Stale Yes must",
+      "options": [
+        "Be generation-rejected",
+        "Always write",
+        "Clear the database"
+      ],
+      "correct": 0,
+      "feedback": "Intent may have changed.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Direct callback invocation proves",
+      "options": [
+        "A physical button click",
+        "A network SLA",
+        "The BSL continuation branch"
+      ],
+      "correct": 2,
+      "feedback": "Test the actual dialog separately.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "How can you establish that duplicate Yes did not repeat calculation?",
+      "options": [
+        "Check the handled version and a counter of 1",
+        "Only observe that the window closed",
+        "Print identical text twice"
+      ],
+      "correct": 0,
+      "feedback": "Distinguish a direct callback invocation, dialog interaction, and a remote operation’s result; do not substitute one for another.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your new task: where did each value come from, which action was permitted, and what establishes preservation?",
+      "feedback": "This answer is not graded automatically. Compare it with your own observations.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "The reply arrived later: which intention does it confirm?",
+    "task": "Preserve the old callback and add ПослеНовогоПодтверждения. With version 9 and 150 minutes, reject version 8; the first current Yes calculates 2.5 once; its duplicate returns “Уже обработано” without recalculation. Add numeric form attributes ОбработаннаяВерсия and РасчетовОпыта. A current No cancels without calculating; a stale No must not cancel the new intention. No document is saved.",
+    "environment": "Installed 1C 8.3 and a separate own infobase. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Managed УчебнаяФормаЗаявки module",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Форма.bsl",
+        "content": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура УчебноеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    Оповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Проверить часы без записи документа?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеПодтверждения(Ответ,Снимок) Экспорт\n    Если Ответ <> КодВозвратаДиалога.Да Тогда ИтогОпыта = \"Отменено\"; Возврат; КонецЕсли;\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    ИтогОпыта = Строка(ЧасыНаСервере(Снимок.Минуты));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаКлиенте\nПроцедура НовоеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    ИтогОпыта = \"Ожидание\";\n    Оповещение = Новый ОписаниеОповещения(\"ПослеНовогоПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Посчитать часы один раз без записи?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеНовогоПодтверждения(Ответ,Снимок) Экспорт\n    // TODO: implement the new task contract.\n    ВызватьИсключение \"TODO\";\nКонецПроцедуры\n"
+      },
+      {
+        "path": "Команда.bsl",
+        "content": "&НаКлиенте\nПроцедура ПроверитьПовтор(Команда) Экспорт\n    ВерсияЗапроса = 9; Объект.ДлительностьМинут = 150;\n    ОбработаннаяВерсия = 0; РасчетовОпыта = 0;\n    ПослеНовогоПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",8,150));\n    Сообщить(\"Старый ответ: \" + ИтогОпыта);\n    ПослеНовогоПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",9,150));\n    Сообщить(\"Первое Да: \" + ИтогОпыта);\n    ПослеНовогоПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",9,150));\n    Сообщить(\"Повтор: \" + ИтогОпыта);\n    Сообщить(\"Расчётов: \" + Строка(РасчетовОпыта));\n    Сообщить(\"В базе: \" + Строка(СверитьБуфер().ВБазе));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура УчебноеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    Оповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Проверить часы без записи документа?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеПодтверждения(Ответ,Снимок) Экспорт\n    Если Ответ <> КодВозвратаДиалога.Да Тогда ИтогОпыта = \"Отменено\"; Возврат; КонецЕсли;\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    ИтогОпыта = Строка(ЧасыНаСервере(Снимок.Минуты));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаКлиенте\nПроцедура НовоеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    ИтогОпыта = \"Ожидание\";\n    Оповещение = Новый ОписаниеОповещения(\"ПослеНовогоПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Посчитать часы один раз без записи?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеНовогоПодтверждения(Ответ,Снимок) Экспорт\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    Если ОбработаннаяВерсия = Снимок.Версия Тогда ИтогОпыта = \"Уже обработано\"; Возврат; КонецЕсли;\n    Если Ответ <> КодВозвратаДиалога.Да Тогда\n        ОбработаннаяВерсия = Снимок.Версия; ИтогОпыта = \"Отменено\"; Возврат;\n    КонецЕсли;\n    Часы = ЧасыНаСервере(Снимок.Минуты);\n    ОбработаннаяВерсия = Снимок.Версия;\n    РасчетовОпыта = РасчетовОпыта + 1;\n    ИтогОпыта = Строка(Часы);\nКонецПроцедуры\n",
+      "files": {
+        "Форма.bsl": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаКлиенте\nПроцедура УчебноеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    Оповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Проверить часы без записи документа?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеПодтверждения(Ответ,Снимок) Экспорт\n    Если Ответ <> КодВозвратаДиалога.Да Тогда ИтогОпыта = \"Отменено\"; Возврат; КонецЕсли;\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    ИтогОпыта = Строка(ЧасыНаСервере(Снимок.Минуты));\n    Сообщить(ИтогОпыта);\nКонецПроцедуры\n\n&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаКлиенте\nПроцедура НовоеПодтверждение(Команда) Экспорт\n    ВерсияЗапроса = ВерсияЗапроса + 1;\n    Снимок = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n    ИтогОпыта = \"Ожидание\";\n    Оповещение = Новый ОписаниеОповещения(\"ПослеНовогоПодтверждения\",ЭтотОбъект,Снимок);\n    ПоказатьВопрос(Оповещение,\"Посчитать часы один раз без записи?\",РежимДиалогаВопрос.ДаНет);\nКонецПроцедуры\n\n&НаКлиенте\nПроцедура ПослеНовогоПодтверждения(Ответ,Снимок) Экспорт\n    Если Снимок.Версия <> ВерсияЗапроса Или Снимок.Минуты <> Объект.ДлительностьМинут Тогда\n        ИтогОпыта = \"Устаревшее намерение\"; Возврат;\n    КонецЕсли;\n    Если ОбработаннаяВерсия = Снимок.Версия Тогда ИтогОпыта = \"Уже обработано\"; Возврат; КонецЕсли;\n    Если Ответ <> КодВозвратаДиалога.Да Тогда\n        ОбработаннаяВерсия = Снимок.Версия; ИтогОпыта = \"Отменено\"; Возврат;\n    КонецЕсли;\n    Часы = ЧасыНаСервере(Снимок.Минуты);\n    ОбработаннаяВерсия = Снимок.Версия;\n    РасчетовОпыта = РасчетовОпыта + 1;\n    ИтогОпыта = Строка(Часы);\nКонецПроцедуры\n",
+        "Команда.bsl": "&НаКлиенте\nПроцедура ПроверитьПовтор(Команда) Экспорт\n    ВерсияЗапроса = 9; Объект.ДлительностьМинут = 150;\n    ОбработаннаяВерсия = 0; РасчетовОпыта = 0;\n    ПослеНовогоПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",8,150));\n    Сообщить(\"Старый ответ: \" + ИтогОпыта);\n    ПослеНовогоПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",9,150));\n    Сообщить(\"Первое Да: \" + ИтогОпыта);\n    ПослеНовогоПодтверждения(КодВозвратаДиалога.Да,Новый Структура(\"Версия,Минуты\",9,150));\n    Сообщить(\"Повтор: \" + ИтогОпыта);\n    Сообщить(\"Расчётов: \" + Строка(РасчетовОпыта));\n    Сообщить(\"В базе: \" + Строка(СверитьБуфер().ВБазе));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "Append both files to the form module, retaining one copy of each earlier method. This is the independent solution, not the worked example. Opening the reference does not modify your code."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New task: input and result",
+        "input": "Version 9, 150 minutes; replies 8/Yes, 9/Yes, 9/Yes.",
+        "output": "Старый ответ: Устаревшее намерение\nПервое Да: 2,5\nПовтор: Уже обработано\nРасчётов: 1\nВ базе: 30"
+      }
+    ],
+    "criteria": [
+      "The stale reply is refused; the first current Yes gives 2.5; its duplicate keeps the counter at 1.",
+      "A current No gives “Отменено” with no new calculations. Check the snapshot before allowing an old reply to cancel a new intention.",
+      "Distinguish a direct callback invocation, dialog interaction, and a remote operation’s result; do not substitute one for another."
+    ],
+    "hint": "The diagram follows the worked callback. The independent task additionally checks whether the version was already handled.",
+    "steps": [
+      {
+        "where": "Nexus → Practice",
+        "action": "Before running, record inputs, expected value sources, and one refusal.",
+        "why": "Keep the prediction independent of the supplied output.",
+        "expected": "An own prediction is recorded."
+      },
+      {
+        "where": "Own copy → Designer → form",
+        "action": "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work. In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "why": "Preserve work and choose the correct module type.",
+        "expected": "Prior definitions are preserved; new attributes belong to the form."
+      },
+      {
+        "where": "Form module and commands",
+        "action": "In the form editor create the command ПоказатьПродолжение, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link ПроверитьПовтор similarly for the independent task.",
+        "why": "Both files belong to the form; no startup handler is required.",
+        "expected": "The command points to its single intended procedure."
+      },
+      {
+        "where": "Save → F7 → Enterprise",
+        "action": "Preserve the old callback and add ПослеНовогоПодтверждения. With version 9 and 150 minutes, reject version 8; the first current Yes calculates 2.5 once; its duplicate returns “Уже обработано” without recalculation. Add numeric form attributes ОбработаннаяВерсия and РасчетовОпыта. A current No cancels without calculating; a stale No must not cancel the new intention. No document is saved.",
+        "why": "The new task checks independent transfer of the idea.",
+        "expected": "Старый ответ: Устаревшее намерение\nПервое Да: 2,5\nПовтор: Уже обработано\nРасчётов: 1\nВ базе: 30"
+      },
+      {
+        "where": "Own source and self-report",
+        "action": "Save your source and expected/actual observations. Explain a changed or initially mismatching case. Close without saving wherever the contract requires it.",
+        "why": "A run and understanding are different facts.",
+        "expected": "Source, observations, and explanation are recorded; earlier work is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-forms-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Managed forms and client/server contexts",
+      "language": "English",
+      "purpose": "Optional reading after your attempt; the lesson explains its required route.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits",
+    "platform-contract": "platform-contract"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Continuations run later",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Bind confirmation to intent",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Cancellation has observable effects",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Tests control event ordering",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p8-4-author-v1",
+    "quiz": [
+      {
+        "question": "Should a stale Yes execute the new version’s action?",
+        "options": [
+          "No — version and snapshot must match",
+          "Yes — every Yes is identical",
+          "Yes — if the window looks the same"
+        ],
+        "correct": 0,
+        "explanation": "No. Confirmation belongs to a specific intention. A Yes does not establish that its version or minutes are still current. This experiment never saves a document and makes no claim about cancelling an already accepted remote action."
+      },
+      {
+        "question": "After ShowQuestion the answer",
+        "options": [
+          "Is already certain",
+          "Arrives later in the continuation",
+          "Is always Yes"
+        ],
+        "correct": 1,
+        "explanation": "The dialog is asynchronous."
+      },
+      {
+        "question": "Stale Yes must",
+        "options": [
+          "Be generation-rejected",
+          "Always write",
+          "Clear the database"
+        ],
+        "correct": 0,
+        "explanation": "Intent may have changed."
+      },
+      {
+        "question": "Direct callback invocation proves",
+        "options": [
+          "A physical button click",
+          "A network SLA",
+          "The BSL continuation branch"
+        ],
+        "correct": 2,
+        "explanation": "Test the actual dialog separately."
+      },
+      {
+        "question": "How can you establish that duplicate Yes did not repeat calculation?",
+        "options": [
+          "Check the handled version and a counter of 1",
+          "Only observe that the window closed",
+          "Print identical text twice"
+        ],
+        "correct": 0,
+        "explanation": "Distinguish a direct callback invocation, dialog interaction, and a remote operation’s result; do not substitute one for another."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS + MAIN MANAGED FORM OBSERVATION PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "async-main",
+      "async-independent"
+    ],
+    "scope": "Реальная управляемая форма. Восемь основных main/independent случаев плюс два перечитывания сохранности; callbacks вызваны напрямую, физические диалоги не заявлены.",
+    "physicalDialogInteractionVerified": false,
+    "plainStandaloneHandlerGUI": false,
+    "studentAuthorshipVerified": false
+  }
+}

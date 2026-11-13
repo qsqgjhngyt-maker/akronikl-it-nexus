@@ -6,7 +6,7 @@
   "standardVersion": "academy-gold-1.1",
   "status": "candidate",
   "title": "Euclid's algorithm: remainders, traces and invariants",
-  "lead": "Instead of guessing a greatest common divisor, we repeatedly transform a pair of integers without changing the answer.",
+  "lead": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
   "why": "Euclid's algorithm is a model of algorithmic reasoning: simplify the state while preserving a key property, then explain why the process must terminate.",
   "objectives": [
     "Trace the greatest common divisor calculation by hand.",
@@ -309,5 +309,649 @@
       "steps becomes 10"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+    "prerequisites": [
+      "You can divide with a remainder and read assignments and a condition. while is introduced here."
+    ],
+    "model": [
+      "The greatest common divisor of 48 and 18 is the largest positive number dividing both without a remainder. 48 = 2 × 18 + 12. The common divisors of 48 and 18 are the same as those of 18 and 12: subtracting a multiple preserves them.",
+      "While b is not zero, compute a % b, then set a to the old b and b to the remainder. while means repeat while the condition is true; != means not equal. The temporary variable remainder preserves the remainder before a changes.",
+      "For b > 0, the remainder is nonnegative and smaller than b. Thus the second number decreases to zero; division by zero never runs because the condition is tested before the body. The pair’s greatest common divisor stays the same at every step: this is the concrete invariant. We do not use the pair 0,0 here."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+      "code": "#include <iostream>\n\nint main() {\n    int a = 48;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "6\n",
+      "trace": [
+        {
+          "line": "remainder = 48 % 18",
+          "before": "a: 48; b: 18",
+          "after": "remainder: 12",
+          "why": "48 = 2 × 18 + 12."
+        },
+        {
+          "line": "a = b; b = remainder",
+          "before": "48; 18",
+          "after": "a: 18; b: 12",
+          "why": "Moved to a pair with the same common divisor."
+        },
+        {
+          "line": "18 % 12; replacement",
+          "before": "18; 12",
+          "after": "a: 12; b: 6",
+          "why": "Remainder 6; the second number decreased."
+        },
+        {
+          "line": "12 % 6; replacement",
+          "before": "12; 6",
+          "after": "a: 6; b: 0",
+          "why": "Remainder 0. The next while condition is false."
+        },
+        {
+          "line": "cout << a",
+          "before": "6; 0",
+          "after": "stdout: 6",
+          "why": "The final nonzero a is the answer."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Set a=35 and b=15. Write both pair replacements before running.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int a = 48;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "5\n",
+      "hints": [
+        "35 % 15 = 5, so the next pair is 15,5.",
+        "15 % 5 = 0; the answer is 5."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int a = 35;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "1\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int a = 35;\n    int b = 15;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "5\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "9\n"
+        }
+      ],
+      "rubric": [
+        "Compare the output with the readable reference case below.",
+        "Explain each change using the objects or operations in this topic.",
+        "The pairs are (27,18) → (18,9) → (9,0), so the GCD is 9. Assigning a=b first makes 18%18 yield 0 instead of 9 and breaks the first transition."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int a = 27;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+      "steps": [
+        "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Setting a=b before computing a%b loses the old a: 18%18 gives 0 instead of 12.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b2-author-v1",
+    "title": "Euclid’s algorithm: what changes and what stays",
+    "goal": "Trace the remainders, explain why the GCD is preserved and justify termination separately.",
+    "prerequisites": [
+      {
+        "text": "Nonnegative integers and the remainder operation."
+      },
+      {
+        "text": "Basic pseudocode and step traces."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Why remainders make the problem smaller",
+        "paragraphs": [
+          "We could try every possible divisor of 48 and 18, but division tells us that 48 = 2×18 + 12. Any common divisor of 48 and 18 must also divide 12.",
+          "Therefore gcd(48,18) equals gcd(18,12), then gcd(12,6), then gcd(6,0). The result is 6. Each transformation preserves the sought divisor.",
+          "Imagine two strips of length 48 and 18 cm. Cut both into identical pieces with nothing left over. Two pieces of length 18 leave 12, so now solve the same problem for 18 and 12."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Pseudocode and state transitions",
+        "paragraphs": [
+          "Start with (a,b). While b is not zero, compute r=a mod b, then replace a with b and b with r. The remainder is never computed with divisor zero.",
+          "For 48 and 18, the trace reads (48,18,12) → (18,12,6) → (12,6,0) → (6,0). The second component decreases after each iteration.",
+          "Every row uses the old b. Record the remainder before changing a."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int a = 48, b = 18;\n    int r = a % b;\n    std::cout << b << ' ' << r << '\\n';\n}",
+          "stdin": "",
+          "output": "18 12\n"
+        },
+        "tables": [
+          {
+            "caption": "Trace for 48 and 18",
+            "columns": [
+              "Old pair",
+              "Remainder",
+              "New pair"
+            ],
+            "rows": [
+              [
+                "48, 18",
+                "12",
+                "18, 12"
+              ],
+              [
+                "18, 12",
+                "6",
+                "12, 6"
+              ],
+              [
+                "12, 6",
+                "0",
+                "6, 0"
+              ]
+            ]
+          }
+        ],
+        "diagram": {
+          "caption": "Loop pseudocode",
+          "text": "while b ≠ 0:\n  r ← a mod b\n  a ← b\n  b ← r\nprint a"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Why the GCD invariant holds",
+        "paragraphs": [
+          "If a number divides both a and b, it also divides a-qb and thus the remainder r. Conversely, a common divisor of b and r divides a=qb+r.",
+          "The two pairs have the same common divisors. Once b=0, the current a is the GCD for the stated valid input domain.",
+          "The invariant does not require a to stay 48. Both numbers change, but each pair has the same set of common divisors."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Why the loop must stop",
+        "paragraphs": [
+          "For nonnegative a and positive b, the remainder is nonnegative and strictly smaller than b. The second component cannot keep decreasing forever without reaching zero.",
+          "Inputs (0,18) and (18,0) both have GCD 18. In this teaching contract (0,0) is rejected explicitly because it has no unique greatest positive divisor.",
+          "Try the pair (18, 0). The loop condition is false before the first remainder, so the GCD is 18 and the number of replacements is zero."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Build a safe C++ implementation",
+        "paragraphs": [
+          "For strips of length 48 and 18 cm, find the longest equal pieces with no waste. The first division leaves 12 cm. What piece size will the replacements eventually yield?",
+          "Trace the loop on paper. Record the second value after each iteration."
+        ],
+        "prediction": [
+          "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}"
+        ],
+        "predictionInput": "48 18\n",
+        "reveal": {
+          "title": "Compare your prediction and trace the steps",
+          "paragraphs": [
+            "Read and validate inputs before the loop. We accept nonnegative values within int range, excluding (0,0). Production-grade code also needs bounds and input-failure handling.",
+            "To debug, compare the full trace, not only the last output. Calculate the remainder before overwriting the previous pair.",
+            "Trace the run with 48 18. If you assign a = b before b = a % b, the first remainder becomes 18 % 18 = 0. The program stops and incorrectly prints 18."
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
+            "stdin": "48 18\n",
+            "output": "6\n"
+          }
+        }
+      },
+      {
+        "id": "concept-6",
+        "title": "Why the pair replacement preserves the GCD",
+        "paragraphs": [
+          "If a = q·b + r, every common divisor of a and b divides r = a − q·b. Conversely, a common divisor of b and r divides a. Thus the common divisors are unchanged. With b>0, 0≤r<b, so the second value strictly decreases to zero. These arguments establish answer preservation and termination separately. For (18,48), the first remainder is 18; reversed inputs still work."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Input policy and execution limits",
+        "paragraphs": [
+          "The lab accepts integers a and b from 0 to 100000 except (0, 0). The worked C++ example uses the same bounds.",
+          "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Try a separate task",
+        "paragraphs": [
+          "For 84 and 30, find the GCD and the number of pair replacements. Print the two numbers separated by a space. Accept integers from 0 to 100000 except (0, 0). Print invalid for disallowed or unreadable input.",
+          "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "For input 18 48, trace the first replacement and then the remaining steps. What GCD does the program print?",
+        "options": [
+          "6\n",
+          "18\n",
+          "0\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. The first replacement gives (48, 18), followed by the original trace.",
+          "18 is the first remainder, not the answer. The second value is still nonzero.",
+          "When b reaches zero, the program prints a."
+        ],
+        "recall": "concept-5",
+        "code": {
+          "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
+          "stdin": "18 48\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
+          "stdin": "18 48\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          },
+          "expected": "6\n"
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "Why does gcd(a,b) equal gcd(b,a%b) when b>0?",
+        "options": [
+          "The pairs have the same set of common divisors",
+          "Compilers enforce it",
+          "b always equals a"
+        ],
+        "correct": 0,
+        "feedback": "Divisibility is preserved in both directions.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Why must the loop terminate?",
+        "options": [
+          "The remainder always equals b",
+          "The new b is strictly smaller than the old positive b",
+          "Every case has five steps"
+        ],
+        "correct": 1,
+        "feedback": "A nonnegative decreasing integer cannot decrease forever.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Which input does our exercise reject?",
+        "options": [
+          "0 18",
+          "18 0",
+          "0 0"
+        ],
+        "correct": 2,
+        "feedback": "We exclude the two-zero case from this task's input domain.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Show all pairs after replacements for (84, 30). Name the quantity that decreases and the property that stays unchanged.",
+        "feedback": "Explain why the second number decreases and why 0 18 takes one replacement while 18 0 takes none.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "GCD and replacement count",
+      "task": "For 84 and 30, find the GCD and the number of pair replacements. Print the two numbers separated by a space. Accept integers from 0 to 100000 except (0, 0). Print invalid for disallowed or unreadable input.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    // TODO: replace the pair and count each completed iteration.\n    std::cout << a << ' ' << steps << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "84 30\n",
+      "returnAnchor": "concept-5",
+      "recall": "concept-5",
+      "outputFields": [
+        "GCD",
+        "Pair replacements"
+      ],
+      "cases": [
+        {
+          "label": "New main input",
+          "input": "84 30\n",
+          "output": "6 3\n"
+        },
+        {
+          "label": "Check 1",
+          "input": "48 18\n",
+          "output": "6 3\n"
+        },
+        {
+          "label": "Check 2",
+          "input": "1071 462\n",
+          "output": "21 3\n"
+        },
+        {
+          "label": "Check 3",
+          "input": "0 0\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 4",
+          "input": "oops\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 5",
+          "input": "0 18\n",
+          "output": "18 1\n"
+        },
+        {
+          "label": "Check 6",
+          "input": "18 0\n",
+          "output": "18 0\n"
+        },
+        {
+          "label": "Check 7",
+          "input": "18 48\n",
+          "output": "6 4\n"
+        },
+        {
+          "label": "Check 8",
+          "input": "100001 1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 9",
+          "input": "-1 1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 10",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Compute the remainder before replacing the pair and only when b ≠ 0.",
+        "Explain why the second number decreases and why 0 18 takes one replacement while 18 0 takes none."
+      ],
+      "hint": "Count only completed replacements. Compare 0 18 and 18 0.",
+      "steps": [
+        {
+          "where": "My program",
+          "action": "Trace 84 and 30 on paper.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Add the loop and increment the counter after replacing the pair.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Check both the GCD and counter on boundary cases.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      },
+      {
+        "id": "cpp20-stmt.iter",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[stmt.iter]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.iter"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+    "starterExpected": "84 0\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "84 30\n",
+        "label": "transfer-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "6 3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "48 18\n",
+        "label": "transfer-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "6 3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "1071 462\n",
+        "label": "transfer-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "21 3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "0 0\n",
+        "label": "transfer-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "oops\n",
+        "label": "transfer-5",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "0 18\n",
+        "label": "transfer-6",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "18 1\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "18 0\n",
+        "label": "transfer-7",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "18 0\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "18 48\n",
+        "label": "transfer-8",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "6 4\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "100001 1\n",
+        "label": "transfer-9",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "-1 1\n",
+        "label": "transfer-10",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+        "stdin": "",
+        "label": "transfer-11",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
+        "stdin": "18 0\n",
+        "label": "example-case-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "18\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
+        "stdin": "0 18\n",
+        "label": "example-case-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "18\n"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-2",
+      "3": "concept-4",
+      "4": "concept-7"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ]
   }
 }

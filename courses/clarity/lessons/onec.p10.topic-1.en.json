@@ -1,0 +1,450 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p10-topic-1-author-v1",
+  "id": "onec.p10.topic-1",
+  "courseId": "onec",
+  "moduleId": "onec.p10",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Reliability, security and diagnostics",
+  "locale": "en",
+  "title": "Wrote 99, reread 30: what rollback did",
+  "goal": "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P9. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "The write has executed inside the experiment, yet rereading after cancellation gives 30. This is a transaction boundary at work. Trace it on one own request without claiming to have tested two concurrent sessions.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Your copy and separate files",
+      "paragraphs": [
+        "Continue your own P9 copy. Preserve a DT backup and previous sources, restore into a new empty infobase and verify the path. Do not load over your work.",
+        "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global and Privileged disabled. Данные.bsl contains helpers and the function; Приложение.bsl contains the separate caller. Add only missing definitions and keep one copy of each helper.",
+        "НовыйНаборРегистров creates new training records owned by this experiment. Preserve the previous handler first. Remove only the added startup call after one run, so reopening does not create another set. Compare your own references rather than the screenshot’s UUIDs."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Individually correct, collectively wrong",
+      "paragraphs": [
+        "Two operations each read balance 10 and spend 7. Each passes alone; combined balance−4 breaks the rule. A post-read check without coordinated locking does not prevent the second transaction. Starting a transaction alone does not specify lock scope. Draw read A → readB → write A → write B before choosing an API.",
+        "The runnable local experiment creates own 30/45 documents. A transaction locks Document.ЗаявкаУслуги by the first reference, writes 99 and rolls back. Expect 30 and the untouched 45. This proves actual lock API/rollback, not a two-session race."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЛокальнойБлокировки() Экспорт\n    Д = НовыйНаборРегистров(); НачатьТранзакцию();\n    Попытка\n        Блокировка = Новый БлокировкаДанных; Элемент = Блокировка.Добавить(\"Документ.ЗаявкаУслуги\"); Элемент.УстановитьЗначение(\"Ссылка\",Д.Первая); Блокировка.Заблокировать();\n        Объект = Д.Первая.ПолучитьОбъект(); Объект.ДлительностьМинут = 99; Объект.Записать(); ОтменитьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\n    Возврат Новый Структура(\"ОткатСохранил,ДругойСохранен\",Д.Первая.ДлительностьМинут = 30,Д.Вторая.ДлительностьМинут = 45);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "Create own 30 and 45 values. The lock targets the first request reference. Write 99 within the transaction and roll it back. A fresh read returns 30; the other request retains 45. The two labelled Да values check different assertions.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытЛокальнойБлокировки();\n    Сообщить(\"Откат вернул 30: \" + Строка(Р.ОткатСохранил));\n    Сообщить(\"Вторая осталась 45: \" + Строка(Р.ДругойСохранен));\nКонецПроцедуры\n",
+        "output": "Откат вернул 30: Да\nВторая осталась 45: Да",
+        "files": {
+          "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЛокальнойБлокировки() Экспорт\n    Д = НовыйНаборРегистров(); НачатьТранзакцию();\n    Попытка\n        Блокировка = Новый БлокировкаДанных; Элемент = Блокировка.Добавить(\"Документ.ЗаявкаУслуги\"); Элемент.УстановитьЗначение(\"Ссылка\",Д.Первая); Блокировка.Заблокировать();\n        Объект = Д.Первая.ПолучитьОбъект(); Объект.ДлительностьМинут = 99; Объект.Записать(); ОтменитьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\n    Возврат Новый Структура(\"ОткатСохранил,ДругойСохранен\",Д.Первая.ДлительностьМинут = 30,Д.Вторая.ДлительностьМинут = 45);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытЛокальнойБлокировки();\n    Сообщить(\"Откат вернул 30: \" + Строка(Р.ОткатСохранил));\n    Сообщить(\"Вторая осталась 45: \" + Строка(Р.ДругойСохранен));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Step",
+            "Observation and meaning"
+          ],
+          "rows": [
+            [
+              "Start",
+              "30/45 — Two own references."
+            ],
+            [
+              "Transaction",
+              "Lock first;write 99 — Second unchanged."
+            ],
+            [
+              "Rollback",
+              "30/45 — Both checks True."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Locks apply to data",
+      "paragraphs": [
+        "Managed locking identifies a data space and dimension values. Lock invariant-related data before deciding. Too-wide locks reduce concurrency; too-narrow locks miss conflicts. Scope depends on register, mode and operation; there is no universal line suitable for every solution.",
+        "Lock scope follows the invariant. A shared customer/period resource may need a broader key than one document reference. Define competing read/check/write operations first. Locking the entire infobase merely to avoid errors is not a justified design."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "After writing 99, ОтменитьТранзакцию runs. What will a fresh read of the first request return?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "30. Writing and committing are different steps. An exception requires closing the transaction; it does not make an operation successful. A document lock alone does not establish protection of a shared customer balance."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Consistent ordering reduces deadlocks",
+      "paragraphs": [
+        "Two operations locking A/Bin opposite order can deadlock. Agree on stable-key order and keep transactions short. A timeout is failure, not a successful spend. Retrying needs idempotency and a fresh state read; blindly repeating external effects can duplicate them.",
+        "Draw a separate schedule: both actors read 10 and request 7. Correct serialization makes the second reread 3 and reject. A real test needs two permitted concurrent sessions with controlled pauses; a single-user training installation does not prove it."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "This diagram shows one actual local change and rollback. The independent task changes the other reference and commits. Do not extend that observation to concurrency without a second participant.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Source",
+            "lines": [
+              "30 / 45"
+            ]
+          },
+          {
+            "title": "Lock",
+            "lines": [
+              "первая / first"
+            ]
+          },
+          {
+            "title": "Write",
+            "lines": [
+              "99"
+            ]
+          },
+          {
+            "title": "Roll back",
+            "lines": [
+              "30 / 45"
+            ]
+          }
+        ],
+        "alternative": [
+          "Source: 30 / 45",
+          "Lock: первая / first",
+          "Write: 99",
+          "Roll back: 30 / 45"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Replace rollback with commit but keep expecting 30. The check must now expose 99. Repair the operation contract rather than its expected result. The two-participant 10-minus-7 schedule remains a separate test requiring another environment.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Two sessions need separate evidence",
+      "paragraphs": [
+        "Single-session training cannot prove this scenario. In a permitted multi-session stand, control barriers and record both traces and final balance. From 10, one spend 7 succeeds; the second rereads and rejects, result 3. Test an independent customer to show the lock does not block everything.",
+        "In another copy replace rollback with commit:99 persists and the 30 assertion fails. Retain the failed protocol and corrected source. Timeouts, deadlocks and a server cluster remain separate scenarios until actually tested."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Create new 20-minute and 60-minute requests. Lock the second reference, write 90 and explicitly commit. Reread both: the first remains 20, the second is 90 and keeps its reference. The exception handler must roll back the unfinished transaction and rethrow.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p10-locks-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "41bd44e2b25dd5a9a1533a79207f209b2476f70b14a2857209a62a3cfba2d46f",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "caption": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "Only the described training actions are established. Two concurrent sessions, clusters, field latency, debugger GUI and arbitrary external-code safety remain separate. Execution, a saved mark and learner understanding are distinct.",
+        "Explain why one session cannot establish absence of races, timeouts or deadlocks."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "After writing 99, ОтменитьТранзакцию runs. What will a fresh read of the first request return?",
+      "options": [
+        "30: the change was rolled back",
+        "99: every Записать is final",
+        "45: another row is chosen"
+      ],
+      "correct": 0,
+      "feedback": "30. Writing and committing are different steps. An exception requires closing the transaction; it does not make an operation successful. A document lock alone does not establish protection of a shared customer balance.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does a transaction choose the correct managed-lock scope itself?",
+      "options": [
+        "No",
+        "Always",
+        "For every register"
+      ],
+      "correct": 0,
+      "feedback": "Scope follows the invariant and operation.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "After spending 7 from 10, another 7 should",
+      "options": [
+        "Succeed",
+        "Reject under a no-negative rule",
+        "Rename something"
+      ],
+      "correct": 1,
+      "feedback": "Current balance 3 is insufficient.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Does one training session prove a race?",
+      "options": [
+        "Yes",
+        "For minutes",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "Two controlled executions are needed.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Rollback passed in one session. Is protection against two simultaneous deductions established?",
+      "options": [
+        "No: two sessions and both traces are needed",
+        "Yes: beginning a transaction suffices",
+        "Yes: any lock name protects the whole infobase"
+      ],
+      "correct": 0,
+      "feedback": "Explain why one session cannot establish absence of races, timeouts or deadlocks.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Wrote 99, reread 30: what rollback did",
+    "task": "Create new 20-minute and 60-minute requests. Lock the second reference, write 90 and explicitly commit. Reread both: the first remains 20, the second is 90 and keeps its reference. The exception handler must roll back the unfinished transaction and rethrow.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебнаяНадёжность",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЯвнойФиксации() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытЯвнойФиксации();\n    Сообщить(\"Первая после фиксации: \" + Строка(Р.Первая));\n    Сообщить(\"Вторая после фиксации: \" + Строка(Р.Вторая));\n    Сообщить(\"Та же вторая ссылка: \" + Строка(Р.СсылкаТаЖе));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЯвнойФиксации() Экспорт\n    Д = НовыйНаборРегистров(20,60);\n    НачатьТранзакцию();\n    Попытка\n        Блокировка = Новый БлокировкаДанных;\n        Элемент = Блокировка.Добавить(\"Документ.ЗаявкаУслуги\");\n        Элемент.УстановитьЗначение(\"Ссылка\",Д.Вторая);\n        Блокировка.Заблокировать();\n        Объект = Д.Вторая.ПолучитьОбъект();\n        Объект.ДлительностьМинут = 90; Объект.Записать();\n        ЗафиксироватьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\n    Возврат Новый Структура(\"Первая,Вторая,СсылкаТаЖе\",Д.Первая.ДлительностьМинут,Д.Вторая.ДлительностьМинут,Д.Вторая.ПолучитьОбъект().Ссылка = Д.Вторая);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЯвнойФиксации() Экспорт\n    Д = НовыйНаборРегистров(20,60);\n    НачатьТранзакцию();\n    Попытка\n        Блокировка = Новый БлокировкаДанных;\n        Элемент = Блокировка.Добавить(\"Документ.ЗаявкаУслуги\");\n        Элемент.УстановитьЗначение(\"Ссылка\",Д.Вторая);\n        Блокировка.Заблокировать();\n        Объект = Д.Вторая.ПолучитьОбъект();\n        Объект.ДлительностьМинут = 90; Объект.Записать();\n        ЗафиксироватьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\n    Возврат Новый Структура(\"Первая,Вторая,СсылкаТаЖе\",Д.Первая.ДлительностьМинут,Д.Вторая.ДлительностьМинут,Д.Вторая.ПолучитьОбъект().Ссылка = Д.Вторая);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытЯвнойФиксации();\n    Сообщить(\"Первая после фиксации: \" + Строка(Р.Первая));\n    Сообщить(\"Вторая после фиксации: \" + Строка(Р.Вторая));\n    Сообщить(\"Та же вторая ссылка: \" + Строка(Р.СсылкаТаЖе));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "Full reference for the new task. First compare your own attempt and labelled observations. The example, reference and own work are distinct; viewing the reference changes no draft."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "Own new 20/60; commit the second request’s change to 90.",
+        "output": "Первая после фиксации: 20\nВторая после фиксации: 90\nТа же вторая ссылка: Да"
+      }
+    ],
+    "criteria": [
+      "Labelled results:20,90, Да. Check the actual references rather than an arbitrary record with matching minutes.",
+      "Lock the second reference; commit differs from the worked rollback.",
+      "Explain why one session cannot establish absence of races, timeouts or deadlocks."
+    ],
+    "hint": "This diagram shows one actual local change and rollback. The independent task changes the other reference and commits. Do not extend that observation to concurrency without a second participant.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
+      },
+      {
+        "where": "Общие → Общие модули → УчебнаяНадёжность",
+        "action": "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p10-locks.json",
+  "assessment": {
+    "contentRevision": "onec-p10-topic-1-author-v1",
+    "quiz": [
+      {
+        "question": "After writing 99, ОтменитьТранзакцию runs. What will a fresh read of the first request return?",
+        "options": [
+          "30: the change was rolled back",
+          "99: every Записать is final",
+          "45: another row is chosen"
+        ],
+        "correct": 0,
+        "explanation": "30. Writing and committing are different steps. An exception requires closing the transaction; it does not make an operation successful. A document lock alone does not establish protection of a shared customer balance."
+      },
+      {
+        "question": "Does a transaction choose the correct managed-lock scope itself?",
+        "options": [
+          "No",
+          "Always",
+          "For every register"
+        ],
+        "correct": 0,
+        "explanation": "Scope follows the invariant and operation."
+      },
+      {
+        "question": "After spending 7 from 10, another 7 should",
+        "options": [
+          "Succeed",
+          "Reject under a no-negative rule",
+          "Rename something"
+        ],
+        "correct": 1,
+        "explanation": "Current balance 3 is insufficient."
+      },
+      {
+        "question": "Does one training session prove a race?",
+        "options": [
+          "Yes",
+          "For minutes",
+          "No"
+        ],
+        "correct": 2,
+        "explanation": "Two controlled executions are needed."
+      },
+      {
+        "question": "Rollback passed in one session. Is protection against two simultaneous deductions established?",
+        "options": [
+          "No: two sessions and both traces are needed",
+          "Yes: beginning a transaction suffices",
+          "Yes: any lock name protects the whole infobase"
+        ],
+        "correct": 0,
+        "explanation": "Explain why one session cannot establish absence of races, timeouts or deadlocks."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p10.topic-1.en.json"
+}

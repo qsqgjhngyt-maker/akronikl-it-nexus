@@ -18,7 +18,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Arithmetic and assignment: quotient, remainder, and safe intermediates",
-  "lead": "Check integer division, express state changes concisely, and calculate block counts without overflow.",
+  "lead": "Separate computing a value from storing it in a variable.",
   "why": "A defect can occur before a result is stored: a wide destination cannot repair earlier arithmetic on the right. Reliable calculation begins with valid inputs and bounds for every step rather than an overflow experiment.",
   "objectives": [
     "Calculate / and % for positive and negative integers.",
@@ -351,5 +351,552 @@
       "+="
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Separate computing a value from storing it in a variable.",
+    "prerequisites": [
+      "You know initialization and the difference between an expression and a statement."
+    ],
+    "model": [
+      "In sum = sum + 3, read the old sum, add 3, then store the new value back. For this integer variable, sum += 3 is a shorthand for the same operation. sum + 3 alone does not store the result.",
+      "For integers, 17/5 is 3 and 17%5 is 2: 3×5+2=17. Division by zero is invalid. For negative operands, division truncates toward zero; this first example uses nonnegative numbers. For large calculations, check type bounds, including intermediate products."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Separate computing a value from storing it in a variable.",
+      "code": "#include <iostream>\n\nint main() {\n    int sum = 10;\n    sum = sum + 3;\n    sum += 2;\n    std::cout << sum << ' ' << 17 / 5 << ' ' << 17 % 5 << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "15 3 2\n",
+      "trace": [
+        {
+          "line": "sum = 10",
+          "before": "—",
+          "after": "sum: 10",
+          "why": "Initial value."
+        },
+        {
+          "line": "sum = sum + 3",
+          "before": "sum: 10",
+          "after": "sum: 13",
+          "why": "Compute 10+3, then store 13."
+        },
+        {
+          "line": "sum += 2",
+          "before": "sum: 13",
+          "after": "sum: 15",
+          "why": "Added to the already changed value."
+        },
+        {
+          "line": "17 / 5; 17 % 5",
+          "before": "17; 5",
+          "after": "3; 2",
+          "why": "Quotient and remainder are different results."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace sum += 2 with sum *= 2.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int sum = 10;\n    sum = sum + 3;\n    sum += 2;\n    std::cout << sum << ' ' << 17 / 5 << ' ' << 17 % 5 << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "26 3 2\n",
+      "hints": [
+        "sum is already 13 before this line.",
+        "It multiplies 13, not the initial 10."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int sum = 10;\n    sum = sum + 3;\n    sum *= 2;\n    std::cout << sum << ' ' << 17 / 5 << ' ' << 17 % 5 << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "26 3 2\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Start with balance=20; add 7, then subtract 5. Print balance and explain both assignments.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "22\n"
+        }
+      ],
+      "rubric": [
+        "Compare the output with the readable reference case below.",
+        "Explain each change using the objects or operations in this topic.",
+        "balance changes from 20 to 27 to 22. Writing balance=+7 instead of balance+=7 makes the result after subtracting 5 equal 2 instead of 22."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int balance = 20;\n    balance += 7;\n    balance -= 5;\n    std::cout << balance << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Separate computing a value from storing it in a variable.",
+      "steps": [
+        "Start with balance=20; add 7, then subtract 5. Print balance and explain both assignments.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "sum=+2 assigns positive 2; it does not add 2. The order of the += symbols matters.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b1-author-v1",
+    "title": "Arithmetic: complete groups, a remainder and safe calculations",
+    "goal": "Choose division and remainder to fit the task, trace compound assignments, and check the range before calculating.",
+    "prerequisites": [
+      {
+        "text": "Named values, type ranges, and expression grouping."
+      },
+      {
+        "text": "Simple if and early return from Module 1 are repeated in a protective scaffold. Full logic is treated in lesson 9."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Why −7 / 3 gives −2",
+        "paragraphs": [
+          "Seven items fill two boxes of three with one item left. But what does −7 / 3 mean? The picture of physical boxes is no longer enough; we need the language rule.",
+          "Predict the quotient and remainder, then check the relationship dividend = quotient × divisor + remainder. It reveals the sign of the remainder without memorising each case separately."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int dividend{-7};\n    int divisor{3};\n    std::cout << dividend / divisor << ' ' << dividend % divisor << '\\n';\n    return 0;\n}\n"
+        ],
+        "reveal": {
+          "title": "Compare your prediction and follow the steps",
+          "paragraphs": [
+            "For integers, 7 / 3 is 2. −7 / 3 is −2: the fraction is discarded toward zero rather than rounded down to −3. −7 % 3 is −1 because −7 = (−2) × 3 + (−1). A nonzero remainder has the dividend’s sign, not necessarily the divisor’s.",
+            "Check 7 / −3 and −7 / −3 with the same identity. This is not the always-nonnegative mathematical modulo used in some tasks. Do not assume % produces an index in 0…b−1 for negative inputs. Here we explain the result; range normalization belongs to a later concrete task.",
+            "Change only the divisor’s sign: −7 / −3 gives 2 and the remainder stays −1. Check −7 = 2 × (−3) − 1. A remainder is not necessarily positive."
+          ],
+          "tables": [
+            {
+              "caption": "Follow the difficult step",
+              "columns": [
+                "Expression",
+                "Quotient and remainder",
+                "Check"
+              ],
+              "rows": [
+                [
+                  "7 / 3; 7 % 3",
+                  "2; 1",
+                  "7 = 2 * 3 + 1"
+                ],
+                [
+                  "−7 / 3; −7 % 3",
+                  "−2; −1",
+                  "−7 = (−2) * 3 + (−1)"
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int dividend{-7};\n    int divisor{3};\n    std::cout << dividend / divisor << ' ' << dividend % divisor << '\\n';\n    return 0;\n}\n",
+            "stdin": "",
+            "output": "-2 -1\n"
+          }
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "Reject invalid division before evaluating it",
+        "paragraphs": [
+          "For integers a zero divisor is invalid for both / and %. Another dangerous boundary is the minimum signed value divided by −1 when the quotient is unrepresentable. A successful build does not make these runtime operations valid. We do not execute them for an error screenshot.",
+          "The laboratory scaffold checks invalid bounds before dividing. || means or: if any rejection condition is true, it prints invalid and return 0 ends processing. This repeats the protective scaffold from Module 1 rather than requiring new independent branching design."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Tracing +=, -= and *=",
+        "paragraphs": [
+          "For a simple int stock, stock += 4; adds 4, stock -= 3; subtracts 3, and stock *= 2; doubles it. The sequence is 10 → 14 → 11 → 22. /= and %= replace the value with the quotient and remainder. Division and range restrictions still apply.",
+          "For a simple name, x += y updates x with the sum. Do not generalize this to a blind textual rewrite of complex left expressions: compound assignment evaluates its left operand once. We use ordinary names only, without arrays, pointers, or effectful functions."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int stock{10};\n    stock += 4;\n    stock -= 3;\n    stock *= 2;\n    std::cout << stock << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "22\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Choose the wider type before multiplying",
+        "paragraphs": [
+          "Let width and height be ints equal to 50000. In long long area = width * height;, the product is evaluated as int when both operands remain int. On a target with 32-bit int, 2500000000 does not fit. The wider area destination cannot help. We discuss this unsafe form without executing it.",
+          "In the safe example 1LL is a long long literal with value 1. 1LL * width * height starts multiplication in a wide integer type. These small nonnegative operands convert safely. Another solution is to declare both operands long long initially. General promotions and conversions follow next; the essential point is widening before the dangerous step."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int width{50000};\n    int height{50000};\n    long long area = 1LL * width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "2500000000\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Complete blocks are not enough for a remainder",
+        "paragraphs": [
+          "With bytes=1001 and blockBytes=1000 the quotient is 1 and remainder 1: one full block, but two are needed for storage. For bytes ≥ 0 and blockBytes > 0, (bytes + blockBytes - 1) / blockBytes rounds upward. Zero volume needs zero blocks and an exact multiple needs no extra block.",
+          "The formula is not automatically safe near a type maximum: the addition can overflow. We bound bytes to 1000000000000 and blockBytes to 4096, so the numerator is at most 1000000004095 and fits long long. Bounds are checked first. A different contract requires a new proof or another formula."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Testing a block boundary",
+        "paragraphs": [
+          "For a block size of 1000, test volumes 0, 999, 1000, and 1001. They distinguish empty volume, remainder, an exact multiple, and the next block. Also test blockBytes=0: expect invalid without executing division.",
+          "Record the maximum intermediate bound as well as output. A sanitizer helps find defects in tests, but a few clean runs do not replace reasoning over the stated range. The diagram below traces only the valid example −7 / 3."
+        ]
+      },
+      {
+        "id": "diagnose-floating-remainder",
+        "title": "Intentional: % on double",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "% here requires integer operands. Do not guess a cast that changes the task meaning."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    double value{7.5};\n    std::cout << value % 2 << '\\n';\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        },
+        "deep": {
+          "title": "Can we round up without another large sum?",
+          "text": "For a nonnegative numerator and positive denominator, take the integer quotient and add 1 only when the remainder is nonzero: bytes / blockBytes + (bytes % blockBytes != 0). The bool comparison becomes 0 or 1 in this sum. This avoids overflowing bytes + blockBytes − 1, but it does not remove the need to validate the inputs.",
+          "sourceId": "cpp20-expr.mul"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Now solve a different problem",
+        "paragraphs": [
+          "Complete the starter with complete blocks, remaining bytes and required blocks. The protective if already precedes division; explain its conditions first. Start with a different volume: 2050 bytes and 1024-byte blocks. Predict complete blocks, remainder and required blocks. Then check 0, 1024 and 1025 bytes; keep the zero-size guard before division.",
+          "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What are −7 / −3 and −7 % −3?",
+        "options": [
+          "2 -1",
+          "2 1",
+          "3 2"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Correct: 2 × (−3) + (−1) returns −7.",
+          "A nonzero remainder has the dividend’s sign; the dividend is −7.",
+          "The integer quotient truncates towards zero rather than rounding to 3."
+        ],
+        "recall": "concept-1",
+        "code": "#include <iostream>\n\nint main() {\n    int dividend{-7};\n    int divisor{-3};\n    std::cout << dividend / divisor << ' ' << dividend % divisor << '\\n';\n    return 0;\n}\n",
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int dividend{-7};\n    int divisor{-3};\n    std::cout << dividend / divisor << ' ' << dividend % divisor << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "expected": "2 -1\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int dividend{-7};\n    int divisor{-3};\n    std::cout << dividend / divisor << ' ' << dividend % divisor << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What is −7 % 3?",
+        "options": [
+          "2",
+          "-1",
+          "1"
+        ],
+        "correct": 1,
+        "feedback": "−7 / 3 = −2 and −7 − (−2 × 3) = −1.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Why can long long result = a*b; be insufficient for int a,b?",
+        "options": [
+          "The int product is computed before storage",
+          "long long cannot hold integers",
+          "All parentheses must be removed"
+        ],
+        "correct": 0,
+        "feedback": "The destination type does not change arithmetic already performed on operands.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "When does (n+d−1)/d require extra justification?",
+        "options": [
+          "Never",
+          "Always: signs, nonzero d, and the sum range must be established",
+          "Only when printing text"
+        ],
+        "correct": 1,
+        "feedback": "A correct mathematical formula does not establish representability of its intermediates.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Start with a different volume: 2050 bytes and 1024-byte blocks. Predict complete blocks, remainder and required blocks. Then check 0, 1024 and 1025 bytes; keep the zero-size guard before division.",
+        "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Volume and whole blocks",
+      "task": "Complete the starter with complete blocks, remaining bytes and required blocks. The protective if already precedes division; explain its conditions first. Start with a different volume: 2050 bytes and 1024-byte blocks. Predict complete blocks, remainder and required blocks. Then check 0, 1024 and 1025 bytes; keep the zero-size guard before division.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    long long bytes{2050};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    return 0;\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "",
+      "returnAnchor": "concept-5",
+      "recall": "concept-5",
+      "cases": [
+        {
+          "label": "Main transfer task",
+          "input": "",
+          "output": "full=2\nremainder=2\nneeded=3\n"
+        }
+      ],
+      "criteria": [
+        "Division happens only after validation.",
+        "An exact multiple needs no extra block.",
+        "No signed overflow or division by zero was executed.",
+        "Record stdout for each case and a range proof.",
+        "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
+      ],
+      "hint": "Start with a different volume: 2050 bytes and 1024-byte blocks. Predict complete blocks, remainder and required blocks. Then check 0, 1024 and 1025 bytes; keep the zero-size guard before division.",
+      "steps": [
+        {
+          "where": "My independent work",
+          "action": "Write valid ranges before coding.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Prove the numerator upper bound.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Add remainder and rounding up.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "For block size 1024, test volumes 0, 1024, 1025 and 2050; then check that size 0 is rejected before division.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      },
+      {
+        "id": "cpp20-expr.ass",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.ass]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.ass"
+      },
+      {
+        "id": "cpp20-conv.prom",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[conv.prom]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/conv.prom"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    long long bytes{2050};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{2050};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=2\nremainder=2\nneeded=3\n",
+        "label": "independent",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{2050};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{0};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=0\nremainder=0\nneeded=0\n",
+        "label": "transfer-0",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{0};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{1024};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=1\nremainder=0\nneeded=1\n",
+        "label": "transfer-1024",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{1024};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{1025};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=1\nremainder=1\nneeded=2\n",
+        "label": "transfer-1025",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{1025};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{0};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=0\nremainder=0\nneeded=0\n",
+        "label": "empty",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{0};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{999};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=0\nremainder=999\nneeded=1\n",
+        "label": "below",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{999};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{1000};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=1\nremainder=0\nneeded=1\n",
+        "label": "exact",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{1000};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{1001};\n    long long blockBytes{0};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "invalid\n",
+        "label": "zero-divisor-rejected",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{1001};\n    long long blockBytes{0};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{1'000'000'000'000LL};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "full=1000000000\nremainder=0\nneeded=1000000000\n",
+        "label": "max-volume",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long bytes{1'000'000'000'000LL};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-3",
+      "3": "concept-4",
+      "4": "concept-5",
+      "5": "concept-2"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      }
+    ],
+    "starterExpected": "full=2\n"
   }
 }

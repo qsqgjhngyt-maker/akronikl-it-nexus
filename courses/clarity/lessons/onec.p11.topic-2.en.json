@@ -1,0 +1,450 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p11-topic-2-author-v1",
+  "id": "onec.p11.topic-2",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Integrations and background operations",
+  "locale": "en",
+  "title": "Number 30 and string “30”: same appearance, different contract",
+  "goal": "Validate JSON/XML schema, types and limits without executing input text.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P10. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "Both packets look plausible, but one stores minutes as a number and the other as text. A JSON parser can read both. Schema validation, rather than parsing success, decides whether they are acceptable.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Own copy, common module and separate caller",
+      "paragraphs": [
+        "Continue your own training copy after P10. Preserve a DT backup and previous sources, restore into a separate new infobase and verify its path. Preserve prior work and records.",
+        "Put functions in server common module УчебныйОбмен: Server/Server call enabled, Client, Global, Privileged disabled. Данные.bsl and Приложение.bsl belong to different modules. Append only missing definitions and retain one copy of each helper.",
+        "Preserve the previous application handler first. Remove only the added startup call after one experiment. Your UUIDs and own process port may differ from the author’s observation."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Serialization carries data",
+      "paragraphs": [
+        "JSON carries values but does not automatically preserve every 1C-specific type. References need agreed external keys, dates a format/timezone, and money precision rules. A customer display name is not identity. Define required fields, types, ranges and protocol version in a schema.",
+        "The complete source accepts JSON text with exactly schemaVersion, minutes, text. Validate string type/4096 length, syntax, field set, types and integer range 0…1440. Parsing alone is not schema validation. This limit applies to materialized input; a network stream needs its own bound."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ПроверитьПакет(Текст) Экспорт\n    Если ТипЗнч(Текст) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Нужен текст\"; КонецЕсли;\n    Если СтрДлина(Текст) > 4096 Тогда ВызватьИсключение \"Пакет слишком большой\"; КонецЕсли;\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Текст);\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Если ТипЗнч(Данные) <> Тип(\"Структура\") Тогда ВызватьИсключение \"Нужен объект\"; КонецЕсли;\n    Если Данные.Количество() <> 3 Тогда ВызватьИсключение \"Ровно три поля\"; КонецЕсли;\n    Версия = Неопределено; Минуты = Неопределено; Метка = Неопределено;\n    Если Не Данные.Свойство(\"schemaVersion\",Версия) Или Не Данные.Свойство(\"minutes\",Минуты) Или Не Данные.Свойство(\"text\",Метка) Тогда ВызватьИсключение \"Неверные поля\"; КонецЕсли;\n    Если ТипЗнч(Версия) <> Тип(\"Число\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(Метка) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если Версия <> 1 Или Минуты < 0 Или Минуты > 1440 Или Цел(Минуты) <> Минуты Или СтрДлина(Метка) > 80 Тогда ВызватьИсключение \"Неверные значения\"; КонецЕсли;\n    Возврат Данные;\nКонецФункции\n\nФункция ОпытJSONXML() Экспорт\n    Данные = ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":30,\"\"text\"\":\"\"Учебный & <текст>\"\"}\");\n    Запись = Новый ЗаписьJSON; Запись.УстановитьСтроку(); ЗаписатьJSON(Запись,Данные); Текст = Запись.Закрыть(); Повтор = ПроверитьПакет(Текст);\n    Отказ = Ложь; Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":\"\"30\"\",\"\"text\"\":\"\"Учебный\"\"}\"); Исключение Отказ = Истина; КонецПопытки;\n    Запись = Новый ЗаписьXML; Запись.УстановитьСтроку(); Запись.ЗаписатьНачалоЭлемента(\"request\"); Запись.ЗаписатьАтрибут(\"minutes\",Строка(Данные.minutes)); Запись.ЗаписатьТекст(Данные.text); Запись.ЗаписатьКонецЭлемента(); XML = Запись.Закрыть();\n    Чтение = Новый ЧтениеXML; Чтение.УстановитьСтроку(XML); Чтение.Прочитать();\n    XMLВерный = Чтение.Имя = \"request\" И Чтение.ПолучитьАтрибут(\"minutes\") = \"30\"; Чтение.Закрыть();\n    Возврат Новый Структура(\"JSONВерный,ТипОтклонен,XMLВерный\",Повтор.minutes = 30 И Повтор.text = Данные.text,Отказ,XMLВерный);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "Number 30 and text containing & and angle brackets survive JSON writing and rereading. String “30” is rejected by type. The API creates own XML, then checks its request root and minutes attribute. Arbitrary external XML is not accepted.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытJSONXML();\n    Сообщить(\"Число и текст сохранены: \" + Строка(Р.JSONВерный));\n    Сообщить(\"Строка вместо числа отклонена: \" + Строка(Р.ТипОтклонен));\n    Сообщить(\"Корень и атрибут XML верны: \" + Строка(Р.XMLВерный));\nКонецПроцедуры\n",
+        "output": "Число и текст сохранены: Да\nСтрока вместо числа отклонена: Да\nКорень и атрибут XML верны: Да",
+        "files": {
+          "Данные.bsl": "Функция ПроверитьПакет(Текст) Экспорт\n    Если ТипЗнч(Текст) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Нужен текст\"; КонецЕсли;\n    Если СтрДлина(Текст) > 4096 Тогда ВызватьИсключение \"Пакет слишком большой\"; КонецЕсли;\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Текст);\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Если ТипЗнч(Данные) <> Тип(\"Структура\") Тогда ВызватьИсключение \"Нужен объект\"; КонецЕсли;\n    Если Данные.Количество() <> 3 Тогда ВызватьИсключение \"Ровно три поля\"; КонецЕсли;\n    Версия = Неопределено; Минуты = Неопределено; Метка = Неопределено;\n    Если Не Данные.Свойство(\"schemaVersion\",Версия) Или Не Данные.Свойство(\"minutes\",Минуты) Или Не Данные.Свойство(\"text\",Метка) Тогда ВызватьИсключение \"Неверные поля\"; КонецЕсли;\n    Если ТипЗнч(Версия) <> Тип(\"Число\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(Метка) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если Версия <> 1 Или Минуты < 0 Или Минуты > 1440 Или Цел(Минуты) <> Минуты Или СтрДлина(Метка) > 80 Тогда ВызватьИсключение \"Неверные значения\"; КонецЕсли;\n    Возврат Данные;\nКонецФункции\n\nФункция ОпытJSONXML() Экспорт\n    Данные = ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":30,\"\"text\"\":\"\"Учебный & <текст>\"\"}\");\n    Запись = Новый ЗаписьJSON; Запись.УстановитьСтроку(); ЗаписатьJSON(Запись,Данные); Текст = Запись.Закрыть(); Повтор = ПроверитьПакет(Текст);\n    Отказ = Ложь; Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":\"\"30\"\",\"\"text\"\":\"\"Учебный\"\"}\"); Исключение Отказ = Истина; КонецПопытки;\n    Запись = Новый ЗаписьXML; Запись.УстановитьСтроку(); Запись.ЗаписатьНачалоЭлемента(\"request\"); Запись.ЗаписатьАтрибут(\"minutes\",Строка(Данные.minutes)); Запись.ЗаписатьТекст(Данные.text); Запись.ЗаписатьКонецЭлемента(); XML = Запись.Закрыть();\n    Чтение = Новый ЧтениеXML; Чтение.УстановитьСтроку(XML); Чтение.Прочитать();\n    XMLВерный = Чтение.Имя = \"request\" И Чтение.ПолучитьАтрибут(\"minutes\") = \"30\"; Чтение.Закрыть();\n    Возврат Новый Структура(\"JSONВерный,ТипОтклонен,XMLВерный\",Повтор.minutes = 30 И Повтор.text = Данные.text,Отказ,XMLВерный);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытJSONXML();\n    Сообщить(\"Число и текст сохранены: \" + Строка(Р.JSONВерный));\n    Сообщить(\"Строка вместо числа отклонена: \" + Строка(Р.ТипОтклонен));\n    Сообщить(\"Корень и атрибут XML верны: \" + Строка(Р.XMLВерный));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Step",
+            "Observation and meaning"
+          ],
+          "rows": [
+            [
+              "Text",
+              "Version 1, numeric 30 — Contract validated."
+            ],
+            [
+              "Round trip",
+              "JSON → data → JSON — Type/text retained."
+            ],
+            [
+              "XML",
+              "Own root/attribute — Read checked."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Parsing is not validation",
+      "paragraphs": [
+        "Syntactically valid{\"minutes\": \"30\"}can violate a numeric requirement. Do not coerce every input and hide sender defects. Separate parsing, schema validation, business rules and persistence. Handle unknown versions and critical unexpected fields under an explicit policy.",
+        "A valid packet uses version 1, numeric 30 and synthetic text containing& and< >. JSON writing/reading preserves number and text. String\"30\" is deliberately rejected; implicit coercion would change the versioned contract."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Must syntactically valid minutes=\"30\" satisfy a numeric-minutes contract?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. Automatic conversion hides a sender’s contract violation. Validation explicitly requires a number, integral minutes within range and version 1. The 4096 limit concerns an already received string, not the incoming network stream."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Bound size and structure",
+      "paragraphs": [
+        "Check byte limits before expensive parsing and structure depth/count during validation. Reject DOCTYPE/ENTITY in teaching XML imports; do not enable external entities for convenience. Never pass text toExecute. Regex is not a general XML parser, so exercise formats are deliberately constrained.",
+        "Generate XML only from own data using the platform writer: request root, minutes attribute and text node. The API escapes special characters. This test checks root/attribute and is not a complete arbitrary-XML/XSD validator; it accepts no user DTD/external documents."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "Valid syntax does not rule out a wrong version, extra field or string instead of number. The new zero distinguishes type from plausible presentation. DTD, external entities and a complete XSD validator are not tested here.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Input",
+            "lines": [
+              "text"
+            ]
+          },
+          {
+            "title": "Parse",
+            "lines": [
+              "JSON"
+            ]
+          },
+          {
+            "title": "Validate",
+            "lines": [
+              "types / range"
+            ]
+          },
+          {
+            "title": "Compare",
+            "lines": [
+              "semantic fields"
+            ]
+          }
+        ],
+        "alternative": [
+          "Input: text",
+          "Parse: JSON",
+          "Validate: types / range",
+          "Compare: semantic fields"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Raw serialization text is compared and another JSON field order is treated as different data, or ПрочитатьJSON is followed by saving without field validation. Compare semantic fields; parsing grants no permission to write.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Test round trips",
+      "paragraphs": [
+        "Serialize a synthetic request, parse and compare semantic fields rather than JSON key order. Include Cyrillic, quotes, zero, missing required data, wrong types and oversized input. Rejection must not leave partially created customers/documents. Raw-payload hash and semantic identity are distinct.",
+        "Run from the server common module and print JSONВерный, ТипОтклонен, XMLВерный. In another copy test an unknown fourth field, version 2, fraction 30.5 and length 4097. Record each expected rejection; none should modify infobase documents."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "A new valid packet contains numeric 0 and own text with & and < >. Confirm that 0 stays numeric. Separately refuse version 2, a fourth field, fraction 0.5 and a 4097-character string. None of these cases creates documents.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p11-serialization-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "ef61036a08932fef806d669d0de561f7241c2c1874265e897cc72faef290c419",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "caption": "Actual worked-function observation in a separate training infobase on 1C 8.3.27.2214. Labels distinguish properties; the independent task has different inputs. This is not learner work or automatic assessment of understanding.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "Only the described training paths are established. Real HTTPS services, arbitrary URLs, concurrent first delivery, crash recovery, background queues and scheduling remain NOT RUN. Technical observations, self-report and learner understanding are separate.",
+        "Separate parsing, schema, business rules, persistence and the untested arbitrary-XML import."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Must syntactically valid minutes=\"30\" satisfy a numeric-minutes contract?",
+      "options": [
+        "No: syntax and type are separate checks",
+        "Yes: parsing checks every rule",
+        "Yes: every number can be stored as text"
+      ],
+      "correct": 0,
+      "feedback": "No. Automatic conversion hides a sender’s contract violation. Validation explicitly requires a number, integral minutes within range and version 1. The 4096 limit concerns an already received string, not the incoming network stream.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does successful JSON parsing prove schema validity?",
+      "options": [
+        "Yes",
+        "No",
+        "For numbers"
+      ],
+      "correct": 1,
+      "feedback": "Check types and required fields separately.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Should received data be executed withExecute?",
+      "options": [
+        "Always",
+        "For XML",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "Serialized input remains data.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Compare a round trip by",
+      "options": [
+        "Semantic fields",
+        "Always key order",
+        "Color"
+      ],
+      "correct": 0,
+      "feedback": "JSON field order does not define message identity.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "A parser read JSON. Is validity for saving established?",
+      "options": [
+        "No: schema and business rules are still needed",
+        "Yes: syntax checks everything",
+        "Yes: if field order matches"
+      ],
+      "correct": 0,
+      "feedback": "Separate parsing, schema, business rules, persistence and the untested arbitrary-XML import.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Number 30 and string “30”: same appearance, different contract",
+    "task": "A new valid packet contains numeric 0 and own text with & and < >. Confirm that 0 stays numeric. Separately refuse version 2, a fourth field, fraction 0.5 and a 4097-character string. None of these cases creates documents.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныйОбмен",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ПроверитьПакет(Текст) Экспорт\n    Если ТипЗнч(Текст) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Нужен текст\"; КонецЕсли;\n    Если СтрДлина(Текст) > 4096 Тогда ВызватьИсключение \"Пакет слишком большой\"; КонецЕсли;\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Текст);\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Если ТипЗнч(Данные) <> Тип(\"Структура\") Тогда ВызватьИсключение \"Нужен объект\"; КонецЕсли;\n    Если Данные.Количество() <> 3 Тогда ВызватьИсключение \"Ровно три поля\"; КонецЕсли;\n    Версия = Неопределено; Минуты = Неопределено; Метка = Неопределено;\n    Если Не Данные.Свойство(\"schemaVersion\",Версия) Или Не Данные.Свойство(\"minutes\",Минуты) Или Не Данные.Свойство(\"text\",Метка) Тогда ВызватьИсключение \"Неверные поля\"; КонецЕсли;\n    Если ТипЗнч(Версия) <> Тип(\"Число\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(Метка) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если Версия <> 1 Или Минуты < 0 Или Минуты > 1440 Или Цел(Минуты) <> Минуты Или СтрДлина(Метка) > 80 Тогда ВызватьИсключение \"Неверные значения\"; КонецЕсли;\n    Возврат Данные;\nКонецФункции\n\nФункция ОпытНовыхГраницПакета() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытНовыхГраницПакета();\n    Сообщить(\"Ноль остался числом: \" + Строка(Р.НольЧислом));\n    Сообщить(\"Версия2 отклонена: \" + Строка(Р.ВерсияОтклонена));\n    Сообщить(\"Четвёртое поле отклонено: \" + Строка(Р.ЛишнееОтклонено));\n    Сообщить(\"Дробь отклонена: \" + Строка(Р.ДробьОтклонена));\n    Сообщить(\"Длина4097 отклонена: \" + Строка(Р.ДлинаОтклонена));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ПроверитьПакет(Текст) Экспорт\n    Если ТипЗнч(Текст) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Нужен текст\"; КонецЕсли;\n    Если СтрДлина(Текст) > 4096 Тогда ВызватьИсключение \"Пакет слишком большой\"; КонецЕсли;\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Текст);\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Если ТипЗнч(Данные) <> Тип(\"Структура\") Тогда ВызватьИсключение \"Нужен объект\"; КонецЕсли;\n    Если Данные.Количество() <> 3 Тогда ВызватьИсключение \"Ровно три поля\"; КонецЕсли;\n    Версия = Неопределено; Минуты = Неопределено; Метка = Неопределено;\n    Если Не Данные.Свойство(\"schemaVersion\",Версия) Или Не Данные.Свойство(\"minutes\",Минуты) Или Не Данные.Свойство(\"text\",Метка) Тогда ВызватьИсключение \"Неверные поля\"; КонецЕсли;\n    Если ТипЗнч(Версия) <> Тип(\"Число\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(Метка) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если Версия <> 1 Или Минуты < 0 Или Минуты > 1440 Или Цел(Минуты) <> Минуты Или СтрДлина(Метка) > 80 Тогда ВызватьИсключение \"Неверные значения\"; КонецЕсли;\n    Возврат Данные;\nКонецФункции\n\nФункция ОпытНовыхГраницПакета() Экспорт\n    Пакет = ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":0,\"\"text\"\":\"\"Новый & <ноль>\"\"}\");\n    ВерсияОтклонена = Ложь; ЛишнееОтклонено = Ложь; ДробьОтклонена = Ложь; ДлинаОтклонена = Ложь;\n    Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":2,\"\"minutes\"\":0,\"\"text\"\":\"\"новый\"\"}\"); Исключение ВерсияОтклонена = Истина; КонецПопытки;\n    Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":0,\"\"text\"\":\"\"новый\"\",\"\"extra\"\":1}\"); Исключение ЛишнееОтклонено = Истина; КонецПопытки;\n    Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":0.5,\"\"text\"\":\"\"новый\"\"}\"); Исключение ДробьОтклонена = Истина; КонецПопытки;\n    Длинный = \"\"; Для Индекс = 1 По 4097 Цикл Длинный = Длинный + \"x\"; КонецЦикла;\n    Попытка ПроверитьПакет(Длинный); Исключение ДлинаОтклонена = Истина; КонецПопытки;\n    Возврат Новый Структура(\"НольЧислом,ВерсияОтклонена,ЛишнееОтклонено,ДробьОтклонена,ДлинаОтклонена\",Пакет.minutes = 0 И ТипЗнч(Пакет.minutes) = Тип(\"Число\"),ВерсияОтклонена,ЛишнееОтклонено,ДробьОтклонена,ДлинаОтклонена);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ПроверитьПакет(Текст) Экспорт\n    Если ТипЗнч(Текст) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Нужен текст\"; КонецЕсли;\n    Если СтрДлина(Текст) > 4096 Тогда ВызватьИсключение \"Пакет слишком большой\"; КонецЕсли;\n    Чтение = Новый ЧтениеJSON; Чтение.УстановитьСтроку(Текст);\n    Данные = ПрочитатьJSON(Чтение); Чтение.Закрыть();\n    Если ТипЗнч(Данные) <> Тип(\"Структура\") Тогда ВызватьИсключение \"Нужен объект\"; КонецЕсли;\n    Если Данные.Количество() <> 3 Тогда ВызватьИсключение \"Ровно три поля\"; КонецЕсли;\n    Версия = Неопределено; Минуты = Неопределено; Метка = Неопределено;\n    Если Не Данные.Свойство(\"schemaVersion\",Версия) Или Не Данные.Свойство(\"minutes\",Минуты) Или Не Данные.Свойство(\"text\",Метка) Тогда ВызватьИсключение \"Неверные поля\"; КонецЕсли;\n    Если ТипЗнч(Версия) <> Тип(\"Число\") Или ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(Метка) <> Тип(\"Строка\") Тогда ВызватьИсключение \"Неверные типы\"; КонецЕсли;\n    Если Версия <> 1 Или Минуты < 0 Или Минуты > 1440 Или Цел(Минуты) <> Минуты Или СтрДлина(Метка) > 80 Тогда ВызватьИсключение \"Неверные значения\"; КонецЕсли;\n    Возврат Данные;\nКонецФункции\n\nФункция ОпытНовыхГраницПакета() Экспорт\n    Пакет = ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":0,\"\"text\"\":\"\"Новый & <ноль>\"\"}\");\n    ВерсияОтклонена = Ложь; ЛишнееОтклонено = Ложь; ДробьОтклонена = Ложь; ДлинаОтклонена = Ложь;\n    Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":2,\"\"minutes\"\":0,\"\"text\"\":\"\"новый\"\"}\"); Исключение ВерсияОтклонена = Истина; КонецПопытки;\n    Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":0,\"\"text\"\":\"\"новый\"\",\"\"extra\"\":1}\"); Исключение ЛишнееОтклонено = Истина; КонецПопытки;\n    Попытка ПроверитьПакет(\"{\"\"schemaVersion\"\":1,\"\"minutes\"\":0.5,\"\"text\"\":\"\"новый\"\"}\"); Исключение ДробьОтклонена = Истина; КонецПопытки;\n    Длинный = \"\"; Для Индекс = 1 По 4097 Цикл Длинный = Длинный + \"x\"; КонецЦикла;\n    Попытка ПроверитьПакет(Длинный); Исключение ДлинаОтклонена = Истина; КонецПопытки;\n    Возврат Новый Структура(\"НольЧислом,ВерсияОтклонена,ЛишнееОтклонено,ДробьОтклонена,ДлинаОтклонена\",Пакет.minutes = 0 И ТипЗнч(Пакет.minutes) = Тип(\"Число\"),ВерсияОтклонена,ЛишнееОтклонено,ДробьОтклонена,ДлинаОтклонена);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныйОбмен.ОпытНовыхГраницПакета();\n    Сообщить(\"Ноль остался числом: \" + Строка(Р.НольЧислом));\n    Сообщить(\"Версия2 отклонена: \" + Строка(Р.ВерсияОтклонена));\n    Сообщить(\"Четвёртое поле отклонено: \" + Строка(Р.ЛишнееОтклонено));\n    Сообщить(\"Дробь отклонена: \" + Строка(Р.ДробьОтклонена));\n    Сообщить(\"Длина4097 отклонена: \" + Строка(Р.ДлинаОтклонена));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "Version 1 / numeric 0 / own text; four separate contract violations.",
+        "output": "Ноль остался числом: Да\nВерсия2 отклонена: Да\nЧетвёртое поле отклонено: Да\nДробь отклонена: Да\nДлина4097 отклонена: Да"
+      }
+    ],
+    "criteria": [
+      "Five labelled Да values: numeric zero and four independent refusals.",
+      "Do not confuse string length with UTF-8 byte count; they are different limits. Execute no input text.",
+      "Separate parsing, schema, business rules, persistence and the untested arbitrary-XML import."
+    ],
+    "hint": "Valid syntax does not rule out a wrong version, extra field or string instead of number. The new zero distinguishes type from plausible presentation. DTD, external entities and a complete XSD validator are not tested here.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныйОбмен",
+        "action": "УчебныйОбмен common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p11-serialization.json",
+  "assessment": {
+    "contentRevision": "onec-p11-topic-2-author-v1",
+    "quiz": [
+      {
+        "question": "Must syntactically valid minutes=\"30\" satisfy a numeric-minutes contract?",
+        "options": [
+          "No: syntax and type are separate checks",
+          "Yes: parsing checks every rule",
+          "Yes: every number can be stored as text"
+        ],
+        "correct": 0,
+        "explanation": "No. Automatic conversion hides a sender’s contract violation. Validation explicitly requires a number, integral minutes within range and version 1. The 4096 limit concerns an already received string, not the incoming network stream."
+      },
+      {
+        "question": "Does successful JSON parsing prove schema validity?",
+        "options": [
+          "Yes",
+          "No",
+          "For numbers"
+        ],
+        "correct": 1,
+        "explanation": "Check types and required fields separately."
+      },
+      {
+        "question": "Should received data be executed withExecute?",
+        "options": [
+          "Always",
+          "For XML",
+          "No"
+        ],
+        "correct": 2,
+        "explanation": "Serialized input remains data."
+      },
+      {
+        "question": "Compare a round trip by",
+        "options": [
+          "Semantic fields",
+          "Always key order",
+          "Color"
+        ],
+        "correct": 0,
+        "explanation": "JSON field order does not define message identity."
+      },
+      {
+        "question": "A parser read JSON. Is validity for saving established?",
+        "options": [
+          "No: schema and business rules are still needed",
+          "Yes: syntax checks everything",
+          "Yes: if field order matches"
+        ],
+        "correct": 0,
+        "explanation": "Separate parsing, schema, business rules, persistence and the untested arbitrary-XML import."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p11.topic-2.en.json"
+}

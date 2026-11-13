@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "proposalRevision": "r3-review-1",
+  "locale": "en",
+  "status": "REVIEW CANDIDATE — NOT APPROVED",
+  "completionPolicy": "No completion, attempt or achievement is created by changing views.",
+  "persistenceScope": "In-memory prototype only; no private storage contract is implemented.",
+  "id": "onec.p2.topic-1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "course": "1C: Enterprise 8 programming",
+  "module": "BSL fundamentals",
+  "title": "Your first calculation: data, assignment and a message",
+  "goal": "Calculate two durations in installed 1C and explain the value after each statement.",
+  "prerequisites": [
+    {
+      "text": "You need addition of small whole numbers. Variables and assignment are introduced here."
+    },
+    {
+      "text": "External practice needs the official training 1C and a separate empty infobase. If they are not ready, open Preparation; you can read the explanation immediately.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The task and the tools",
+      "paragraphs": [
+        "One training request takes 30 minutes and another 45. The total is 75 minutes. We want the program to add the durations; displaying a prewritten 75 does not prove that calculation. The data is synthetic; no real service or customer is needed.",
+        "BSL is the built-in language of 1C. Nexus presents the lesson. Configurator is where you edit your training infobase’s code. 1C:Enterprise executes it and displays a message. Nexus cannot observe that external window or synchronise source with it automatically."
+      ]
+    },
+    {
+      "id": "values",
+      "title": "Give the two values names",
+      "paragraphs": [
+        "A variable is a name through which the program accesses a value. The statement МинутыПервойЗаявки = 30; places 30 on the right and the author’s chosen name on the left. The right side is evaluated, then its value is assigned to the name on the left. After this statement one duration is known; the second has not been assigned yet.",
+        "The second assignment supplies 45 without changing the first 30. Each name is written as one identifier without spaces. 30 without quotes is a number; \"30\" is text, so our durations have no quotes. A semicolon ends a statement."
+      ]
+    },
+    {
+      "id": "calculation",
+      "title": "Four statements and their result",
+      "paragraphs": [
+        "The third statement has two variables and + on the right. The platform reads their current values 30 and 45, obtains 75 and assigns it to ВсегоМинут. That variable stores the resulting number. In the fourth statement, Сообщить reads and displays the value; its parentheses contain what should be shown.",
+        "A message is not a saved database record. These statements do not create a customer or save a document. We are checking calculation and a visible message, not persistence of business data."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "МинутыПервойЗаявки = 30;\nМинутыВторойЗаявки = 45;\nВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\nСообщить(ВсегоМинут);",
+        "output": "75"
+      },
+      "trace": [
+        [
+          "МинутыПервойЗаявки = 30;",
+          "—",
+          "First:30",
+          "Assign the first input."
+        ],
+        [
+          "МинутыВторойЗаявки = 45;",
+          "First:30",
+          "First:30; second:45",
+          "The first value remains unchanged."
+        ],
+        [
+          "ВсегоМинут = … + …;",
+          "30 + 45",
+          "ВсегоМинут:75",
+          "Evaluate addition before assignment."
+        ],
+        [
+          "Сообщить(ВсегоМинут);",
+          "ВсегоМинут:75",
+          "Message 75",
+          "Display the value; no database record is written."
+        ]
+      ]
+    },
+    {
+      "id": "module",
+      "title": "Where the source belongs",
+      "paragraphs": [
+        "For the first run, use the managed application module, which belongs to the application as a whole. ПриНачалеРаботыСистемы is a handler called when a user session starts. The four statements go between Процедура… and КонецПроцедуры. The complete frame is below, so the execution entry point is explicit.",
+        "Use a new empty training infobase, not a working database or an existing handler you care about. Saving the configuration preserves the editable source; updating the database configuration passes changes to the running application. That is why the workflow includes save, F7 and a fresh F5 run."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 30;\n    МинутыВторойЗаявки = 45;\n    ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+        "output": "75"
+      }
+    },
+    {
+      "id": "variation",
+      "title": "Check a change, rather than memorising 75",
+      "paragraphs": [
+        "If only the second duration changes from 45 to 20, the same addition statement obtains 50. Write that prediction before running. If 75 still appears, check the infobase name and directory, saved module and database update; do not change the expectation to match an old message.",
+        "Replacing + with − for the original 30 and 45 produces −15. The source can be syntactically valid while subtracting instead of adding. Restore + and rerun the same case; expect 75."
+      ],
+      "clarifications": [
+        {
+          "title": "A third duration: what changes in the calculation",
+          "text": "If a third 15-minute request is added to 30 and 45, provide a separate value and a third term: 30 + 45 + 15 = 90. Predicting by hand detects a new variable omitted from the sum. In the independent task below you will apply the same rule to three different durations."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Now calculate your own total",
+      "paragraphs": [
+        "Use Self-check to reason about other data, then complete one independent task in installed 1C. Returning to the explanation must not replace your draft. Confirming an external step is your self-report, not a Nexus observation of 1C."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "bsl-predict",
+      "prompt": "The statements A=12; B=8; Всего=A+B; are followed by Сообщить(Всего);. What message is expected?",
+      "options": [
+        "20",
+        "128",
+        "75"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct: the numbers 12 and 8 add to 20.",
+        "These are numbers without quotes, so this is addition, not text concatenation.",
+        "75 belonged to the different inputs 30 and 45."
+      ]
+    },
+    {
+      "id": "bsl-save",
+      "prompt": "You changed the second duration from 45 to 20 and saved the source in Configurator. The old open session still shows 75. What should you check?",
+      "options": [
+        "The database configuration update and a fresh run of the same training infobase.",
+        "Replace the prediction 50 with 75.",
+        "Mark complete: some message is visible."
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct: saved source and the running version are separate stages.",
+        "30+20=50. An old message does not change the calculation.",
+        "A completion mark does not verify external execution or understanding."
+      ]
+    },
+    {
+      "id": "bsl-explain",
+      "kind": "free",
+      "prompt": "Explain the third and fourth statements below: what value is calculated, what is displayed, and is a customer record created?",
+      "feedback": "Distinguish calculation from display. Free text is not graded automatically.",
+      "anchor": "calculation",
+      "code": "МинутыПервойЗаявки = 30;\nМинутыВторойЗаявки = 45;\nВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\nСообщить(ВсегоМинут);"
+    }
+  ],
+  "practice": {
+    "title": "Three training requests",
+    "task": "Add durations of 10,25 and 5 minutes. Create three variables, calculate the total and display it with Сообщить. Then change only the second duration to 0. Predict both outcomes before running.",
+    "environment": "Installed official training 1C:Enterprise 8.3, a separate empty file infobase, Configurator and then 1C:Enterprise mode. Nexus does not execute this BSL.",
+    "setup": true,
+    "files": [
+      {
+        "path": "МодульУправляемогоПриложения.bsl",
+        "language": "bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    // Add the three durations, their sum and a message here.\nКонецПроцедуры\n"
+      }
+    ],
+    "reference": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 10;\n    МинутыВторойЗаявки = 25;\n    МинутыТретьейЗаявки = 5;\n    ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки + МинутыТретьейЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+    "cases": [
+      {
+        "label": "Three durations",
+        "input": "10;25;5",
+        "output": "40"
+      },
+      {
+        "label": "Second duration 0",
+        "input": "10;0;5",
+        "output": "15"
+      }
+    ],
+    "criteria": [
+      "Produce 40 and 15 for the corresponding inputs, using variables to calculate the total.",
+      "Explain why 10−25+5 produces −10 and violates the addition task.",
+      "Preserve source in your training infobase and compare the actual message manually."
+    ],
+    "hint": "Assign all three inputs before calculating the total. A zero second duration must not remove the other 10 and 5.",
+    "returnAnchor": "calculation",
+    "steps": [
+      {
+        "where": "1C launcher",
+        "action": "Create a new empty file infobase named “Training calculationR 3” and verify its directory.",
+        "why": "Keep working and earlier training infobases intact.",
+        "expected": "You know the selected infobase’s name and path."
+      },
+      {
+        "where": "Configurator",
+        "action": "Use Configuration → Open configuration; right-click the root configuration → Open managed application module (Russian UI: Открыть модуль управляемого приложения). In the new empty base, place the complete ПриНачалеРаботыСистемы frame from the explanation.",
+        "why": "The platform needs a named startup handler.",
+        "expected": "Source is inside one startup procedure, not an unrelated module."
+      },
+      {
+        "where": "Configurator",
+        "action": "Write your calculation. Ctrl+S saves the editable configuration. Close this infobase’s user window;F7 updates the database configuration.",
+        "why": "Saving source alone does not run the new version.",
+        "expected": "The update finishes without a diagnostic."
+      },
+      {
+        "where": "Designer (Configurator) → 1C:Enterprise",
+        "action": "Run with F5 from Configurator. Compare the message with 40. After changing 25 to 0, repeat save/F7/F5.",
+        "why": "Compare actual external execution, not the expected text in the browser.",
+        "expected": "The second run displays 15. Messages do not create catalog records."
+      },
+      {
+        "where": "Nexus",
+        "action": "Record your observation and explain both sums.",
+        "why": "Nexus cannot observe the external 1C window.",
+        "expected": "The status is self-report, not automatic attestation."
+      }
+    ],
+    "externalRoute": "1C Designer (Configurator) → configuration root → managed application module → your calculation inside ПриНачалеРаботыСистемы → Ctrl+S → close the previous session → F7 → F5. Press F5 in Designer; read the message in 1C:Enterprise."
+  },
+  "nativePrograms": [
+    {
+      "name": "first-75",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 30;\n    МинутыВторойЗаявки = 45;\n    ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+      "value": 75
+    },
+    {
+      "name": "changed-50",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 30;\n    МинутыВторойЗаявки = 20;\n    ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+      "value": 50
+    },
+    {
+      "name": "wrong-subtraction",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 30;\n    МинутыВторойЗаявки = 45;\n    ВсегоМинут = МинутыПервойЗаявки - МинутыВторойЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+      "value": -15
+    },
+    {
+      "name": "independent-40",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 10;\n    МинутыВторойЗаявки = 25;\n    МинутыТретьейЗаявки = 5;\n    ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки + МинутыТретьейЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+      "value": 40
+    },
+    {
+      "name": "independent-zero",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 10;\n    МинутыВторойЗаявки = 0;\n    МинутыТретьейЗаявки = 5;\n    ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки + МинутыТретьейЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+      "value": 15
+    }
+  ]
+}

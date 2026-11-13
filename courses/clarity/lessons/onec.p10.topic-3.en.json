@@ -1,0 +1,451 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p10-topic-3-author-v1",
+  "id": "onec.p10.topic-3",
+  "courseId": "onec",
+  "moduleId": "onec.p10",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Reliability, security and diagnostics",
+  "locale": "en",
+  "title": "From error 1441 to a checked repair",
+  "goal": "Diagnose a defect using safe logs, a debugger and a reproducible scenario.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P9. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "After an error message, it is easy to assume that nothing was saved or that the entire program failed. Check one specific request: which action was refused, what remains stored and what changes after correcting the input.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Your copy and separate files",
+      "paragraphs": [
+        "Continue your own P9 copy. Preserve a DT backup and previous sources, restore into a new empty infobase and verify the path. Do not load over your work.",
+        "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global and Privileged disabled. Данные.bsl contains helpers and the function; Приложение.bsl contains the separate caller. Add only missing definitions and keep one copy of each helper.",
+        "НовыйНаборРегистров creates new training records owned by this experiment. Preserve the previous handler first. Remove only the added startup call after one run, so reopening does not create another set. Compare your own references rather than the screenshot’s UUIDs."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Link observations to an operation",
+      "paragraphs": [
+        "Useful logs contain time, case/runID, operation and safe outcome. “Error” alone does not identify the stage or affected document. Use synthetic keys and no secrets. Correlation links request, handler and rejection without dumping a database publicly.",
+        "Use an own 30-minute document and reproduce a direct 1441 rejection from module 5. Retain source, actual reference and expected 30 after failure. Exclude real customers, tokens, account contents and license identifiers from the protocol."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытРазбораОтказа() Экспорт\n    Д = НовыйНаборРегистров();\n    Объект = Д.Первая.ПолучитьОбъект();\n    ОтказДиапазона = Ложь;\n    Попытка\n        Объект.ДлительностьМинут = 1441; Объект.Записать();\n    Исключение\n        ОтказДиапазона = Истина;\n    КонецПопытки;\n    ПослеОтказа = Д.Первая.ДлительностьМинут;\n    ЗаписьЖурналаРегистрации(\"Nexus.P10.Диагностика\",УровеньЖурналаРегистрации.Предупреждение,Метаданные.Документы.ЗаявкаУслуги,Д.Первая,\"case=diagnostics-main; input=1441; range-rejected\");\n    Объект = Д.Первая.ПолучитьОбъект();\n    Объект.ДлительностьМинут = 45; Объект.Записать();\n    Возврат Новый Структура(\"Отказ,ПослеОтказа,ПослеПравки,Вторая\",ОтказДиапазона,ПослеОтказа,Д.Первая.ДлительностьМинут,Д.Вторая.ДлительностьМинут);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The first own request stores 30. Writing 1441 is refused by range validation; rereading gives 30. A safe case marker is written to the event log instead of dumping data. A freshly read object then saves 45; the second request remains 45.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытРазбораОтказа();\n    Сообщить(\"1441 отклонено: \" + Строка(Р.Отказ));\n    Сообщить(\"После отказа: \" + Строка(Р.ПослеОтказа));\n    Сообщить(\"После исправления: \" + Строка(Р.ПослеПравки));\n    Сообщить(\"Вторая сохранена: \" + Строка(Р.Вторая));\nКонецПроцедуры\n",
+        "output": "Минуты должны быть в диапазоне 0..1440.\n1441 отклонено: Да\nПосле отказа: 30\nПосле исправления: 45\nВторая сохранена: 45",
+        "files": {
+          "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытРазбораОтказа() Экспорт\n    Д = НовыйНаборРегистров();\n    Объект = Д.Первая.ПолучитьОбъект();\n    ОтказДиапазона = Ложь;\n    Попытка\n        Объект.ДлительностьМинут = 1441; Объект.Записать();\n    Исключение\n        ОтказДиапазона = Истина;\n    КонецПопытки;\n    ПослеОтказа = Д.Первая.ДлительностьМинут;\n    ЗаписьЖурналаРегистрации(\"Nexus.P10.Диагностика\",УровеньЖурналаРегистрации.Предупреждение,Метаданные.Документы.ЗаявкаУслуги,Д.Первая,\"case=diagnostics-main; input=1441; range-rejected\");\n    Объект = Д.Первая.ПолучитьОбъект();\n    Объект.ДлительностьМинут = 45; Объект.Записать();\n    Возврат Новый Структура(\"Отказ,ПослеОтказа,ПослеПравки,Вторая\",ОтказДиапазона,ПослеОтказа,Д.Первая.ДлительностьМинут,Д.Вторая.ДлительностьМинут);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытРазбораОтказа();\n    Сообщить(\"1441 отклонено: \" + Строка(Р.Отказ));\n    Сообщить(\"После отказа: \" + Строка(Р.ПослеОтказа));\n    Сообщить(\"После исправления: \" + Строка(Р.ПослеПравки));\n    Сообщить(\"Вторая сохранена: \" + Строка(Р.Вторая));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Step",
+            "Observation and meaning"
+          ],
+          "rows": [
+            [
+              "Reproduce",
+              "1441 — Expected rejection."
+            ],
+            [
+              "Observe",
+              "Module/line/refusal — Cause checked."
+            ],
+            [
+              "Correct",
+              "45 in copy — Reread 45; original retained."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "A debugger tests a hypothesis",
+      "paragraphs": [
+        "Break at the expected branch, inspect types/values and step through. Editing variables is not evidence that the code is correct. Success after manual value injection is not a normal reproducible run. Record the first divergence and minimal inputs.",
+        "Designer → Administration → Event log: select the short experiment interval and event filters. Only configured events appear. A missing entry does not prove no operation happened; correlate time/module/reference with an independent reread."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "An in-memory object was assigned 1441, but saving failed. What must be checked in the infobase?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "The prior 30. An in-memory field does not establish stored state. A fresh read ties the observation to a specific record, and the log marker helps locate that operation."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Safe diagnostics",
+      "paragraphs": [
+        "Technical messages can include paths, queries and personal data. Keep raw logs private; share classifications and synthetic examples. Avoid hiding useful causes behind “try later,”but do not publish indiscriminately. Define log retention separately.",
+        "Open the document object module, break on range validation and start debugging with F5. Perform the own invalid write; inspect duration and refusal, then continue. Remove breakpoints afterwards and do not edit values during the accepted run."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The in-memory 1441 and stored 30 belong to different stages. After refusal, reread a new object before saving 45. The independent task replaces the upper invalid boundary with the lower one: -1/0.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Stored",
+            "lines": [
+              "30"
+            ]
+          },
+          {
+            "title": "Attempt",
+            "lines": [
+              "1441 → отказ"
+            ]
+          },
+          {
+            "title": "Reread",
+            "lines": [
+              "30"
+            ]
+          },
+          {
+            "title": "Repair",
+            "lines": [
+              "45 → 45"
+            ]
+          }
+        ],
+        "alternative": [
+          "Stored: 30",
+          "Attempt: 1441 → отказ",
+          "Reread: 30",
+          "Repair: 45 → 45"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Changing 1441 to 45 manually in the debugger and declaring the code repaired does not show normal execution. Preserve the original input, hypothesis and corrected source; check refusal and the valid boundary without changing variables interactively.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "A fix ends with regression",
+      "paragraphs": [
+        "Preserve failing case, hypothesis, attempt, outcome and cause. After fixing, repeat original and neighboring cases, including failure/preservation. If the issue disappears only under a debugger, investigate ordering/timing. Retain failed experiments to document boundaries and prevent repeating false paths.",
+        "Use the defect cycle: reproduce, hypothesize range validation, observe 1441/refusal, correct input 45, reread 45 and regress the earlier 30/rejection. Retain both outcomes. Keep user messages clear and technical details in the safe own protocol."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Use a new 20/60 pair. Try saving-1 to the second request and confirm that 60 remains. Record a separate safe refusal marker. Reread the object, save the valid boundary 0 and confirm 0; the first request remains 20. Explain the first point of divergence from expectation.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot.",
+        "Own markers for both refusals were found in the separate infobase event log. No full raw log is included. Log-viewer and debugger GUI execution are not claimed here; follow the described route in your own copy."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p10-diagnostics-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "6f34360dfc780fb9ecc2164ee68f03798c0d52d147e7ab3b71e478e19f4f1d72",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "caption": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "Only the described training actions are established. Two concurrent sessions, clusters, field latency, debugger GUI and arbitrary external-code safety remain separate. Execution, a saved mark and learner understanding are distinct.",
+        "Distinguish an event, log settings, branch execution and rereading stored state."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "An in-memory object was assigned 1441, but saving failed. What must be checked in the infobase?",
+      "options": [
+        "The prior 30 at the same reference",
+        "Necessarily 1441",
+        "Any line claiming success"
+      ],
+      "correct": 0,
+      "feedback": "The prior 30. An in-memory field does not establish stored state. A fresh read ties the observation to a specific record, and the log marker helps locate that operation.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does manually changing a variable prove a fix?",
+      "options": [
+        "No",
+        "Yes",
+        "Always in a debugger"
+      ],
+      "correct": 0,
+      "feedback": "Repeat normally.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Should an entire raw log be public?",
+      "options": [
+        "Always",
+        "No; minimize it",
+        "Mandatory on errors"
+      ],
+      "correct": 1,
+      "feedback": "Diagnostics can contain private data.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "After a fix, perform",
+      "options": [
+        "Only a screenshot",
+        "History deletion",
+        "Regression of original and nearby cases"
+      ],
+      "correct": 2,
+      "feedback": "A fix must be reproducible.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "A log has no row. Is absence of the operation established?",
+      "options": [
+        "No: check settings and independent observations",
+        "Yes: the log is always complete",
+        "Yes: if the exception is removed"
+      ],
+      "correct": 0,
+      "feedback": "Distinguish an event, log settings, branch execution and rereading stored state.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "From error 1441 to a checked repair",
+    "task": "Use a new 20/60 pair. Try saving-1 to the second request and confirm that 60 remains. Record a separate safe refusal marker. Reread the object, save the valid boundary 0 and confirm 0; the first request remains 20. Explain the first point of divergence from expectation.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебнаяНадёжность",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытДругойГраницы() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытДругойГраницы();\n    Сообщить(\"Минус один отклонён: \" + Строка(Р.Отказ));\n    Сообщить(\"После отказа: \" + Строка(Р.ПослеОтказа));\n    Сообщить(\"После исправления: \" + Строка(Р.ПослеПравки));\n    Сообщить(\"Первая сохранена: \" + Строка(Р.Первая));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытДругойГраницы() Экспорт\n    Д = НовыйНаборРегистров(20,60);\n    Объект = Д.Вторая.ПолучитьОбъект();\n    БылОтказ = Ложь;\n    Попытка\n        Объект.ДлительностьМинут = -1; Объект.Записать();\n    Исключение\n        БылОтказ = Истина;\n    КонецПопытки;\n    ПослеОтказа = Д.Вторая.ДлительностьМинут;\n    ЗаписьЖурналаРегистрации(\"Nexus.P10.Диагностика\",УровеньЖурналаРегистрации.Предупреждение,Метаданные.Документы.ЗаявкаУслуги,Д.Вторая,\"case=diagnostics-independent; input=-1; range-rejected\");\n    Объект = Д.Вторая.ПолучитьОбъект();\n    Объект.ДлительностьМинут = 0; Объект.Записать();\n    Возврат Новый Структура(\"Отказ,ПослеОтказа,ПослеПравки,Первая\",БылОтказ,ПослеОтказа,Д.Вторая.ДлительностьМинут,Д.Первая.ДлительностьМинут);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытДругойГраницы() Экспорт\n    Д = НовыйНаборРегистров(20,60);\n    Объект = Д.Вторая.ПолучитьОбъект();\n    БылОтказ = Ложь;\n    Попытка\n        Объект.ДлительностьМинут = -1; Объект.Записать();\n    Исключение\n        БылОтказ = Истина;\n    КонецПопытки;\n    ПослеОтказа = Д.Вторая.ДлительностьМинут;\n    ЗаписьЖурналаРегистрации(\"Nexus.P10.Диагностика\",УровеньЖурналаРегистрации.Предупреждение,Метаданные.Документы.ЗаявкаУслуги,Д.Вторая,\"case=diagnostics-independent; input=-1; range-rejected\");\n    Объект = Д.Вторая.ПолучитьОбъект();\n    Объект.ДлительностьМинут = 0; Объект.Записать();\n    Возврат Новый Структура(\"Отказ,ПослеОтказа,ПослеПравки,Первая\",БылОтказ,ПослеОтказа,Д.Вторая.ДлительностьМинут,Д.Первая.ДлительностьМинут);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебнаяНадёжность.ОпытДругойГраницы();\n    Сообщить(\"Минус один отклонён: \" + Строка(Р.Отказ));\n    Сообщить(\"После отказа: \" + Строка(Р.ПослеОтказа));\n    Сообщить(\"После исправления: \" + Строка(Р.ПослеПравки));\n    Сообщить(\"Первая сохранена: \" + Строка(Р.Первая));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "Full reference for the new task. First compare your own attempt and labelled observations. The example, reference and own work are distinct; viewing the reference changes no draft."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "New 20/60 pair; second-request inputs: -1, then 0.",
+        "output": "Минус один отклонён: Да\nПосле отказа: 60\nПосле исправления: 0\nПервая сохранена: 20"
+      }
+    ],
+    "criteria": [
+      "Labelled results: Да,60,0,20. Refusal and repair concern the same second reference.",
+      "Log only an own case marker and safe description; real data and secrets are unnecessary.",
+      "Distinguish an event, log settings, branch execution and rereading stored state."
+    ],
+    "hint": "The in-memory 1441 and stored 30 belong to different stages. After refusal, reread a new object before saving 45. The independent task replaces the upper invalid boundary with the lower one: -1/0.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Keep the earlier source and DT backup; restore into a new empty directory and verify its path. Use an own 30-minute document and reproduce a direct 1441 rejection from module 5. Retain source, actual reference and expected 30 after failure. Exclude real customers, tokens, account contents and license identifiers from the protocol.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
+      },
+      {
+        "where": "Общие → Общие модули → УчебнаяНадёжность",
+        "action": "УчебнаяНадёжность common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p10-diagnostics.json",
+  "assessment": {
+    "contentRevision": "onec-p10-topic-3-author-v1",
+    "quiz": [
+      {
+        "question": "An in-memory object was assigned 1441, but saving failed. What must be checked in the infobase?",
+        "options": [
+          "The prior 30 at the same reference",
+          "Necessarily 1441",
+          "Any line claiming success"
+        ],
+        "correct": 0,
+        "explanation": "The prior 30. An in-memory field does not establish stored state. A fresh read ties the observation to a specific record, and the log marker helps locate that operation."
+      },
+      {
+        "question": "Does manually changing a variable prove a fix?",
+        "options": [
+          "No",
+          "Yes",
+          "Always in a debugger"
+        ],
+        "correct": 0,
+        "explanation": "Repeat normally."
+      },
+      {
+        "question": "Should an entire raw log be public?",
+        "options": [
+          "Always",
+          "No; minimize it",
+          "Mandatory on errors"
+        ],
+        "correct": 1,
+        "explanation": "Diagnostics can contain private data."
+      },
+      {
+        "question": "After a fix, perform",
+        "options": [
+          "Only a screenshot",
+          "History deletion",
+          "Regression of original and nearby cases"
+        ],
+        "correct": 2,
+        "explanation": "A fix must be reproducible."
+      },
+      {
+        "question": "A log has no row. Is absence of the operation established?",
+        "options": [
+          "No: check settings and independent observations",
+          "Yes: the log is always complete",
+          "Yes: if the exception is removed"
+        ],
+        "correct": 0,
+        "explanation": "Distinguish an event, log settings, branch execution and rereading stored state."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p10.topic-3.en.json"
+}

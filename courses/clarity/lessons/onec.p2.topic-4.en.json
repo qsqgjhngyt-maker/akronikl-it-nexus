@@ -1,0 +1,540 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p2-loops-author-v1",
+  "id": "onec.p2.topic-4",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "BSL fundamentals",
+  "locale": "en",
+  "title": "Loops: preserve state and explain termination",
+  "goal": "Trace accumulation, distinguish counter and accumulator, and independently write a finite loop with a new summation rule.",
+  "prerequisites": [
+    {
+      "text": "Complete Value types and Conditions: distinguish a number from a string and explain a test. Know how to open, save, and run a handler in your training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "Why the result must remember the previous iteration",
+      "paragraphs": [
+        "You need the total duration of several equal intervals. Three intervals of15 minutes give45. A loop describes one action and a repetition rule, rather than merely hiding three repeated lines.",
+        "We will distinguish a counter from an accumulator, trace each transition, and check a case with no iterations. Then you will write a different program: add the current request number rather than a constant15."
+      ]
+    },
+    {
+      "id": "state",
+      "title": "The counter and accumulator have different jobs",
+      "paragraphs": [
+        "Номер identifies the current iteration. ВсегоМинут stores the sum of intervals already counted. ВсегоМинут = ВсегоМинут + 15 reads the previous total on the right, adds15, and stores the new value on the left.",
+        "Zero is assigned once before the loop: no intervals have been counted yet. After k iterations, ВсегоМинут should equal15×k. This relation explains the intermediate15 and30 as well as the final45."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Complete example: three additions and one message",
+      "paragraphs": [
+        "Для Номер = 1 По 3 assigns1, then2, then3 to the counter. The body between Цикл and КонецЦикла runs for each value. Сообщить follows КонецЦикла, so it displays the total once.",
+        "Read the table first and match it to the addition statement. One accumulator variable changes; you do not need three separate totals or three resets."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    ВсегоМинут = 0;\n    Для Номер = 1 По 3 Цикл\n        ВсегоМинут = ВсегоМинут + 15;\n    КонецЦикла;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+        "output": "45"
+      },
+      "tables": [
+        {
+          "caption": "One accumulator between iterations",
+          "columns": [
+            "State",
+            "Номер",
+            "Before addition",
+            "After addition"
+          ],
+          "rows": [
+            [
+              "Before Для",
+              "Not assigned yet",
+              "0",
+              "0"
+            ],
+            [
+              "Iteration1",
+              "1",
+              "0",
+              "15"
+            ],
+            [
+              "Iteration2",
+              "2",
+              "15",
+              "30"
+            ],
+            [
+              "Iteration3",
+              "3",
+              "30",
+              "45"
+            ]
+          ]
+        }
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p2-loops-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "48c7d74d3c300c022d4148c61efe460d08d7bc9a4f5f82e447a9c9fa6768982c",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual messages from the complete worked example in the own NexusP2Module20261108 infobase, running in installed 1C 8.3.27.2214.",
+          "caption": "Actual messages from the complete worked example in the own NexusP2Module20261108 infobase, running in installed 1C 8.3.27.2214.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Before revealing: only the upper bound changes",
+      "paragraphs": [
+        "The next complete handler replaces По 3 with По 4. Add exactly one row to your trace, mentally or on paper. Keep15, the initial zero, and the location of Сообщить unchanged.",
+        "Predict both the total and the number of messages. Open the comparison after recording your own prediction."
+      ],
+      "predictionBundle": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    ВсегоМинут = 0;\n    Для Номер = 1 По 4 Цикл\n        ВсегоМинут = ВсегоМинут + 15;\n    КонецЦикла;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n"
+      },
+      "reveal": {
+        "title": "Compare your prediction",
+        "paragraphs": [
+          "The result is60: the fourth iteration takes45 and adds15. There is still one message; the statement after the loop has not become part of its body."
+        ]
+      }
+    },
+    {
+      "id": "variation",
+      "title": "A changed input checks the rule",
+      "paragraphs": [
+        "For four iterations, the trace extends to0→15→30→45→60. The final result changes predictably because each iteration accounts for exactly one interval.",
+        "This is the same algorithm with a different bound, not the lesson's independent task. Keep this version separately to compare it with a new accumulation rule."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    ВсегоМинут = 0;\n    Для Номер = 1 По 4 Цикл\n        ВсегоМинут = ВсегоМинут + 15;\n    КонецЦикла;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+        "output": "60"
+      }
+    },
+    {
+      "id": "zero-case",
+      "title": "An empty range: no iterations",
+      "paragraphs": [
+        "For the range1..0, the Для body does not run. The initial ВсегоМинут remains0, and the message after the loop still runs. Zero does not become an extra iteration.",
+        "Draw only the initial state and exit for this case. An intermediate15 would be an invented step. A Пока whose initial test is false follows the same important idea: its body need not run even once."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    ВсегоМинут = 0;\n    Для Номер = 1 По 0 Цикл\n        ВсегоМинут = ВсегоМинут + 15;\n    КонецЦикла;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+        "output": "0"
+      }
+    },
+    {
+      "id": "wrong-reset",
+      "title": "Valid syntax, but the previous sum is lost",
+      "paragraphs": [
+        "The incorrect complete handler moves the reset into the body. Each addition first loses the previous result. Every iteration ends at15, so the final result is15 rather than45.",
+        "The first divergence occurs in the second iteration: the total should be15 before addition, but it has become0. You have found a specific lost transition; replacing the final line with a literal45 would hide the error."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Для Номер = 1 По 3 Цикл\n        ВсегоМинут = 0;\n        ВсегоМинут = ВсегоМинут + 15;\n    КонецЦикла;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры\n",
+        "output": "15"
+      },
+      "tables": [
+        {
+          "caption": "First divergence",
+          "columns": [
+            "Iteration",
+            "Correct before → after",
+            "Reset version before → after"
+          ],
+          "rows": [
+            [
+              "1",
+              "0 → 15",
+              "0 → 15"
+            ],
+            [
+              "2",
+              "15 → 30",
+              "0 → 15"
+            ],
+            [
+              "3",
+              "30 → 45",
+              "0 → 15"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "output-position",
+      "title": "The message location changes what you observe",
+      "paragraphs": [
+        "Moving Сообщить into the body displays intermediate15,30,45. Accumulation is unchanged, but the observable result is three messages rather than one final total.",
+        "Decide beforehand whether the task requires one final value or a trace. Merely including45 does not make the variants equivalent; message count and order are part of the requirement."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    ВсегоМинут = 0;\n    Для Номер = 1 По 3 Цикл\n        ВсегоМинут = ВсегоМинут + 15;\n        Сообщить(ВсегоМинут);\n    КонецЦикла;\nКонецПроцедуры\n",
+        "output": "15\n30\n45"
+      }
+    },
+    {
+      "id": "while-rule",
+      "title": "Пока needs an explicit state change",
+      "paragraphs": [
+        "Пока tests its condition before running the body. Unlike Для, it requires you to write the increment of Номер yourself. After the body, execution returns to the same test.",
+        "For a known integer N from0 to100, start with Номер=1 and increase it by1 each iteration. After finitely many iterations, Номер exceeds N and the test becomes false. Do not run the version without a counter change; fix its lack of termination first."
+      ]
+    },
+    {
+      "id": "loop-map",
+      "title": "The back edge returns to the test",
+      "paragraphs": [
+        "In the diagram, N abbreviates КоличествоЗаявок. The test has two paths: true enters the body; false goes directly to the final message. After incrementing the counter, the arrow returns to the test, not to initialization.",
+        "Trace N=0 without entering the body. Then trace N=4: the final test sees Номер=5. That test ends the loop; successful compilation does not explain it by itself."
+      ],
+      "flow": {
+        "kind": "while-cycle",
+        "caption": "Пока: test before the body and return to the same test",
+        "textLabel": "Loop paths in plain text",
+        "labels": {
+          "initial": "Номер = 1; Итог = 0",
+          "condition": "Номер ≤ N",
+          "body": "Итог = Итог + Номер",
+          "advance": "Номер = Номер + 1",
+          "result": "Сообщить(Итог)",
+          "end": "End",
+          "yes": "yes",
+          "no": "no"
+        },
+        "alternative": [
+          "N means КоличествоЗаявок. Before the first test, Номер=1 and Итог=0.",
+          "If Номер≤N, add the current number to the total, increase the number by1, and return to the test.",
+          "If the condition is false, skip the body, display the total once, and finish.",
+          "For N=0, the first test1≤0 is false: no additions, result0.",
+          "For N=4, after four additions Номер=5 and Итог=10; the test5≤4 is false."
+        ]
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now use a new rule: sum the current numbers",
+      "paragraphs": [
+        "Write a finite Пока that adds1, then2,3,4 for four requests. The result is10. Adding a constant15 solves a different task and gives60; copying the worked example without changing its meaning is insufficient.",
+        "Also check5 requests →15,0 →0, and1 →1. Reset the accumulator before the loop and change the counter inside it. Practice provides a separate TODO starter, control cases, your own work window, and a reference on request."
+      ]
+    },
+    {
+      "id": "continue",
+      "title": "Продолжить skips the rest of one iteration",
+      "paragraphs": [
+        "This separate finite example traverses1..5 but skips number3 before addition. The result is1+2+4+5=12. The loop continues with later values.",
+        "This flow-control comparison does not solve the independent task of summing all numbers. Later, Для Каждого will traverse collection elements; ordinary in-memory accumulation does not automatically read database documents."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Итог = 0;\n    Для Номер = 1 По 5 Цикл\n        Если Номер = 3 Тогда\n            Продолжить;\n        КонецЕсли;\n        Итог = Итог + Номер;\n    КонецЦикла;\n    Сообщить(Итог);\nКонецПроцедуры\n",
+        "output": "12"
+      }
+    },
+    {
+      "id": "break",
+      "title": "Прервать exits the entire loop",
+      "paragraphs": [
+        "Replace Продолжить with Прервать at the same location. At number3, the loop exits before addition. Only1 and2 have been counted, so the total is3;4 and5 are not processed.",
+        "Explain the difference between skipping one number and stopping processing. Both programs are finite and can run in your own training infobase; an infinite loop is unnecessary for checking the distinction."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Итог = 0;\n    Для Номер = 1 По 5 Цикл\n        Если Номер = 3 Тогда\n            Прервать;\n        КонецЕсли;\n        Итог = Итог + Номер;\n    КонецЦикла;\n    Сообщить(Итог);\nКонецПроцедуры\n",
+        "output": "3"
+      }
+    },
+    {
+      "id": "native-place",
+      "title": "Where the complete example belongs in 1C",
+      "paragraphs": [
+        "Open your training infobase's application module from the configuration root. The screenshot shows the complete worked handler with three additions. Save any previous exercise separately first.",
+        "For your independent work, keep one ПриНачалеРаботыСистемы and implement the new task inside it. Nexus can store a separate BSL draft; installed 1C executes it after saving and updating the infobase."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p2-loops-main-designer.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "f769da985e60671c7628e3dd4e149de1c0ecd189955980315291575e0c8f2940",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Complete training handler in the own NexusP2Module20261108 infobase. Location: Designer → configuration root → Открыть модуль приложения (Open application module).",
+          "caption": "Complete training handler in the own NexusP2Module20261108 infobase. Location: Designer → configuration root → Открыть модуль приложения (Open application module).",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "native-observation",
+      "title": "What a matching result establishes",
+      "paragraphs": [
+        "The separate training 1C checked the worked45, variations60 and0, incorrect reset15, independent totals10/15/0/1, and finite Прервать/Продолжить variants. The complete worked and independent handlers also produced45 and10 in the message window.",
+        "Matching these cases establishes observations for the exact sources and inputs. Check understanding through transition explanations and a changed case of your own; this experiment does not validate unknown input types or every possible program."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Replace По 3 with По 0 in the worked example. What do you observe?",
+      "options": [
+        "One0 message; the body did not run",
+        "One15 message",
+        "Three0 messages"
+      ],
+      "correct": 0,
+      "feedback": "The range1..0 is empty. The initial zero remains; the message after the loop runs once.",
+      "recall": "zero-case"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Where should a whole-loop accumulator be initialized?",
+      "options": [
+        "At the end of each iteration",
+        "Before the loop",
+        "After displaying the result"
+      ],
+      "correct": 1,
+      "feedback": "Resetting inside erases the preceding total.",
+      "recall": "wrong-reset"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does the main example produce with По 4 instead of По 3?",
+      "options": [
+        "15",
+        "45",
+        "60"
+      ],
+      "correct": 2,
+      "feedback": "Four additions of 15 total 60.",
+      "recall": "variation"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "How can the reset error be tested safely?",
+      "options": [
+        "A separate finite copy with trace 15 → 0 → 15",
+        "An infinite loop",
+        "Deleting the primary infobase"
+      ],
+      "correct": 0,
+      "feedback": "Use an observable finite counterexample without damaging primary work.",
+      "recall": "wrong-reset"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "In the new task, change only КоличествоЗаявок from4 to5. Which result and why?",
+      "options": [
+        "15: add the next current number5",
+        "75: always add15",
+        "5: the counter replaces the accumulator"
+      ],
+      "correct": 0,
+      "feedback": "After four iterations the total is10. The fifth adds5 to give15, a different rule from adding a constant15.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain one changed case in your own words: initial state, first important step, and difference from the worked example. What does the run establish, and what still needs an explanation?",
+      "feedback": "This answer is not graded automatically. Check your explanation against the trace and keep your own prediction separate from actual messages.",
+      "recall": "while-rule"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Your own sum of request numbers",
+    "task": "For a known integer КоличествоЗаявок from0 to100, write a finite Пока summing1…N. Require10 for4,15 for5,0 for0,1 for1. Display one final message. Explain what Итог preserves and why Номер changes.",
+    "environment": "Installed training 1C8.3, your separate infobase, and one application handler. Nexus stores separate work; 1C executes BSL.",
+    "externalRoute": "Own infobase → Designer → root → Открыть модуль приложения",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "МодульУправляемогоПриложения.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    КоличествоЗаявок = 4;\n    // TODO: initialize the accumulator and the starting number.\n    // TODO: write a finite Пока that adds the current number.\n    // TODO: display one total after the loop.\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    КоличествоЗаявок = 4;\n    Итог = 0;\n    Номер = 1;\n    Пока Номер <= КоличествоЗаявок Цикл\n        Итог = Итог + Номер;\n        Номер = Номер + 1;\n    КонецЦикла;\n    Сообщить(Итог);\nКонецПроцедуры\n",
+      "paragraphs": [
+        "You opened the reference on request. First compare initialization, addition of the current number, and counter changes with your version; viewing it does not replace your editor."
+      ]
+    },
+    "returnAnchor": "while-rule",
+    "cases": [
+      {
+        "label": "Four requests",
+        "input": "КоличествоЗаявок = 4;",
+        "output": "10"
+      },
+      {
+        "label": "Five requests",
+        "input": "КоличествоЗаявок = 5;",
+        "output": "15"
+      },
+      {
+        "label": "No requests",
+        "input": "КоличествоЗаявок = 0;",
+        "output": "0"
+      },
+      {
+        "label": "One request",
+        "input": "КоличествоЗаявок = 1;",
+        "output": "1"
+      }
+    ],
+    "criteria": [
+      "The four control inputs produce10,15,0,1; one message is displayed after the loop.",
+      "The accumulator is initialized once before the loop; the current number is added.",
+      "Each iteration changes the counter; the exit condition is explained. N=0 does not invent an iteration.",
+      "Your prediction, actual messages, and explanation of the first divergence in an incorrect version are recorded."
+    ],
+    "hint": "Trace Итог and Номер separately. Under the new rule, the total after two iterations is3 rather than30.",
+    "steps": [
+      {
+        "id": "predict",
+        "title": "Make your own prediction first",
+        "where": "Nexus → Practice → your separate draft and run note",
+        "action": "Before running, record a trace for4 and a separate path for0. Label Итог and Номер before every test.",
+        "why": "A prediction records the dependency you expect before you compare it with a fact.",
+        "expected": "Your expectations are recorded separately from the actual result."
+      },
+      {
+        "id": "open-module",
+        "title": "Open the correct location",
+        "where": "Own training infobase → Designer → configuration root → Открыть модуль приложения",
+        "action": "Save the previous training source separately. Open your own infobase's application module and keep one ПриНачалеРаботыСистемы handler.",
+        "why": "Work must run in a known training infobase, with a saved copy of the previous source.",
+        "expected": "The correct module is open; the previous version is saved."
+      },
+      {
+        "id": "write",
+        "title": "Implement your own version",
+        "where": "Designer → module editor → ПриНачалеРаботыСистемы",
+        "action": "Start with the TODO starter and complete it yourself. Viewing an example or reference does not replace your saved Nexus code.",
+        "why": "The independent program uses a new rule; the worked example does not solve it.",
+        "expected": "A complete independent handler has clear variables and one entry point."
+      },
+      {
+        "id": "run",
+        "title": "Check it in installed 1C",
+        "where": "Designer → Ctrl+S → F7 → F5 → 1C:Enterprise → Messages",
+        "action": "Save the module, update the database configuration, and start your own client. Record actual messages for each control input and compare them with your prediction.",
+        "why": "Installed 1C executes BSL; Nexus stores a learning draft and a result note.",
+        "expected": "Each case has an exact input and an observed actual output."
+      },
+      {
+        "id": "record",
+        "title": "Record the result",
+        "where": "Result recording → your BSL file and Nexus → external-run note",
+        "action": "Save the source, a prediction/fact/explanation table, and one changed case of your own. If results differ, find the first diverging step.",
+        "why": "The same final line does not establish correctness of every step or understanding.",
+        "expected": "Code, facts, and your own explanation remain separately available; completion is a self-report."
+      }
+    ]
+  },
+  "terms": [
+    "variable",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p2-loops.json",
+  "assessment": {
+    "contentRevision": "onec-p2-loops-author-v1",
+    "quiz": [
+      {
+        "question": "Replace По 3 with По 0 in the worked example. What do you observe?",
+        "options": [
+          "One0 message; the body did not run",
+          "One15 message",
+          "Three0 messages"
+        ],
+        "correct": 0,
+        "explanation": "The range1..0 is empty. The initial zero remains; the message after the loop runs once."
+      },
+      {
+        "question": "Where should a whole-loop accumulator be initialized?",
+        "options": [
+          "At the end of each iteration",
+          "Before the loop",
+          "After displaying the result"
+        ],
+        "correct": 1,
+        "explanation": "Resetting inside erases the preceding total."
+      },
+      {
+        "question": "What does the main example produce with По 4 instead of По 3?",
+        "options": [
+          "15",
+          "45",
+          "60"
+        ],
+        "correct": 2,
+        "explanation": "Four additions of 15 total 60."
+      },
+      {
+        "question": "How can the reset error be tested safely?",
+        "options": [
+          "A separate finite copy with trace 15 → 0 → 15",
+          "An infinite loop",
+          "Deleting the primary infobase"
+        ],
+        "correct": 0,
+        "explanation": "Use an observable finite counterexample without damaging primary work."
+      },
+      {
+        "question": "In the new task, change only КоличествоЗаявок from4 to5. Which result and why?",
+        "options": [
+          "15: add the next current number5",
+          "75: always add15",
+          "5: the counter replaces the accumulator"
+        ],
+        "correct": 0,
+        "explanation": "After four iterations the total is10. The fifth adds5 to give15, a different rule from adding a constant15."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-language-8327",
+      "title": "1C script: loops and primitive values",
+      "author": "1C Company",
+      "edition": "1C:Enterprise Developer Guide8.3.27",
+      "section": "Chapter4: loops, conditions, and primitive types",
+      "language": "English",
+      "purpose": "Look up the language constructs after your own work. The lesson explains everything required for the task.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p2.topic-4.en.json"
+}

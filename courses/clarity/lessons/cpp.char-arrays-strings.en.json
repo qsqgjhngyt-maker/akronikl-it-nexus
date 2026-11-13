@@ -1,0 +1,436 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b3-author-v1",
+  "id": "cpp.char-arrays-strings",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.structured-programming",
+  "course": "C++ programming",
+  "module": "Structured Programming",
+  "locale": "en",
+  "title": "Strings: bytes, terminators, and safe views",
+  "goal": "Distinguish bytes, the terminator and a non-owning slice, and state the units of a text report.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+    },
+    {
+      "text": "Follow the prerequisite links: cpp.two-dimensional-arrays. New constructs are introduced before the assignment."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Character arrays and C strings",
+      "paragraphs": [
+        "The three letters in cat occupy four array cells with the terminator. This storage size is not automatically the word’s length.",
+        "char word[4]{'c','a','t','\\0'} is a C string with three letters and a null terminator. char letters[3]{'c','a','t'} is a three-char array, but not a C string. Passing it to a function that searches for \\0 violates that function’s precondition.",
+        "The array size includes terminator storage; the text length before it does not. An embedded zero byte ends a C string before the buffer ends. Demonstrate the distinction with bounded valid examples, never by executing an unterminated read."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "std::string owns a sequence",
+      "paragraphs": [
+        "std::string tracks its own char count and may contain embedded \\0 data. size() counts chars, not visible letters. c_str() supplies a null-terminated compatibility buffer; do not retain its pointer across string mutation or owner destruction.",
+        "operator>> reads a whitespace-delimited token. getline reads a line without its terminating newline and retains internal spaces. Choose according to the format: a project name may contain spaces while a command code may be one ASCII token.",
+        "In the three-byte string a, 0, b, zero is inside the data. std::string stores its length separately and does not stop traversal at that byte."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Length and terminator",
+      "paragraphs": [
+        "Predict the array size, string length and numerical value of the middle byte."
+      ],
+      "prediction": [
+        "#include <iostream>\n#include <string>\nint main() {\n    char word[]{\"cat\"};\n    std::string text{\"a\\0b\", 3};\n    std::cout << sizeof(word) << ' ' << text.size() << ' ' << static_cast<int>(text[1]) << '\\n';\n}\n"
+      ],
+      "predictionInput": "",
+      "predictionBundle": {},
+      "reveal": {
+        "title": "Reveal output and trace execution",
+        "paragraphs": [
+          "The first two numbers refer to different types: array size and string length. The third shows a null byte inside the string."
+        ],
+        "tables": [
+          {
+            "caption": "Trace for this run",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "What to check"
+            ],
+            "rows": [
+              [
+                "Array",
+                "\"cat\"",
+                "4",
+                "Three letters plus the null terminator."
+              ],
+              [
+                "string owner",
+                "a, 0, b",
+                "size = 3",
+                "Construction specifies the length."
+              ],
+              [
+                "Middle byte",
+                "text[1]",
+                "0",
+                "Zero is stored as data."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <string>\nint main() {\n    char word[]{\"cat\"};\n    std::string text{\"a\\0b\", 3};\n    std::cout << sizeof(word) << ' ' << text.size() << ' ' << static_cast<int>(text[1]) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "4 3 0\n"
+        }
+      }
+    },
+    {
+      "id": "concept-3",
+      "title": "ASCII and UTF-8",
+      "paragraphs": [
+        "In UTF-8 one code point can occupy several bytes. Four Cyrillic letters commonly occupy eight bytes, while a perceived character may itself contain several code points. size() promises neither code-point nor grapheme count.",
+        "The lab classifies only ASCII A…Z, a…z, 0…9, and ordinary space. Other bytes count as other without modifying the original string. This is an explicit limited contract, not Unicode normalization or collation.",
+        "In UTF-8, é occupies two bytes. An ASCII classifier counts both bytes as other; it makes no claim about the number of letters on screen."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "string_view does not own",
+      "paragraphs": [
+        "std::string_view from <string_view> holds a pointer and a length into another object’s text. It is convenient for read-only parameters but does not extend a std::string’s lifetime. A view’s substr creates another view; converting to std::string creates an owned copy.",
+        "A view need not end in \\0. Do not pass view.data() to a C-string API without proving termination. Never return a view into a local string or mutate an owner in a way that may relocate its buffer while the view is in use.",
+        "In key=value, the right-hand view refers to the characters after '='. While the owner is alive and its storage is unchanged, reading does not require a copy."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A view with a live owner",
+      "paragraphs": [
+        "Locate '=' in key=value. Trace the positions that form the two slices."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <string>\n#include <string_view>\nint main() {\n    std::string owner{\"key=value\"};\n    std::string_view view{owner};\n    auto position = view.find('=');\n    if (position == std::string_view::npos) { std::cout << \"missing\\n\"; return 0; }\n    std::cout << view.substr(0, position) << '|' << view.substr(position + 1) << '\\n';\n}\n",
+        "stdin": "",
+        "output": "key|value\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Search, emptiness, and byte classes",
+      "paragraphs": [
+        "find returns a position or std::string::npos. Check the result and bounds before substr because the current runtime does not support exceptions. An empty line may be valid under the format; it differs from a failed getline with no line available.",
+        "For <cctype>, pass a value representable as unsigned char or EOF; a negative char is invalid. Direct unsigned-char comparisons against ASCII boundaries avoid locale-dependent classification here. An individual UTF-8 byte must not be edited as though it were a whole letter.",
+        "A missing '=' gives npos. Check it before adding 1 or taking the right-hand slice."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Text-interface tests",
+      "paragraphs": [
+        "Test an empty line, spaces only, mixed letters and digits, internal spaces, and UTF-8. The lab limit is 200 bytes. Input must contain exactly one line; a second line, even empty, is extra data.",
+        "Preserve the original bytes and expected categories without claiming to count human-perceived characters. Next, a struct will group text, numbers, and status into one record without mixing their meanings.",
+        "One empty line differs from no line. In the first case getline obtains a record of length 0; in the second no record is extracted."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Build an ASCII report in which each byte belongs to exactly one of four classes. Length is measured in bytes.",
+        "Label A, b, space, 1, 2 and !. Predict separately what happens with é."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the program print for the cat array and the string a, 0, b?",
+      "options": [
+        "4 3 0\n",
+        "3 1 0\n",
+        "4 3 1\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Yes. The terminator is part of the array, and the string holds all three bytes.",
+        "sizeof includes the terminator, and the string is not truncated by the internal zero.",
+        "The byte value is printed, not its index."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <string>\nint main() {\n    char word[]{\"cat\"};\n    std::string text{\"a\\0b\", 3};\n    std::cout << sizeof(word) << ' ' << text.size() << ' ' << static_cast<int>(text[1]) << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <string>\nint main() {\n    char word[]{\"cat\"};\n    std::string text{\"a\\0b\", 3};\n    std::cout << sizeof(word) << ' ' << text.size() << ' ' << static_cast<int>(text[1]) << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "4 3 0\n"
+      },
+      "recall": "example-1"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does size() count in a UTF-8 std::string?",
+      "options": [
+        "char elements, meaning bytes on the 8-bit-char target",
+        "Words",
+        "Always visible letters"
+      ],
+      "correct": 0,
+      "feedback": "Code points and graphemes require a separate algorithm.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Must string_view be null-terminated?",
+      "options": [
+        "Only after find",
+        "Yes",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "A view has a length, not a termination guarantee.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Are an empty line and no line equivalent?",
+      "options": [
+        "Yes",
+        "No; getline distinguishes them",
+        "Only for ASCII"
+      ],
+      "correct": 1,
+      "feedback": "An empty line can be read successfully.",
+      "recall": "concept-6"
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "What does npos after find mean?",
+      "options": [
+        "No match was found",
+        "The beginning of the string",
+        "The last valid index"
+      ],
+      "correct": 0,
+      "feedback": "Check the result before calculating a substring.",
+      "recall": "concept-5"
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What is needed to accept this lab?",
+      "options": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correct": 2,
+      "feedback": "A progress flag is not evidence of independent mastery.",
+      "recall": "concept-6"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why does é contribute two other bytes under this contract? What would change in the tests if Unicode letters had to be counted?",
+      "feedback": "A blank line is represented by a newline. Do not treat UTF-8 byte length as a letter count.",
+      "recall": "concept-5"
+    }
+  ],
+  "practice": {
+    "title": "One-line byte report",
+    "task": "Read one line of at most 200 bytes. Print bytes letters digits spaces other using ASCII classes; an empty line is valid, but no line or a second line is invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string line;\n    if (!std::getline(std::cin, line) || line.size() > 200) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::string extra;\n    if (std::getline(std::cin, extra)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int letters{}, digits{}, spaces{}, other{};\n    for (unsigned char byte : line) {\n        // TODO: count byte in exactly one of the four ASCII categories.\n    }\n    std::cout << line.size() << ' ' << letters << ' ' << digits\n              << ' ' << spaces << ' ' << other << '\\n';\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "Ab 12!\n",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Letters, digits, a space and a sign",
+        "input": "Ab 12!\n",
+        "output": "6 2 2 1 1\n"
+      },
+      {
+        "label": "One blank line",
+        "input": "\n",
+        "output": "0 0 0 0 0\n"
+      },
+      {
+        "label": "No line",
+        "input": "",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Two spaces",
+        "input": "  \n",
+        "output": "2 0 0 2 0\n"
+      },
+      {
+        "label": "Two UTF-8 bytes",
+        "input": "é\n",
+        "output": "2 0 0 0 2\n"
+      },
+      {
+        "label": "Two records",
+        "input": "one\ntwo",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Extra blank record",
+        "input": "a\n\n",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "The sum of letters, digits, spaces and other must equal bytes. Compare a blank line with absent input and test UTF-8.",
+      "Byte length and perceived-text length are different contracts.",
+      "Do not retain string_view into a temporary string. Do not call isalpha with a potentially negative char.",
+      "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+      "Keep the source, exact input and observed output."
+    ],
+    "hint": "A blank line is represented by a newline. Do not treat UTF-8 byte length as a letter count.",
+    "steps": [
+      {
+        "where": "Before running",
+        "action": "Label A, b, space, 1, 2 and !. Predict separately what happens with é.",
+        "why": "Each byte is classified, so the four counts must sum to the length.",
+        "expected": "Ab 12! contains 2 letters, 2 digits, 1 space and 1 other byte."
+      },
+      {
+        "where": "My program",
+        "action": "Allow an empty line and reject no record, an overlong line or a second line. Compare bytes against ASCII ranges.",
+        "why": "getline distinguishes a zero-length record from no record.",
+        "expected": "The starter prints 6 0 0 0 0; classification gives 6 2 2 1 1."
+      },
+      {
+        "where": "Check",
+        "action": "The sum of letters, digits, spaces and other must equal bytes. Compare a blank line with absent input and test UTF-8.",
+        "why": "A multibyte character tests the report’s unit of measurement.",
+        "expected": "A blank line gives five zeroes. An absent line is rejected, and é gives 2 other bytes."
+      }
+    ],
+    "recall": "concept-5",
+    "outputFields": [
+      "Bytes",
+      "ASCII letters",
+      "Digits",
+      "Spaces",
+      "Other bytes"
+    ],
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "6 0 0 0 0\n",
+      "exitCode": 0
+    }
+  },
+  "terms": [
+    {
+      "term": "Terminator",
+      "definition": "the zero char marking the end of a C string."
+    },
+    {
+      "term": "string_view",
+      "definition": "a non-owning char sequence with a length."
+    },
+    {
+      "term": "UTF-8",
+      "definition": "encoding code points using variable-length byte sequences."
+    },
+    {
+      "term": "Code point",
+      "definition": "a numeric position in the Unicode code space."
+    },
+    {
+      "term": "Grapheme",
+      "definition": "a perceived text unit, sometimes containing multiple code points."
+    },
+    {
+      "term": "npos",
+      "definition": "a special no-position value returned by search."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-STRING",
+    "CPP20-STRINGVIEW"
+  ],
+  "extras": {
+    "lessonId": "cpp.char-arrays-strings",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Stepwise map: Strings: bytes, terminators, and safe views",
+      "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+      "steps": [
+        {
+          "title": "Character arrays and C strings",
+          "description": "char word[4]{'c','a','t','\\0'} is a C string with three letters and a null terminator. char letters[3]{'c','a','t'} is a three-char array, but not a C string. Passing it to a function that searches for \\0 violates that function’s precondition."
+        },
+        {
+          "title": "std::string owns a sequence",
+          "description": "std::string tracks its own char count and may contain embedded \\0 data. size() counts chars, not visible letters. c_str() supplies a null-terminated compatibility buffer; do not retain its pointer across string mutation or owner destruction."
+        },
+        {
+          "title": "ASCII and UTF-8",
+          "description": "In UTF-8 one code point can occupy several bytes. Four Cyrillic letters commonly occupy eight bytes, while a perceived character may itself contain several code points. size() promises neither code-point nor grapheme count."
+        },
+        {
+          "title": "string_view does not own",
+          "description": "std::string_view from <string_view> holds a pointer and a length into another object’s text. It is convenient for read-only parameters but does not extend a std::string’s lifetime. A view’s substr creates another view; converting to std::string creates an owned copy."
+        },
+        {
+          "title": "Search, emptiness, and byte classes",
+          "description": "find returns a position or std::string::npos. Check the result and bounds before substr because the current runtime does not support exceptions. An empty line may be valid under the format; it differs from a failed getline with no line available."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-STRING",
+      "CPP20-STRINGVIEW"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\structured\\char-arrays-strings.en.json",
+  "reading": [
+    {
+      "id": "cpp20-string",
+      "title": "C++20 [basic.string]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[basic.string]",
+      "language": "English",
+      "purpose": "Find how string stores length and exposes its sequence.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.string"
+    },
+    {
+      "id": "cpp20-stringview",
+      "title": "C++20 [string.view]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[string.view]",
+      "language": "English",
+      "purpose": "Check find and substr and the non-owning nature of string_view.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/string.view"
+    }
+  ],
+  "authored": true
+}

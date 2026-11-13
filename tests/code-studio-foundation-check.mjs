@@ -16,9 +16,10 @@ assert(sandbox.includes('diagnostic-jump'),'Detailed diagnostics are not clickab
 assert(sandbox.includes('codeStudio?.setStaticDiagnostics'),'Static analysis is not connected to Problems');
 
 const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
-assert(app.includes("codeStudioMarkup"),'Lesson UI does not render Code Studio');
-assert(app.includes("bindCodeStudio"),'Lesson UI does not bind Code Studio');
-assert(app.includes("codeStudio:studio"),'Sandbox controller is not connected to Code Studio');
+const views=fs.readFileSync(new URL('../core/learning-views.js',import.meta.url),'utf8'),learning=fs.readFileSync(new URL('../core/cpp-clarity-r3-session.mjs',import.meta.url),'utf8');
+assert(app.includes('createLearningViews')&&views.includes('codeStudioMarkup'),'Lesson UI does not render Code Studio');
+assert(app.includes('bindLegacyLearning')&&learning.includes('bindCodeStudio'),'Lesson UI does not bind Code Studio');
+assert(learning.includes("codeStudio:studio"),'Sandbox controller is not connected to Code Studio');
 
 const workspace=createCodeWorkspace({languageId:'cpp',entryFile:'main.cpp',files:[{path:'main.cpp',content:'int main(){}'}]});
 assert(workspace.getFile('main.cpp')?.content==='int main(){}','Workspace entry file failed');

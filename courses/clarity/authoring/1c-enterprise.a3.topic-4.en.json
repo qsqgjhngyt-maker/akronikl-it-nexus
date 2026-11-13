@@ -1,0 +1,538 @@
+{
+  "schemaVersion": 1,
+  "block": "ENTERPRISE-A3",
+  "id": "1c-enterprise.a3.topic-4",
+  "locale": "en",
+  "revision": "enterprise-a3-topic-4-author-v1",
+  "source": {
+    "path": "courses/1c-enterprise/lessons/en/a3-reports.json",
+    "sha256": "5dd0de1e85fc71cffd77a43c94e2723cabeb3b40c9fe09d14088c6aafa31cc58"
+  },
+  "title": "Customer report: turn source documents into a verifiable total",
+  "goal": "Generate the prepared report in your training infobase, reconcile counts and minutes with source requests and explain a customer filter.",
+  "prerequisites": [
+    {
+      "text": "1c-enterprise.a 2; A1–A2: separate infobase, catalogs, references and documents; synthetic data only.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "From a familiar situation to a checkable question",
+      "paragraphs": [
+        "Your paper says 120 minutes; the report says 105. Who is wrong? First ask which requests are included. North correctly gives 105; the complete control set requires 120. Explain a report through original numbers and parameters, not a green mark."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Where to act",
+      "paragraphs": [
+        "Work in the installed training service. Nexus stores the lesson and your note, but does not change the external infobase. Give report control its own separate practice with the four specified requests; 0/1440 probes and earlier 20/55 must not silently enter its total. Preserve earlier infobases. The ready-made report requires no BSL."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "A report reads documents without replacing them",
+      "paragraphs": [
+        "The training package includes Заявки по клиентам. It reads ЗаявкаУслуги documents, excludes deletion-marked records and groups by customer reference. Количество counts included requests; Минуты sums ДлительностьМинут. Generating a report writes no request documents. A report row is not another document.",
+        "This simple variant has no period or status restriction: all non-deletion-marked requests are included, including Новая. Do not import assumptions from another application. A universal report is not automatically present in every empty infobase; this is a specific report supplied with our original training package."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "Reason before acting",
+      "paragraphs": [
+        "Calculate from documents before generating three views without changing data.",
+        "Identify the infobase, list and particular record separately. A command, visible text and saved state are different things."
+      ],
+      "code": {
+        "language": "text",
+        "source": "First customer: 30 + 45 + 30 = 105 minutes, 3 requests.\nSecond: 15 minutes, 1 request.\nOverall: 105 + 15 = 120 minutes, 4 requests.\n\nNexusTrainingServiceDeskReportsV2.cf"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "Example beside its observation",
+      "paragraphs": [
+        "Calculate from documents before generating three views without changing data."
+      ],
+      "code": {
+        "language": "text",
+        "source": "First customer: 30 + 45 + 30 = 105 minutes, 3 requests.\nSecond: 15 minutes, 1 request.\nOverall: 105 + 15 = 120 minutes, 4 requests.\n\nNexusTrainingServiceDeskReportsV2.cf",
+        "output": "The service’s actual existing data composition schema runs on four own requests:unfiltered 4/120, North’s reference 3/105, then 4/120 after clearing. These are not totals substituted from lesson prose."
+      },
+      "tables": [
+        {
+          "caption": "Four requests, two customers and one overall total",
+          "columns": [
+            "Step / condition",
+            "Observation",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Sources",
+              "First: 30, 45, 30; second: 15",
+              "Four distinct numbers."
+            ],
+            [
+              "All customers",
+              "3+1 and 105+15",
+              "4 requests, 120 minutes."
+            ],
+            [
+              "First customer",
+              "30+45+30",
+              "3 requests, 105 minutes."
+            ],
+            [
+              "Restriction disabled",
+              "Regenerate",
+              "4 requests, 120 minutes again."
+            ]
+          ]
+        },
+        {
+          "caption": "Equal sums with different documents",
+          "columns": [
+            "Step / condition",
+            "Observation",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Sum",
+              "Both sets yield 75",
+              "Arithmetic cannot distinguish composition."
+            ],
+            [
+              "Numbers and scope",
+              "Inspect source documents",
+              "A different set is revealed."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Prepare the control before generating",
+      "paragraphs": [
+        "From the previous lesson record each actual number, customer and duration. The sequential dataset has Учебный Север — ремонт with 30, 45 and 30 minutes and Учебный Юг with 15. Expected totals: first customer 3 and 105; second 1 and 15; overall 4 and 120. Include additional requests you created rather than deleting them to match an illustration.",
+        "Derive the control from the primary list and opened documents, not a copy of the report under test. Equal sums do not prove equal composition: 30+45 and 15+60 both yield 75 but represent different requests. Check count, customer reference, numbers and units together."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Predict the result",
+      "paragraphs": [
+        "You change Customer in parameters without regenerating the report. May you treat the old total as a new result?"
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. Selected parameters and the displayed result are different states. Generate again and compare with the independent total of exactly the selected requests. Saved documents are not rewritten."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Parameters and a fresh result are separate states",
+      "paragraphs": [
+        "Open Учебная сервисная служба → Отчёты → Заявки по клиентам. Disable the Клиент checkbox and choose Сформировать. After changing its value or checkbox, choose Сформировать again: the previous result can remain visible until regeneration.",
+        "For the customer restriction enable Клиент and select the existing Учебный Север — ремонт catalog item. It is a reference to an item, not a search for similar text. Equally named items may have different codes and separate totals. Do not create another customer merely to filter the report."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Context and transitions",
+      "paragraphs": [
+        "Read the path and explain what changes at each step. The diagram does not operate the external application."
+      ],
+      "flow": {
+        "caption": "Explore the example: Four requests, two customers and one overall total",
+        "nodes": [
+          {
+            "title": "Sources",
+            "lines": [
+              "First: 30, 45, 30; second: 15 → Four distinct numbers."
+            ]
+          },
+          {
+            "title": "All customers",
+            "lines": [
+              "3+1 and 105+15 → 4 requests, 120 minutes."
+            ]
+          },
+          {
+            "title": "First customer",
+            "lines": [
+              "30+45+30 → 3 requests, 105 minutes."
+            ]
+          },
+          {
+            "title": "Restriction disabled",
+            "lines": [
+              "Regenerate → 4 requests, 120 minutes again."
+            ]
+          }
+        ],
+        "alternative": [
+          "Sources: First: 30, 45, 30; second: 15 → Four distinct numbers.",
+          "All customers: 3+1 and 105+15 → 4 requests, 120 minutes.",
+          "First customer: 30+45+30 → 3 requests, 105 minutes.",
+          "Restriction disabled: Regenerate → 4 requests, 120 minutes again."
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "Check the explanation’s boundary",
+      "paragraphs": [
+        "Select the second customer: expect 1/15 rather than an error or lost first-customer data; disable to restore the full set.",
+        "Compare scope and selected reference first; 15 may belong to another customer."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Why 120 and 105 can both be correct",
+      "paragraphs": [
+        "The overall report includes four requests and 120 minutes. The first-customer restriction includes three and 105. The difference of 15 belongs to the second customer; it is a change of scope, not lost data. Disabling the checkbox and regenerating should restore 4 and 120 without editing documents.",
+        "When results disagree, compare scope before composition. Check Клиент, the selected item and regeneration. In the primary list clear your restrictions and compare numbers, minutes and deletion marks. Do not change data to obtain an attractive total or remove other deletion marks: retain the discrepancy and identify the included or omitted request."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new independent task",
+      "paragraphs": [
+        "In your separate practice with East 20/55/40, West 45 calculate totals before running the report. Generate “Requests by customer” without a filter, then only for East’s reference; remove the condition and generate again. Record parameters, the four numbers and three results. Preserve earlier sets and saved results; if additional requests appear, first verify the infobase and set membership.",
+        "Record a prediction first. After your own attempt reveal the reference and compare the selected record as well as its number."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Actual training-service window",
+      "paragraphs": [
+        "The author uses three new separate training infobases:control 4/120, a new 4/160 set and input validation. The actual report DCS and ordering/filter queries run; records are compared after restarting. Three GUI captures show only their labelled states. Complete manual form entry, every list setting, installer, permissions and learner actions are NOT RUN."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/a3-report-total-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "83ca4a621c8adc6bcf39968771b0259c62079ef34ce551d3abd8b5fe4a8168f6",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "The actual service report on the control set:North 105, South 15, total 120. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
+          "caption": "The actual service report on the control set:North 105, South 15, total 120. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "When the report command is absent",
+      "paragraphs": [
+        "First check that you opened the same infobase used for earlier labs. The current prepared package already includes the report, so loading another configuration over your work is unnecessary. An earlier package may lack it. In that case use the additional copy-update route below while retaining the original infobase separately.",
+        "That route applies to the unchanged Nexus training structure when only data was added. Loading a full .cf over your custom objects or code can replace that development: stop, preserve the base and review merging separately. A .cf contains configuration structure and training code, not a backup of your documents. A .dt export contains the infobase configuration and data."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "What constitutes the lab result",
+      "paragraphs": [
+        "Keep your control table, the parameters of three generations and observations: all → first customer → all. Reopen one earlier request by number and verify its customer and minutes. Illustrations use synthetic Учебный клиент А and Б from a separate test; your names, dates and numbers can differ.",
+        "Nexus can store your self-reported completion and a safe result description. That is not a server-side BSL verdict or proof of authorship. This lab runs in installed 1C; Studio, source transfer and Windows Sandbox are unnecessary."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Optional: preserve an earlier package in a separate copy",
+      "paragraphs": [
+        "Use this section only when the report is absent and your infobase has the earlier unchanged Nexus training structure. If you added objects or changed configuration code, do not load a full .cf: preserve a .dt and review merging separately. The normal current-package workflow needs none of these steps.",
+        "1. Close this infobase’s Enterprise window. Select the original training infobase in the launcher and open Конфигуратор. Choose Администрирование → Выгрузить информационную базу…, save a clearly named .dt backup in a separate folder and wait for successful completion. Do not continue after a failed export. Close Designer.",
+        "2. In the launcher choose Добавить → create a new infobase → without configuration. Give it a distinct name, such as My service — report copy, and a new separate folder. Open Designer for the NEW base, verify its identity and choose Администрирование → Загрузить информационную базу… using your .dt. Restoration replaces its target, so that target must be only the new empty copy. Retain the original launcher entry."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "Optional: add the report only to that prepared copy",
+      "paragraphs": [
+        "3. Open the restored new copy in Enterprise and compare previous numbers and fields with your control table. Stop and return to the original when they differ; do not edit documents to hide a mismatch. Close Enterprise.",
+        "4. Expand the Nexus lab instructions and download the service CF (full filename beside the example). Open Designer for the restored NEW copy. Choose Конфигурация → Загрузить конфигурацию из файла… and select that .cf. This is a full load for the known unchanged training structure, not an automatic merge of custom development. Save the configuration and update the database configuration (F7). Review changes; stop on unexpected object or data deletion.",
+        "5. After a successful update, open the copy in Enterprise. Verify previous numbers, customers, minutes and comments; then open Отчёты → Заявки по клиентам and follow the main lab route. Retain the original base and .dt as separate return points. An automated check covers this unchanged package on 8.3.27.2214 with four synthetic requests; it makes no arbitrary-configuration upgrade claim."
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What the result establishes",
+      "paragraphs": [
+        "The author uses three new separate training infobases:control 4/120, a new 4/160 set and input validation. The actual report DCS and ordering/filter queries run; records are compared after restarting. Three GUI captures show only their labelled states. Complete manual form entry, every list setting, installer, permissions and learner actions are NOT RUN.",
+        "Technical checks do not assess understanding. Distinguish your observations from unperformed steps. Training names, numbers and comments are fictional; no work data is required."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "You change Customer in parameters without regenerating the report. May you treat the old total as a new result?",
+      "options": [
+        "No: generate again",
+        "Yes: the parameter rewrites the display",
+        "Yes: the old total is already new"
+      ],
+      "correct": 0,
+      "feedback": "No. Selected parameters and the displayed result are different states. Generate again and compare with the independent total of exactly the selected requests. Saved documents are not rewritten.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Which action refreshes the table after changing the customer?",
+      "options": [
+        "Сформировать",
+        "Rewrite a request",
+        "Close Nexus"
+      ],
+      "correct": 0,
+      "feedback": "Regenerate to apply the parameters.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What is the overall result for 30, 45, 30 and 15?",
+      "options": [
+        "3 and 105",
+        "4 and 120",
+        "4 and 105"
+      ],
+      "correct": 1,
+      "feedback": "Four distinct documents total 120 minutes.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Which file is a complete infobase export with data?",
+      "options": [
+        ".bsl",
+        ".cf",
+        ".dt"
+      ],
+      "correct": 2,
+      "feedback": "A .dt includes configuration and data; .cf does not replace that backup.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "East 3/115, West 1/45. Overall result?",
+      "options": [
+        "Four requests 160 minutes",
+        "Four requests 115 minutes",
+        "Two requests 160 minutes"
+      ],
+      "correct": 0,
+      "feedback": "Before reporting:East 20+55+40=115 minutes, 3 requests; West 45 minutes, 1 request; total 160 minutes, 4 requests. Generate without a filter:4/160; by East’s reference:3/115; remove it and regenerate:4/160 again. Label numbers as count and minutes. An old result remaining after a parameter change is not a new calculation. The reference explains checking; record your own numbers, parameters and actual observations separately.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How did you distinguish the selected record, unsaved input and saved result? Give your own observation and the check’s limit.",
+      "feedback": "This free response is not graded automatically. Compare it with actual fields in your own infobase.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Customer report: turn source documents into a verifiable total",
+    "task": "In your separate practice with East 20/55/40, West 45 calculate totals before running the report. Generate “Requests by customer” without a filter, then only for East’s reference; remove the condition and generate again. Record parameters, the four numbers and three results. Preserve earlier sets and saved results; if additional requests appear, first verify the infobase and set membership.",
+    "environment": "Official installed training 1C and your continuing infobase; no code editing.",
+    "externalRoute": "Enterprise → Учебная сервисная служба → Отчёты → Заявки по клиентам",
+    "setupGuide": true,
+    "files": [],
+    "referenceSolution": {
+      "language": "text",
+      "source": "Before reporting:East 20+55+40=115 minutes, 3 requests; West 45 minutes, 1 request; total 160 minutes, 4 requests. Generate without a filter:4/160; by East’s reference:3/115; remove it and regenerate:4/160 again. Label numbers as count and minutes. An old result remaining after a parameter change is not a new calculation. The reference explains checking; record your own numbers, parameters and actual observations separately.",
+      "files": {
+        "Observation.txt": "Before reporting:East 20+55+40=115 minutes, 3 requests; West 45 minutes, 1 request; total 160 minutes, 4 requests. Generate without a filter:4/160; by East’s reference:3/115; remove it and regenerate:4/160 again. Label numbers as count and minutes. An old result remaining after a parameter change is not a new calculation. The reference explains checking; record your own numbers, parameters and actual observations separately."
+      },
+      "paragraphs": [
+        "This is a reasoning reference, not an automatic completion certificate. Opening it does not replace your note."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent work",
+        "input": "In your separate practice with East 20/55/40, West 45 calculate totals before running the report. Generate “Requests by customer” without a filter, then only for East’s reference; remove the condition and generate again. Record parameters, the four numbers and three results. Preserve earlier sets and saved results; if additional requests appear, first verify the infobase and set membership.",
+        "output": "Before reporting:East 20+55+40=115 minutes, 3 requests; West 45 minutes, 1 request; total 160 minutes, 4 requests. Generate without a filter:4/160; by East’s reference:3/115; remove it and regenerate:4/160 again. Label numbers as count and minutes. An old result remaining after a parameter change is not a new calculation. The reference explains checking; record your own numbers, parameters and actual observations separately."
+      }
+    ],
+    "criteria": [
+      "Name the own infobase, exact records and observations after reopening.",
+      "The new task preserves the worked example; only intended fields change.",
+      "An expected refusal is not reported as a successful save; unperformed steps are explicit."
+    ],
+    "hint": "No. Selected parameters and the displayed result are different states. Generate again and compare with the independent total of exactly the selected requests. Saved documents are not rewritten.",
+    "steps": [
+      {
+        "id": "own-1",
+        "title": "Independent calculation",
+        "where": "Own four requests",
+        "action": "List numbers, customers and minutes; calculate East 115, West 45, total 160.",
+        "why": "Check a particular saved state.",
+        "expected": "Expected 4/160 and 3/115 are recorded before reporting."
+      },
+      {
+        "id": "own-2",
+        "title": "Generate unfiltered",
+        "where": "Requests by customer",
+        "action": "Disable the customer filter and generate. Compare details and total with the four numbers.",
+        "why": "Check a particular saved state.",
+        "expected": "Count 4, minutes 160."
+      },
+      {
+        "id": "own-3",
+        "title": "East reference",
+        "where": "The same report’s parameters",
+        "action": "Enable the filter for your East card and generate again.",
+        "why": "Check a particular saved state.",
+        "expected": "Count 3, minutes 115; West remains outside the selection."
+      },
+      {
+        "id": "own-4",
+        "title": "Restore and explain",
+        "where": "The same report; Nexus",
+        "action": "Remove the filter, regenerate and explain 160→115→160 through the original documents.",
+        "why": "Check a particular saved state.",
+        "expected": "4/160 again; data is unchanged."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Catalogs, documents and forms",
+      "language": "English",
+      "purpose": "Optional clarification after your attempt; required steps are provided in the lesson.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "A report reads documents without replacing them",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Prepare the control before generating",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Parameters and a fresh result are separate states",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Why 120 and 105 can both be correct",
+      "anchor": "concept-3"
+    },
+    {
+      "sourceTitle": "When the report command is absent",
+      "anchor": "concept-4"
+    },
+    {
+      "sourceTitle": "What constitutes the lab result",
+      "anchor": "concept-5"
+    },
+    {
+      "sourceTitle": "Optional: preserve an earlier package in a separate copy",
+      "anchor": "concept-6"
+    },
+    {
+      "sourceTitle": "Optional: add the report only to that prepared copy",
+      "anchor": "concept-7"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "enterprise-a3-topic-4-author-v1",
+    "quiz": [
+      {
+        "question": "You change Customer in parameters without regenerating the report. May you treat the old total as a new result?",
+        "options": [
+          "No: generate again",
+          "Yes: the parameter rewrites the display",
+          "Yes: the old total is already new"
+        ],
+        "correct": 0,
+        "explanation": "No. Selected parameters and the displayed result are different states. Generate again and compare with the independent total of exactly the selected requests. Saved documents are not rewritten."
+      },
+      {
+        "question": "Which action refreshes the table after changing the customer?",
+        "options": [
+          "Сформировать",
+          "Rewrite a request",
+          "Close Nexus"
+        ],
+        "correct": 0,
+        "explanation": "Regenerate to apply the parameters."
+      },
+      {
+        "question": "What is the overall result for 30, 45, 30 and 15?",
+        "options": [
+          "3 and 105",
+          "4 and 120",
+          "4 and 105"
+        ],
+        "correct": 1,
+        "explanation": "Four distinct documents total 120 minutes."
+      },
+      {
+        "question": "Which file is a complete infobase export with data?",
+        "options": [
+          ".bsl",
+          ".cf",
+          ".dt"
+        ],
+        "correct": 2,
+        "explanation": "A .dt includes configuration and data; .cf does not replace that backup."
+      },
+      {
+        "question": "East 3/115, West 1/45. Overall result?",
+        "options": [
+          "Four requests 160 minutes",
+          "Four requests 115 minutes",
+          "Two requests 160 minutes"
+        ],
+        "correct": 0,
+        "explanation": "Before reporting:East 20+55+40=115 minutes, 3 requests; West 45 minutes, 1 request; total 160 minutes, 4 requests. Generate without a filter:4/160; by East’s reference:3/115; remove it and regenerate:4/160 again. Label numbers as count and minutes. An old result remaining after a parameter change is not a new calculation. The reference explains checking; record your own numbers, parameters and actual observations separately."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS / OWN TRAINING RECORDS",
+    "platformVersion": "8.3.27.2214",
+    "scope": "The author uses three new separate training infobases:control 4/120, a new 4/160 set and input validation. The actual report DCS and ordering/filter queries run; records are compared after restarting. Three GUI captures show only their labelled states. Complete manual form entry, every list setting, installer, permissions and learner actions are NOT RUN.",
+    "cases": [
+      "report-total"
+    ],
+    "studentAuthorshipVerified": false
+  }
+}

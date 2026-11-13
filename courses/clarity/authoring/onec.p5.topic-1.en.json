@@ -1,0 +1,494 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P5",
+  "id": "onec.p5.topic-1",
+  "locale": "en",
+  "revision": "onec-p5-topic-1-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p5-lifecycle.json",
+    "sha256": "0bf129f802934c453cb4a6f6a9845cc8b292355da929ac5f5eb8e9569fbb507b"
+  },
+  "title": "Same request, new state: from draft to saved record",
+  "goal": "Create and write an own request, then update the same document while checking reference, duration and status.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P4. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "You edited a request, but reopening still shows the old minutes. Did the change stop in memory, during saving, or afterwards? Follow one reference from an unsaved draft to a second fresh read.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Documents have state",
+      "paragraphs": [
+        "A new object exists in memory before its first write. A written document has persisted fields and identity. A posted document additionally passed its configured accounting processing. Deletion marking is not physical deletion. Define commands and invariants for each state rather than treating UI as the lifecycle model.",
+        "The full function creates its own customer/service and a new request object. Its reference is empty before writing. Filling fields and calling Записать persists a 30-minute Новая request. Rereading through the reference tests database state; the current variable value alone does not."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Prepare the experiment while retaining P4",
+      "paragraphs": [
+        "Continue your own P4 copy after preserving its DT and sources. Do not load a full configuration over prior work. If using the supplied training template, load service-desk-documents-v2 into a new separate infobase and distinguish it from your continuing work.",
+        "ЗаявкаУслуги needs Клиент, Услуга, Статус, ДлительностьМинут and Комментарий. ПередЗаписью must refuse missing customer/service/status and minutes outside 0…1440. Review the existing handler first; do not create another procedure of the same name.",
+        "Keep the existing УчебныеДанные common module. Append the new function outside existing definitions; the application calls it once. Posting is not required for these observations."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ОпытЖизненногоЦикла() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — жизненный цикл\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — диагностика\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    ДоЗаписиПусто = Документ.Ссылка.Пустая();\n    Документ.Дата = Дата(2026,11,2,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n    Документ.ДлительностьМинут = 30;\n    Документ.Записать();\n    Ссылка = Документ.Ссылка;\n    ПослеЗаписи = Ссылка.ПолучитьОбъект();\n    ПерваяЗаписьВерна = Не Ссылка.Пустая() И ПослеЗаписи.ДлительностьМинут = 30 И Не ПослеЗаписи.Проведен;\n    ПослеЗаписи.ДлительностьМинут = 60;\n    ПослеЗаписи.Статус = Перечисления.СтатусыЗаявки.ВРаботе;\n    ПослеЗаписи.Записать();\n    Перечитанный = Ссылка.ПолучитьОбъект();\n    ОбновленаТаЖеЗаявка = Перечитанный.Ссылка = Ссылка И Перечитанный.ДлительностьМинут = 60\n        И Перечитанный.Статус = Перечисления.СтатусыЗаявки.ВРаботе;\n    Возврат Новый Структура(\"ДоЗаписиПусто,ПерваяЗаписьВерна,ОбновленаТаЖеЗаявка,Ссылка\",ДоЗаписиПусто,ПерваяЗаписьВерна,ОбновленаТаЖеЗаявка,Ссылка);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "First create a 30-minute request in status Новая. Saving gives it a reference. Retrieve an object through that same reference, set 60 and ВРаботе, save, and read again. The three labelled Да values concern different stages; the last does not imply automatic posting.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЖизненногоЦикла();\n    Сообщить(\"До записи ссылка пустая: \" + Строка(Результат.ДоЗаписиПусто));\n    Сообщить(\"Первая запись верна: \" + Строка(Результат.ПерваяЗаписьВерна));\n    Сообщить(\"Обновлена та же заявка: \" + Строка(Результат.ОбновленаТаЖеЗаявка));\nКонецПроцедуры\n",
+        "output": "До записи ссылка пустая: Да\nПервая запись верна: Да\nОбновлена та же заявка: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытЖизненногоЦикла() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — жизненный цикл\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — диагностика\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    ДоЗаписиПусто = Документ.Ссылка.Пустая();\n    Документ.Дата = Дата(2026,11,2,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n    Документ.ДлительностьМинут = 30;\n    Документ.Записать();\n    Ссылка = Документ.Ссылка;\n    ПослеЗаписи = Ссылка.ПолучитьОбъект();\n    ПерваяЗаписьВерна = Не Ссылка.Пустая() И ПослеЗаписи.ДлительностьМинут = 30 И Не ПослеЗаписи.Проведен;\n    ПослеЗаписи.ДлительностьМинут = 60;\n    ПослеЗаписи.Статус = Перечисления.СтатусыЗаявки.ВРаботе;\n    ПослеЗаписи.Записать();\n    Перечитанный = Ссылка.ПолучитьОбъект();\n    ОбновленаТаЖеЗаявка = Перечитанный.Ссылка = Ссылка И Перечитанный.ДлительностьМинут = 60\n        И Перечитанный.Статус = Перечисления.СтатусыЗаявки.ВРаботе;\n    Возврат Новый Структура(\"ДоЗаписиПусто,ПерваяЗаписьВерна,ОбновленаТаЖеЗаявка,Ссылка\",ДоЗаписиПусто,ПерваяЗаписьВерна,ОбновленаТаЖеЗаявка,Ссылка);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЖизненногоЦикла();\n    Сообщить(\"До записи ссылка пустая: \" + Строка(Результат.ДоЗаписиПусто));\n    Сообщить(\"Первая запись верна: \" + Строка(Результат.ПерваяЗаписьВерна));\n    Сообщить(\"Обновлена та же заявка: \" + Строка(Результат.ОбновленаТаЖеЗаявка));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Draft",
+              "New object",
+              "Reference still empty."
+            ],
+            [
+              "First write",
+              "30, Новая",
+              "Document persisted."
+            ],
+            [
+              "Update",
+              "Same reference, 60, ВРаботе",
+              "Existing document updated."
+            ],
+            [
+              "Reread",
+              "ПолучитьОбъект",
+              "Reference, duration and status checked."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "A number does not replace identity",
+      "paragraphs": [
+        "Numbers serve people, but numbering scope and periodicity depend on configuration. Use references for exact reopening. Two similar requests are not automatically duplicates. External request IDs need an explicit uniqueness policy; displayed document numbers alone are not a redelivery strategy.",
+        "Next obtain the same document object, set 60 minutes and ВРаботе, then write again. The assertion compares reference, duration and status. Creating another document would produce a second request, not an update. Record the assigned number and use it when inspecting the list."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Does saving status Закрыта automatically post the document?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. In this configuration an enumeration assignment changes a field, and ordinary Записать saves fields. Posting is requested through a separate mode; check its flag and movements separately."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Verify accounting effects separately",
+      "paragraphs": [
+        "Posting may be unavailable in a starter configuration. EvenPosted=True does not specify required register records. Define business meaning and affected registers first, then link states to expected records. Document reports and movement reports answer different questions.",
+        "ВРаботе is an application enumeration value. Проведен is a separate posting flag associated with register movements. This experiment uses an ordinary write, so it remains unposted. Selecting a status does not by itself schedule work, grant access or implement a transition rule; those need explicit code."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The diagram follows the worked example.30 and 60 are states of one document, not two requests. The reference obtained by the first save connects both fresh reads.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Draft",
+            "lines": [
+              "empty reference"
+            ]
+          },
+          {
+            "title": "Save",
+            "lines": [
+              "30 / Новая"
+            ]
+          },
+          {
+            "title": "Same record",
+            "lines": [
+              "60 / ВРаботе"
+            ]
+          },
+          {
+            "title": "Fresh read",
+            "lines": [
+              "reference retained"
+            ]
+          }
+        ],
+        "alternative": [
+          "Draft: empty reference",
+          "Save: 30 / Новая",
+          "Same record: 60 / ВРаботе",
+          "Fresh read: reference retained"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Calling СоздатьДокумент instead of retrieving the saved reference creates another request. Its 75 minutes may be correct, but the old request was not updated. The minutes assertion passes while reference equality fails.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Test through a new session",
+      "paragraphs": [
+        "Create, write without posting and reread. Then post in a suitable template, check movements and reverse posting. Reopen a session and compare states and identities. Name the exact configuration: posting results do not retroactively prove the earlyA2/P 2 stand supports posting.",
+        "The incorrect variant changes the second duration assignment from 60 to 61. It compiles and preserves the reference but fails the duration assertion. This distinguishes a semantic check from merely running without exceptions. Each run creates new synthetic items: remove the startup call afterward while preserving the function and observation."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Create a new 45-minute request in Новая. Update that same request to 75 minutes and Закрыта. Freshly read it and verify the same reference, customer and service, 75 minutes, Закрыта status, and absence of posting.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p5-lifecycle-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "669a890c56702e3735c8561fb518ca6007893959a70034476e7c66ab70e7b7ef",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain why Закрыта does not establish posting and why a new СоздатьДокумент does not update the earlier request."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Does saving status Закрыта automatically post the document?",
+      "options": [
+        "No: status and posting are distinct",
+        "Yes: Закрыта always posts",
+        "Yes: if the number is present"
+      ],
+      "correct": 0,
+      "feedback": "No. In this configuration an enumeration assignment changes a field, and ordinary Записать saves fields. Posting is requested through a separate mode; check its flag and movements separately.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Updating an existing document needs",
+      "options": [
+        "Its reference object",
+        "Necessarily a new document",
+        "A new course"
+      ],
+      "correct": 0,
+      "feedback": "ПолучитьОбъект uses the selected identity.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "ВРаботе and Проведен are",
+      "options": [
+        "Always identical",
+        "Different properties",
+        "Defined by button colour"
+      ],
+      "correct": 1,
+      "feedback": "Status is application data; posting concerns movements.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "The 61 variant tests",
+      "options": [
+        "Syntax only",
+        "Account login",
+        "The semantic expectation of 60"
+      ],
+      "correct": 2,
+      "feedback": "Valid syntax can produce a wrong value.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "How do you establish an update to the earlier request?",
+      "options": [
+        "Compare its reference and fields after a fresh read",
+        "Check only 75 on screen",
+        "Create a document with a similar number"
+      ],
+      "correct": 0,
+      "feedback": "Explain why Закрыта does not establish posting and why a new СоздатьДокумент does not update the earlier request.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Same request, new state: from draft to saved record",
+    "task": "Create a new 45-minute request in Новая. Update that same request to 75 minutes and Закрыта. Freshly read it and verify the same reference, customer and service, 75 minutes, Закрыта status, and absence of posting.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ОпытЗакрытияЗаявки() Экспорт\n    // TODO: implement the independent task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЗакрытияЗаявки();\n    Сообщить(\"Заявка и связи сохранены: \" + Строка(Результат.ТаЖеЗаявка));\n    Сообщить(\"После чтения75 минут: \" + Строка(Результат.Минуты75));\n    Сообщить(\"Статус Закрыта сохранён: \" + Строка(Результат.СтатусЗакрыта));\n    Сообщить(\"Статус не проводит документ: \" + Строка(Результат.БезПроведения));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытЗакрытияЗаявки() Экспорт\n\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — новая работа\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — новая работа\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,8,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n\n    Документ.ДлительностьМинут = 45; Документ.Записать();\n    СсылкаДо = Документ.Ссылка;\n    Объект = СсылкаДо.ПолучитьОбъект();\n    Объект.ДлительностьМинут = 75;\n    Объект.Статус = Перечисления.СтатусыЗаявки.Закрыта;\n    Объект.Записать();\n    Факт = СсылкаДо.ПолучитьОбъект();\n    Возврат Новый Структура(\"ТаЖеЗаявка,Минуты75,СтатусЗакрыта,БезПроведения\",\n        Факт.Ссылка = СсылкаДо И Факт.Клиент = Клиент.Ссылка И Факт.Услуга = Услуга.Ссылка,\n        Факт.ДлительностьМинут = 75,\n        Факт.Статус = Перечисления.СтатусыЗаявки.Закрыта, Не Факт.Проведен);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытЗакрытияЗаявки() Экспорт\n\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — новая работа\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — новая работа\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,8,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n\n    Документ.ДлительностьМинут = 45; Документ.Записать();\n    СсылкаДо = Документ.Ссылка;\n    Объект = СсылкаДо.ПолучитьОбъект();\n    Объект.ДлительностьМинут = 75;\n    Объект.Статус = Перечисления.СтатусыЗаявки.Закрыта;\n    Объект.Записать();\n    Факт = СсылкаДо.ПолучитьОбъект();\n    Возврат Новый Структура(\"ТаЖеЗаявка,Минуты75,СтатусЗакрыта,БезПроведения\",\n        Факт.Ссылка = СсылкаДо И Факт.Клиент = Клиент.Ссылка И Факт.Услуга = Услуга.Ссылка,\n        Факт.ДлительностьМинут = 75,\n        Факт.Статус = Перечисления.СтатусыЗаявки.Закрыта, Не Факт.Проведен);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЗакрытияЗаявки();\n    Сообщить(\"Заявка и связи сохранены: \" + Строка(Результат.ТаЖеЗаявка));\n    Сообщить(\"После чтения75 минут: \" + Строка(Результат.Минуты75));\n    Сообщить(\"Статус Закрыта сохранён: \" + Строка(Результат.СтатусЗакрыта));\n    Сообщить(\"Статус не проводит документ: \" + Строка(Результат.БезПроведения));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "New invented customer,service and request;45→75minutes,Новая→Закрыта.",
+        "output": "Заявка и связи сохранены: Да\nПосле чтения75 минут: Да\nСтатус Закрыта сохранён: Да\nСтатус не проводит документ: Да"
+      }
+    ],
+    "criteria": [
+      "Every labelled assertion prints Да; compare distinct properties rather than just line count.",
+      "The check reads the database through the preserved reference after the second save.",
+      "Explain why Закрыта does not establish posting and why a new СоздатьДокумент does not update the earlier request."
+    ],
+    "hint": "The diagram follows the worked example.30 and 60 are states of one document, not two requests. The reference obtained by the first save connects both fresh reads.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Use your continuing P4 copy, verify metadata and preserve source before adding code. For a new experiment restore a DT only into a new empty base. Do not reload a full CF over prior work.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "The own copy contains Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки; posting additionally requires Трудозатраты."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits",
+    "platform-contract": "platform-contract"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Documents have state",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "A number does not replace identity",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Verify accounting effects separately",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Test through a new session",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p5-topic-1-author-v1",
+    "quiz": [
+      {
+        "question": "Does saving status Закрыта automatically post the document?",
+        "options": [
+          "No: status and posting are distinct",
+          "Yes: Закрыта always posts",
+          "Yes: if the number is present"
+        ],
+        "correct": 0,
+        "explanation": "No. In this configuration an enumeration assignment changes a field, and ordinary Записать saves fields. Posting is requested through a separate mode; check its flag and movements separately."
+      },
+      {
+        "question": "Updating an existing document needs",
+        "options": [
+          "Its reference object",
+          "Necessarily a new document",
+          "A new course"
+        ],
+        "correct": 0,
+        "explanation": "ПолучитьОбъект uses the selected identity."
+      },
+      {
+        "question": "ВРаботе and Проведен are",
+        "options": [
+          "Always identical",
+          "Different properties",
+          "Defined by button colour"
+        ],
+        "correct": 1,
+        "explanation": "Status is application data; posting concerns movements."
+      },
+      {
+        "question": "The 61 variant tests",
+        "options": [
+          "Syntax only",
+          "Account login",
+          "The semantic expectation of 60"
+        ],
+        "correct": 2,
+        "explanation": "Valid syntax can produce a wrong value."
+      },
+      {
+        "question": "How do you establish an update to the earlier request?",
+        "options": [
+          "Compare its reference and fields after a fresh read",
+          "Check only 75 on screen",
+          "Create a document with a similar number"
+        ],
+        "correct": 0,
+        "explanation": "Explain why Закрыта does not establish posting and why a new СоздатьДокумент does not update the earlier request."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS + MAIN GUI OBSERVATION PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "lifecycle-main",
+      "lifecycle-independent"
+    ],
+    "scope": "8 прямых вызовов неизменённых экспортных функций из управляемого клиента: четыре основных примера и четыре самостоятельных решения. Общий модуль имеет Сервер/Вызов сервера, Privileged=false. Это не широкая матрица и не оценка понимания.",
+    "studentAuthorshipVerified": false,
+    "GUIcases": [
+      "lifecycle-main"
+    ],
+    "plainStandaloneHandlerGUI": false
+  },
+  "editorialClarification": "P5 preserves original theory; adds exact metadata/handler preparation, genuine output including expected refusal warnings, independent tasks and a real transaction branch."
+}

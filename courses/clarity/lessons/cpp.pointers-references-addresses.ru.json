@@ -1,0 +1,436 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b1-author-v1",
+  "id": "cpp.pointers-references-addresses",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "Программирование на C++",
+  "module": "Основы C++",
+  "locale": "ru",
+  "title": "Копия, ссылка и указатель: к какому объекту ведёт запись",
+  "goal": "Вы проследите связь имён с объектами, переключите указатель и объясните условия безопасного доступа.",
+  "prerequisites": [
+    {
+      "text": "Копирование и присваивание, области действия и время жизни, bool и простой if из Module 1."
+    },
+    {
+      "text": "Предыдущая тема о разных смыслах выражений; умение следить за одним изменением за раз."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Один объект и независимая копия",
+      "paragraphs": [
+        "Два человека смотрят на один счётчик, а третий переписал старое число на бумагу. Когда счётчик изменится, бумага сама не обновится. В программе такую разницу можно выразить копией и ссылкой.",
+        "Начальное value равно 10. copy запоминает число, alias обозначает тот же объект, а pointer хранит путь к нему. Предскажите три числа после двух изменений. На схеме A — условное имя объекта, не настоящий адрес памяти."
+      ],
+      "prediction": [
+        "#include <iostream>\n\nint main() {\n    int value{10};\n    int copy = value;\n    int& alias = value;\n    int* pointer = &value;\n    alias = 12;\n    *pointer = 15;\n    std::cout << value << ' ' << copy << ' ' << alias << '\\n';\n    return 0;\n}\n"
+      ],
+      "reveal": {
+        "title": "Сверить прогноз и разобрать шаги",
+        "paragraphs": [
+          "После int value{10}; запись int copy = value; создаёт независимый int. int& alias = value; создаёт ссылку на исходный объект: alias — другой способ обозначать value, а не снимок. Присваивание alias = 12; меняет value. Сравните это с копией из темы 5.",
+          "В объявлении & рядом с типом вводит ссылку. В int* pointer = &value; звёздочка рядом с типом вводит указатель, а &value справа получает адрес. Одинаковые символы имеют разные роли в объявлениях и выражениях; читайте всю конструкцию, не отдельный знак.",
+          "Если убрать только *pointer = 15, какими будут три числа? Получатся 12, 10, 12: исчезло одно изменение общего объекта, но копия по-прежнему независима."
+        ],
+        "tables": [
+          {
+            "caption": "Проследим трудный шаг",
+            "columns": [
+              "Шаг",
+              "Объект A: value, alias, *pointer",
+              "Объект B: copy"
+            ],
+            "rows": [
+              [
+                "После объявлений",
+                "10; pointer → A",
+                "10"
+              ],
+              [
+                "alias = 12;",
+                "12; связь прежняя",
+                "10"
+              ],
+              [
+                "*pointer = 15;",
+                "15; связь прежняя",
+                "10"
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    int copy = value;\n    int& alias = value;\n    int* pointer = &value;\n    alias = 12;\n    *pointer = 15;\n    std::cout << value << ' ' << copy << ' ' << alias << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "15 10 15\n"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Меняем объект или меняем адресата",
+      "paragraphs": [
+        "pointer хранит значение указателя, а *pointer обозначает объект, на который он указывает. *pointer = 15; меняет value. pointer = &second; меняет сам указатель: теперь доступ ведёт к second. Это разные операции и разные строки журнала состояния.",
+        "В схеме можно назвать объекты A и B, а стрелку подписать pointer → A. Это условные обозначения, не численные адреса. Реальные адреса зависят от запуска, target и среды. Их нельзя делать ожидаемым stdout или стабильным идентификатором учебного объекта."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int* selected = &first;\n    selected = &second;\n    *selected = 7;\n    std::cout << first << ' ' << second << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "5 7\n"
+      },
+      "tables": [
+        {
+          "caption": "Переключение пути доступа",
+          "columns": [
+            "Инструкция",
+            "Куда ведёт selected",
+            "first; second"
+          ],
+          "rows": [
+            [
+              "int* selected = &first;",
+              "first",
+              "5; 9"
+            ],
+            [
+              "selected = &second;",
+              "second",
+              "5; 9"
+            ],
+            [
+              "*selected = 7;",
+              "second",
+              "5; 7"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Почему ссылка не переключается",
+      "paragraphs": [
+        "После int& alias = first; запись alias = second; копирует текущее значение second в first. Она не переключает alias на другой объект. Для указателя selected = &second; действительно переключает адрес. Проверка должна наблюдать оба исходных объекта, иначе разница может остаться невидимой.",
+        "В обычной работе ссылка удобна, когда доступ всегда относится к известному живому объекту. Указатель уместен для явного отсутствия либо выбора объекта, но сам по себе не означает владение памятью. Здесь ни ссылка, ни указатель не создают и не удаляют свои объекты."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << ' ' << second << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "9 9 20\n"
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "Отсутствующий и уже исчезнувший объект",
+      "paragraphs": [
+        "int* selected{nullptr}; явно означает отсутствие выбранного объекта. Перед чтением *selected проверяем selected != nullptr. if/else из Module 1 выбирает безопасную ветвь: при отсутствии печатает absent, при наличии читает значение. Это проверка отсутствия, а не доказательство любой возможной корректности указателя.",
+        "Ненулевой указатель может стать висячим после выхода объекта из внутреннего блока. Простая проверка на nullptr не продлевает время жизни. В этом уроке все разыменования происходят при живом объекте; null/dangling не разыменовываются даже в «плохом эксперименте». Для проекта фиксируйте, что владелец данных живёт дольше всех доступов к ним."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int* selected{nullptr};\n    if (selected != nullptr) {\n        std::cout << *selected << '\\n';\n    } else {\n        std::cout << \"absent\\n\";\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "absent\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Можно читать, но нельзя писать этим путём",
+      "paragraphs": [
+        "const int* observer = &value; позволяет читать *observer, но не изменять value через этот указатель. Сам исходный value может быть обычным int: value = 14; допустимо и наблюдатель увидит 14. Аналогично const int& view запрещает изменение через view. «Только чтение этим путём» не означает вечную неизменность исходного объекта.",
+        "Не убирайте const случайным преобразованием ради исчезновения ошибки. Отрицательный пример специально требует отказа сборки при записи через const int*. Устройство int* const — постоянного самого указателя — можно изучить позже; в этом вводном контракте важно уверенно читать const перед int."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    const int* observer = &value;\n    const int& view = value;\n    value = 14;\n    std::cout << *observer << ' ' << view << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "14 14\n"
+      }
+    },
+    {
+      "id": "concept-6",
+      "title": "Проверяем связи, а не случайные адреса",
+      "paragraphs": [
+        "В самостоятельной работе сначала будут два объекта: stock и snapshot. Ссылка selectedStock должна вести к stock, как и указатель stockPointer. Перед каждым изменением подпишите, какой объект оно затронет; отдельного объекта со «значением ссылки» в этой модели нет.",
+        "Проверьте те же операции на начальных 3 и 20. Все значения безопасны. Затем отдельно объясните null-пример без намеренного падения программы. Сохраните схему с легендой и stdout: только картинка не доказывает выполнение, а только stdout не объясняет отношения объектов."
+      ]
+    },
+    {
+      "id": "diagnose-write-through-const",
+      "title": "Намеренно: запись через const int*",
+      "paragraphs": [
+        "Это отдельная неисправная программа для разбора диагностики. Она не заменяет вашу работу. Сначала найдите причину, затем сравните отказ сборки с исправленным вариантом.",
+        "Этот путь только для чтения."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    const int* observer = &value;\n    *observer = 20;\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      }
+    },
+    {
+      "id": "diagnose-uninitialized-reference",
+      "title": "Намеренно: ссылка без объекта",
+      "paragraphs": [
+        "Это отдельная неисправная программа для разбора диагностики. Она не заменяет вашу работу. Сначала найдите причину, затем сравните отказ сборки с исправленным вариантом.",
+        "Обычная локальная ссылка требует инициализации."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int& alias;\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      },
+      "deep": {
+        "title": "Обязан ли указатель владеть объектом?",
+        "text": "Нет. В этом уроке объекты создаются обычными локальными объявлениями. Указатель лишь позволяет обратиться к ним; он не продлевает их жизнь и не должен удалять их. Позже владение будет отдельной темой. Здесь достаточно проверить, что объект существует во время каждого доступа.",
+        "sourceId": "cpp20-dcl.ref"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь решите другую задачу",
+      "paragraphs": [
+        "Создайте снимок, ссылку и указатель. Через ссылку продайте 3, через указатель добавьте 2. Снимок должен остаться исходным. Добавьте второй запас otherStock{20}. Переключите только stockPointer на него и через *stockPointer прибавьте 1. Объясните, почему selectedStock всё ещё обозначает первый stock; приведите значения обоих запасов и снимка.",
+        "Откройте «Практику». Заготовка и ваш текущий код находятся отдельно от примеров. Запишите прогноз до запуска; после проверки объясните результат своими словами."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "После int first{5}; int second{9}; int& alias = first; выполняются alias = second; и second = 20;. Чему равны first и alias?",
+      "options": [
+        "9 9",
+        "5 20",
+        "20 20"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Да. В first записали значение 9, а ссылка осталась связана с first.",
+        "alias = second присваивает число объекту first; это не переключение ссылки.",
+        "Последующее изменение second не меняет first: при присваивании было скопировано только значение 9."
+      ],
+      "recall": "concept-3",
+      "code": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << '\\n';\n    return 0;\n}\n",
+      "execution": {
+        "source": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "9 9\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "Что делает *p=7 при корректном int* p?",
+      "options": [
+        "Меняет объект по указателю",
+        "Создаёт новый int",
+        "Всегда меняет адрес p"
+      ],
+      "correct": 0,
+      "feedback": "Разыменование обозначает целевой объект.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "alias=second после int& alias=first переключает ссылку?",
+      "options": [
+        "Да",
+        "Нет, копирует значение в first",
+        "Только для нуля"
+      ],
+      "correct": 1,
+      "feedback": "Обычная ссылка не переназначается.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "Проверка p!=nullptr доказывает, что цель ещё жива?",
+      "options": [
+        "Да",
+        "Нет, время жизни проверяется отдельно",
+        "Только на ПК"
+      ],
+      "correct": 1,
+      "feedback": "Висячий указатель может оставаться ненулевым.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "concept-3",
+      "kind": "choice",
+      "prompt": "Может ли const int* наблюдать изменение обычного исходного int?",
+      "options": [
+        "Да, const ограничивает запись через этот путь",
+        "Нет, исходник заморожен навсегда",
+        "Только при копировании"
+      ],
+      "correct": 0,
+      "feedback": "Свойства пути доступа не равны свойствам самого источника.",
+      "recall": "concept-5"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Добавьте второй запас otherStock{20}. Переключите только stockPointer на него и через *stockPointer прибавьте 1. Объясните, почему selectedStock всё ещё обозначает первый stock; приведите значения обоих запасов и снимка.",
+      "feedback": "Объясните словами, какой объект или промежуточное значение меняется. Совпадение stdout само по себе не заменяет это объяснение.",
+      "recall": "concept-2"
+    }
+  ],
+  "practice": {
+    "title": "Один запас — несколько способов доступа",
+    "task": "Создайте снимок, ссылку и указатель. Через ссылку продайте 3, через указатель добавьте 2. Снимок должен остаться исходным. Добавьте второй запас otherStock{20}. Переключите только stockPointer на него и через *stockPointer прибавьте 1. Объясните, почему selectedStock всё ещё обозначает первый stock; приведите значения обоих запасов и снимка.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "",
+    "returnAnchor": "concept-2",
+    "recall": "concept-2",
+    "cases": [
+      {
+        "label": "Основное новое условие",
+        "input": "",
+        "output": "stock=9\nsnapshot=10\nalias=9\n"
+      }
+    ],
+    "criteria": [
+      "Все разыменования обращаются к живому stock.",
+      "Копия не выдаётся за alias.",
+      "Есть легенда, значения и реальный stdout.",
+      "Нет new/delete, адресной арифметики и опасных чтений.",
+      "Объясните словами, какой объект или промежуточное значение меняется. Совпадение stdout само по себе не заменяет это объяснение."
+    ],
+    "hint": "Добавьте второй запас otherStock{20}. Переключите только stockPointer на него и через *stockPointer прибавьте 1. Объясните, почему selectedStock всё ещё обозначает первый stock; приведите значения обоих запасов и снимка.",
+    "steps": [
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Нарисуйте отношения до запуска.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Разделите два изменения на инструкции.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Сверьте итог и снимок.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя самостоятельная работа",
+        "action": "Повторите для начальных 3 и 20.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Ссылка T&",
+      "definition": "В наших объявлениях alias существующего объекта; требует инициализации и не переназначается другому объекту."
+    },
+    {
+      "term": "Указатель T*",
+      "definition": "Отдельный объект со значением указателя, например адресом подходящего живого T либо nullptr."
+    },
+    {
+      "term": "Взятие адреса &",
+      "definition": "В выражении &value получает указатель на объект value."
+    },
+    {
+      "term": "Разыменование *",
+      "definition": "В *pointer обозначает объект по указателю; доступ требует корректного указателя и допустимого времени жизни."
+    },
+    {
+      "term": "nullptr",
+      "definition": "Специальное значение отсутствующего указателя; разыменовывать его нельзя."
+    },
+    {
+      "term": "Висячий указатель",
+      "definition": "Указатель, чей прежний объект уже завершил время жизни; ненулевой вид не доказывает безопасность доступа."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-REFERENCES",
+    "CPP20-POINTERS",
+    "CPP20-UNARY",
+    "CPP20-LIFETIME",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.pointers-references-addresses",
+    "locale": "ru",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-REFERENCES",
+      "CPP20-POINTERS",
+      "CPP20-UNARY",
+      "CPP20-LIFETIME",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\pointers-references-addresses.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-dcl.ref",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[dcl.ref]",
+      "language": "English",
+      "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.ref"
+    },
+    {
+      "id": "cpp20-dcl.ptr",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[dcl.ptr]",
+      "language": "English",
+      "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.ptr"
+    },
+    {
+      "id": "cpp20-basic.life",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[basic.life]",
+      "language": "English",
+      "purpose": "Точная формулировка правила из этого урока. Это справочный текст; собственное объяснение и примеры выше доступны без сети.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
+    }
+  ],
+  "authored": true
+}

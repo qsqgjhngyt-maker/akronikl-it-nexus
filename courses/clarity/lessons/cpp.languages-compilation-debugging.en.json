@@ -1,0 +1,660 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b2-author-v1",
+  "id": "cpp.languages-compilation-debugging",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.algorithms",
+  "course": "C++ programming",
+  "module": "Algorithmic Thinking",
+  "locale": "en",
+  "title": "What failed: the build, the run or the formula",
+  "goal": "Identify the failing stage and verify one correction with a reproducible experiment.",
+  "prerequisites": [
+    {
+      "text": "Basic conditions and input/output."
+    },
+    {
+      "text": "Algorithm, input and test case."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Source files and builds",
+      "paragraphs": [
+        "C++ is written in text files. A compiler handles source using selected language options, and diagnostic wording varies among tools.",
+        "Code Studio's actual capabilities depend on its runtime provider. Do not assume complete C++23 support merely from the tool name.",
+        "Run the tiny program and record Nexus C++. This control shows that the environment can build and run a small source file. Change one condition at a time next."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\";\n}",
+        "stdin": "",
+        "output": "Nexus C++\n"
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Preprocessing, compilation and linking",
+      "paragraphs": [
+        "Preprocessing handles directives such as #include. Compilation checks language constructs and translates code; linking resolves required symbols and libraries.",
+        "A missing semicolon typically causes a compilation error; a declared but undefined external function may cause a linker error."
+      ],
+      "diagram": {
+        "caption": "Where to look for the first cause",
+        "text": "main.cpp → process #include\n         → translate the source\n         → link the program\n         → run with the recorded stdin"
+      }
+    },
+    {
+      "id": "concept-3",
+      "title": "A program can fail after a successful build",
+      "paragraphs": [
+        "Execution can encounter invalid input, forbidden operations and incorrect decisions. Integer division by zero must be prevented.",
+        "With two int operands, 10/3 is 3 rather than 3.333. This is the defined integer operation, not a compiler defect.",
+        "Input 10 2 produces 12 because this example promises a sum. The same output would be wrong for a quotient task. Begin with the expected result rather than a guess about the compiler."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a + b << '\\n';\n}",
+        "stdin": "10 2\n",
+        "output": "12\n"
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "Debugging starts with reproduction",
+      "paragraphs": [
+        "A rectangle report for 4 by 3 expected 12, but the program printed 7. Before editing, find the operator that actually executes.",
+        "Record the observed result and explain why the build can still succeed."
+      ],
+      "prediction": [
+        "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+      ],
+      "predictionInput": "4 3\n",
+      "reveal": {
+        "title": "Compare your prediction and trace the steps",
+        "paragraphs": [
+          "Record the command, input, expected output, actual output and first relevant diagnostic. Classify the phase of failure before editing.",
+          "Make one motivated correction and rerun both the failing case and earlier successful cases.",
+          "The area contract requires multiplication. For 4 and 3, record “expected 12, observed 7.” Build and execution succeeded, so inspect the formula first. Replace only + with *, then verify 4 3 and 1 1."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+          "stdin": "4 3\n",
+          "output": "7\n"
+        },
+        "tables": [
+          {
+            "caption": "Signals from different failure modes",
+            "columns": [
+              "Observation",
+              "Where to look",
+              "What to compare"
+            ],
+            "rows": [
+              [
+                "No executable",
+                "Syntax or link",
+                "First build diagnostic"
+              ],
+              [
+                "Program runs, input rejected",
+                "Input contract",
+                "Exact stdin and allowed range"
+              ],
+              [
+                "Program prints 7 instead of 12",
+                "Area formula",
+                "Expected result for 4 3"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Standards and portability",
+      "paragraphs": [
+        "These examples are checked in C++20 mode and use core language facilities. A language standard defines the rules, while a compiler selects a mode and reports diagnostics. Record the tool version and selected mode when comparing two machines.",
+        "Do not rely on identical diagnostic wording in a portable experiment. Check build success, exit status and exact stdout separately."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "A minimal reproducible example",
+      "paragraphs": [
+        "A syntax defect prevents a build, for example a missing semicolon. An execution defect or wrong result appears when running: division by zero is invalid, while integer 10/3 yields 3 rather than 3.333. For negative integers, C++ truncates the quotient toward zero: -8/3 is -2. Save source, input, expected and actual output; fix one cause and rerun earlier tests.",
+        "Compare the corrected source with the previous one. This pair changes exactly one operator and keeps the same extraction and range check. For 1 1 the defective version would give 2 and the correction gives 1."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n}\n",
+        "stdin": "4 3\n",
+        "output": "12\n"
+      }
+    },
+    {
+      "id": "concept-7",
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "For the laboratory, a and b are limited to -1000000..1000000 and b must be nonzero. This also excludes quotient overflow.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
+    },
+    {
+      "id": "diagnose-syntax",
+      "title": "Experiment: missing semicolon",
+      "paragraphs": [
+        "This version must be rejected during the build. Look at the first message near std::cout and the closing brace. Restore the semicolon and verify the control output Nexus C++."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\"\n}",
+        "stdin": "",
+        "expectCompileFailure": true
+      }
+    },
+    {
+      "id": "diagnose-link",
+      "title": "Experiment: declared but not defined",
+      "paragraphs": [
+        "The compiler knows the signature of area and can translate the call. The linker still needs the function body. This single file lacks it, so the build cannot produce a runnable result. Add a definition with the same signature."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "int area(int width, int height);\n\nint main() {\n    return area(4, 3);\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Try a separate task",
+      "paragraphs": [
+        "Debug the integer quotient program. The starter reads input and checks −1000000..1000000 and a nonzero divisor, but its formula is wrong. First reproduce the difference for 17 −5, then fix the operation. Print invalid for disallowed or unreadable input.",
+        "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "For input 5 3, what does the shown source print before correcting its formula?",
+      "options": [
+        "8\n",
+        "15\n",
+        "invalid\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Yes. This source adds 5 and 3.",
+        "15 is the correct area, but it is not the observed output of this defective source.",
+        "The input is readable and passes the stated bounds."
+      ],
+      "recall": "concept-4",
+      "code": {
+        "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+        "stdin": "5 3\n"
+      },
+      "execution": {
+        "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+        "stdin": "5 3\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "8\n"
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "When is a missing semicolon generally detected?",
+      "options": [
+        "Compilation",
+        "After process exit",
+        "In graphic design"
+      ],
+      "correct": 0,
+      "feedback": "It is a syntax issue.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "What is 10/3 when both values have type int?",
+      "options": [
+        "3.333",
+        "3",
+        "4"
+      ],
+      "correct": 1,
+      "feedback": "Integer division discards the fraction.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "What must be true before dividing a by b?",
+      "options": [
+        "The UI is colorful",
+        "a>0",
+        "b!=0"
+      ],
+      "correct": 2,
+      "feedback": "Zero division is invalid.",
+      "recall": "concept-7"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "For 17 −5, compare the starter’s result with the corrected program. Explain how this defect differs from a missing semicolon and why b = 0 is checked first.",
+      "feedback": "Name the starter’s failure mode and record source, input, expected and observed output before and after.",
+      "recall": "concept-4"
+    }
+  ],
+  "practice": {
+    "title": "Fixing integer division",
+    "task": "Debug the integer quotient program. The starter reads input and checks −1000000..1000000 and a nonzero divisor, but its formula is wrong. First reproduce the difference for 17 −5, then fix the operation. Print invalid for disallowed or unreadable input.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    // This placeholder builds but performs the wrong operation.\n    std::cout << a + b << '\\n';\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "17 -5\n",
+    "returnAnchor": "concept-4",
+    "recall": "concept-4",
+    "cases": [
+      {
+        "label": "New main input",
+        "input": "17 -5\n",
+        "output": "-3\n"
+      },
+      {
+        "label": "Check 1",
+        "input": "10 3\n",
+        "output": "3\n"
+      },
+      {
+        "label": "Check 2",
+        "input": "10 0\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Check 3",
+        "input": "-8 3\n",
+        "output": "-2\n"
+      },
+      {
+        "label": "Check 4",
+        "input": "oops\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Check 5",
+        "input": "-2147483648 -1\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Check 6",
+        "input": "1000000 -1000000\n",
+        "output": "-1\n"
+      },
+      {
+        "label": "Check 7",
+        "input": "1000001 1\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Check 8",
+        "input": "",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Retain the guard before division and check b=0.",
+      "Check truncation toward zero with a negative quotient.",
+      "Name the starter’s failure mode and record source, input, expected and observed output before and after."
+    ],
+    "hint": "Record expected and observed results for 17 −5, then make one change.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Record a prediction and run the starter.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Fix one operation.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Repeat the run and test zero, sign and range.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Compilation",
+      "definition": "Checking and translating C++ source into object representation."
+    },
+    {
+      "term": "Linking",
+      "definition": "Resolving cross-module symbols and dependencies into an executable."
+    },
+    {
+      "term": "Runtime",
+      "definition": "The environment where a built program reads inputs and produces results."
+    },
+    {
+      "term": "Debugging",
+      "definition": "Reproducing, locating, fixing and retesting a defect."
+    }
+  ],
+  "sourceRefs": [
+    "ISO-CPP",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.languages-compilation-debugging",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "ISO-CPP",
+      "CPP-GUIDELINES"
+    ],
+    "modulePracticum": {
+      "title": "Module project: a verifiable multi-item order",
+      "challenge": "Build a console program that validates a whole order, sums its items, calculates an integer discount and prints one reproducible result. Start with the requirement and tests, then implement and debug.",
+      "readiness": "Use this after all eight lessons. Functions and loops may be adapted from the provided starter; memorising syntax is not the goal. This project connects the reasoning skills of Module 1.",
+      "requirements": [
+        "The header contains n and discount: integers, 0 ≤ n ≤ 20 and 0 ≤ discount ≤ 100.",
+        "Exactly n pairs follow: price and quantity, each an integer from 0 to 1000. Whitespace separates values.",
+        "Reject missing, nonnumeric, fractional or out-of-range values and extra non-whitespace input. Print only invalid followed by a newline; do not print a partial total.",
+        "subtotal is the sum of price × quantity for all items. saving = subtotal × discount / 100, rounded down; total = subtotal − saving. Print subtotal, saving and total separated by single spaces, then a newline.",
+        "For n = 0 the result is 0 0 0. The entire input still must satisfy the contract. Prices and totals use whole currency units, not floating-point money."
+      ],
+      "milestones": [
+        "Write the input/output contract and predict the empty-order, 99-with-10%-discount and maximum-order results before opening the reference.",
+        "Draw a flowchart with success and failure branches. Write pseudocode, then split validation, item cost and discount saving into functions with preconditions and results.",
+        "Trace the three-item example using i, current item cost and subtotal. Explain the invariant: before iteration i, subtotal equals the cost of the first i validated items.",
+        "Implement the starter, run every listed case and record exact stdin, expected stdout, actual stdout and verdict. Add two of your own cases.",
+        "Reproduce and repair one defect, rerun earlier tests and explain why the evidence supports the fix."
+      ],
+      "walkthrough": [
+        "For 120×3, 100×2 and 0×10 the accumulator changes 0 → 360 → 560 → 560. At each step it contains exactly the sum of the items already checked.",
+        "At a 15% discount, saving is 560×15/100 = 84 and total is 476. For 99 and 10%, saving is 9 and total is 90: rounding the final amount down instead would implement a different requirement.",
+        "long long is an integer type guaranteed to cover at least a signed 64-bit range. It keeps accumulation and multiplication separate from the narrower loop counter. Bounds still matter: at most 20×1000×1000 = 20000000 units are accumulated.",
+        "All output is deferred until validation is complete. std::ws consumes trailing whitespace; eof() checks that no other input remains. This is a stricter input contract than the small introductory examples.",
+        "i increases by one and cannot exceed n ≤ 20. That bound explains termination. The Euclidean lesson taught the same proof pattern: identify state, an invariant and a measure that moves toward stopping.",
+        "The starter compiles and prints todo. Its (void) lines only suppress unused-parameter warnings; replace each placeholder with the required calculation. Copying visible code does not replace your editor or mark the project complete."
+      ],
+      "skills": [
+        {
+          "lessonId": "cpp.programming-process",
+          "title": "Requirement and observable result"
+        },
+        {
+          "lessonId": "cpp.algorithm-definition-properties",
+          "title": "Preconditions and termination"
+        },
+        {
+          "lessonId": "cpp.algorithm-representations",
+          "title": "Algorithm representations"
+        },
+        {
+          "lessonId": "cpp.pseudocode-euclidean-algorithm",
+          "title": "Invariant and trace"
+        },
+        {
+          "lessonId": "cpp.flowcharts",
+          "title": "Complete flowchart branches"
+        },
+        {
+          "lessonId": "cpp.top-down-design",
+          "title": "Function contracts"
+        },
+        {
+          "lessonId": "cpp.sequence-branching-loops",
+          "title": "Loop and accumulator"
+        },
+        {
+          "lessonId": "cpp.languages-compilation-debugging",
+          "title": "Build and debugging"
+        }
+      ],
+      "artifacts": [
+        "main.cpp — your implementation.",
+        "README.md — requirement, function contracts, pseudocode and flowchart.",
+        "trace.md — iteration table and invariant argument.",
+        "test-report.md — all listed tests, two additional cases and exact outputs.",
+        "debugging.md — failing input, hypothesis, change, retest and remaining limitations."
+      ],
+      "starterCode": "#include <iostream>\n\nbool validItem(long long price, long long quantity) {\n    (void)price;\n    (void)quantity;\n    return false;\n}\n\nlong long itemCost(long long price, long long quantity) {\n    (void)price;\n    (void)quantity;\n    return 0;\n}\n\nlong long discountSaving(long long subtotal, int percent) {\n    (void)subtotal;\n    (void)percent;\n    return 0;\n}\n\nint main() {\n    std::cout << \"todo\\n\";\n}\n",
+      "referenceCode": "#include <iostream>\n\nbool validItem(long long price, long long quantity) {\n    return price >= 0 && price <= 1000 && quantity >= 0 && quantity <= 1000;\n}\n\nlong long itemCost(long long price, long long quantity) {\n    return price * quantity;\n}\n\nlong long discountSaving(long long subtotal, int percent) {\n    return subtotal * percent / 100;\n}\n\nint main() {\n    int n, discount;\n    if (!(std::cin >> n >> discount) || n < 0 || n > 20 || discount < 0 || discount > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long subtotal = 0;\n    for (int i = 0; i < n; ++i) {\n        long long price, quantity;\n        if (!(std::cin >> price >> quantity) || !validItem(price, quantity)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        subtotal += itemCost(price, quantity);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long saving = discountSaving(subtotal, discount);\n    std::cout << subtotal << ' ' << saving << ' ' << subtotal - saving << '\\n';\n}\n",
+      "cases": [
+        {
+          "stdin": "3 15\n120 3\n100 2\n0 10\n",
+          "stdout": "560 84 476\n",
+          "purpose": "Ordinary three-item order"
+        },
+        {
+          "stdin": "0 0\n",
+          "stdout": "0 0 0\n",
+          "purpose": "Empty order: zero iterations"
+        },
+        {
+          "stdin": "0 100\n",
+          "stdout": "0 0 0\n",
+          "purpose": "Full discount on an empty order"
+        },
+        {
+          "stdin": "1 10\n99 1\n",
+          "stdout": "99 9 90\n",
+          "purpose": "Round the saving down before subtraction"
+        },
+        {
+          "stdin": "1 0\n1000 1000\n",
+          "stdout": "1000000 0 1000000\n",
+          "purpose": "Maximum item without a discount"
+        },
+        {
+          "stdin": "20 100\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n1000 1000\n",
+          "stdout": "20000000 20000000 0\n",
+          "purpose": "Maximum item count, price, quantity and discount"
+        },
+        {
+          "stdin": "1 100\n0 1000\n",
+          "stdout": "0 0 0\n",
+          "purpose": "Zero price"
+        },
+        {
+          "stdin": "1 50\n1000 0\n",
+          "stdout": "0 0 0\n",
+          "purpose": "Zero quantity"
+        },
+        {
+          "stdin": "1 25\n7 3   \n\t",
+          "stdout": "21 5 16\n",
+          "purpose": "Trailing whitespace is allowed"
+        },
+        {
+          "stdin": "21 0\n",
+          "stdout": "invalid\n",
+          "purpose": "Too many items"
+        },
+        {
+          "stdin": "-1 0\n",
+          "stdout": "invalid\n",
+          "purpose": "Negative item count"
+        },
+        {
+          "stdin": "0 101\n",
+          "stdout": "invalid\n",
+          "purpose": "Discount outside the range"
+        },
+        {
+          "stdin": "1 0\n1001 1\n",
+          "stdout": "invalid\n",
+          "purpose": "Price outside the range"
+        },
+        {
+          "stdin": "1 0\n1 -1\n",
+          "stdout": "invalid\n",
+          "purpose": "Negative quantity"
+        },
+        {
+          "stdin": "2 0\n100 2\n-1 1\n",
+          "stdout": "invalid\n",
+          "purpose": "Invalid item after a valid one: no partial total"
+        },
+        {
+          "stdin": "1 0\n10\n",
+          "stdout": "invalid\n",
+          "purpose": "Incomplete item"
+        },
+        {
+          "stdin": "1 0\n10 2.5\n",
+          "stdout": "invalid\n",
+          "purpose": "Fractional suffix on the final value"
+        },
+        {
+          "stdin": "0 0 99\n",
+          "stdout": "invalid\n",
+          "purpose": "Extra input is rejected by the contract"
+        },
+        {
+          "stdin": "1 0\n999999999999999999999999 1\n",
+          "stdout": "invalid\n",
+          "purpose": "Input exceeds the numeric type"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n",
+          "purpose": "Nonnumeric input"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n",
+          "purpose": "Empty input"
+        },
+        {
+          "stdin": "2 50\n1 1\n1 1\n",
+          "stdout": "2 1 1\n",
+          "purpose": "Apply the discount to the whole order, not separately to each item"
+        },
+        {
+          "stdin": "0 -1\n",
+          "stdout": "invalid\n",
+          "purpose": "Negative discount"
+        },
+        {
+          "stdin": "1 0\n1 1001\n",
+          "stdout": "invalid\n",
+          "purpose": "Quantity exceeds the upper bound"
+        },
+        {
+          "stdin": "1\n",
+          "stdout": "invalid\n",
+          "purpose": "Header has no discount"
+        },
+        {
+          "stdin": "0 10.5\n",
+          "stdout": "invalid\n",
+          "purpose": "Fractional header even for an empty order"
+        }
+      ],
+      "rubric": [
+        {
+          "criterion": "Requirement and representations",
+          "points": 2,
+          "complete": "A precise contract, complete flowchart and matching pseudocode.",
+          "partial": "One representation or an important boundary is missing.",
+          "missing": "No reproducible contract or algorithm."
+        },
+        {
+          "criterion": "Decomposition and reasoning",
+          "points": 2,
+          "complete": "Function contracts, correct trace, invariant and termination argument.",
+          "partial": "Implementation is split, but a contract or proof is incomplete.",
+          "missing": "No meaningful decomposition or trace."
+        },
+        {
+          "criterion": "Validation and arithmetic",
+          "points": 2,
+          "complete": "All invalid cases are rejected, no partial output, bounds and rounding are justified.",
+          "partial": "The ordinary case works, but validation or rounding is incomplete.",
+          "missing": "Unsafe or unexplained calculations."
+        },
+        {
+          "criterion": "Reproducible testing",
+          "points": 2,
+          "complete": "Every listed case and two additional cases have exact predicted and actual outputs.",
+          "partial": "Tests exist but a category or evidence is missing.",
+          "missing": "Only an unsupported claim that it works."
+        },
+        {
+          "criterion": "Debugging and explanation",
+          "points": 2,
+          "complete": "A reproduced defect, tested fix and clear explanation of the algorithm.",
+          "partial": "A fix is described without complete reproduction or retesting.",
+          "missing": "No defect report or explanation."
+        }
+      ],
+      "completionRule": "Self-check: at least 8 of 10 points, with no failure of required validation or a listed output. Use the rubric manually; it does not set a grade, mastery level or completion flag. A working reference alone is not your project evidence.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\languages-compilation-debugging.en.json",
+  "reading": [
+    {
+      "id": "cpp20-lex.phases",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[lex.phases]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.phases"
+    },
+    {
+      "id": "cpp20-basic.def.odr",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[basic.def.odr]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.def.odr"
+    },
+    {
+      "id": "cpp20-expr.mul",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.mul]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+    }
+  ],
+  "authored": true
+}

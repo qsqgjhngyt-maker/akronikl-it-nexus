@@ -1,0 +1,489 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P6",
+  "id": "onec.p6.topic-2",
+  "locale": "en",
+  "revision": "onec-p6-topic-2-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p6-balances.json",
+    "sha256": "9c23f70b219f6ff75ad5466f52cdc1a122c94655f46cc3eeb1894fe7cec26e8d"
+  },
+  "title": "Balance: receipts and expenses have direction",
+  "goal": "Write two own recorder sets and verify 20, time boundaries and dimension isolation.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P5. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "The register contains a 30-minute receipt and 10-minute expense. Simply adding 40 does not answer “how much remains”. Follow movement direction, time, and customer.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Dimensions say where; resources say how much",
+      "paragraphs": [
+        "For service obligations, customer is a dimension and minutes a resource. Receipt 30 increases obligation; expense 10 reduces it. Sign follows business meaning, not whether an event is good or bad. Balance 20 derives from movements; manually maintaining it in a card too creates two sources of truth.",
+        "Add balance accumulation register Обязательства with Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource, selected among ЗаявкаУслуги movements. Keep Трудозатраты as turnover-kind; do not change an existing populated register’s kind."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Add only the missing part of your own setup",
+      "paragraphs": [
+        "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+        "Accumulation registers → Обязательства, Balances; Клиент: CatalogRef.Клиенты; Минуты: Number 15, 2. Select it under ЗаявкаУслуги movements. Retain old fields/Трудозатраты.",
+        "Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists, do not add another definition:retain it and append only the new function. Do not load a full CF over your work."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытОстатковОбязательств() Экспорт\n    Набор = НовыйНаборРегистров(30,10);\n    Для Индекс = 0 По 1 Цикл\n        Записи = РегистрыНакопления.Обязательства.СоздатьНаборЗаписей(); Записи.Отбор.Регистратор.Установить(?(Индекс = 0,Набор.Первая,Набор.Вторая));\n        Движение = Записи.Добавить(); Движение.Период = Дата(2026,11,2,14,0,0); Движение.Клиент = Набор.Клиент;\n        Движение.ВидДвижения = ?(Индекс = 0,ВидДвиженияНакопления.Приход,ВидДвиженияНакопления.Расход);\n        Движение.Минуты = ?(Индекс = 0,30,10); Записи.Записать(Истина);\n    КонецЦикла;\n    Остаток = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Набор.Клиент));\n    До = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,1),Новый Структура(\"Клиент\",Набор.Клиент));\n    Другой = Справочники.Клиенты.СоздатьЭлемент(); Другой.Наименование = \"Учебный без движений\"; Другой.Записать();\n    ЧужойОстаток = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Другой.Ссылка));\n    Возврат Новый Структура(\"ОстатокВерный,ДоНет,РазныеКлиенты,Клиент\",Остаток.Количество() = 1 И Остаток[0].Минуты = 20,До.Количество() = 0,ЧужойОстаток.Количество() = 0,Набор.Клиент);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "Two movement sets belong to separate own documents. A receipt of 30 increases the obligation, and an expense of 10 reduces it:the balance is 20. Before the movement date there are no rows. Another customer does not inherit those 20.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытОстатковОбязательств();\n    Сообщить(\"Остаток20 минут: \" + Строка(Результат.ОстатокВерный));\n    Сообщить(\"До движений пусто: \" + Строка(Результат.ДоНет));\n    Сообщить(\"Другой клиент отдельно: \" + Строка(Результат.РазныеКлиенты));\nКонецПроцедуры\n",
+        "output": "Остаток20 минут: Да\nДо движений пусто: Да\nДругой клиент отдельно: Да",
+        "files": {
+          "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытОстатковОбязательств() Экспорт\n    Набор = НовыйНаборРегистров(30,10);\n    Для Индекс = 0 По 1 Цикл\n        Записи = РегистрыНакопления.Обязательства.СоздатьНаборЗаписей(); Записи.Отбор.Регистратор.Установить(?(Индекс = 0,Набор.Первая,Набор.Вторая));\n        Движение = Записи.Добавить(); Движение.Период = Дата(2026,11,2,14,0,0); Движение.Клиент = Набор.Клиент;\n        Движение.ВидДвижения = ?(Индекс = 0,ВидДвиженияНакопления.Приход,ВидДвиженияНакопления.Расход);\n        Движение.Минуты = ?(Индекс = 0,30,10); Записи.Записать(Истина);\n    КонецЦикла;\n    Остаток = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Набор.Клиент));\n    До = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,1),Новый Структура(\"Клиент\",Набор.Клиент));\n    Другой = Справочники.Клиенты.СоздатьЭлемент(); Другой.Наименование = \"Учебный без движений\"; Другой.Записать();\n    ЧужойОстаток = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Другой.Ссылка));\n    Возврат Новый Структура(\"ОстатокВерный,ДоНет,РазныеКлиенты,Клиент\",Остаток.Количество() = 1 И Остаток[0].Минуты = 20,До.Количество() = 0,ЧужойОстаток.Количество() = 0,Набор.Клиент);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытОстатковОбязательств();\n    Сообщить(\"Остаток20 минут: \" + Строка(Результат.ОстатокВерный));\n    Сообщить(\"До движений пусто: \" + Строка(Результат.ДоНет));\n    Сообщить(\"Другой клиент отдельно: \" + Строка(Результат.РазныеКлиенты));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation and reason"
+          ],
+          "rows": [
+            [
+              "Receipt",
+              "Own requestα,30 — Obligation increases."
+            ],
+            [
+              "Expense",
+              "Own requestβ,10 — Obligation decreases."
+            ],
+            [
+              "Balance",
+              "Customer/time — 20."
+            ],
+            [
+              "Controls",
+              "Earlier/other customer — No rows."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Recorders explain origin",
+      "paragraphs": [
+        "Each movement links to a document, explaining the balance. Movement period and document date can have distinct meanings under configuration rules. A total screenshot without drill-down is insufficient. Preserve recorder identity and compare recorder-filtered sets when reposting.",
+        "Preparation creates an own customer/service and 30/10 documents. The function writes receipt 30 and expense 10 using their recorder filters. A positive expense value with Expense direction reduces balance; do not also negate it without a different explicit contract."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "An expense of 25 is replaced with 15 for the same recorder, with a receipt of 90. What balance follows?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "75. Записать(Истина) replaces the set selected by the recorder filter. The old 25 must not remain alongside the new 15. Other recorders are retained."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Balance depends on time",
+      "paragraphs": [
+        "After receipt 30 atD1, balance is 30; after expense 10 atD2, it is 20. Specify boundary inclusion and time precision. Period turnover and point-in-time balance are different quantities. Before the first movement, expect the agreed zero rather than a stale report result.",
+        "Expect 20 on Nov 3, no earlier rows on Nov 1 and none for another own customer. These independently test arithmetic, time and dimensions. Do not compare against the whole infobase total. References and recorders trace every movement."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The first three nodes explain directional change of one balance. The last is a separate dimension-isolation check, not deletion of that balance.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Receipt",
+            "lines": [
+              "+30"
+            ]
+          },
+          {
+            "title": "Expense",
+            "lines": [
+              "−10"
+            ]
+          },
+          {
+            "title": "Balance",
+            "lines": [
+              "20"
+            ]
+          },
+          {
+            "title": "Other customer",
+            "lines": [
+              "absent"
+            ]
+          }
+        ],
+        "alternative": [
+          "Receipt: +30",
+          "Expense: −10",
+          "Balance: 20",
+          "Other customer: absent"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Choosing Приход for both rows preserves their amounts and customer but gives 40 instead of 20. Check movement direction separately from resource magnitude.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "An invariant detects duplicate writes",
+      "paragraphs": [
+        "Opening + receipts − expenses = closing. Verify independently, then repost the receipt. A duplicated 30 must not turn 20 into 50. Add another customer and check dimension isolation. Prohibiting negative balance needs an explicit business rule and reliable concurrent checking inP10.",
+        "Expense 11 is a compilable negative control yielding 19 rather than 20. Write(True) replaces the filtered recorder set; an incorrect/missing filter is dangerous. The code clears no entire register or earlier documents. Record created identities and work only in your copy."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "For a new own customer create receipt 90 and expense 25:balance 65. Replace only that expense recorder’s set with 15:balance 75. Verify another customer without movements has no rows.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p6-balances-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "be442b24819ea33e00d3859ab0102f914f522b1ea43d893c1534f03f293f3468",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain why direction, time, and dimension are required alongside the minute amount."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "An expense of 25 is replaced with 15 for the same recorder, with a receipt of 90. What balance follows?",
+      "options": [
+        "75:90−15",
+        "50:90−25−15",
+        "105:90+15"
+      ],
+      "correct": 0,
+      "feedback": "75. Записать(Истина) replaces the set selected by the recorder filter. The old 25 must not remain alongside the new 15. Other recorders are retained.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "For a remaining balance use",
+      "options": [
+        "Balances",
+        "Turnovers only",
+        "A customer title"
+      ],
+      "correct": 0,
+      "feedback": "Add balance accumulation register Обязательства with Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource, selected among ЗаявкаУслуги movements. Keep Трудозатраты as turnover-kind; do not change an existing populated register’s kind.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Receipt 30 minus expense 10 gives",
+      "options": [
+        "40",
+        "20",
+        "−40"
+      ],
+      "correct": 1,
+      "feedback": "Preparation creates an own customer/service and 30/10 documents. The function writes receipt 30 and expense 10 using their recorder filters. A positive expense value with Expense direction reduces balance; do not also negate it without a different explicit contract.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "A recorder filter bounds",
+      "options": [
+        "The platform",
+        "Colour only",
+        "The replacement scope"
+      ],
+      "correct": 2,
+      "feedback": "Expect 20 on Nov 3, no earlier rows on Nov 1 and none for another own customer. These independently test arithmetic, time and dimensions. Do not compare against the whole infobase total. References and recorders trace every movement.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What protects another document when replacing an expense?",
+      "options": [
+        "An exact recorder filter on the set",
+        "Matching customer display names",
+        "Deleting the whole register"
+      ],
+      "correct": 0,
+      "feedback": "Explain why direction, time, and dimension are required alongside the minute amount.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Balance: receipts and expenses have direction",
+    "task": "For a new own customer create receipt 90 and expense 25:balance 65. Replace only that expense recorder’s set with 15:balance 75. Verify another customer without movements has no rows.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЗаменыРасхода() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЗаменыРасхода();\n    Сообщить(\"До замены расхода: \" + Строка(Результат.До));\n    Сообщить(\"После замены на15: \" + Строка(Результат.После));\n    Сообщить(\"Другой клиент без остатка: \" + Строка(Результат.ДругойПустой));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЗаменыРасхода() Экспорт\n    Набор = НовыйНаборРегистров(90,25);\n    Для Индекс = 0 По 1 Цикл\n        Записи = РегистрыНакопления.Обязательства.СоздатьНаборЗаписей();\n        Записи.Отбор.Регистратор.Установить(?(Индекс = 0,Набор.Первая,Набор.Вторая));\n        Строка = Записи.Добавить(); Строка.Период = Дата(2026,11,2,14,0,0); Строка.Клиент = Набор.Клиент;\n        Строка.ВидДвижения = ?(Индекс = 0,ВидДвиженияНакопления.Приход,ВидДвиженияНакопления.Расход);\n        Строка.Минуты = ?(Индекс = 0,90,25); Записи.Записать(Истина);\n    КонецЦикла;\n    Отбор = Новый Структура(\"Клиент\",Набор.Клиент);\n    До = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Отбор);\n    Замена = РегистрыНакопления.Обязательства.СоздатьНаборЗаписей(); Замена.Отбор.Регистратор.Установить(Набор.Вторая);\n    Строка = Замена.Добавить(); Строка.Период = Дата(2026,11,2,14,0,0); Строка.Клиент = Набор.Клиент;\n    Строка.ВидДвижения = ВидДвиженияНакопления.Расход; Строка.Минуты = 15; Замена.Записать(Истина);\n    После = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Отбор);\n    Другой = Справочники.Клиенты.СоздатьЭлемент(); Другой.Наименование = \"P6 без обязательств\"; Другой.Записать();\n    Чужой = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Другой.Ссылка));\n    Возврат Новый Структура(\"До,После,ДругойПустой\",До[0].Минуты,После[0].Минуты,Чужой.Количество() = 0);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЗаменыРасхода() Экспорт\n    Набор = НовыйНаборРегистров(90,25);\n    Для Индекс = 0 По 1 Цикл\n        Записи = РегистрыНакопления.Обязательства.СоздатьНаборЗаписей();\n        Записи.Отбор.Регистратор.Установить(?(Индекс = 0,Набор.Первая,Набор.Вторая));\n        Строка = Записи.Добавить(); Строка.Период = Дата(2026,11,2,14,0,0); Строка.Клиент = Набор.Клиент;\n        Строка.ВидДвижения = ?(Индекс = 0,ВидДвиженияНакопления.Приход,ВидДвиженияНакопления.Расход);\n        Строка.Минуты = ?(Индекс = 0,90,25); Записи.Записать(Истина);\n    КонецЦикла;\n    Отбор = Новый Структура(\"Клиент\",Набор.Клиент);\n    До = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Отбор);\n    Замена = РегистрыНакопления.Обязательства.СоздатьНаборЗаписей(); Замена.Отбор.Регистратор.Установить(Набор.Вторая);\n    Строка = Замена.Добавить(); Строка.Период = Дата(2026,11,2,14,0,0); Строка.Клиент = Набор.Клиент;\n    Строка.ВидДвижения = ВидДвиженияНакопления.Расход; Строка.Минуты = 15; Замена.Записать(Истина);\n    После = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Отбор);\n    Другой = Справочники.Клиенты.СоздатьЭлемент(); Другой.Наименование = \"P6 без обязательств\"; Другой.Записать();\n    Чужой = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Другой.Ссылка));\n    Возврат Новый Структура(\"До,После,ДругойПустой\",До[0].Минуты,После[0].Минуты,Чужой.Количество() = 0);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытЗаменыРасхода();\n    Сообщить(\"До замены расхода: \" + Строка(Результат.До));\n    Сообщить(\"После замены на15: \" + Строка(Результат.После));\n    Сообщить(\"Другой клиент без остатка: \" + Строка(Результат.ДругойПустой));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "Receipt 90;expense 25→15;balance date 3November.",
+        "output": "До замены расхода: 65\nПосле замены на15: 75\nДругой клиент без остатка: Да"
+      }
+    ],
+    "criteria": [
+      "Labelled results:65, 75, Да.",
+      "After replacement, the old 25 is not accumulated with 15; the filter targets the intended recorder.",
+      "Explain why direction, time, and dimension are required alongside the minute amount."
+    ],
+    "hint": "The first three nodes explain directional change of one balance. The last is a separate dimension-isolation check, not deletion of that balance.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work. Accumulation registers → Обязательства, Balances; Клиент: CatalogRef.Клиенты; Минуты: Number 15,2. Select it under ЗаявкаУслуги movements. Retain old fields/Трудозатраты.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "Prior work is retained; the required metadata objects and relationships are defined."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions. Preserve the УчебныеДанные common module. Each experience shows its complete preparation. If НовыйНаборРегистров already exists,do not add another definition:retain it and append only the new function. Do not load a full CF over your work.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits",
+    "platform-contract": "platform-contract"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Dimensions say where; resources say how much",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Recorders explain origin",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Balance depends on time",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "An invariant detects duplicate writes",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p6-topic-2-author-v1",
+    "quiz": [
+      {
+        "question": "An expense of 25 is replaced with 15 for the same recorder, with a receipt of 90. What balance follows?",
+        "options": [
+          "75:90−15",
+          "50:90−25−15",
+          "105:90+15"
+        ],
+        "correct": 0,
+        "explanation": "75. Записать(Истина) replaces the set selected by the recorder filter. The old 25 must not remain alongside the new 15. Other recorders are retained."
+      },
+      {
+        "question": "For a remaining balance use",
+        "options": [
+          "Balances",
+          "Turnovers only",
+          "A customer title"
+        ],
+        "correct": 0,
+        "explanation": "Add balance accumulation register Обязательства with Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource, selected among ЗаявкаУслуги movements. Keep Трудозатраты as turnover-kind; do not change an existing populated register’s kind."
+      },
+      {
+        "question": "Receipt 30 minus expense 10 gives",
+        "options": [
+          "40",
+          "20",
+          "−40"
+        ],
+        "correct": 1,
+        "explanation": "Preparation creates an own customer/service and 30/10 documents. The function writes receipt 30 and expense 10 using their recorder filters. A positive expense value with Expense direction reduces balance; do not also negate it without a different explicit contract."
+      },
+      {
+        "question": "A recorder filter bounds",
+        "options": [
+          "The platform",
+          "Colour only",
+          "The replacement scope"
+        ],
+        "correct": 2,
+        "explanation": "Expect 20 on Nov 3, no earlier rows on Nov 1 and none for another own customer. These independently test arithmetic, time and dimensions. Do not compare against the whole infobase total. References and recorders trace every movement."
+      },
+      {
+        "question": "What protects another document when replacing an expense?",
+        "options": [
+          "An exact recorder filter on the set",
+          "Matching customer display names",
+          "Deleting the whole register"
+        ],
+        "correct": 0,
+        "explanation": "Explain why direction, time, and dimension are required alongside the minute amount."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS + MAIN GUI OBSERVATION PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "balances-main",
+      "balances-independent"
+    ],
+    "scope": "10 прямых вызовов неизменённых экспортных функций из управляемого клиента: пять основных примеров и пять самостоятельных решений. Общий модуль имеет Сервер/Вызов сервера, Privileged=false. Это не широкая матрица и не оценка понимания.",
+    "studentAuthorshipVerified": false,
+    "GUIcases": [
+      "balances-main"
+    ],
+    "plainStandaloneHandlerGUI": false
+  },
+  "editorialClarification": "Original balance equation spaced for reading and320px wrapping; meaning, native functions and original course source unchanged."
+}

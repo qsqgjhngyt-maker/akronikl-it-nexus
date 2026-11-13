@@ -850,5 +850,855 @@
       "Проект читает data/tasks.txt и создаёт board-report.txt в файловой системе запуска. Веб-runtime не обещает автоматически записать результат обратно в личный проект. После проверки используйте штатное явное сохранение файлов результата. Не считайте наличие файла в одном запуске доказательством его наличия после перезапуска или на другом устройстве.",
       "Короткий ADR фиксирует контекст, варианты, решение и последствия. Для этого проекта сравните открытый vector с функциями и Board с закрытым состоянием; concrete policy и virtual интерфейс; немедленную запись и подготовку кандидата. Объясните, какую проблему решает выбранная сложность и какой вариант вы бы предпочли для меньшего приложения."
     ]
+  },
+  "teachingEdition": {
+    "revision": "b5-author-v1",
+    "title": "Проектирование, тестируемость и рефакторинг",
+    "goal": "Разделите разбор и предметные операции, затем сохраните результаты при переносе кода в несколько файлов.",
+    "prerequisites": [
+      {
+        "text": "Module 1–4: ввод, функции, последовательности, владение, тестирование и многофайловая сборка."
+      },
+      {
+        "text": "Прямые зависимости: cpp.templates-concepts, cpp.testing-diagnostics, cpp.multifile-build, cpp.files"
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Поддерживаемость как проверяемое свойство",
+        "paragraphs": [
+          "У списка задач есть формат ввода, допустимость и сумма минут. При смене ввода тесты valid и total должны работать на значениях в памяти.",
+          "Поддерживаемость проявляется при изменении требования: можно ли локально изменить правило и сохранить понятность остальных частей? Не оценивайте её только числом классов. В проекте есть значения Task, владелец Board, стратегия Policy, разбор входа и вывод отчёта. Каждый элемент отвечает за отдельное решение, которое может измениться.",
+          "Начните с конкретного сценария: обычная оценка равна минутам, срочная — удвоенным минутам. Затем добавьте отказ импорта, проверку уникальности ID и экспорт. Список требований задаёт границы тестов. Абстракция без примера изменения остаётся предположением; поэтому защита включает небольшое новое требование и оценку затронутых файлов."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Связность и зависимости",
+        "paragraphs": [
+          "Высокая связность означает, что части модуля работают на одну понятную ответственность. Малое сцепление означает, что изменение внутреннего решения не заставляет множество клиентов меняться. Board проверяет инвариант задач, но не открывает файлы и не читает cin. Поэтому тест может создать кандидата прямо в памяти без подготовки браузерного интерфейса.",
+          "Policy передаётся в total как const ссылка. Board не владеет стратегией и не выбирает режим, но использует её контракт. main владеет конкретной стратегией через unique_ptr. Так направление зависимости видно из сигнатуры. Не вводите глобальный singleton только для удобного доступа: он скроет входы теста и сделает независимые запуски связанными.",
+          "Discount передаётся явно. Проверка цены не требует изменения глобального состояния или файла."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Скидка передаётся как зависимость",
+        "paragraphs": [
+          "Вычислите цены 1000 центов при двух переданных скидках."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nstruct Discount {\n    int percent;\n    int apply(int cents) const { return cents * (100 - percent) / 100; }\n};\nint price(int cents, const Discount &policy) { return policy.apply(cents); }\nint main() {\n    std::cout << price(1000, Discount{10}) << ' '\n              << price(1000, Discount{0}) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "900 1000\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Рефакторинг сохраняет поведение",
+        "paragraphs": [
+          "Рефакторинг меняет устройство кода при сохранении оговорённого наблюдаемого поведения. Сначала зафиксируйте тесты действующего контракта, затем перенесите вычисление total из main в предметную функцию и повторите проверки. Если одновременно изменить формат вывода и внутреннюю архитектуру, источник расхождения станет труднее определить.",
+          "Не закрепляйте тестом любую случайность старой реализации. Контракт может явно измениться, но такое изменение нужно описать отдельно от рефакторинга. В лабораторной порядок строк и сообщения фиксированы, а внутреннее расположение функций нет. Это позволяет вынести доменную часть в заголовок и cpp без изменения результатов на тех же входах.",
+          "Сохраните ввод и вывод до выноса функций. После сборки двух cpp повторите те же случаи."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Тестовый драйвер без магии",
+        "paragraphs": [
+          "Отдельный драйвер создаёт Board и две Policy, проверяет обычный и срочный итог, независимость копии и отказы замены. Счётчик checks увеличивается только при успешном условии. При любом неуспехе выводится FAIL, а итоговый код возврата становится ненулевым. Поэтому простая строка PASS сама по себе не является основанием принять решение.",
+          "В сборке драйвер заменяет main.cpp, но использует те же domain.cpp и report.cpp. Одновременно два main не компонуются. В Nexus создайте отдельную копию проекта или явно замените основной файл после сохранения исходника. Метаданные includeRoots и translationUnits показывают, какие файлы входят в исполняемую программу; каталог tests не подключается автоматически.",
+          "Драйвер проверяет total на обычном и пустом наборе. При ошибке он возвращает ненулевой код завершения."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Драйвер проверяет обычный и пустой набор",
+        "paragraphs": [
+          "Свяжите PASS 2 с двумя конкретными условиями драйвера."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Открыть вывод и разбор",
+          "paragraphs": [
+            "PASS 2 связано с двумя проверенными входами. При провале любого условия драйвер задаёт ненулевой exit."
+          ],
+          "tables": [
+            {
+              "caption": "Что происходит по шагам",
+              "columns": [
+                "Действие",
+                "До",
+                "После",
+                "Почему"
+              ],
+              "rows": [
+                [
+                  "Обычный набор",
+                  "{1,5}, {2,8}",
+                  "total = 13",
+                  "Суммируются минуты."
+                ],
+                [
+                  "Пустой набор",
+                  "{}",
+                  "total = 0",
+                  "Начальное значение определяет результат."
+                ],
+                [
+                  "Объединить проверки",
+                  "13 == 13, 0 == 0",
+                  "PASS 2, exit = 0",
+                  "Оба условия должны быть истинны."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+            "stdin": "",
+            "output": "PASS 2\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Сильная гарантия импорта",
+        "paragraphs": [
+          "Board::replace принимает кандидат по значению, проверяет размер, диапазоны и уникальность ID, затем выполняет swap. Контролируемый отказ расположен до swap. При исключении исходные задачи сохраняются, а кандидат очищается автоматически. Проверка включает неверные данные и принудительный отказ на корректных данных: это разные основания отклонения.",
+          "Гарантия относится к состоянию Board, а не ко всем действиям main. Печать статуса и создание файла происходят после попытки импорта. Отчёт описывает текущее состояние даже при отвергнутом кандидате. Такой протокол позволяет наблюдать сохранность прежних задач без доступа к private полю и без обещания транзакции файловой системы.",
+          "В итоговом Board отказ происходит до swap. Отчёт после него должен показать исходную задачу {1,10}."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Файлы и явные артефакты",
+        "paragraphs": [
+          "Проект читает data/tasks.txt и создаёт board-report.txt в файловой системе запуска. Веб-runtime не обещает автоматически записать результат обратно в личный проект. После проверки используйте штатное явное сохранение файлов результата. Не считайте наличие файла в одном запуске доказательством его наличия после перезапуска или на другом устройстве.",
+          "Проверка экспорта включает открытие потока, запись, close и состояние потока после закрытия. Деструктор файла нужен для освобождения ресурса, но сообщение об успешном сохранении требует явной проверки ошибки. Отсутствующий входной файл, пустой файл и файл с нулём задач — три разных контрольных случая, которые нельзя смешивать.",
+          "board-report.txt появляется в файловой системе запуска. После сравнения строк сохраните его в проект явным действием."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "ADR и обзор альтернатив",
+        "paragraphs": [
+          "Короткий ADR фиксирует контекст, варианты, решение и последствия. Для этого проекта сравните открытый vector с функциями и Board с закрытым состоянием; concrete policy и virtual интерфейс; немедленную запись и подготовку кандидата. Объясните, какую проблему решает выбранная сложность и какой вариант вы бы предпочли для меньшего приложения.",
+          "Аргументы должны ссылаться на требования и проверяемые свойства. «Так принято» или название паттерна недостаточны. Укажите ограничения: до 20 задач, целые минуты, отсутствие сети и GUI, экспорты по явному действию. Ни эта архитектура, ни набор тестов не доказывают промышленную готовность произвольного приложения; они формируют воспроизводимую основу для дальнейшей работы.",
+          "В ADR привяжите решение к требованию. Например, Policy позволяет менять оценку, сохраняя операции Board."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Защита накопленного проекта",
+        "paragraphs": [
+          "Сдача включает исходники, входные файлы, фактические stdout, сохранённый отчёт, результаты отдельного драйвера и ADR. Затем преподаватель или партнёр выбирает новый случай из разрешённой области и небольшое изменение требования. Например, добавьте ещё одну стратегию оценки и покажите, какие тесты и файлы действительно пришлось менять.",
+          "Не отмечайте выполнение только за совпадение с эталонным текстом кода. Нужны объяснение инварианта, владения, копии, полиморфного вызова, гарантии отказа и ограничения шаблона. После Module 5 эти основания переходят в архитектуру приложений и события Module 6. Итоговая курсовая проверка должна позже объединить модули, а не подменять их практику единственным тестом.",
+          "Возьмите новый допустимый вход и объясните, какие проверки подтверждают сохранение поведения после переноса функций."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь ваша задача",
+        "paragraphs": [
+          "Реализуйте valid и total независимо от main. Затем вынесите их определения в отдельную единицу трансляции и повторите случаи.",
+          "Разделите границы id/minutes, уникальность и суммирование."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Что появится в stdout после двух успешных проверок total?",
+        "options": [
+          "PASS 2\n",
+          "FAIL",
+          "PASS 1"
+        ],
+        "correct": 0,
+        "feedback": "Оба условия истинны. stdout содержит PASS 2, а return ok?0:1 даёт код 0.",
+        "code": {
+          "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+          "stdin": "",
+          "expected": "PASS 2\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Что сохраняет рефакторинг?",
+        "options": [
+          "Согласованное наблюдаемое поведение.",
+          "Любой внутренний адрес.",
+          "Количество строк исходника."
+        ],
+        "correct": 0,
+        "feedback": "Рефакторинг меняет внутреннее устройство при сохранении согласованного результата для тех же входов. Изменение формата или бизнес-правила является отдельным изменением контракта; внутренние адреса и число строк обычно не обещаны клиенту.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Почему Board не читает cin?",
+        "options": [
+          "Потому что классы не могут читать cin.",
+          "Чтобы домен проверялся независимо от ввода.",
+          "Чтобы скрыть все ошибки."
+        ],
+        "correct": 1,
+        "feedback": "Board можно проверить на значениях в памяти без подготовки потока ввода. Разбор cin остаётся у клиента; это разделение ответственности, а не запрет языку читать поток внутри класса.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Зачем отдельный main тестового драйвера?",
+        "options": [
+          "Чтобы собрать два main вместе.",
+          "Чтобы не использовать домен.",
+          "Он заменяет приложение при проверке общей доменной части."
+        ],
+        "correct": 2,
+        "feedback": "Драйвер использует те же domain.cpp и report.cpp, но предоставляет собственную точку входа для проверок. Его собирают вместо main приложения: две конкурирующие точки входа не являются одним тестовым запуском.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Сохраняется ли output file в проект автоматически?",
+        "options": [
+          "Нет, требуется штатное явное сохранение артефакта.",
+          "Да, без явного действия.",
+          "Да, при каждом выводе cout."
+        ],
+        "correct": 0,
+        "feedback": "Созданный файл сначала существует только в файловой системе конкретного запуска. Штатное явное сохранение переносит выбранный результат в проект; cout не обещает сохранение файла или синхронизацию устройства.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Доказывает ли успешный тест все возможные требования?",
+        "options": [
+          "Да, любые будущие требования.",
+          "Нет, вывод ограничен проверенным контрактом и случаями.",
+          "Да, если код скопирован."
+        ],
+        "correct": 1,
+        "feedback": "Тест подтверждает конкретные наблюдения при заданных входах и контракте. Новые требования могут затронуть непроверенные области, поэтому нужны анализ, дополнительные случаи и защита причин корректности.",
+        "recall": "concept-8"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Почему успешной сборки недостаточно после выноса valid и total в cpp/header?",
+        "feedback": "Повторите корректные и ошибочные входы, сравните stdout и exit. Соединение файлов само по себе не подтверждает прежние расчёты.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Лабораторная: Проектирование, тестируемость и рефакторинг",
+      "task": "Прочитайте n=0…20 и n пар id/minutes. id=1…100 уникален, minutes=0…100. Сначала проверьте весь ввод и хвост. Отделите valid и total от main. Успех: tasks N minutes S. Неверный ввод или повтор ID: invalid. Затем перенесите домен в отдельную TU без изменения результатов.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nbool valid(const std::vector<Task> &tasks) {\n    // TODO: Проверьте границы каждой задачи и уникальность ID без чтения\n    // cin.\n    return true;\n}\nint total(const std::vector<Task> &tasks) {\n    int minutes = 0;\n    // TODO: Подсчитайте минуты в переданном наборе независимо от ввода.\n    return minutes;\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<Task> tasks;\n    for (int i = 0; i < n; ++i) {\n        Task t;\n        if (!(std::cin >> t.id >> t.minutes)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        tasks.push_back(t);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || !valid(tasks)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"tasks \" << tasks.size() << \" minutes \" << total(tasks)\n              << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "2 1 5 2 8",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Случай 1",
+          "input": "0",
+          "output": "tasks 0 minutes 0\n"
+        },
+        {
+          "label": "Первый содержательный запуск",
+          "input": "2 1 5 2 8",
+          "output": "tasks 2 minutes 13\n"
+        },
+        {
+          "label": "Случай 3",
+          "input": "1 100 100",
+          "output": "tasks 1 minutes 100\n"
+        },
+        {
+          "label": "Случай 4",
+          "input": "1 1 0",
+          "output": "tasks 1 minutes 0\n"
+        },
+        {
+          "label": "Ошибка ввода · 5",
+          "input": "2 1 4 1 7",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 6",
+          "input": "1 0 3",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 7",
+          "input": "1 1 -1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 8",
+          "input": "1 1 101",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 9",
+          "input": "1 1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 10",
+          "input": "21",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 11",
+          "input": "0 x",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка ввода · 12",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Для {1,5},{2,8} valid истинен, total равен 13.",
+        "Вывод tasks 2 minutes 13.",
+        "В обоих вариантах tasks 0 minutes 0 и invalid.",
+        "Добавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче."
+      ],
+      "hint": "Повторите корректные и ошибочные входы, сравните stdout и exit. Соединение файлов само по себе не подтверждает прежние расчёты.",
+      "steps": [
+        {
+          "where": "До запуска",
+          "action": "Разделите границы id/minutes, уникальность и суммирование.",
+          "why": "Каждое правило проверяется без cin.",
+          "expected": "Для {1,5},{2,8} valid истинен, total равен 13."
+        },
+        {
+          "where": "В моей программе",
+          "action": "Допишите функции и выполните 2 1 5 2 8.",
+          "why": "Проверяются разбор пар и передача готового набора.",
+          "expected": "Вывод tasks 2 minutes 13."
+        },
+        {
+          "where": "После запуска",
+          "action": "Сравните 0 и 2 1 4 1 7 до и после выноса домена.",
+          "why": "Повтор ID проверяет инвариант, повтор запуска — сохранение поведения.",
+          "expected": "В обоих вариантах tasks 0 minutes 0 и invalid."
+        }
+      ],
+      "modulePracticum": {
+        "referenceCode": "#include \"domain.hpp\"\n#include <iostream>\n#include <utility>\n#include <fstream>\n#include <memory>\n#include <stdexcept>\nint main(){int mode,fail;if(!(std::cin>>mode>>fail)||mode<0||mode>1||fail<0||fail>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n academy::Board board;std::unique_ptr<academy::Policy> policy;\n if(mode==0)policy=std::make_unique<academy::Normal>();else policy=std::make_unique<academy::Urgent>();\n try{\n  std::ifstream in{\"data/tasks.txt\"};int n;if(!(in>>n)||n<0||n>20)throw std::invalid_argument(\"input\");\n  std::vector<academy::Task> candidate;for(int i=0;i<n;++i){academy::Task t;if(!(in>>t.id>>t.minutes))throw std::invalid_argument(\"record\");candidate.push_back(t);}\n  in>>std::ws;if(!in.eof())throw std::invalid_argument(\"trailing\");\n  board.replace(std::move(candidate),fail==1);std::cout<<\"accepted\\n\";\n }catch(const std::exception&){std::cout<<\"rejected\\n\";}\n std::cout<<\"tasks \"<<board.tasks().size()<<\" score \"<<board.total(*policy)<<'\\n';\n std::ofstream out{\"board-report.txt\"};if(!out){std::cout<<\"export-failed\\n\";return 1;}\n academy::write_report(out,board,*policy);out.close();if(!out){std::cout<<\"export-failed\\n\";return 1;}\n}\n",
+        "referenceFiles": {
+          "include/domain.hpp": "#ifndef NEXUS_M5_DOMAIN_HPP\n#define NEXUS_M5_DOMAIN_HPP\n#include <vector>\n#include <concepts>\n#include <ostream>\nnamespace academy {\nstruct Task {int id,minutes;};\ntemplate<std::integral T> bool bounded(T n,T lo,T hi){return lo<=n&&n<=hi;}\nstruct Policy {virtual int score(const Task&)const=0;virtual ~Policy()=default;};\nstruct Normal final:Policy {int score(const Task& t)const override{return t.minutes;}};\nstruct Urgent final:Policy {int score(const Task& t)const override{return 2*t.minutes;}};\nclass Board {\n std::vector<Task> tasks_{{1,10}};\npublic:\n void replace(std::vector<Task> candidate,bool fail);\n int total(const Policy& policy)const;\n const std::vector<Task>& tasks()const{return tasks_;}\n};\nvoid write_report(std::ostream&,const Board&,const Policy&);\n}\n#endif\n",
+          "src/domain.cpp": "#include \"domain.hpp\"\n#include <stdexcept>\nnamespace academy {\nvoid Board::replace(std::vector<Task> candidate,bool fail){\n if(candidate.size()>20)throw std::invalid_argument(\"size\");\n for(std::size_t i=0;i<candidate.size();++i){const auto& t=candidate[i];\n  if(!bounded(t.id,1,100)||!bounded(t.minutes,0,100))throw std::invalid_argument(\"range\");\n  for(std::size_t j=0;j<i;++j)if(candidate[j].id==t.id)throw std::invalid_argument(\"duplicate\");\n }\n if(fail)throw std::runtime_error(\"injected\");\n tasks_.swap(candidate);\n}\nint Board::total(const Policy& policy)const{int n=0;for(const auto& t:tasks_)n+=policy.score(t);return n;}\n}\n",
+          "src/report.cpp": "#include \"domain.hpp\"\nnamespace academy {\nvoid write_report(std::ostream& out,const Board& b,const Policy& p){\n out<<\"tasks \"<<b.tasks().size()<<\" score \"<<b.total(p)<<'\\n';\n for(const auto& t:b.tasks())out<<t.id<<' '<<t.minutes<<'\\n';\n}\n}\n",
+          "data/tasks.txt": "2\n2 3\n3 4\n"
+        },
+        "metadata": {
+          "includeRoots": [
+            "include"
+          ],
+          "translationUnits": [
+            "main.cpp",
+            "src/domain.cpp",
+            "src/report.cpp"
+          ]
+        },
+        "testDriver": "#include \"domain.hpp\"\n#include <iostream>\n#include <utility>\n#include <sstream>\n#include <stdexcept>\nint main(){academy::Board b;academy::Normal normal;academy::Urgent urgent;int checks=0;\n auto check=[&](bool ok){if(ok)++checks;else std::cout<<\"FAIL\\n\";};\n check(b.total(normal)==10);check(b.total(urgent)==20);\n b.replace({{2,3},{3,4}},false);check(b.total(normal)==7);check(b.total(urgent)==14);\n academy::Board copy=b;copy.replace({},false);check(copy.total(normal)==0);check(b.total(normal)==7);\n auto reject=[&](std::vector<academy::Task> v,bool fail){auto before=b.tasks();try{b.replace(std::move(v),fail);return false;}catch(const std::exception&){if(b.tasks().size()!=before.size())return false;for(std::size_t i=0;i<before.size();++i)if(b.tasks()[i].id!=before[i].id||b.tasks()[i].minutes!=before[i].minutes)return false;return true;}};\n check(reject({{2,1},{2,2}},false));check(reject({{0,1}},false));check(reject({{1,-1}},false));check(reject({{1,2}},true));\n check(academy::bounded(0,0,100)&&!academy::bounded(101,0,100));\n std::ostringstream out;academy::write_report(out,b,normal);check(out.str()==\"tasks 2 score 7\\n2 3\\n3 4\\n\");\n std::cout<<\"PASS \"<<checks<<'\\n';return checks==12?0:1;}\n",
+        "testExpectedStdout": "PASS 12\n",
+        "cases": [
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 0 score 0\n",
+            "files": {
+              "data/tasks.txt": "0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 0 score 0\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 0 score 0\n",
+            "files": {
+              "data/tasks.txt": "0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 0 score 0\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 1 score 0\n",
+            "files": {
+              "data/tasks.txt": "1\n1 0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 0\n1 0\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 1 score 0\n",
+            "files": {
+              "data/tasks.txt": "1\n1 0\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 0\n1 0\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 2 score 7\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 2 score 7\n2 3\n3 4\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 2 score 14\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 2 score 14\n2 3\n3 4\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 1 score 100\n",
+            "files": {
+              "data/tasks.txt": "1\n100 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 100\n100 100\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 1 score 200\n",
+            "files": {
+              "data/tasks.txt": "1\n100 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 200\n100 100\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "accepted\ntasks 20 score 2000\n",
+            "files": {
+              "data/tasks.txt": "20\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 20 score 2000\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            }
+          },
+          {
+            "stdin": "1 0",
+            "stdout": "accepted\ntasks 20 score 4000\n",
+            "files": {
+              "data/tasks.txt": "20\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 20 score 4000\n1 100\n2 100\n3 100\n4 100\n5 100\n6 100\n7 100\n8 100\n9 100\n10 100\n11 100\n12 100\n13 100\n14 100\n15 100\n16 100\n17 100\n18 100\n19 100\n20 100\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {},
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": ""
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "x"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "-1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "21"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "2 1 3 1 4"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 0 1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 101 1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1 -1"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1 101"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "0 tail"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 0",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "1 1 x"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "0 1",
+            "stdout": "rejected\ntasks 1 score 10\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 10\n1 10\n"
+            }
+          },
+          {
+            "stdin": "1 1",
+            "stdout": "rejected\ntasks 1 score 20\n",
+            "files": {
+              "data/tasks.txt": "2\n2 3\n3 4\n"
+            },
+            "outputFiles": {
+              "board-report.txt": "tasks 1 score 20\n1 10\n"
+            }
+          },
+          {
+            "stdin": "2 0",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          },
+          {
+            "stdin": "0 2",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          },
+          {
+            "stdin": "",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          },
+          {
+            "stdin": "0 0 tail",
+            "stdout": "invalid\n",
+            "outputFiles": {},
+            "fileProperties": {
+              "board-report.txt": {
+                "kind": "absent"
+              }
+            }
+          }
+        ],
+        "title": "Проект модуля: Поддерживаемое приложение",
+        "challenge": "Создайте личный многофайловый проект с Board и Policy. Начальная задача {1,10}. stdin: mode=0…1 и fail=0…1 без хвоста; неверный stdin даёт только invalid без отчёта. data/tasks.txt: n=0…20, затем n пар уникальный id=1…100 и minutes=0…100 без хвоста. Отсутствие/неверный файл или fail=1 отвергает импорт, сохраняя исходную задачу. mode=0 считает минуты, mode=1 удваивает. stdout: accepted/rejected, затем tasks N score S. board-report.txt содержит tasks N score S и каждую пару по строке в порядке файла. Явно сохраните отчёт кнопкой файлов результата. Ошибка экспорта даёт export-failed и exit=1; это отдельный контракт от Board. Отдельно замените main тестовым драйвером, не собирайте оба main вместе.",
+        "starterCode": "#include \"domain.hpp\"\n#include <iostream>\n#include <fstream>\n#include <memory>\n#include <utility>\nint main(){\n // TODO: validate mode/fail; read data/tasks.txt; choose an academy::Policy.\n // TODO: build a candidate and invoke Board::replace inside try/catch.\n // TODO: report current state and explicitly check export close status.\n std::cout<<\"pending\\n\";\n}\n",
+        "starterExpectedStdout": "pending\n",
+        "starterFiles": {
+          "include/domain.hpp": "#ifndef NEXUS_M5_DOMAIN_HPP\n#define NEXUS_M5_DOMAIN_HPP\n#include <vector>\n#include <concepts>\n#include <ostream>\nnamespace academy {\nstruct Task {int id,minutes;};\ntemplate<std::integral T> bool bounded(T n,T lo,T hi){return lo<=n&&n<=hi;}\nstruct Policy {virtual int score(const Task&)const=0;virtual ~Policy()=default;};\nstruct Normal final:Policy {int score(const Task& t)const override{return t.minutes;}};\nstruct Urgent final:Policy {int score(const Task& t)const override{return 2*t.minutes;}};\nclass Board {\n std::vector<Task> tasks_{{1,10}};\npublic:\n void replace(std::vector<Task> candidate,bool fail);\n int total(const Policy& policy)const;\n const std::vector<Task>& tasks()const{return tasks_;}\n};\nvoid write_report(std::ostream&,const Board&,const Policy&);\n}\n#endif\n",
+          "src/domain.cpp": "#include \"domain.hpp\"\nnamespace academy {void Board::replace(std::vector<Task>,bool){/* TODO */}int Board::total(const Policy&)const{return 0;}}\n",
+          "src/report.cpp": "#include \"domain.hpp\"\nnamespace academy {void write_report(std::ostream&,const Board&,const Policy&){/* TODO */}}\n",
+          "data/tasks.txt": "2\n2 3\n3 4\n"
+        },
+        "skills": [
+          {
+            "lessonId": "cpp.oop-principles",
+            "title": "Объекты, абстракция и границы ответственности"
+          },
+          {
+            "lessonId": "cpp.classes-objects-state-control",
+            "title": "Классы, интерфейс и состояние"
+          },
+          {
+            "lessonId": "cpp.constructors-destructors",
+            "title": "Конструирование и завершение жизни"
+          },
+          {
+            "lessonId": "cpp.raii-smart-pointers",
+            "title": "RAII и умные указатели"
+          },
+          {
+            "lessonId": "cpp.value-copy-move",
+            "title": "Семантика значения, копирование и перемещение"
+          },
+          {
+            "lessonId": "cpp.composition-inheritance-polymorphism",
+            "title": "Композиция, наследование и полиморфизм"
+          },
+          {
+            "lessonId": "cpp.exceptions-guarantees",
+            "title": "Исключения и гарантии обработки ошибок"
+          },
+          {
+            "lessonId": "cpp.templates-concepts",
+            "title": "Шаблоны и ограниченные обобщения"
+          },
+          {
+            "lessonId": "cpp.design-testability-refactoring",
+            "title": "Проектирование, тестируемость и рефакторинг"
+          }
+        ],
+        "milestones": [
+          "Зафиксируйте входной контракт и схему владения.",
+          "Реализуйте предметные типы без файлового ввода.",
+          "Проверьте инварианты и независимую копию.",
+          "Подключите Policy и две стратегии через const интерфейс.",
+          "Внедрите отказ до commit и сравните состояние целиком.",
+          "Соберите отдельный драйвер: ожидается PASS 12 и exit=0.",
+          "Запустите файловые случаи и явно сохраните отчёт.",
+          "Защитите ADR и выполните изменение требования."
+        ],
+        "rubric": [
+          {
+            "points": 2,
+            "criterion": "Инварианты и ответственность Board/Policy объяснены.",
+            "complete": "Критерий полностью подтверждён исходником, фактическим случаем и объяснением: Инварианты и ответственность Board/Policy объяснены.",
+            "partial": "Есть частичная реализация, но не хватает независимого случая или объяснения.",
+            "missing": "Критерий не выполнен либо наблюдается нарушение контракта."
+          },
+          {
+            "points": 2,
+            "criterion": "RAII, копия и полиморфное уничтожение корректны.",
+            "complete": "Критерий полностью подтверждён исходником, фактическим случаем и объяснением: RAII, копия и полиморфное уничтожение корректны.",
+            "partial": "Есть частичная реализация, но не хватает независимого случая или объяснения.",
+            "missing": "Критерий не выполнен либо наблюдается нарушение контракта."
+          },
+          {
+            "points": 2,
+            "criterion": "Отказ до commit сохраняет весь снимок; есть отдельный тест.",
+            "complete": "Критерий полностью подтверждён исходником, фактическим случаем и объяснением: Отказ до commit сохраняет весь снимок; есть отдельный тест.",
+            "partial": "Есть частичная реализация, но не хватает независимого случая или объяснения.",
+            "missing": "Критерий не выполнен либо наблюдается нарушение контракта."
+          },
+          {
+            "points": 2,
+            "criterion": "Файлы, negative cases и драйвер проверены фактическими запусками.",
+            "complete": "Критерий полностью подтверждён исходником, фактическим случаем и объяснением: Файлы, negative cases и драйвер проверены фактическими запусками.",
+            "partial": "Есть частичная реализация, но не хватает независимого случая или объяснения.",
+            "missing": "Критерий не выполнен либо наблюдается нарушение контракта."
+          },
+          {
+            "points": 2,
+            "criterion": "ADR, артефакты и изменение требования защищены.",
+            "complete": "Критерий полностью подтверждён исходником, фактическим случаем и объяснением: ADR, артефакты и изменение требования защищены.",
+            "partial": "Есть частичная реализация, но не хватает независимого случая или объяснения.",
+            "missing": "Критерий не выполнен либо наблюдается нарушение контракта."
+          }
+        ],
+        "artifacts": [
+          "Все .cpp/.hpp и входные файлы",
+          "Фактические результаты и новые тесты",
+          "Явно сохранённый board-report.txt",
+          "ADR с альтернативами",
+          "Краткая защита изменения требования"
+        ],
+        "completionRule": "Необходимы все пять критериев, не менее 8/10 и отсутствие незакрытого нарушения инварианта, владения или сохранности при отказе. Проверка преподавателем/самопроверка по материалам; автоматический зачёт не реализован.",
+        "label": "ПРОЕКТ МОДУЛЯ",
+        "readiness": "Начинайте после лабораторных указанных тем. Сначала собственная попытка, затем сравнение с опорным решением.",
+        "requirements": [
+          "Создайте личный многофайловый проект с Board и Policy. Начальная задача {1,10}. stdin: mode=0…1 и fail=0…1 без хвоста; неверный stdin даёт только invalid без отчёта. data/tasks.txt: n=0…20, затем n пар уникальный id=1…100 и minutes=0…100 без хвоста. Отсутствие/неверный файл или fail=1 отвергает импорт, сохраняя исходную задачу. mode=0 считает минуты, mode=1 удваивает. stdout: accepted/rejected, затем tasks N score S. board-report.txt содержит tasks N score S и каждую пару по строке в порядке файла. Явно сохраните отчёт кнопкой файлов результата. Ошибка экспорта даёт export-failed и exit=1; это отдельный контракт от Board. Отдельно замените main тестовым драйвером, не собирайте оба main вместе.",
+          "Не теряйте прежний код: создайте отдельный проект или сохранённую копию перед заменой.",
+          "Сравнивайте код возврата, stdout и оговорённые файлы, а не только отсутствие красного сообщения."
+        ],
+        "walkthrough": [
+          "Высокая связность означает, что части модуля работают на одну понятную ответственность. Малое сцепление означает, что изменение внутреннего решения не заставляет множество клиентов меняться. Board проверяет инвариант задач, но не открывает файлы и не читает cin. Поэтому тест может создать кандидата прямо в памяти без подготовки браузерного интерфейса.",
+          "Отдельный драйвер создаёт Board и две Policy, проверяет обычный и срочный итог, независимость копии и отказы замены. Счётчик checks увеличивается только при успешном условии. При любом неуспехе выводится FAIL, а итоговый код возврата становится ненулевым. Поэтому простая строка PASS сама по себе не является основанием принять решение.",
+          "Board::replace принимает кандидат по значению, проверяет размер, диапазоны и уникальность ID, затем выполняет swap. Контролируемый отказ расположен до swap. При исключении исходные задачи сохраняются, а кандидат очищается автоматически. Проверка включает неверные данные и принудительный отказ на корректных данных: это разные основания отклонения.",
+          "Проект читает data/tasks.txt и создаёт board-report.txt в файловой системе запуска. Веб-runtime не обещает автоматически записать результат обратно в личный проект. После проверки используйте штатное явное сохранение файлов результата. Не считайте наличие файла в одном запуске доказательством его наличия после перезапуска или на другом устройстве.",
+          "Короткий ADR фиксирует контекст, варианты, решение и последствия. Для этого проекта сравните открытый vector с функциями и Board с закрытым состоянием; concrete policy и virtual интерфейс; немедленную запись и подготовку кандидата. Объясните, какую проблему решает выбранная сложность и какой вариант вы бы предпочли для меньшего приложения."
+        ]
+      },
+      "recall": "example-2",
+      "starterRevision": "b5-starter-v1",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "tasks 2 minutes 0\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-class",
+        "title": "C++20 [class]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[class]",
+        "language": "English",
+        "purpose": "Сверьте требования C++20 в [class] после работы с примерами урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+      }
+    ],
+    "coverage": {
+      "1": "concept-2",
+      "2": "example-2",
+      "3": "concept-3",
+      "4": "concept-5",
+      "5": "concept-7"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Поддерживаемость как проверяемое свойство",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Связность и зависимости",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Рефакторинг сохраняет поведение",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Тестовый драйвер без магии",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Сильная гарантия импорта",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Файлы и явные артефакты",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "ADR и обзор альтернатив",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Защита накопленного проекта",
+        "anchor": "concept-8"
+      }
+    ]
   }
 }

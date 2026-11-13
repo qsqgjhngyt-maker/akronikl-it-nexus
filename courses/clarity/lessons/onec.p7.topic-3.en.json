@@ -1,0 +1,454 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p7-topic-3-author-v1",
+  "id": "onec.p7.topic-3",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Queries and performance",
+  "locale": "en",
+  "title": "A temporary table: its name does not replace shared context",
+  "goal": "Materialize two own requests, reconcile 75 and end the temporary-table context.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P6. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "One query created a table, but another cannot find it. The name alone is insufficient: which manager owns the prepared set, and when is it closed?",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Intermediate sets need contracts",
+      "paragraphs": [
+        "A temporary table stores intermediate results within an execution context and can support reuse. It is not a persistent catalog. Specify fields, keys and expected multiplicity. Materializing all columns or all source rows can hurt performance; select only required data with justified filtering.",
+        "Create a local TempTablesManager. The first query stores only references and minutes of the own customer in СвоиЗаявки. This is not permanent metadata or a global multi-user cache."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Continue your own P6 setup",
+      "paragraphs": [
+        "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "Use the existing Клиенты, Услуги and ЗаявкаУслуги. Queries require no new permanent metadata object. Functions run in УчебныеДанные: Server and Server call enabled; Client/Global/Privileged disabled. Do not load a full CF over your work.",
+        "НовыйНаборРегистров is the P6 preparation helper. If already defined, retain its single definition and append only the new experience function. The Приложение.bsl caller belongs in the separate application handler. After one run, remove only the added startup call."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытВременнойТаблицы() Экспорт\n    Д = НовыйНаборРегистров(); Менеджер = Новый МенеджерВременныхТаблиц;\n    Запрос = Новый Запрос; Запрос.МенеджерВременныхТаблиц = Менеджер;\n    Запрос.Текст = \"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ПОМЕСТИТЬ СвоиЗаявки ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент\";\n    Запрос.УстановитьПараметр(\"Клиент\", Д.Клиент); Запрос.Выполнить();\n    Итоги = Новый Запрос(\"ВЫБРАТЬ СУММА(Т.Минуты) КАК Минуты, КОЛИЧЕСТВО(*) КАК ЧислоСтрок ИЗ СвоиЗаявки КАК Т\");\n    Итоги.МенеджерВременныхТаблиц = Менеджер; Таблица = Итоги.Выполнить().Выгрузить();\n    Верно = Таблица[0].Минуты = 75 И Таблица[0].ЧислоСтрок = 2;\n    Менеджер.Закрыть();\n    Отказ = Ложь; Попытка Итоги.Выполнить(); Исключение Отказ = Истина; КонецПопытки;\n    Возврат Новый Структура(\"НаборВерный,КонтекстЗакрыт\",Верно,Отказ);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The first query places two own requests in СвоиЗаявки. The second uses the same manager and gets 2 rows/ 75 minutes. After Закрыть, a further query must refuse. This concerns resource lifetime, not deletion of documents.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытВременнойТаблицы();\n    Сообщить(\"Две строки и75 минут: \" + Строка(Результат.НаборВерный));\n    Сообщить(\"Закрытый менеджер отклонён: \" + Строка(Результат.КонтекстЗакрыт));\nКонецПроцедуры\n",
+        "output": "Две строки и75 минут: Да\nЗакрытый менеджер отклонён: Да",
+        "files": {
+          "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытВременнойТаблицы() Экспорт\n    Д = НовыйНаборРегистров(); Менеджер = Новый МенеджерВременныхТаблиц;\n    Запрос = Новый Запрос; Запрос.МенеджерВременныхТаблиц = Менеджер;\n    Запрос.Текст = \"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ПОМЕСТИТЬ СвоиЗаявки ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент\";\n    Запрос.УстановитьПараметр(\"Клиент\", Д.Клиент); Запрос.Выполнить();\n    Итоги = Новый Запрос(\"ВЫБРАТЬ СУММА(Т.Минуты) КАК Минуты, КОЛИЧЕСТВО(*) КАК ЧислоСтрок ИЗ СвоиЗаявки КАК Т\");\n    Итоги.МенеджерВременныхТаблиц = Менеджер; Таблица = Итоги.Выполнить().Выгрузить();\n    Верно = Таблица[0].Минуты = 75 И Таблица[0].ЧислоСтрок = 2;\n    Менеджер.Закрыть();\n    Отказ = Ложь; Попытка Итоги.Выполнить(); Исключение Отказ = Истина; КонецПопытки;\n    Возврат Новый Структура(\"НаборВерный,КонтекстЗакрыт\",Верно,Отказ);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытВременнойТаблицы();\n    Сообщить(\"Две строки и75 минут: \" + Строка(Результат.НаборВерный));\n    Сообщить(\"Закрытый менеджер отклонён: \" + Строка(Результат.КонтекстЗакрыт));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation and reason"
+          ],
+          "rows": [
+            [
+              "Create",
+              "Local manager — One owner."
+            ],
+            [
+              "Store",
+              "СвоиЗаявки:2/75 — Own key only."
+            ],
+            [
+              "Read",
+              "Same manager — 2/75."
+            ],
+            [
+              "Close",
+              "Read again — Expected rejection."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Virtual tables compute a view",
+      "paragraphs": [
+        "Balance, Turnovers andSliceLast expose register semantics. Period and dimension parameters participate in the computation. Filtering afterwards is not always semantically or operationally equivalent to a virtual-table parameter. Establish correctness on a small set before comparing plans and measurements.",
+        "Assign the same manager to the second query so it sees the temporary table and returns two facts/75. An equal table name does not transfer context. Separate field/row provenance from the final aggregation."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Will a new manager automatically see another manager’s СвоиЗаявки?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. The query’s МенеджерВременныхТаблиц establishes the context. Identical query text does not transfer prepared rows to another manager. Closing the owner ends access to its tables."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Manager lifetime",
+      "paragraphs": [
+        "A shared temporary-table manager can expose an intermediate set to multiple queries. Another query without that context need not see it. A global manager is not an eternal cache of other users’data. Define creation, use and disposal; repeat tests from a known state.",
+        "Close the manager after reading. A controlled subsequent access must fail, proving the context ended. Production cleanup must also handle exceptions; this experiment covers the normal path and explicit later failure, not all server failures."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "Each arrow either establishes, uses, or ends resource access. Documents remain in the infobase. The independent task separately checks another context and a filtered single row.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Create manager",
+            "lines": [
+              "own context"
+            ]
+          },
+          {
+            "title": "Prepare",
+            "lines": [
+              "СвоиЗаявки"
+            ]
+          },
+          {
+            "title": "Read",
+            "lines": [
+              "2 / 75"
+            ]
+          },
+          {
+            "title": "Close",
+            "lines": [
+              "access ended"
+            ]
+          }
+        ],
+        "alternative": [
+          "Create manager: own context",
+          "Prepare: СвоиЗаявки",
+          "Read: 2 / 75",
+          "Close: access ended"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Copying the aggregate query text without sharing its manager leaves the table absent in that context. Creating a permanent catalog with a similar name does not repair the contract.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Test stages separately",
+      "paragraphs": [
+        "First reconcile temporary rows with source data, then final aggregation with an independent total. For virtual tables, test before the first movement and at a change boundary. Include empty sets. Faster execution with different identities or values is not a valid optimization.",
+        "The module 6 virtual table computes register semantics over time/dimensions; a temporary table stores a prepared set within a context. Compare purposes. Materialization alone does not prove faster execution."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "From new 20-minute and 40-minute requests, place only durations >= 30 in МойОтбор. The owning manager must return 1 row/40. Another manager must refuse, while the first still works. After closing the first, its query must refuse too.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p7-tables-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "edd9f09d0f7746682dfd94a633a00919eeb533bb754bbc39087f179d9623d0df",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain how a temporary table differs from a permanent object and a register’s virtual table."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Will a new manager automatically see another manager’s СвоиЗаявки?",
+      "options": [
+        "No: the table name belongs to its context",
+        "Yes: the name is global",
+        "Yes: if the query is in the same function"
+      ],
+      "correct": 0,
+      "feedback": "No. The query’s МенеджерВременныхТаблиц establishes the context. Identical query text does not transfer prepared rows to another manager. Closing the owner ends access to its tables.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "The second query sees the set through",
+      "options": [
+        "Equal colour",
+        "Shared manager",
+        "A global course name"
+      ],
+      "correct": 1,
+      "feedback": "The manager binds the context.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "INTO creates here",
+      "options": [
+        "A temporary set",
+        "A permanent catalog",
+        "An account"
+      ],
+      "correct": 0,
+      "feedback": "The set lives in its manager.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "After Close expect",
+      "options": [
+        "Eternal caching",
+        "A new record",
+        "A rejected read"
+      ],
+      "correct": 2,
+      "feedback": "The resource has ended.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Why does copying query text not guarantee table access?",
+      "options": [
+        "The same live manager must be supplied",
+        "User display names must match",
+        "Earlier documents must be deleted"
+      ],
+      "correct": 0,
+      "feedback": "Explain how a temporary table differs from a permanent object and a register’s virtual table.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "A temporary table: its name does not replace shared context",
+    "task": "From new 20-minute and 40-minute requests, place only durations >= 30 in МойОтбор. The owning manager must return 1 row/40. Another manager must refuse, while the first still works. After closing the first, its query must refuse too.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытГраницыМенеджера() Экспорт\n    // TODO: implement the new task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытГраницыМенеджера();\n    Сообщить(\"Строк после отбора: \" + Строка(Результат.Строк));\n    Сообщить(\"Минут после отбора: \" + Строка(Результат.Минуты));\n    Сообщить(\"Чужой менеджер отклонён: \" + Строка(Результат.ДругойОтклонен));\n    Сообщить(\"Свой менеджер ещё работает: \" + Строка(Результат.СвойСохранен));\n    Сообщить(\"После закрытия отказ: \" + Строка(Результат.ЗакрытыйОтклонен));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытГраницыМенеджера() Экспорт\n    Д = НовыйНаборРегистров(20,40); Менеджер = Новый МенеджерВременныхТаблиц;\n    Создание = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ПОМЕСТИТЬ МойОтбор ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент И З.ДлительностьМинут >= &Порог\");\n    Создание.МенеджерВременныхТаблиц = Менеджер; Создание.УстановитьПараметр(\"Клиент\",Д.Клиент); Создание.УстановитьПараметр(\"Порог\",30); Создание.Выполнить();\n    Итоги = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк,СУММА(Т.Минуты) КАК Минуты ИЗ МойОтбор КАК Т\"); Итоги.МенеджерВременныхТаблиц = Менеджер;\n    Факт = Итоги.Выполнить().Выгрузить()[0];\n    ДругойМенеджер = Новый МенеджерВременныхТаблиц; ДругойЗапрос = Новый Запрос(Итоги.Текст); ДругойЗапрос.МенеджерВременныхТаблиц = ДругойМенеджер;\n    ДругойОтклонен = Ложь; Попытка ДругойЗапрос.Выполнить(); Исключение ДругойОтклонен = Истина; КонецПопытки; ДругойМенеджер.Закрыть();\n    СохраненСвой = Итоги.Выполнить().Выгрузить()[0].Минуты = 40;\n    Менеджер.Закрыть(); ЗакрытыйОтклонен = Ложь; Попытка Итоги.Выполнить(); Исключение ЗакрытыйОтклонен = Истина; КонецПопытки;\n    Возврат Новый Структура(\"Строк,Минуты,ДругойОтклонен,СвойСохранен,ЗакрытыйОтклонен\",Факт.Строк,Факт.Минуты,ДругойОтклонен,СохраненСвой,ЗакрытыйОтклонен);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытГраницыМенеджера() Экспорт\n    Д = НовыйНаборРегистров(20,40); Менеджер = Новый МенеджерВременныхТаблиц;\n    Создание = Новый Запрос(\"ВЫБРАТЬ З.Ссылка,З.ДлительностьМинут КАК Минуты ПОМЕСТИТЬ МойОтбор ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент И З.ДлительностьМинут >= &Порог\");\n    Создание.МенеджерВременныхТаблиц = Менеджер; Создание.УстановитьПараметр(\"Клиент\",Д.Клиент); Создание.УстановитьПараметр(\"Порог\",30); Создание.Выполнить();\n    Итоги = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк,СУММА(Т.Минуты) КАК Минуты ИЗ МойОтбор КАК Т\"); Итоги.МенеджерВременныхТаблиц = Менеджер;\n    Факт = Итоги.Выполнить().Выгрузить()[0];\n    ДругойМенеджер = Новый МенеджерВременныхТаблиц; ДругойЗапрос = Новый Запрос(Итоги.Текст); ДругойЗапрос.МенеджерВременныхТаблиц = ДругойМенеджер;\n    ДругойОтклонен = Ложь; Попытка ДругойЗапрос.Выполнить(); Исключение ДругойОтклонен = Истина; КонецПопытки; ДругойМенеджер.Закрыть();\n    СохраненСвой = Итоги.Выполнить().Выгрузить()[0].Минуты = 40;\n    Менеджер.Закрыть(); ЗакрытыйОтклонен = Ложь; Попытка Итоги.Выполнить(); Исключение ЗакрытыйОтклонен = Истина; КонецПопытки;\n    Возврат Новый Структура(\"Строк,Минуты,ДругойОтклонен,СвойСохранен,ЗакрытыйОтклонен\",Факт.Строк,Факт.Минуты,ДругойОтклонен,СохраненСвой,ЗакрытыйОтклонен);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытГраницыМенеджера();\n    Сообщить(\"Строк после отбора: \" + Строка(Результат.Строк));\n    Сообщить(\"Минут после отбора: \" + Строка(Результат.Минуты));\n    Сообщить(\"Чужой менеджер отклонён: \" + Строка(Результат.ДругойОтклонен));\n    Сообщить(\"Свой менеджер ещё работает: \" + Строка(Результат.СвойСохранен));\n    Сообщить(\"После закрытия отказ: \" + Строка(Результат.ЗакрытыйОтклонен));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "20 and 40, threshold 30; one owner and a separate control manager.",
+        "output": "Строк после отбора: 1\nМинут после отбора: 40\nЧужой менеджер отклонён: Да\nСвой менеджер ещё работает: Да\nПосле закрытия отказ: Да"
+      }
+    ],
+    "criteria": [
+      "Labelled results:1, 40, Да, Да, Да.",
+      "Another manager’s refusal does not close the original; the original is closed explicitly.",
+      "Explain how a temporary table differs from a permanent object and a register’s virtual table."
+    ],
+    "hint": "Each arrow either establishes, uses, or ends resource access. Documents remain in the infobase. The independent task separately checks another context and a filtered single row.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "The own P6 copy and prior definitions are preserved."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "Use the existing Клиенты, Услуги and ЗаявкаУслуги. Queries require no new permanent metadata object. Functions run in УчебныеДанные: Server and Server call enabled; Client/Global/Privileged disabled. Do not load a full CF over your work. НовыйНаборРегистров is the P6 preparation helper. If already defined,retain its single definition and append only the new experience function. The Приложение.bsl caller belongs in the separate application handler. After one run,remove only the added startup call.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p7-tables.json",
+  "assessment": {
+    "contentRevision": "onec-p7-topic-3-author-v1",
+    "quiz": [
+      {
+        "question": "Will a new manager automatically see another manager’s СвоиЗаявки?",
+        "options": [
+          "No: the table name belongs to its context",
+          "Yes: the name is global",
+          "Yes: if the query is in the same function"
+        ],
+        "correct": 0,
+        "explanation": "No. The query’s МенеджерВременныхТаблиц establishes the context. Identical query text does not transfer prepared rows to another manager. Closing the owner ends access to its tables."
+      },
+      {
+        "question": "The second query sees the set through",
+        "options": [
+          "Equal colour",
+          "Shared manager",
+          "A global course name"
+        ],
+        "correct": 1,
+        "explanation": "The manager binds the context."
+      },
+      {
+        "question": "INTO creates here",
+        "options": [
+          "A temporary set",
+          "A permanent catalog",
+          "An account"
+        ],
+        "correct": 0,
+        "explanation": "The set lives in its manager."
+      },
+      {
+        "question": "After Close expect",
+        "options": [
+          "Eternal caching",
+          "A new record",
+          "A rejected read"
+        ],
+        "correct": 2,
+        "explanation": "The resource has ended."
+      },
+      {
+        "question": "Why does copying query text not guarantee table access?",
+        "options": [
+          "The same live manager must be supplied",
+          "User display names must match",
+          "Earlier documents must be deleted"
+        ],
+        "correct": 0,
+        "explanation": "Explain how a temporary table differs from a permanent object and a register’s virtual table."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p7.topic-3.en.json"
+}

@@ -1,0 +1,499 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P5",
+  "id": "onec.p5.topic-3",
+  "locale": "en",
+  "revision": "onec-p5-topic-3-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p5-posting.json",
+    "sha256": "0e119af4bd724aaeed99b5a140c3501aaa17515dc2058bfeb748f35bf94e53ba"
+  },
+  "title": "The document is saved, but where is its movement?",
+  "goal": "Add a teaching labor-turnover register in a copy and verify ordinary writing, posting and unposting for one own recorder.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P4. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A 30-minute request exists in the list. Does accounting already include 30 minutes of work? Observe the document and register rows separately: saving, posting, and unposting create different states.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "The document is the recorder",
+      "paragraphs": [
+        "A movement explains which document caused an accounting fact. A service desk can track minute obligations by customer. A record contains period, dimensions, resource and recorder. A document’sMinutes field is not itself a movement. Agree on sign and meaning before implementing a handler.",
+        "Posting is denied in the starter. In a new copy add accumulation register Трудозатраты with Turnovers kind, Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource. The existing document attribute remains ДлительностьМинут. The register resource is a distinct field; no populated header attribute must be renamed."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Prepare the experiment while retaining P4",
+      "paragraphs": [
+        "Continue your own P4 copy after preserving its DT and sources. Do not load a full configuration over prior work. If using the supplied training template, load service-desk-documents-v2 into a new separate infobase and distinguish it from your continuing work.",
+        "ЗаявкаУслуги needs Клиент, Услуга, Статус, ДлительностьМинут and Комментарий. ПередЗаписью must refuse missing customer/service/status and minutes outside 0…1440. Review the existing handler first; do not create another procedure of the same name.",
+        "For posting, add the missing accumulation register Трудозатраты in Designer: Turnovers, dimension Клиент of customer-reference type, resource Минуты Number(15,2), recorder ЗаявкаУслуги. Allow posting for the document and select this register under Движения. Preserve existing attributes and modules.",
+        "The separate source below belongs to the document OBJECT module, not the common module or application handler. Reconcile ПередЗаписью with existing code. Add the missing ОбработкаПроведения or reconcile the existing one: clear this document’s set, enable writing, and add its date, customer and minutes. Do not duplicate handlers."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "// Оригинальная учебная проверка и движения P5; существующая ДлительностьМинут сохранена.\nПроцедура ПередЗаписью(Отказ, РежимЗаписи, РежимПроведения)\n    Если Не ЗначениеЗаполнено(Клиент) Или Не ЗначениеЗаполнено(Услуга) Тогда\n        Отказ = Истина;\n        Сообщить(\"Укажите учебного клиента и услугу.\");\n    КонецЕсли;\n    Если ДлительностьМинут < 0 Или ДлительностьМинут > 1440 Тогда\n        Отказ = Истина;\n        Сообщить(\"Минуты должны быть в диапазоне 0..1440.\");\n    КонецЕсли;\n    Если Не ЗначениеЗаполнено(Статус) Тогда\n        Отказ = Истина;\n        Сообщить(\"Укажите статус учебной заявки.\");\n    КонецЕсли;\nКонецПроцедуры\n\nПроцедура ОбработкаПроведения(Отказ, РежимПроведения)\n    Движения.Трудозатраты.Очистить();\n    Движения.Трудозатраты.Записывать = Истина;\n    Движение = Движения.Трудозатраты.Добавить();\n    Движение.Период = Дата;\n    Движение.Клиент = Клиент;\n    Движение.Минуты = ДлительностьМинут;\nКонецПроцедуры\n"
+      }
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ОпытПроведенияИОтмены() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P5 — проведение\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P5 — проведение\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,2,14,0,0); Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = 30;\n    Документ.Записать(); Ссылка = Документ.Ссылка;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк, ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Регистратор = &Заявка\");\n    Запрос.УстановитьПараметр(\"Заявка\",Ссылка);\n    До = Запрос.Выполнить().Выгрузить();\n    ОбычнаяЗаписьБезДвижений = До[0].Строк = 0 И Не Ссылка.Проведен;\n    Документ.Записать(РежимЗаписиДокумента.Проведение);\n    После = Запрос.Выполнить().Выгрузить();\n    ПроведениеПроверено = Ссылка.Проведен И После[0].Строк = 1 И После[0].Минуты = 30;\n    Документ.Записать(РежимЗаписиДокумента.ОтменаПроведения);\n    ПослеОтмены = Запрос.Выполнить().Выгрузить();\n    ОтменаПроверена = Не Ссылка.Проведен И ПослеОтмены[0].Строк = 0 И Не Ссылка.Пустая();\n    Возврат Новый Структура(\"ОбычнаяЗаписьБезДвижений,ПроведениеПроверено,ОтменаПроверена,Ссылка\",ОбычнаяЗаписьБезДвижений,ПроведениеПроверено,ОтменаПроверена,Ссылка);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The query filters movements by the actual reference of this request only. Before posting there are 0 rows. Posting yields 1 row/30 minutes. Unposting returns to 0 rows while the document reference remains non-empty. Other training requests do not affect this observation.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПроведенияИОтмены();\n    Сообщить(\"Обычная запись без движений: \" + Строка(Результат.ОбычнаяЗаписьБезДвижений));\n    Сообщить(\"Проведение создало30 минут: \" + Строка(Результат.ПроведениеПроверено));\n    Сообщить(\"Отмена убрала движения: \" + Строка(Результат.ОтменаПроверена));\nКонецПроцедуры\n",
+        "output": "Обычная запись без движений: Да\nПроведение создало30 минут: Да\nОтмена убрала движения: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытПроведенияИОтмены() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P5 — проведение\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P5 — проведение\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,2,14,0,0); Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая; Документ.ДлительностьМинут = 30;\n    Документ.Записать(); Ссылка = Документ.Ссылка;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк, ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Регистратор = &Заявка\");\n    Запрос.УстановитьПараметр(\"Заявка\",Ссылка);\n    До = Запрос.Выполнить().Выгрузить();\n    ОбычнаяЗаписьБезДвижений = До[0].Строк = 0 И Не Ссылка.Проведен;\n    Документ.Записать(РежимЗаписиДокумента.Проведение);\n    После = Запрос.Выполнить().Выгрузить();\n    ПроведениеПроверено = Ссылка.Проведен И После[0].Строк = 1 И После[0].Минуты = 30;\n    Документ.Записать(РежимЗаписиДокумента.ОтменаПроведения);\n    ПослеОтмены = Запрос.Выполнить().Выгрузить();\n    ОтменаПроверена = Не Ссылка.Проведен И ПослеОтмены[0].Строк = 0 И Не Ссылка.Пустая();\n    Возврат Новый Структура(\"ОбычнаяЗаписьБезДвижений,ПроведениеПроверено,ОтменаПроверена,Ссылка\",ОбычнаяЗаписьБезДвижений,ПроведениеПроверено,ОтменаПроверена,Ссылка);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПроведенияИОтмены();\n    Сообщить(\"Обычная запись без движений: \" + Строка(Результат.ОбычнаяЗаписьБезДвижений));\n    Сообщить(\"Проведение создало30 минут: \" + Строка(Результат.ПроведениеПроверено));\n    Сообщить(\"Отмена убрала движения: \" + Строка(Результат.ОтменаПроверена));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Ordinary write",
+              "Reference α, 30 minutes",
+              "No α movements."
+            ],
+            [
+              "Posting",
+              "ОбработкаПроведения",
+              "One α row for 30."
+            ],
+            [
+              "Unposting",
+              "Automatic movement deletion",
+              "No α rows."
+            ],
+            [
+              "Document",
+              "Same reference α",
+              "Document retained."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Rebuild the movement set",
+      "paragraphs": [
+        "Build movements from current document data inPosting and control record-set writing. Reposting replaces that recorder’s effect rather than appending a duplicate. Changing 30 to 45 yields 45, not 75. Do not manually add the prior document amount to the new record set.",
+        "Allow document posting and select Трудозатраты among its register records. In ОбработкаПроведения clear this recorder’s collection, enable writing and add period from Дата, customer from Клиент and minutes from ДлительностьМинут. This clears the current document’s movement set, not the whole register. Keep the existing ПередЗаписью validation."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "A 45-minute request is reposted after changing it to 75. With movements rebuilt correctly, what total should this recorder have?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "One row of 75. The handler clears this document’s prior movement set and rebuilds it. Accumulating 45+75 would mean the old accounting effect was not replaced. A query checks this property; the Проведен flag alone does not."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Reversal removes effects, not the document",
+      "paragraphs": [
+        "After reversal, the document remains while its accounting effect is removed or compensated under the model. Metadata and handlers determine behavior. Inspect recorder-filtered records and register totals, not onlyPosted. A starter stand without posting needs a new versioned template for this exercise.",
+        "The function creates an own 30-minute request. An ordinary write gives zero movements filtered by its reference. Posting gives one row and 30 minutes. Unposting with automatic movement deletion removes those rows while retaining the document and reference. Новая is not a posting criterion. Test one recorder rather than the entire infobase’s accumulated total."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "At each node distinguish the document’s existence from its movements. The diagram shows the 30-minute worked example. The independent task additionally checks replacement of 45 with 75 on reposting.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Save",
+            "lines": [
+              "0 rows"
+            ]
+          },
+          {
+            "title": "Post",
+            "lines": [
+              "1 row"
+            ]
+          },
+          {
+            "title": "Result",
+            "lines": [
+              "30 minutes"
+            ]
+          },
+          {
+            "title": "Unpost",
+            "lines": [
+              "0 rows"
+            ]
+          }
+        ],
+        "alternative": [
+          "Save: 0 rows",
+          "Post: 1 row",
+          "Result: 30 minutes",
+          "Unpost: 0 rows"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "A faulty variant retains the old 45 and adds 75. Проведен remains true, but 120 is wrong. Another error is querying the whole register without filtering the request, then attributing unrelated minutes to it.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Rejection must be atomic",
+      "paragraphs": [
+        "If required movement data is missing, reject before accepting effects. A negative case checks both document and movements. An unset flag with partially modified register data is not a correct rejection. Transactional checks cover every side effect, not one table alone.",
+        "The incorrect variant uses 31 minutes: it still creates a movement, but the independent 30-minute expectation rejects it. Do not adjust expected totals to follow a defect. This small teaching model does not establish statutory accounting, concurrent posting, reservation or industrial performance. Reposting is developed in the next module."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Create and post a new 45-minute request; verify 1 row/45. Change that same request to 75 and repost:it must have 1 row/75, not 120. Unpost it:0 movements, the request and its reference remain.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p5-posting-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "f6344ab8ed99f4d10092225ef18915496f5120fa637eddd38ba34445c1976f20",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain why Проведен cannot replace checking register rows and totals."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "A 45-minute request is reposted after changing it to 75. With movements rebuilt correctly, what total should this recorder have?",
+      "options": [
+        "One row, 75 minutes",
+        "Two rows, 120 minutes",
+        "Zero rows, the document disappears"
+      ],
+      "correct": 0,
+      "feedback": "One row of 75. The handler clears this document’s prior movement set and rebuilds it. Accumulating 45+75 would mean the old accounting effect was not replaced. A query checks this property; the Проведен flag alone does not.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Трудозатраты here is",
+      "options": [
+        "A turnover register",
+        "A password",
+        "A course"
+      ],
+      "correct": 0,
+      "feedback": "Its resource measures labor over a period.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "The handler’s Минуты resource comes from",
+      "options": [
+        "Customer name",
+        "Document ДлительностьМинут",
+        "Topic ID"
+      ],
+      "correct": 1,
+      "feedback": "An explicit assignment uses the retained field.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "After unposting expect",
+      "options": [
+        "A deleted document",
+        "Every register empty",
+        "No own-recorder movements and a retained document"
+      ],
+      "correct": 2,
+      "feedback": "Unposting is not document deletion.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "How do you distinguish correct reposting from duplicate effects?",
+      "options": [
+        "Check 1 row and 75 for the intended recorder",
+        "Check onlyПроведен",
+        "Sum every row for all customers"
+      ],
+      "correct": 0,
+      "feedback": "Explain why Проведен cannot replace checking register rows and totals.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "The document is saved, but where is its movement?",
+    "task": "Create and post a new 45-minute request; verify 1 row/45. Change that same request to 75 and repost:it must have 1 row/75, not 120. Unpost it:0 movements, the request and its reference remain.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ОпытПерепроведения() Экспорт\n    // TODO: implement the independent task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПерепроведения();\n    Сообщить(\"Первая запись движения45: \" + Строка(Результат.ПервыйФакт));\n    Сообщить(\"После перепроведения75 не120: \" + Строка(Результат.НеНакоплено));\n    Сообщить(\"Отмена убрала строки но не заявку: \" + Строка(Результат.ОтменаВерна));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытПерепроведения() Экспорт\n\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — новая работа\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — новая работа\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,8,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n\n    Документ.ДлительностьМинут = 45;\n    Документ.Записать(РежимЗаписиДокумента.Проведение);\n    СсылкаДо = Документ.Ссылка;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк, ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Регистратор = &Заявка\");\n    Запрос.УстановитьПараметр(\"Заявка\",СсылкаДо);\n    Первое = Запрос.Выполнить().Выгрузить();\n    ПервыйФакт = Первое[0].Строк = 1 И Первое[0].Минуты = 45;\n    Документ.ДлительностьМинут = 75;\n    Документ.Записать(РежимЗаписиДокумента.Проведение);\n    Второе = Запрос.Выполнить().Выгрузить();\n    НеНакоплено = Второе[0].Строк = 1 И Второе[0].Минуты = 75;\n    Документ.Записать(РежимЗаписиДокумента.ОтменаПроведения);\n    Третье = Запрос.Выполнить().Выгрузить();\n    ОтменаВерна = Третье[0].Строк = 0 И Не СсылкаДо.Пустая() И Не СсылкаДо.Проведен;\n    Возврат Новый Структура(\"ПервыйФакт,НеНакоплено,ОтменаВерна\",ПервыйФакт,НеНакоплено,ОтменаВерна);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытПерепроведения() Экспорт\n\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — новая работа\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — новая работа\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,8,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n\n    Документ.ДлительностьМинут = 45;\n    Документ.Записать(РежимЗаписиДокумента.Проведение);\n    СсылкаДо = Документ.Ссылка;\n    Запрос = Новый Запрос(\"ВЫБРАТЬ КОЛИЧЕСТВО(*) КАК Строк, ЕСТЬNULL(СУММА(Т.Минуты),0) КАК Минуты ИЗ РегистрНакопления.Трудозатраты КАК Т ГДЕ Т.Регистратор = &Заявка\");\n    Запрос.УстановитьПараметр(\"Заявка\",СсылкаДо);\n    Первое = Запрос.Выполнить().Выгрузить();\n    ПервыйФакт = Первое[0].Строк = 1 И Первое[0].Минуты = 45;\n    Документ.ДлительностьМинут = 75;\n    Документ.Записать(РежимЗаписиДокумента.Проведение);\n    Второе = Запрос.Выполнить().Выгрузить();\n    НеНакоплено = Второе[0].Строк = 1 И Второе[0].Минуты = 75;\n    Документ.Записать(РежимЗаписиДокумента.ОтменаПроведения);\n    Третье = Запрос.Выполнить().Выгрузить();\n    ОтменаВерна = Третье[0].Строк = 0 И Не СсылкаДо.Пустая() И Не СсылкаДо.Проведен;\n    Возврат Новый Структура(\"ПервыйФакт,НеНакоплено,ОтменаВерна\",ПервыйФакт,НеНакоплено,ОтменаВерна);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытПерепроведения();\n    Сообщить(\"Первая запись движения45: \" + Строка(Результат.ПервыйФакт));\n    Сообщить(\"После перепроведения75 не120: \" + Строка(Результат.НеНакоплено));\n    Сообщить(\"Отмена убрала строки но не заявку: \" + Строка(Результат.ОтменаВерна));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "One new request:45→75→unpost; query its recorder only.",
+        "output": "Первая запись движения45: Да\nПосле перепроведения75 не120: Да\nОтмена убрала строки но не заявку: Да"
+      }
+    ],
+    "criteria": [
+      "Three labelled assertions give Да; each total is filtered by the own request’s reference.",
+      "Reposting gives 1 row/75 and unposting 0 rows; the document is not deleted.",
+      "Explain why Проведен cannot replace checking register rows and totals."
+    ],
+    "hint": "At each node distinguish the document’s existence from its movements. The diagram shows the 30-minute worked example. The independent task additionally checks replacement of 45 with 75 on reposting.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Use your continuing P4 copy, verify metadata and preserve source before adding code. For a new experiment restore a DT only into a new empty base. Do not reload a full CF over prior work.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "The own copy contains Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки; posting additionally requires Трудозатраты."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits",
+    "platform-contract": "platform-contract"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "The document is the recorder",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Rebuild the movement set",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Reversal removes effects, not the document",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Rejection must be atomic",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p5-topic-3-author-v1",
+    "quiz": [
+      {
+        "question": "A 45-minute request is reposted after changing it to 75. With movements rebuilt correctly, what total should this recorder have?",
+        "options": [
+          "One row, 75 minutes",
+          "Two rows, 120 minutes",
+          "Zero rows, the document disappears"
+        ],
+        "correct": 0,
+        "explanation": "One row of 75. The handler clears this document’s prior movement set and rebuilds it. Accumulating 45+75 would mean the old accounting effect was not replaced. A query checks this property; the Проведен flag alone does not."
+      },
+      {
+        "question": "Трудозатраты here is",
+        "options": [
+          "A turnover register",
+          "A password",
+          "A course"
+        ],
+        "correct": 0,
+        "explanation": "Its resource measures labor over a period."
+      },
+      {
+        "question": "The handler’s Минуты resource comes from",
+        "options": [
+          "Customer name",
+          "Document ДлительностьМинут",
+          "Topic ID"
+        ],
+        "correct": 1,
+        "explanation": "An explicit assignment uses the retained field."
+      },
+      {
+        "question": "After unposting expect",
+        "options": [
+          "A deleted document",
+          "Every register empty",
+          "No own-recorder movements and a retained document"
+        ],
+        "correct": 2,
+        "explanation": "Unposting is not document deletion."
+      },
+      {
+        "question": "How do you distinguish correct reposting from duplicate effects?",
+        "options": [
+          "Check 1 row and 75 for the intended recorder",
+          "Check onlyПроведен",
+          "Sum every row for all customers"
+        ],
+        "correct": 0,
+        "explanation": "Explain why Проведен cannot replace checking register rows and totals."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS + MAIN GUI OBSERVATION PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "posting-main",
+      "posting-independent"
+    ],
+    "scope": "8 прямых вызовов неизменённых экспортных функций из управляемого клиента: четыре основных примера и четыре самостоятельных решения. Общий модуль имеет Сервер/Вызов сервера, Privileged=false. Это не широкая матрица и не оценка понимания.",
+    "studentAuthorshipVerified": false,
+    "GUIcases": [
+      "posting-main"
+    ],
+    "plainStandaloneHandlerGUI": false
+  },
+  "editorialClarification": "P5 preserves original theory; adds exact metadata/handler preparation, genuine output including expected refusal warnings, independent tasks and a real transaction branch."
+}

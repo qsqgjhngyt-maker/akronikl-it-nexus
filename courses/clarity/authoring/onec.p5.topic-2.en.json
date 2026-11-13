@@ -1,0 +1,496 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P5",
+  "id": "onec.p5.topic-2",
+  "locale": "en",
+  "revision": "onec-p5-topic-2-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p5-events.json",
+    "sha256": "df0f80900e3ab4fb85bbd14a16906eb1fdcf03c1327acdb5e5ea4ee2c3847a11"
+  },
+  "title": "A refused save: how a rule protects data",
+  "goal": "Exercise the existing ПередЗаписью through real object writes, correct two defects and reread the accepted request.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P4. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "A form field looks mandatory, but code can save without opening the form. Where should the rule live so a programmatic save also checks it? Observe refusal, correction, and preservation of the last valid value.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Defaults are not validation",
+      "paragraphs": [
+        "Defaults help create an object but do not validate later writing. Another form, exchange or programmatic call can change values. Separate convenient filling from mandatory validation. Customer, service and duration rules belong at a reliable write boundary; UI explains them to people.",
+        "ПередЗаписью belongs to the ЗаявкаУслуги object module. It checks customer, service, status and the 0..1440 range, setting Отказ. The function exercises this rule with actual object writes. This alone does not establish a universal access policy: permissions, external sources and alternate mutation paths require separate analysis."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Prepare the experiment while retaining P4",
+      "paragraphs": [
+        "Continue your own P4 copy after preserving its DT and sources. Do not load a full configuration over prior work. If using the supplied training template, load service-desk-documents-v2 into a new separate infobase and distinguish it from your continuing work.",
+        "ЗаявкаУслуги needs Клиент, Услуга, Статус, ДлительностьМинут and Комментарий. ПередЗаписью must refuse missing customer/service/status and minutes outside 0…1440. Review the existing handler first; do not create another procedure of the same name.",
+        "Keep the existing УчебныеДанные common module. Append the new function outside existing definitions; the application calls it once. Posting is not required for these observations."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ОпытОтказаПриЗаписи() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — проверка\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — проверка\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,2,13,0,0);\n    Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n    Документ.ДлительностьМинут = 30;\n    КлиентОбязателен = Ложь;\n    Попытка Документ.Записать(); Исключение КлиентОбязателен = Документ.Ссылка.Пустая(); КонецПопытки;\n    Документ.Клиент = Клиент.Ссылка;\n    Документ.ДлительностьМинут = 1441;\n    ГраницаПроверена = Ложь;\n    Попытка Документ.Записать(); Исключение ГраницаПроверена = Документ.Ссылка.Пустая(); КонецПопытки;\n    Документ.ДлительностьМинут = 30;\n    Документ.Записать();\n    Сохраненный = Документ.Ссылка.ПолучитьОбъект();\n    ИсправлениеСохранено = Сохраненный.Клиент = Клиент.Ссылка И Сохраненный.Услуга = Услуга.Ссылка\n        И Сохраненный.ДлительностьМинут = 30;\n    Возврат Новый Структура(\"КлиентОбязателен,ГраницаПроверена,ИсправлениеСохранено,Ссылка\",КлиентОбязателен,ГраницаПроверена,ИсправлениеСохранено,Документ.Ссылка);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The main function attempts three saves: with no customer, with 1441 minutes, then with corrected 30. The first two must refuse without creating a request. The last saves customer, service and 30 minutes; a fresh read checks those exact fields.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran.",
+        "The first two messages are expected refusal reasons emitted by ПередЗаписью. They do not indicate failure of the entire experiment. Three labelled assertions follow."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытОтказаПриЗаписи();\n    Сообщить(\"Без клиента запись отклонена: \" + Строка(Результат.КлиентОбязателен));\n    Сообщить(\"1441 минута отклонена: \" + Строка(Результат.ГраницаПроверена));\n    Сообщить(\"Исправленные поля сохранены: \" + Строка(Результат.ИсправлениеСохранено));\nКонецПроцедуры\n",
+        "output": "Укажите учебного клиента и услугу.\nМинуты должны быть в диапазоне 0..1440.\nБез клиента запись отклонена: Да\n1441 минута отклонена: Да\nИсправленные поля сохранены: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытОтказаПриЗаписи() Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — проверка\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — проверка\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,2,13,0,0);\n    Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n    Документ.ДлительностьМинут = 30;\n    КлиентОбязателен = Ложь;\n    Попытка Документ.Записать(); Исключение КлиентОбязателен = Документ.Ссылка.Пустая(); КонецПопытки;\n    Документ.Клиент = Клиент.Ссылка;\n    Документ.ДлительностьМинут = 1441;\n    ГраницаПроверена = Ложь;\n    Попытка Документ.Записать(); Исключение ГраницаПроверена = Документ.Ссылка.Пустая(); КонецПопытки;\n    Документ.ДлительностьМинут = 30;\n    Документ.Записать();\n    Сохраненный = Документ.Ссылка.ПолучитьОбъект();\n    ИсправлениеСохранено = Сохраненный.Клиент = Клиент.Ссылка И Сохраненный.Услуга = Услуга.Ссылка\n        И Сохраненный.ДлительностьМинут = 30;\n    Возврат Новый Структура(\"КлиентОбязателен,ГраницаПроверена,ИсправлениеСохранено,Ссылка\",КлиентОбязателен,ГраницаПроверена,ИсправлениеСохранено,Документ.Ссылка);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытОтказаПриЗаписи();\n    Сообщить(\"Без клиента запись отклонена: \" + Строка(Результат.КлиентОбязателен));\n    Сообщить(\"1441 минута отклонена: \" + Строка(Результат.ГраницаПроверена));\n    Сообщить(\"Исправленные поля сохранены: \" + Строка(Результат.ИсправлениеСохранено));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Empty customer",
+              "Reference still empty",
+              "First refusal expected."
+            ],
+            [
+              "1441 minutes",
+              "Customer retained",
+              "Second refusal expected."
+            ],
+            [
+              "Correction",
+              "30 minutes",
+              "Write accepted."
+            ],
+            [
+              "Reread",
+              "Persisted reference",
+              "Other fields preserved."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "BeforeWrite sees the object",
+      "paragraphs": [
+        "BeforeWrite receivesCancel and document-writing parameters. It can enforce invariants and reject the operation. Do not reference a particular form’s controls: objects can be written without that form. Messages should identify invalid fields, but a missing message does not make a canceled write successful.",
+        "First attempt a write with no customer; next supply the customer but use 1441 minutes. Both refusals should leave the new document reference empty. Correct to 30, write the same object and reread customer/service/duration. Preserving input lets the learner fix one field instead of rebuilding the entire form."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Memory now holds 1441, but ПередЗаписью refused the save. What will a fresh read of the earlier saved 1440 show?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "1440. The editable object can still contain the refused 1441 while the database retains the last successfully saved 1440. Freshly read the database instead of displaying the same object field."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Handler repeatability",
+      "paragraphs": [
+        "Repeated writing must not add another bonus document or accumulate customer minutes without an accounting rule. Side effects need idempotency and transactional linkage. Begin with input validation and add effects only under explicit requirements. Write identical data twice and compare every affected dataset.",
+        "Do not define a second ПередЗаписью or nest it inside application startup. Inspect and preserve the existing handler, combining changes only in a copy. Place the exported experiment function in a server common module; startup contains only the call. Do not disable validation to obtain a passing message."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The diagram follows the worked example’s three attempts. Refusal ends an attempt, not the entire exercise. Correcting the fields allows the next save to succeed.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "No customer",
+            "lines": [
+              "refuse"
+            ]
+          },
+          {
+            "title": "1441 minutes",
+            "lines": [
+              "refuse"
+            ]
+          },
+          {
+            "title": "Corrected30",
+            "lines": [
+              "save"
+            ]
+          },
+          {
+            "title": "Fresh read",
+            "lines": [
+              "30 / customer / service"
+            ]
+          }
+        ],
+        "alternative": [
+          "No customer: refuse",
+          "1441 minutes: refuse",
+          "Corrected30: save",
+          "Fresh read: 30 / customer / service"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Displaying a warning in ПередЗаписью without setting Отказ=Истина can still allow invalid data to save. A warning message alone does not refuse the operation.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Bypassing UI is a required control",
+      "paragraphs": [
+        "Attempt invalid programmatic writing in a copy. If the form rejects−1 but the object accepts it, the rule protects one route only. Compare document count and prior values. Follow with a valid write. Exchange-loading behavior needs an explicit policy rather than universally disabling invariants.",
+        "The negative control substitutes valid 1440 for invalid 1441. It compiles, but the expected-refusal assertion no longer passes. This demonstrates discrimination across the boundary, not exhaustive coverage of all values or UI messages. Add 0, 1440, a negative value and empty references to your own scenario table."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "With customer, service and status filled, test minute boundaries:-1 is refused on a new object, 0 saves, and 1440 then saves to that same request. Attempting 1441 must refuse; a fresh read retains 1440 and the same reference.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p5-events-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "0ae8bb8abee786f8f81ac3fa03faaf8499d197d0aa4eaace3a9aedd3cfcdfb4b",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain the distinction between an object value, a message, and refusal of a save."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Memory now holds 1441, but ПередЗаписью refused the save. What will a fresh read of the earlier saved 1440 show?",
+      "options": [
+        "1440: the refused value was not saved",
+        "1441: assignment already changed the database",
+        "0: refusal erases the document"
+      ],
+      "correct": 0,
+      "feedback": "1440. The editable object can still contain the refused 1441 while the database retains the last successfully saved 1440. Freshly read the database instead of displaying the same object field.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "This request invariant belongs",
+      "options": [
+        "In the object module",
+        "Only in CSS",
+        "In the lesson title"
+      ],
+      "correct": 0,
+      "feedback": "An actual programmatic object write is tested.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "For 1441, you should",
+      "options": [
+        "Disable validation",
+        "Correct input and retry",
+        "Delete the customer"
+      ],
+      "correct": 1,
+      "feedback": "Bad input does not justify disabling the rule.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Why substitute 1440?",
+      "options": [
+        "To disguise a failure",
+        "To change permissions",
+        "To test discrimination at the valid boundary"
+      ],
+      "correct": 2,
+      "feedback": "The negative control checks the scenario’s ability to distinguish outcomes.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What establishes that refusal left the database unchanged?",
+      "options": [
+        "A fresh read of 1440 through the old reference",
+        "Any warning message",
+        "1441 in the editable object"
+      ],
+      "correct": 0,
+      "feedback": "Explain the distinction between an object value, a message, and refusal of a save.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "A refused save: how a rule protects data",
+    "task": "With customer, service and status filled, test minute boundaries:-1 is refused on a new object, 0 saves, and 1440 then saves to that same request. Attempting 1441 must refuse; a fresh read retains 1440 and the same reference.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ОпытГраницМинут() Экспорт\n    // TODO: implement the independent task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытГраницМинут();\n    Сообщить(\"Минус1 отклонён: \" + Строка(Результат.МинусОтклонен));\n    Сообщить(\"0 минут сохранено: \" + Строка(Результат.НольСохранен));\n    Сообщить(\"1440 минут сохранено: \" + Строка(Результат.ВерхСохранен));\n    Сообщить(\"После отказа осталось1440: \" + Строка(Результат.ОтказСохранилБазу));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытГраницМинут() Экспорт\n\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — новая работа\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — новая работа\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,8,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n\n    Документ.ДлительностьМинут = -1;\n    МинусОтклонен = Ложь;\n    Попытка Документ.Записать();\n    Исключение МинусОтклонен = Документ.Ссылка.Пустая(); КонецПопытки;\n    Документ.ДлительностьМинут = 0; Документ.Записать();\n    СсылкаДо = Документ.Ссылка;\n    НольСохранен = СсылкаДо.ПолучитьОбъект().ДлительностьМинут = 0;\n    Документ.ДлительностьМинут = 1440; Документ.Записать();\n    ВерхСохранен = СсылкаДо.ПолучитьОбъект().ДлительностьМинут = 1440;\n    Документ.ДлительностьМинут = 1441;\n    ОтказПолучен = Ложь;\n    Попытка Документ.Записать();\n    Исключение ОтказПолучен = Истина; КонецПопытки;\n    Факт = СсылкаДо.ПолучитьОбъект();\n    ОтказСохранилБазу = ОтказПолучен И Факт.Ссылка = СсылкаДо И Факт.ДлительностьМинут = 1440;\n    Возврат Новый Структура(\"МинусОтклонен,НольСохранен,ВерхСохранен,ОтказСохранилБазу\",\n        МинусОтклонен,НольСохранен,ВерхСохранен,ОтказСохранилБазу);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытГраницМинут() Экспорт\n\n    Клиент = Справочники.Клиенты.СоздатьЭлемент();\n    Клиент.Наименование = \"Учебный P5 — новая работа\"; Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебная P5 — новая работа\"; Услуга.Записать();\n    Документ = Документы.ЗаявкаУслуги.СоздатьДокумент();\n    Документ.Дата = Дата(2026,11,8,12,0,0);\n    Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка;\n    Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n\n    Документ.ДлительностьМинут = -1;\n    МинусОтклонен = Ложь;\n    Попытка Документ.Записать();\n    Исключение МинусОтклонен = Документ.Ссылка.Пустая(); КонецПопытки;\n    Документ.ДлительностьМинут = 0; Документ.Записать();\n    СсылкаДо = Документ.Ссылка;\n    НольСохранен = СсылкаДо.ПолучитьОбъект().ДлительностьМинут = 0;\n    Документ.ДлительностьМинут = 1440; Документ.Записать();\n    ВерхСохранен = СсылкаДо.ПолучитьОбъект().ДлительностьМинут = 1440;\n    Документ.ДлительностьМинут = 1441;\n    ОтказПолучен = Ложь;\n    Попытка Документ.Записать();\n    Исключение ОтказПолучен = Истина; КонецПопытки;\n    Факт = СсылкаДо.ПолучитьОбъект();\n    ОтказСохранилБазу = ОтказПолучен И Факт.Ссылка = СсылкаДо И Факт.ДлительностьМинут = 1440;\n    Возврат Новый Структура(\"МинусОтклонен,НольСохранен,ВерхСохранен,ОтказСохранилБазу\",\n        МинусОтклонен,НольСохранен,ВерхСохранен,ОтказСохранилБазу);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытГраницМинут();\n    Сообщить(\"Минус1 отклонён: \" + Строка(Результат.МинусОтклонен));\n    Сообщить(\"0 минут сохранено: \" + Строка(Результат.НольСохранен));\n    Сообщить(\"1440 минут сохранено: \" + Строка(Результат.ВерхСохранен));\n    Сообщить(\"После отказа осталось1440: \" + Строка(Результат.ОтказСохранилБазу));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "Sequence:-1,0,1440,1441; one new request after the first successful save.",
+        "output": "Минуты должны быть в диапазоне 0..1440.\nМинуты должны быть в диапазоне 0..1440.\nМинус1 отклонён: Да\n0 минут сохранено: Да\n1440 минут сохранено: Да\nПосле отказа осталось1440: Да"
+      }
+    ],
+    "criteria": [
+      "Two range warnings are expected for -1 and 1441. The four labelled assertions that follow must give Да.",
+      "Four labelled assertions give Да: refusal, lower boundary, upper boundary, and database preservation.",
+      "0 and 1440 are valid; after refusing 1441 a separate read still shows 1440.",
+      "Explain the distinction between an object value, a message, and refusal of a save."
+    ],
+    "hint": "The diagram follows the worked example’s three attempts. Refusal ends an attempt, not the entire exercise. Correcting the fields allows the next save to succeed.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Use your continuing P4 copy, verify metadata and preserve source before adding code. For a new experiment restore a DT only into a new empty base. Do not reload a full CF over prior work.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "The own copy contains Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки; posting additionally requires Трудозатраты."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits",
+    "platform-contract": "platform-contract"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Defaults are not validation",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "BeforeWrite sees the object",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Handler repeatability",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Bypassing UI is a required control",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p5-topic-2-author-v1",
+    "quiz": [
+      {
+        "question": "Memory now holds 1441, but ПередЗаписью refused the save. What will a fresh read of the earlier saved 1440 show?",
+        "options": [
+          "1440: the refused value was not saved",
+          "1441: assignment already changed the database",
+          "0: refusal erases the document"
+        ],
+        "correct": 0,
+        "explanation": "1440. The editable object can still contain the refused 1441 while the database retains the last successfully saved 1440. Freshly read the database instead of displaying the same object field."
+      },
+      {
+        "question": "This request invariant belongs",
+        "options": [
+          "In the object module",
+          "Only in CSS",
+          "In the lesson title"
+        ],
+        "correct": 0,
+        "explanation": "An actual programmatic object write is tested."
+      },
+      {
+        "question": "For 1441, you should",
+        "options": [
+          "Disable validation",
+          "Correct input and retry",
+          "Delete the customer"
+        ],
+        "correct": 1,
+        "explanation": "Bad input does not justify disabling the rule."
+      },
+      {
+        "question": "Why substitute 1440?",
+        "options": [
+          "To disguise a failure",
+          "To change permissions",
+          "To test discrimination at the valid boundary"
+        ],
+        "correct": 2,
+        "explanation": "The negative control checks the scenario’s ability to distinguish outcomes."
+      },
+      {
+        "question": "What establishes that refusal left the database unchanged?",
+        "options": [
+          "A fresh read of 1440 through the old reference",
+          "Any warning message",
+          "1441 in the editable object"
+        ],
+        "correct": 0,
+        "explanation": "Explain the distinction between an object value, a message, and refusal of a save."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS + MAIN GUI OBSERVATION PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "events-main",
+      "events-independent"
+    ],
+    "scope": "8 прямых вызовов неизменённых экспортных функций из управляемого клиента: четыре основных примера и четыре самостоятельных решения. Общий модуль имеет Сервер/Вызов сервера, Privileged=false. Это не широкая матрица и не оценка понимания.",
+    "studentAuthorshipVerified": false,
+    "GUIcases": [
+      "events-main"
+    ],
+    "plainStandaloneHandlerGUI": false
+  },
+  "editorialClarification": "P5 preserves original theory; adds exact metadata/handler preparation, genuine output including expected refusal warnings, independent tasks and a real transaction branch."
+}

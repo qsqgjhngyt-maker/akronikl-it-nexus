@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P9",
+  "id": "onec.p9.topic-2",
+  "locale": "en",
+  "revision": "onec-p9-topic-2-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p9-filters.json",
+    "sha256": "4ca4dc63200d4438d893fdd93d0d96f337a2eb201e26c06452b25dd5126b116f"
+  },
+  "title": "Filtering requests and filtering a customer total are different questions",
+  "goal": "Distinguish dataset parameters, detail filters and aggregate conditions using discriminating input.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P8. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "Two jobs took 25 minutes each. Neither exceeds 40, but together they total 50. Does the report need long jobs or customers with a large combined duration? The order of operations changes the answer.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Your copy and separate files",
+      "paragraphs": [
+        "Continue your own P8 copy. Close Enterprise, save a DT backup and restore it into a new empty infobase; verify the actual path. Preserve prior work, records and the handler. Do not load a full CF over your work.",
+        "УчебныеОтчёты common module: Server and Server call enabled; Client, Global and Privileged disabled. Данные.bsl contains helpers and the function; Приложение.bsl contains the separate caller. Add only missing definitions and keep one copy of each helper.",
+        "НовыйНаборРегистров creates new training records owned by this experiment. Preserve the previous handler first. Remove only the added startup call after one run, so reopening does not create another set. Compare your own references rather than the screenshot’s UUIDs."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Filter level changes meaning",
+      "paragraphs": [
+        "Filtering rows before aggregation differs from filtering groups after it. “Requests longer than 30 minutes” is not “customers totaling more than 30.” A customer with two short requests distinguishes them. Settings must express the intended requirement.",
+        "The previous source retains the own-customer filter and applies minutes>30 to detail:30/45 yields 45. Moving the condition to sum(minutes)>30 is different: the customer total 75 includes both documents."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеОтчёты common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТаблицаКомпоновкиОпыта(Данные,Порог = Неопределено,ПоКлиенту = Ложь) Экспорт\n    Схема = Новый СхемаКомпоновкиДанных;\n    Источник = Схема.ИсточникиДанных.Добавить(); Источник.Имя = \"Основной\"; Источник.ТипИсточникаДанных = \"Local\";\n    Набор = Схема.НаборыДанных.Добавить(Тип(\"НаборДанныхЗапросСхемыКомпоновкиДанных\")); Набор.Имя = \"Заявки\"; Набор.ИсточникДанных = \"Основной\";\n    Набор.Запрос = \"ВЫБРАТЬ З.Ссылка КАК Ссылка, З.Клиент КАК Клиент, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З\";\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Клиент,Минуты\",\",\") Цикл\n        Поле = Набор.Поля.Добавить(Тип(\"ПолеНабораДанныхСхемыКомпоновкиДанных\")); Поле.ПутьКДанным = Имя; Поле.Поле = Имя; Поле.Заголовок = Имя;\n    КонецЦикла;\n    Настройки = Новый НастройкиКомпоновкиДанных;\n    ПоляВывода = ?(ПоКлиенту,\"Клиент,Минуты\",\"Ссылка,Минуты\");\n    Для Каждого Имя Из СтрРазделить(ПоляВывода,\",\") Цикл\n        Выбор = Настройки.Выбор.Элементы.Добавить(Тип(\"ВыбранноеПолеКомпоновкиДанных\")); Выбор.Поле = Новый ПолеКомпоновкиДанных(Имя); Выбор.Использование = Истина;\n    КонецЦикла;\n    Группа = Настройки.Структура.Добавить(Тип(\"ГруппировкаКомпоновкиДанных\")); Группа.Использование = Истина;\n    Группа.Выбор.Элементы.Добавить(Тип(\"АвтоВыбранноеПолеКомпоновкиДанных\"));\n    Если ПоКлиенту Тогда\n        Итог = Схема.TotalFields.Add(); Итог.DataPath = \"Минуты\"; Итог.Expression = \"Сумма(Минуты)\";\n        ПолеГруппы = Группа.ПоляГруппировки.Элементы.Добавить(Тип(\"ПолеГруппировкиКомпоновкиДанных\")); ПолеГруппы.Поле = Новый ПолеКомпоновкиДанных(\"Клиент\");\n    КонецЕсли;\n    Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Клиент\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Равно; Отбор.ПравоеЗначение = Данные.Клиент; Отбор.Использование = Истина;\n    Если Порог <> Неопределено Тогда\n        Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Минуты\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Больше; Отбор.ПравоеЗначение = Порог; Отбор.Использование = Истина;\n    КонецЕсли;\n    Компоновщик = Новый КомпоновщикМакетаКомпоновкиДанных;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\"));\n    Процессор = Новый ПроцессорКомпоновкиДанных; Процессор.Инициализировать(Макет);\n    Вывод = Новый ПроцессорВыводаРезультатаКомпоновкиДанныхВКоллекциюЗначений;\n    Возврат Вывод.Вывести(Процессор);\nКонецФункции\n\nФункция СравнитьУровниОпыта(ПервыеМинуты,ВторыеМинуты,Порог) Экспорт\n    Д = НовыйНаборРегистров(ПервыеМинуты,ВторыеМинуты);\n    Детали = ТаблицаКомпоновкиОпыта(Д,Порог);\n    Группы = ТаблицаКомпоновкиОпыта(Д,Неопределено,Истина);\n    ЧислоГрупп = 0; МинутГруппы = 0;\n    // Явный отбор результата ПОСЛЕ группировки СКД, не настройка быстрой панели.\n    Для Каждого СтрокаГруппы Из Группы Цикл\n        Если СтрокаГруппы.Клиент = Д.Клиент И СтрокаГруппы.Минуты > Порог Тогда\n            ЧислоГрупп = ЧислоГрупп + 1; МинутГруппы = МинутГруппы + СтрокаГруппы.Минуты;\n        КонецЕсли;\n    КонецЦикла;\n    Возврат Новый Структура(\"СтрокДеталей,МинутДеталей,Групп,МинутГруппы\",Детали.Количество(),Детали.Итог(\"Минуты\"),ЧислоГрупп,МинутГруппы);\nКонецФункции\n\nФункция ОпытУровнейОсновной() Экспорт\n    Возврат СравнитьУровниОпыта(30,45,30);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "For the worked 30/45 dataset, filtering details >30 leaves 45. The other path actually groups in DCS with a sum resource to obtain 75, then our explicit code applies >30 to that composed total. It does not silently change a quick-filter panel: both boundaries appear in the function.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran.",
+        "The schema resource defines the minute sum and DCS settings group by customer. In this source, own code tests the resulting aggregate after composition; it is not an existing quick-filter control in the report UI."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытУровнейОсновной();\n    Сообщить(\"Строк деталей >30: \" + Строка(Р.СтрокДеталей));\n    Сообщить(\"Минут в деталях: \" + Строка(Р.МинутДеталей));\n    Сообщить(\"Групп после суммы >30: \" + Строка(Р.Групп));\n    Сообщить(\"Минут в группе: \" + Строка(Р.МинутГруппы));\nКонецПроцедуры\n",
+        "output": "Строк деталей >30: 1\nМинут в деталях: 45\nГрупп после суммы >30: 1\nМинут в группе: 75",
+        "files": {
+          "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТаблицаКомпоновкиОпыта(Данные,Порог = Неопределено,ПоКлиенту = Ложь) Экспорт\n    Схема = Новый СхемаКомпоновкиДанных;\n    Источник = Схема.ИсточникиДанных.Добавить(); Источник.Имя = \"Основной\"; Источник.ТипИсточникаДанных = \"Local\";\n    Набор = Схема.НаборыДанных.Добавить(Тип(\"НаборДанныхЗапросСхемыКомпоновкиДанных\")); Набор.Имя = \"Заявки\"; Набор.ИсточникДанных = \"Основной\";\n    Набор.Запрос = \"ВЫБРАТЬ З.Ссылка КАК Ссылка, З.Клиент КАК Клиент, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З\";\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Клиент,Минуты\",\",\") Цикл\n        Поле = Набор.Поля.Добавить(Тип(\"ПолеНабораДанныхСхемыКомпоновкиДанных\")); Поле.ПутьКДанным = Имя; Поле.Поле = Имя; Поле.Заголовок = Имя;\n    КонецЦикла;\n    Настройки = Новый НастройкиКомпоновкиДанных;\n    ПоляВывода = ?(ПоКлиенту,\"Клиент,Минуты\",\"Ссылка,Минуты\");\n    Для Каждого Имя Из СтрРазделить(ПоляВывода,\",\") Цикл\n        Выбор = Настройки.Выбор.Элементы.Добавить(Тип(\"ВыбранноеПолеКомпоновкиДанных\")); Выбор.Поле = Новый ПолеКомпоновкиДанных(Имя); Выбор.Использование = Истина;\n    КонецЦикла;\n    Группа = Настройки.Структура.Добавить(Тип(\"ГруппировкаКомпоновкиДанных\")); Группа.Использование = Истина;\n    Группа.Выбор.Элементы.Добавить(Тип(\"АвтоВыбранноеПолеКомпоновкиДанных\"));\n    Если ПоКлиенту Тогда\n        Итог = Схема.TotalFields.Add(); Итог.DataPath = \"Минуты\"; Итог.Expression = \"Сумма(Минуты)\";\n        ПолеГруппы = Группа.ПоляГруппировки.Элементы.Добавить(Тип(\"ПолеГруппировкиКомпоновкиДанных\")); ПолеГруппы.Поле = Новый ПолеКомпоновкиДанных(\"Клиент\");\n    КонецЕсли;\n    Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Клиент\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Равно; Отбор.ПравоеЗначение = Данные.Клиент; Отбор.Использование = Истина;\n    Если Порог <> Неопределено Тогда\n        Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Минуты\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Больше; Отбор.ПравоеЗначение = Порог; Отбор.Использование = Истина;\n    КонецЕсли;\n    Компоновщик = Новый КомпоновщикМакетаКомпоновкиДанных;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\"));\n    Процессор = Новый ПроцессорКомпоновкиДанных; Процессор.Инициализировать(Макет);\n    Вывод = Новый ПроцессорВыводаРезультатаКомпоновкиДанныхВКоллекциюЗначений;\n    Возврат Вывод.Вывести(Процессор);\nКонецФункции\n\nФункция СравнитьУровниОпыта(ПервыеМинуты,ВторыеМинуты,Порог) Экспорт\n    Д = НовыйНаборРегистров(ПервыеМинуты,ВторыеМинуты);\n    Детали = ТаблицаКомпоновкиОпыта(Д,Порог);\n    Группы = ТаблицаКомпоновкиОпыта(Д,Неопределено,Истина);\n    ЧислоГрупп = 0; МинутГруппы = 0;\n    // Явный отбор результата ПОСЛЕ группировки СКД, не настройка быстрой панели.\n    Для Каждого СтрокаГруппы Из Группы Цикл\n        Если СтрокаГруппы.Клиент = Д.Клиент И СтрокаГруппы.Минуты > Порог Тогда\n            ЧислоГрупп = ЧислоГрупп + 1; МинутГруппы = МинутГруппы + СтрокаГруппы.Минуты;\n        КонецЕсли;\n    КонецЦикла;\n    Возврат Новый Структура(\"СтрокДеталей,МинутДеталей,Групп,МинутГруппы\",Детали.Количество(),Детали.Итог(\"Минуты\"),ЧислоГрупп,МинутГруппы);\nКонецФункции\n\nФункция ОпытУровнейОсновной() Экспорт\n    Возврат СравнитьУровниОпыта(30,45,30);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытУровнейОсновной();\n    Сообщить(\"Строк деталей >30: \" + Строка(Р.СтрокДеталей));\n    Сообщить(\"Минут в деталях: \" + Строка(Р.МинутДеталей));\n    Сообщить(\"Групп после суммы >30: \" + Строка(Р.Групп));\n    Сообщить(\"Минут в группе: \" + Строка(Р.МинутГруппы));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Step",
+            "Observation and meaning"
+          ],
+          "rows": [
+            [
+              "Source",
+              "30/45 — 75 total."
+            ],
+            [
+              "Detail",
+              "Each row>30 — 45."
+            ],
+            [
+              "Group",
+              "Sum>30 — 75."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Parameters fix computation",
+      "paragraphs": [
+        "Supply virtual-table period, customer and status with correct types. A dynamic CurrentMonth parameter is convenient operationally but should be fixed for reproducible evidence. Avoid hidden conditions lost on reopening. A saved variant must restore every material value.",
+        "Source-period parameters constrain input before aggregation. Detail filters and group-total conditions act at different levels. The original report has a quick Customer filter; do not describe period/status quick fields as already implemented."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "Must both paths return the same minutes for 30/45?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. The first path excludes 30 before summing. The second includes both requests in 75 and then checks that total. The unit remains minutes."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Grouping does not change units",
+      "paragraphs": [
+        "Customer minute sums remain minutes. For a per-document average, specify numerator and denominator; an average of group averages generally differs from the global average. Use customers with unequal request counts as a control. Apply rounding at the declared point.",
+        "In Designer open Reports → ЗаявкиПоКлиентам → Templates → main DCS template. Inspect Datasets, Resources and Settings. Retain the primary variant and create an own variant named by intent, such as Details above 30."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "This diagram shows only the group path. Compare it with 30/45 → detail >30 → 45; the detail path does not run before this one. Our code applies the total condition after composition; it is not presented as a ready-made UI setting.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Own data",
+            "lines": [
+              "30 + 45"
+            ]
+          },
+          {
+            "title": "Group",
+            "lines": [
+              "75 minutes"
+            ]
+          },
+          {
+            "title": "Check >30",
+            "lines": [
+              "75 > 30"
+            ]
+          },
+          {
+            "title": "Return group",
+            "lines": [
+              "1 / 75"
+            ]
+          }
+        ],
+        "alternative": [
+          "Own data: 30 + 45",
+          "Group: 75 minutes",
+          "Check >30: 75 > 30",
+          "Return group: 1 / 75"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Filtering the 25/25 details >40 and calling the result “customers totalling >40” removes both rows before summation and loses the valid 50 total. Renaming the report does not repair the selected level.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Tests distinguish similar reports",
+      "paragraphs": [
+        "Compare rows>30, groups>30, average and sum on one set. Specify expected identities and values beforehand, then save/reopen the variant. A missing-filter negative control must fail. If every variant accidentally yields one number, the dataset does not distinguish wrong implementations and must expand.",
+        "Reconcile all facts 75, details>30 → 45 and group total>30 → 75. Equal totals on another dataset do not prove equivalent rules. Add another own customer with 20/20: no detail exceeds 30, but its total 40 does."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Implement your own function for two new 25-minute requests belonging to your customer. A detail filter >40 must yield 0 rows/0 minutes. Separately obtain an actual DCS group and apply your own condition to its total: >40 gives 1 group/50 minutes; >50 gives 0 groups. Do not add totals to detail rows, and check your own customer key.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеОтчёты common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p9-levels-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "a83c9402f58ef4847e6391f2fea698a6d68996e19b422436a1c46f3bc7cbcdab",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "caption": "Actual worked-example result in a separate training infobase on 1C 8.3.27.2214. Labels distinguish checked properties; your UUIDs will differ. The independent task uses new data.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain why >50 excludes the 50 group while >40 retains it, even though its details did not pass."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Must both paths return the same minutes for 30/45?",
+      "options": [
+        "No: details give 45, the group gives 75",
+        "Yes: every >30 condition means the same thing",
+        "Yes: grouping converts minutes to hours"
+      ],
+      "correct": 0,
+      "feedback": "No. The first path excludes 30 before summing. The second includes both requests in 75 and then checks that total. The unit remains minutes.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Detail>30 from 30/45 yields",
+      "options": [
+        "75",
+        "45",
+        "30"
+      ],
+      "correct": 1,
+      "feedback": "30 is excluded before aggregation.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Total>30 on 20/20",
+      "options": [
+        "Retains 40",
+        "Always removes customer",
+        "Yields 20"
+      ],
+      "correct": 0,
+      "feedback": "The group sum is tested.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "The original quick filter",
+      "options": [
+        "Has any period",
+        "Has a password",
+        "Is confirmed for customer"
+      ],
+      "correct": 2,
+      "feedback": "Do not promise absent UI.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "Why do two 25-minute requests fail detail >40 but pass group >40?",
+      "options": [
+        "The second condition compares their total of 50",
+        "DCS automatically modifies the source documents",
+        "Both totals must be added together"
+      ],
+      "correct": 0,
+      "feedback": "Explain why >50 excludes the 50 group while >40 retains it, even though its details did not pass.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Filtering requests and filtering a customer total are different questions",
+    "task": "Implement your own function for two new 25-minute requests belonging to your customer. A detail filter >40 must yield 0 rows/0 minutes. Separately obtain an actual DCS group and apply your own condition to its total: >40 gives 1 group/50 minutes; >50 gives 0 groups. Do not add totals to detail rows, and check your own customer key.",
+    "environment": "Installed training1C8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеОтчёты",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТаблицаКомпоновкиОпыта(Данные,Порог = Неопределено,ПоКлиенту = Ложь) Экспорт\n    Схема = Новый СхемаКомпоновкиДанных;\n    Источник = Схема.ИсточникиДанных.Добавить(); Источник.Имя = \"Основной\"; Источник.ТипИсточникаДанных = \"Local\";\n    Набор = Схема.НаборыДанных.Добавить(Тип(\"НаборДанныхЗапросСхемыКомпоновкиДанных\")); Набор.Имя = \"Заявки\"; Набор.ИсточникДанных = \"Основной\";\n    Набор.Запрос = \"ВЫБРАТЬ З.Ссылка КАК Ссылка, З.Клиент КАК Клиент, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З\";\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Клиент,Минуты\",\",\") Цикл\n        Поле = Набор.Поля.Добавить(Тип(\"ПолеНабораДанныхСхемыКомпоновкиДанных\")); Поле.ПутьКДанным = Имя; Поле.Поле = Имя; Поле.Заголовок = Имя;\n    КонецЦикла;\n    Настройки = Новый НастройкиКомпоновкиДанных;\n    ПоляВывода = ?(ПоКлиенту,\"Клиент,Минуты\",\"Ссылка,Минуты\");\n    Для Каждого Имя Из СтрРазделить(ПоляВывода,\",\") Цикл\n        Выбор = Настройки.Выбор.Элементы.Добавить(Тип(\"ВыбранноеПолеКомпоновкиДанных\")); Выбор.Поле = Новый ПолеКомпоновкиДанных(Имя); Выбор.Использование = Истина;\n    КонецЦикла;\n    Группа = Настройки.Структура.Добавить(Тип(\"ГруппировкаКомпоновкиДанных\")); Группа.Использование = Истина;\n    Группа.Выбор.Элементы.Добавить(Тип(\"АвтоВыбранноеПолеКомпоновкиДанных\"));\n    Если ПоКлиенту Тогда\n        Итог = Схема.TotalFields.Add(); Итог.DataPath = \"Минуты\"; Итог.Expression = \"Сумма(Минуты)\";\n        ПолеГруппы = Группа.ПоляГруппировки.Элементы.Добавить(Тип(\"ПолеГруппировкиКомпоновкиДанных\")); ПолеГруппы.Поле = Новый ПолеКомпоновкиДанных(\"Клиент\");\n    КонецЕсли;\n    Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Клиент\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Равно; Отбор.ПравоеЗначение = Данные.Клиент; Отбор.Использование = Истина;\n    Если Порог <> Неопределено Тогда\n        Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Минуты\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Больше; Отбор.ПравоеЗначение = Порог; Отбор.Использование = Истина;\n    КонецЕсли;\n    Компоновщик = Новый КомпоновщикМакетаКомпоновкиДанных;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\"));\n    Процессор = Новый ПроцессорКомпоновкиДанных; Процессор.Инициализировать(Макет);\n    Вывод = Новый ПроцессорВыводаРезультатаКомпоновкиДанныхВКоллекциюЗначений;\n    Возврат Вывод.Вывести(Процессор);\nКонецФункции\n\nФункция ОпытДвухКороткихРабот() Экспорт\n    // TODO: implement the new independent task.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытДвухКороткихРабот();\n    Сообщить(\"Строк деталей >40: \" + Строка(Р.СтрокДеталей));\n    Сообщить(\"Минут в деталях: \" + Строка(Р.МинутДеталей));\n    Сообщить(\"Групп после суммы >40: \" + Строка(Р.Групп));\n    Сообщить(\"Минут в группе: \" + Строка(Р.МинутГруппы));\n    Сообщить(\"Групп после суммы >50: \" + Строка(Р.ГруппНаГранице));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТаблицаКомпоновкиОпыта(Данные,Порог = Неопределено,ПоКлиенту = Ложь) Экспорт\n    Схема = Новый СхемаКомпоновкиДанных;\n    Источник = Схема.ИсточникиДанных.Добавить(); Источник.Имя = \"Основной\"; Источник.ТипИсточникаДанных = \"Local\";\n    Набор = Схема.НаборыДанных.Добавить(Тип(\"НаборДанныхЗапросСхемыКомпоновкиДанных\")); Набор.Имя = \"Заявки\"; Набор.ИсточникДанных = \"Основной\";\n    Набор.Запрос = \"ВЫБРАТЬ З.Ссылка КАК Ссылка, З.Клиент КАК Клиент, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З\";\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Клиент,Минуты\",\",\") Цикл\n        Поле = Набор.Поля.Добавить(Тип(\"ПолеНабораДанныхСхемыКомпоновкиДанных\")); Поле.ПутьКДанным = Имя; Поле.Поле = Имя; Поле.Заголовок = Имя;\n    КонецЦикла;\n    Настройки = Новый НастройкиКомпоновкиДанных;\n    ПоляВывода = ?(ПоКлиенту,\"Клиент,Минуты\",\"Ссылка,Минуты\");\n    Для Каждого Имя Из СтрРазделить(ПоляВывода,\",\") Цикл\n        Выбор = Настройки.Выбор.Элементы.Добавить(Тип(\"ВыбранноеПолеКомпоновкиДанных\")); Выбор.Поле = Новый ПолеКомпоновкиДанных(Имя); Выбор.Использование = Истина;\n    КонецЦикла;\n    Группа = Настройки.Структура.Добавить(Тип(\"ГруппировкаКомпоновкиДанных\")); Группа.Использование = Истина;\n    Группа.Выбор.Элементы.Добавить(Тип(\"АвтоВыбранноеПолеКомпоновкиДанных\"));\n    Если ПоКлиенту Тогда\n        Итог = Схема.TotalFields.Add(); Итог.DataPath = \"Минуты\"; Итог.Expression = \"Сумма(Минуты)\";\n        ПолеГруппы = Группа.ПоляГруппировки.Элементы.Добавить(Тип(\"ПолеГруппировкиКомпоновкиДанных\")); ПолеГруппы.Поле = Новый ПолеКомпоновкиДанных(\"Клиент\");\n    КонецЕсли;\n    Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Клиент\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Равно; Отбор.ПравоеЗначение = Данные.Клиент; Отбор.Использование = Истина;\n    Если Порог <> Неопределено Тогда\n        Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Минуты\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Больше; Отбор.ПравоеЗначение = Порог; Отбор.Использование = Истина;\n    КонецЕсли;\n    Компоновщик = Новый КомпоновщикМакетаКомпоновкиДанных;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\"));\n    Процессор = Новый ПроцессорКомпоновкиДанных; Процессор.Инициализировать(Макет);\n    Вывод = Новый ПроцессорВыводаРезультатаКомпоновкиДанныхВКоллекциюЗначений;\n    Возврат Вывод.Вывести(Процессор);\nКонецФункции\n\nФункция ОпытДвухКороткихРабот() Экспорт\n    Д = НовыйНаборРегистров(25,25);\n    Детали = ТаблицаКомпоновкиОпыта(Д,40);\n    Группы = ТаблицаКомпоновкиОпыта(Д,Неопределено,Истина);\n    Прошло40 = 0; Минут40 = 0; Прошло50 = 0;\n    Для Каждого СтрокаГруппы Из Группы Цикл\n        Если СтрокаГруппы.Клиент <> Д.Клиент Тогда Продолжить; КонецЕсли;\n        Если СтрокаГруппы.Минуты > 40 Тогда\n            Прошло40 = Прошло40 + 1; Минут40 = Минут40 + СтрокаГруппы.Минуты;\n        КонецЕсли;\n        Если СтрокаГруппы.Минуты > 50 Тогда Прошло50 = Прошло50 + 1; КонецЕсли;\n    КонецЦикла;\n    Возврат Новый Структура(\"СтрокДеталей,МинутДеталей,Групп,МинутГруппы,ГруппНаГранице\",Детали.Количество(),Детали.Итог(\"Минуты\"),Прошло40,Минут40,Прошло50);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ТаблицаКомпоновкиОпыта(Данные,Порог = Неопределено,ПоКлиенту = Ложь) Экспорт\n    Схема = Новый СхемаКомпоновкиДанных;\n    Источник = Схема.ИсточникиДанных.Добавить(); Источник.Имя = \"Основной\"; Источник.ТипИсточникаДанных = \"Local\";\n    Набор = Схема.НаборыДанных.Добавить(Тип(\"НаборДанныхЗапросСхемыКомпоновкиДанных\")); Набор.Имя = \"Заявки\"; Набор.ИсточникДанных = \"Основной\";\n    Набор.Запрос = \"ВЫБРАТЬ З.Ссылка КАК Ссылка, З.Клиент КАК Клиент, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З\";\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Клиент,Минуты\",\",\") Цикл\n        Поле = Набор.Поля.Добавить(Тип(\"ПолеНабораДанныхСхемыКомпоновкиДанных\")); Поле.ПутьКДанным = Имя; Поле.Поле = Имя; Поле.Заголовок = Имя;\n    КонецЦикла;\n    Настройки = Новый НастройкиКомпоновкиДанных;\n    ПоляВывода = ?(ПоКлиенту,\"Клиент,Минуты\",\"Ссылка,Минуты\");\n    Для Каждого Имя Из СтрРазделить(ПоляВывода,\",\") Цикл\n        Выбор = Настройки.Выбор.Элементы.Добавить(Тип(\"ВыбранноеПолеКомпоновкиДанных\")); Выбор.Поле = Новый ПолеКомпоновкиДанных(Имя); Выбор.Использование = Истина;\n    КонецЦикла;\n    Группа = Настройки.Структура.Добавить(Тип(\"ГруппировкаКомпоновкиДанных\")); Группа.Использование = Истина;\n    Группа.Выбор.Элементы.Добавить(Тип(\"АвтоВыбранноеПолеКомпоновкиДанных\"));\n    Если ПоКлиенту Тогда\n        Итог = Схема.TotalFields.Add(); Итог.DataPath = \"Минуты\"; Итог.Expression = \"Сумма(Минуты)\";\n        ПолеГруппы = Группа.ПоляГруппировки.Элементы.Добавить(Тип(\"ПолеГруппировкиКомпоновкиДанных\")); ПолеГруппы.Поле = Новый ПолеКомпоновкиДанных(\"Клиент\");\n    КонецЕсли;\n    Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Клиент\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Равно; Отбор.ПравоеЗначение = Данные.Клиент; Отбор.Использование = Истина;\n    Если Порог <> Неопределено Тогда\n        Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Минуты\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Больше; Отбор.ПравоеЗначение = Порог; Отбор.Использование = Истина;\n    КонецЕсли;\n    Компоновщик = Новый КомпоновщикМакетаКомпоновкиДанных;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\"));\n    Процессор = Новый ПроцессорКомпоновкиДанных; Процессор.Инициализировать(Макет);\n    Вывод = Новый ПроцессорВыводаРезультатаКомпоновкиДанныхВКоллекциюЗначений;\n    Возврат Вывод.Вывести(Процессор);\nКонецФункции\n\nФункция ОпытДвухКороткихРабот() Экспорт\n    Д = НовыйНаборРегистров(25,25);\n    Детали = ТаблицаКомпоновкиОпыта(Д,40);\n    Группы = ТаблицаКомпоновкиОпыта(Д,Неопределено,Истина);\n    Прошло40 = 0; Минут40 = 0; Прошло50 = 0;\n    Для Каждого СтрокаГруппы Из Группы Цикл\n        Если СтрокаГруппы.Клиент <> Д.Клиент Тогда Продолжить; КонецЕсли;\n        Если СтрокаГруппы.Минуты > 40 Тогда\n            Прошло40 = Прошло40 + 1; Минут40 = Минут40 + СтрокаГруппы.Минуты;\n        КонецЕсли;\n        Если СтрокаГруппы.Минуты > 50 Тогда Прошло50 = Прошло50 + 1; КонецЕсли;\n    КонецЦикла;\n    Возврат Новый Структура(\"СтрокДеталей,МинутДеталей,Групп,МинутГруппы,ГруппНаГранице\",Детали.Количество(),Детали.Итог(\"Минуты\"),Прошло40,Минут40,Прошло50);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Р = УчебныеОтчёты.ОпытДвухКороткихРабот();\n    Сообщить(\"Строк деталей >40: \" + Строка(Р.СтрокДеталей));\n    Сообщить(\"Минут в деталях: \" + Строка(Р.МинутДеталей));\n    Сообщить(\"Групп после суммы >40: \" + Строка(Р.Групп));\n    Сообщить(\"Минут в группе: \" + Строка(Р.МинутГруппы));\n    Сообщить(\"Групп после суммы >50: \" + Строка(Р.ГруппНаГранице));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "25 + 25 minutes; details >40; total >40 and >50.",
+        "output": "Строк деталей >40: 0\nМинут в деталях: 0\nГрупп после суммы >40: 1\nМинут в группе: 50\nГрупп после суммы >50: 0"
+      }
+    ],
+    "criteria": [
+      "Expect labelled values 0, 0, 1, 50, 0: different levels and two different thresholds.",
+      "DCS calculates 50; the subsequent explicit predicate checks the customer key.",
+      "Explain why >50 excludes the 50 group while >40 retains it, even though its details did not pass."
+    ],
+    "hint": "This diagram shows only the group path. Compare it with 30/45 → detail >30 → 45; the detail path does not run before this one. Our code applies the total condition after composition; it is not presented as a ready-made UI setting.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеОтчёты",
+        "action": "УчебныеОтчёты common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Filter level changes meaning",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Parameters fix computation",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Grouping does not change units",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Tests distinguish similar reports",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p9-topic-2-author-v1",
+    "quiz": [
+      {
+        "question": "Must both paths return the same minutes for 30/45?",
+        "options": [
+          "No: details give 45, the group gives 75",
+          "Yes: every >30 condition means the same thing",
+          "Yes: grouping converts minutes to hours"
+        ],
+        "correct": 0,
+        "explanation": "No. The first path excludes 30 before summing. The second includes both requests in 75 and then checks that total. The unit remains minutes."
+      },
+      {
+        "question": "Detail>30 from 30/45 yields",
+        "options": [
+          "75",
+          "45",
+          "30"
+        ],
+        "correct": 1,
+        "explanation": "30 is excluded before aggregation."
+      },
+      {
+        "question": "Total>30 on 20/20",
+        "options": [
+          "Retains 40",
+          "Always removes customer",
+          "Yields 20"
+        ],
+        "correct": 0,
+        "explanation": "The group sum is tested."
+      },
+      {
+        "question": "The original quick filter",
+        "options": [
+          "Has any period",
+          "Has a password",
+          "Is confirmed for customer"
+        ],
+        "correct": 2,
+        "explanation": "Do not promise absent UI."
+      },
+      {
+        "question": "Why do two 25-minute requests fail detail >40 but pass group >40?",
+        "options": [
+          "The second condition compares their total of 50",
+          "DCS automatically modifies the source documents",
+          "Both totals must be added together"
+        ],
+        "correct": 0,
+        "explanation": "Explain why >50 excludes the 50 group while >40 retains it, even though its details did not pass."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS / MAIN GUI OBSERVED",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "levels-main",
+      "levels-independent"
+    ],
+    "scope": "Six targeted native observations across the module; three main GUI observations. DCS performs grouping; own code applies the aggregate predicate after composition. Printing and export were not tested.",
+    "studentAuthorshipVerified": false
+  }
+}

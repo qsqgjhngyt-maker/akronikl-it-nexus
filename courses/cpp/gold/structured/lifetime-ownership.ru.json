@@ -342,5 +342,419 @@
       "Оба владеют объектом"
     ],
     "correctIndex": 0
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "Время жизни, RAII и единственное владение",
+    "goal": "По журналу конструктора и деструктора проследите жизнь объекта и передачу единственного владения.",
+    "prerequisites": [
+      {
+        "text": "Module 1–2: выражения, сравнения, типы, ссылки и проверка cin."
+      },
+      {
+        "text": "Предыдущие темы по ссылкам: Перечисления, alias и варианты данных, array, vector и span: владелец и представление. Новые конструкции вводятся в теории до задания."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Время жизни и область видимости",
+        "paragraphs": [
+          "Локальная переменная видна по имени внутри блока, а её ресурс существует до разрушения объекта. По журналу можно увидеть момент разрушения без чтения уже уничтоженного объекта.",
+          "Область видимости определяет, где доступно имя, а время жизни — когда существует объект. Локальный объект обычно разрушается при выходе из блока, в том числе через return. Адрес можно скопировать наружу, но от этого объект не продолжит существование.",
+          "Наблюдатель int*, ссылка, span или string_view не освобождает объект и не продлевает жизнь владельца. Перед каждым использованием нужно иметь доказательство: объект ещё жив и операция владельца не сделала адрес недействительным."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Минимум синтаксиса конструктора",
+        "paragraphs": [
+          "В struct Trace { explicit Trace(int n):id(n){} ~Trace(){} int id; }; конструктор имеет имя типа и не имеет типа результата. Список :id(n) инициализирует поле до тела. Деструктор ~Trace вызывается при завершении жизни объекта.",
+          "explicit запрещает некоторые неявные преобразования при создании из одного аргумента. В этой теме структура дана как небольшой объяснённый каркас журнала жизни; полная теория инкапсуляции и специальных функций останется в Module 5.",
+          "Trace{2} печатает create 2 при входе во внутренний блок. У закрывающей скобки вызовется деструктор второго объекта, и лишь затем выполняется следующая печать."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Обратный порядок разрушения",
+        "paragraphs": [
+          "Расположите строки create, destroy и end по порядку двух блоков."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    Trace first{1};\n    { Trace second{2}; }\n    std::cout << \"end\\n\";\n}\n",
+          "stdin": "",
+          "output": "create 1\ncreate 2\ndestroy 2\nend\ndestroy 1\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "RAII связывает ресурс с объектом",
+        "paragraphs": [
+          "RAII означает: объект получает ресурс при инициализации и освобождает в деструкторе. vector управляет буфером, string — текстом, ofstream позже будет управлять файлом. Обычный выход из области автоматически запускает освобождение.",
+          "Это правило полезно и без исключений. Оно не обещает выполнение деструкторов при аварийном завершении процесса или принудительном прекращении Worker. Поэтому сохранение пользовательского проекта и подтверждение записи — отдельные действия интерфейса.",
+          "В RAII ресурс приобретает объект, а деструктор освобождает его. Даже ранний return из области завершает жизнь обычных локальных владельцев."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "unique_ptr и make_unique",
+        "paragraphs": [
+          "std::unique_ptr<T> из <memory> владеет одним объектом T; std::make_unique<T>(args) создаёт его и возвращает владельца. Пустой указатель проверяется как bool. p->value обращается к полю объекта, а p.get() выдаёт невладеющий сырой указатель.",
+          "Не вызывайте delete для p.get() и не создавайте второго владельца из того же адреса. reset() освобождает текущий объект и делает указатель пустым без аргумента. Все прежние наблюдатели на освобождённый объект после этого недействительны.",
+          "make_unique создаёт владельца Trace. get() даёт наблюдателя для сравнения, но удалять объект через него нельзя."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Передача владения через move",
+        "paragraphs": [
+          "std::move из <utility> разрешает перемещение; сам по себе вызов не переносит память и не уничтожает объект. auto q=std::move(p) перемещает unique_ptr: q становится владельцем, p становится пустым. Копирование unique_ptr запрещено.",
+          "Объект T сохраняет адрес при таком переносе владельца. Наблюдатель допустим, пока q владеет живым объектом; после q.reset() использовать его нельзя. Для других перемещённых типов нельзя без документации предполагать, что они всегда пусты.",
+          "После move проверяются два независимых факта: прежний unique_ptr пуст, а адрес того же объекта виден у нового владельца. reset разрушает объект уже после этих проверок."
+        ],
+        "tables": [
+          {
+            "caption": "Один объект, смена владельца",
+            "columns": [
+              "Состояние",
+              "Что видно"
+            ],
+            "rows": [
+              [
+                "make_unique",
+                "owner владеет Trace{5}, observer указывает на живой объект."
+              ],
+              [
+                "std::move(owner)",
+                "owner пуст, next владеет тем же Trace{5}. Адрес пока можно сравнить."
+              ],
+              [
+                "next.reset()",
+                "Объект уничтожен, next пуст. Теперь наблюдайте destroy 5, а не observer."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Адрес при переносе владельца",
+        "paragraphs": [
+          "Отметьте, кто владеет объектом до и после move. Что доказывают два булевых результата?"
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    auto owner = std::make_unique<Trace>(5);\n    Trace* observer = owner.get();\n    auto next = std::move(owner);\n    std::cout << (!owner) << ' ' << (observer == next.get()) << '\\n';\n    next.reset();\n}\n"
+        ],
+        "predictionInput": "",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Открыть вывод и проследить выполнение",
+          "paragraphs": [
+            "Журнал содержит одну строку создания и одну разрушения. Две единицы доказывают пустоту старого владельца и совпадение адреса при живом объекте."
+          ],
+          "tables": [
+            {
+              "caption": "Трасса этого запуска",
+              "columns": [
+                "Действие",
+                "Состояние до",
+                "Состояние после",
+                "Что проверить"
+              ],
+              "rows": [
+                [
+                  "make_unique",
+                  "owner: empty",
+                  "owner → Trace{5}",
+                  "Объект создан один раз."
+                ],
+                [
+                  "Перенос",
+                  "owner → Trace{5}",
+                  "next → Trace{5}",
+                  "owner пуст, адрес не изменился."
+                ],
+                [
+                  "reset",
+                  "next → Trace{5}",
+                  "next: empty",
+                  "Появляется destroy 5."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    auto owner = std::make_unique<Trace>(5);\n    Trace* observer = owner.get();\n    auto next = std::move(owner);\n    std::cout << (!owner) << ' ' << (observer == next.get()) << '\\n';\n    next.reset();\n}\n",
+            "stdin": "",
+            "output": "create 5\n1 1\ndestroy 5\n"
+          }
+        }
+      },
+      {
+        "id": "concept-6",
+        "title": "Безопасные эксперименты",
+        "paragraphs": [
+          "Журнал печатает события create и destroy; вложенный блок показывает обратный порядок разрушения локальных объектов. Проверяйте число событий и пустоту владельца после move, а не разыменовывайте освобождённый адрес для получения «интересного» вывода.",
+          "В лабораторной число объектов ограничено, каждый имеет ровно одного владельца. Нарисуйте граф стрелок владельцев и наблюдателей. Он станет основанием для небольшого списка; shared_ptr, Rule of Five и намеренное UB здесь не требуются.",
+          "В опыте сравнивайте адреса, пока ресурс жив. После reset ищите строку destroy и не обращайтесь через observer."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь ваша задача",
+        "paragraphs": [
+          "Добавьте наблюдаемое изменение после переноса. В последней строке деструктор должен видеть новое значение.",
+          "Запишите порядок четырёх строк для N = 4. Отдельно отметьте момент, когда наблюдатель перестаёт быть пригоден."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Какой журнал даёт показанный перенос владельца?",
+        "options": [
+          "create 5\n1 1\ndestroy 5\n",
+          "create 5\n0 1\ndestroy 5\n",
+          "create 5\n1 0\ndestroy 5\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Верно. Переносит unique_ptr, а не сам объект.",
+          "После переноса старый unique_ptr пуст.",
+          "Адрес живого объекта остаётся прежним."
+        ],
+        "code": {
+          "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    auto owner = std::make_unique<Trace>(5);\n    Trace* observer = owner.get();\n    auto next = std::move(owner);\n    std::cout << (!owner) << ' ' << (observer == next.get()) << '\\n';\n    next.reset();\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    auto owner = std::make_unique<Trace>(5);\n    Trace* observer = owner.get();\n    auto next = std::move(owner);\n    std::cout << (!owner) << ' ' << (observer == next.get()) << '\\n';\n    next.reset();\n}\n",
+          "stdin": "",
+          "expected": "create 5\n1 1\ndestroy 5\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Что гарантировано для unique_ptr p после q=std::move(p)?",
+        "options": [
+          "p пуст, q владеет прежним объектом",
+          "Объект обязательно меняет адрес",
+          "Оба владеют объектом"
+        ],
+        "correct": 0,
+        "feedback": "Это передача единственного владения, а не копия объекта.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Продлевает ли get() жизнь объекта?",
+        "options": [
+          "Только после reset",
+          "Да, навсегда",
+          "Нет"
+        ],
+        "correct": 2,
+        "feedback": "Сырой указатель наблюдает, а не владеет.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Когда обычный локальный объект разрушается?",
+        "options": [
+          "При копировании адреса",
+          "При выходе из его области жизни",
+          "Только через delete"
+        ],
+        "correct": 1,
+        "feedback": "RAII привязывает освобождение к жизни владельца.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Нужно ли delete для owner.get()?",
+        "options": [
+          "Нет, ресурс уже управляется владельцем",
+          "Только при move",
+          "Да, перед reset"
+        ],
+        "correct": 0,
+        "feedback": "Ручное удаление нарушит единственное владение.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Что нужно для приёмки этой лабораторной?",
+        "options": [
+          "Только отметка completed",
+          "Только скопированный эталон",
+          "Исходник, реальные результаты, свои тесты и объяснение контракта"
+        ],
+        "correct": 2,
+        "feedback": "Отметка прогресса не равна доказательству самостоятельного освоения.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Для N = 4 объясните, почему последняя строка destroy 5. Что доказывает журнал и почему нельзя читать observer после reset?",
+        "feedback": "Сравнивайте observer с адресом нового владельца до reset. После reset проверяйте только журнал.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Перенести, изменить и освободить",
+      "task": "Создайте через make_unique объект с value от 0 до 1000, перенесите владельца, увеличьте value на 1 и освободите. Выведите create N, moved 1 1, value N+1, destroy N+1. Неверный ввод — invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <memory>\n#include <utility>\n\nstruct Trace {\n    int value;\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    auto owner = std::make_unique<Trace>(n);\n    const Trace* observer = owner.get();\n    // TODO: передайте владение и проверьте обоих владельцев, пока observer действителен,\n    // измените значение через нового владельца и затем явно освободите ресурс.\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "4",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Случай 1",
+          "input": "0",
+          "output": "create 0\nmoved 1 1\nvalue 1\ndestroy 1\n"
+        },
+        {
+          "label": "Случай 2",
+          "input": "4",
+          "output": "create 4\nmoved 1 1\nvalue 5\ndestroy 5\n"
+        },
+        {
+          "label": "Случай 3",
+          "input": "1000",
+          "output": "create 1000\nmoved 1 1\nvalue 1001\ndestroy 1001\n"
+        },
+        {
+          "label": "Случай 4",
+          "input": "-1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Случай 5",
+          "input": "4 x",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Проверьте N = 0 и N = 1000, затем отказ на лишнем токене без строки create.",
+        "Перенос владельца не продлевает жизнь за пределы последнего владельца.",
+        "Не переносите правило пустоты unique_ptr на все типы после move. Не запускайте dangling-доступ.",
+        "Добавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.",
+        "Сохраните исходник, точный ввод и фактический вывод."
+      ],
+      "hint": "Сравнивайте observer с адресом нового владельца до reset. После reset проверяйте только журнал.",
+      "steps": [
+        {
+          "where": "До запуска",
+          "action": "Запишите порядок четырёх строк для N = 4. Отдельно отметьте момент, когда наблюдатель перестаёт быть пригоден.",
+          "why": "Журнал позволяет проверять уничтожение без доступа к уничтоженному объекту.",
+          "expected": "Для N=4 запланированы create 4, moved 1 1, value 5, destroy 5."
+        },
+        {
+          "where": "Моя программа",
+          "action": "Создайте владельца, проверьте перенос, увеличьте значение через нового владельца и вызовите reset.",
+          "why": "Перенос меняет владельца, а изменение значения требует отдельной операции.",
+          "expected": "В заготовке только create 4 и destroy 4. После доработки появляются проверка переноса и новое значение."
+        },
+        {
+          "where": "Проверка",
+          "action": "Проверьте N = 0 и N = 1000, затем отказ на лишнем токене без строки create.",
+          "why": "Граничные входы проверяют и ограничение значения, и отсутствие ресурса при отказе.",
+          "expected": "N=0 и N=1000 создают по одному объекту. Ввод 4 x отклоняется до создания."
+        }
+      ],
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "create 4\ndestroy 4\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-unique",
+        "title": "C++20 [unique.ptr]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[unique.ptr]",
+        "language": "English",
+        "purpose": "Сверьте гарантии перемещения и reset у unique_ptr.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/unique.ptr"
+      },
+      {
+        "id": "cpp20-lifetime",
+        "title": "C++20 [basic.life]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[basic.life]",
+        "language": "English",
+        "purpose": "Найдите границу, после которой доступ к прежнему объекту ограничен.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1"
+      ],
+      "2": [
+        "concept-2",
+        "concept-3",
+        "example-1"
+      ],
+      "3": [
+        "concept-4",
+        "concept-5",
+        "example-2"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Время жизни и область видимости",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Минимум синтаксиса конструктора",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "RAII связывает ресурс с объектом",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "unique_ptr и make_unique",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Передача владения через move",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Безопасные эксперименты",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }

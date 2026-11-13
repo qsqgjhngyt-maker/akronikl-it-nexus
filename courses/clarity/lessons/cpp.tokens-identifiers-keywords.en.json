@@ -1,0 +1,445 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b1-author-v1",
+  "id": "cpp.tokens-identifiers-keywords",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Tokens and names: make a calculation clear without changing it",
+  "goal": "Identify the tokens in a statement, name quantities by their meaning, and check that renaming preserves behavior.",
+  "prerequisites": [
+    {
+      "text": "You can run an int main() scaffold and read std::cout from the previous lesson."
+    },
+    {
+      "text": "You know int name = value; and multiplication of small integers. No new types, functions, or loops are needed."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "What a, b and c stand for",
+      "paragraphs": [
+        "A sensor takes 4 measurements, each lasting 250 milliseconds. The program calculates the total duration, but its author named the quantities a, b and c. Those names are enough for the machine; a reader has to recover their meaning.",
+        "Predict the output line. Then open the walkthrough: first identify the parts of the source, and then choose names that make the units clear to the next reader."
+      ],
+      "prediction": [
+        "#include <iostream>\n\nint main() {\n    int a = 4;\n    int b = 250;\n    int c = a * b;\n    std::cout << \"duration_ms=\" << c << '\\n';\n    return 0;\n}\n"
+      ],
+      "reveal": {
+        "title": "Compare your prediction and follow the steps",
+        "paragraphs": [
+          "Consider int count = 4;. Here int is a keyword, count is an identifier, = is an operator in the initializer syntax, 4 is an integer literal, and ; is a delimiter. Whitespace helps separate pieces but is usually not a language token itself. In count*4, the tokens remain distinct without spaces.",
+          "In std::cout << \"duration_ms=\" << count;, :: spans two characters but is one token; so does <<. A string literal may contain spaces: \"total length\" is not split into two identifiers. Header inclusion has special preprocessing rules; do not count the pieces of #include with a homemade whitespace splitter.",
+          "The value 1000 comes from 4 × 250, not from the names a, b and c. New names must preserve that relationship and the duration_ms= label."
+        ],
+        "tables": [
+          {
+            "caption": "Follow the difficult step",
+            "columns": [
+              "Part of int count = 4;",
+              "Role",
+              "Meaning"
+            ],
+            "rows": [
+              [
+                "int",
+                "keyword",
+                "integer type"
+              ],
+              [
+                "count",
+                "identifier",
+                "object name"
+              ],
+              [
+                "=",
+                "operator in initializer syntax",
+                "initial value on the right"
+              ],
+              [
+                "4",
+                "integer literal",
+                "the number itself"
+              ],
+              [
+                ";",
+                "punctuator",
+                "end of the declaration"
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int a = 4;\n    int b = 250;\n    int c = a * b;\n    std::cout << \"duration_ms=\" << c << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "duration_ms=1000\n"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "When whitespace changes meaning",
+      "paragraphs": [
+        "int count=4; and int count = 4; declare the same object. But intcount = 4; no longer contains the int keyword: it contains a different name. Similarly, totalCount is one identifier while total Count is two. Inserting whitespace at an arbitrary position is not always formatting.",
+        "Indentation and line breaks outside literals help readability. Inside quotes, a space becomes output data: \"length cm=\" and \"length_cm=\" produce different strings. Therefore, formatting changes require a behavior comparison rather than visual inspection alone. Do not combine reformatting with a formula repair in one experiment."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int sampleCount=4; int periodMs=250;\n    int durationMs=sampleCount*periodMs;\n    std::cout<<\"duration_ms=\"<<durationMs<<'\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "duration_ms=1000\n"
+      }
+    },
+    {
+      "id": "concept-3",
+      "title": "Choosing a valid name",
+      "paragraphs": [
+        "Our examples use ASCII Latin letters, digits, and, when useful, underscores; a digit cannot come first. ASCII is a basic character set containing Latin letters and digits. sampleCount, count2, and period_ms follow our convention. A hyphen or space is not part of such a name: sample-count is parsed as names and subtraction.",
+        "This is a course convention, not a claim that C++20 forbids all non-Latin identifiers: specified additional characters are permitted. We restrict the alphabet for convenient typing and portability. Case matters: totalMs and totalMS are distinct names. Choose one style, such as lowerCamelCase, and use it consistently."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Names already reserved by the language",
+      "paragraphs": [
+        "int, return, const, and while have special language roles. You encountered while in Module 1; you do not need to write a loop here. A quantity cannot be named return. cout is not a keyword: it is a library name inside std. Editor coloring is a hint and does not replace compiler checks.",
+        "Some identifier-shaped forms are reserved for the implementation. Avoid double underscores anywhere and an underscore followed by an uppercase letter; our convention avoids any leading underscore. A compiler accepting a reserved name does not make its use valid: some reservation violations require no diagnostic. Thus a successful build is insufficient evidence of a good name."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "A name explains a quantity and its unit",
+      "paragraphs": [
+        "a*b hides the meaning of a duration calculation. sampleCount * periodMs states that a sample count is multiplied by a period in milliseconds to obtain durationMs. The Ms suffix documents the unit. int does not distinguish milliseconds from centimeters; a unit error can compile successfully.",
+        "Do not encode an incidental current value in a name: samples4 becomes misleading when 4 changes to 6. Avoid restating the entire formula in an excessively long name. A useful name answers what the quantity means in the task. Internal durationMs and the external label duration_ms= may follow different conventions; renaming an object need not change the output contract."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int sampleCount = 4;\n    int periodMs = 250;\n    int durationMs = sampleCount * periodMs;\n    std::cout << \"duration_ms=\" << durationMs << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "duration_ms=1000\n"
+      }
+    },
+    {
+      "id": "concept-6",
+      "title": "Rename one object at a time and compare",
+      "paragraphs": [
+        "Record the original stdout first. Rename one declaration and all its uses, then build and compare output. Continue with the next name afterward. Text search helps, but blindly replacing a everywhere can corrupt main and labels. Match word boundaries and review every replacement.",
+        "Compare the original and renamed versions using identical data: the baseline first, then two more cases. Matching output confirms behavior for those cases; it is not a proof about every possible program. The table shows which names changed and which data stayed the same."
+      ],
+      "tables": [
+        {
+          "caption": "Names change; values and the label stay the same",
+          "columns": [
+            "Before",
+            "After",
+            "Meaning"
+          ],
+          "rows": [
+            [
+              "a",
+              "sampleCount",
+              "4 measurements"
+            ],
+            [
+              "b",
+              "periodMs",
+              "250 ms per measurement"
+            ],
+            [
+              "c",
+              "durationMs",
+              "4 × 250 = 1000"
+            ],
+            [
+              "\"duration_ms=\"",
+              "\"duration_ms=\"",
+              "external label unchanged"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diagnose-keyword-name",
+      "title": "Intentional: a keyword used as a name",
+      "paragraphs": [
+        "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+        "return has a grammatical role. Replace it with sampleCount everywhere."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int return = 4;\n    std::cout << return << '\\n';\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      }
+    },
+    {
+      "id": "diagnose-case-mismatch",
+      "title": "Intentional: a case mismatch",
+      "paragraphs": [
+        "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+        "durationMs is declared; durationMS is a different name."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int sampleCount = 4;\n    int periodMs = 250;\n    int durationMs = sampleCount * periodMs;\n    std::cout << \"duration_ms=\" << durationMS << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      },
+      "deep": {
+        "title": "Why can an identifier-shaped name still be reserved?",
+        "text": "Names containing a double underscore or beginning with an underscore followed by an uppercase letter are reserved for the implementation. A leading underscore is also reserved for names in the global namespace. The course therefore uses a simpler convention: do not start your own names with an underscore. This is our example convention, not the complete C++20 naming rule.",
+        "sourceId": "cpp20-lex.token"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve a different problem",
+      "paragraphs": [
+        "There are 5 panels, each 90 cm long. Rename a, b and c to panelCount, panelLengthCm and totalLengthCm. Preserve the values, formula and external length_cm= label. Then compare both versions for 0 × 90 and 2 × 140.",
+        "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "In the meaningfully named program, sampleCount is now 6 and periodMs is 125. The names and formula are unchanged. Which report results?",
+      "options": [
+        "duration_ms=750\n",
+        "duration_ms=1000\n",
+        "durationMs=750\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct: 6 × 125 = 750; the external label is unchanged.",
+        "1000 belongs to the earlier data, 4 × 250. A name does not fix a quantity to its old value.",
+        "durationMs is an internal name. The output string still begins with duration_ms=."
+      ],
+      "recall": "concept-5",
+      "code": "#include <iostream>\n\nint main() {\n    int sampleCount = 6;\n    int periodMs = 125;\n    int durationMs = sampleCount * periodMs;\n    std::cout << \"duration_ms=\" << durationMs << '\\n';\n    return 0;\n}\n",
+      "execution": {
+        "source": "#include <iostream>\n\nint main() {\n    int sampleCount = 6;\n    int periodMs = 125;\n    int durationMs = sampleCount * periodMs;\n    std::cout << \"duration_ms=\" << durationMs << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "duration_ms=750\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int sampleCount = 6;\n    int periodMs = 125;\n    int durationMs = sampleCount * periodMs;\n    std::cout << \"duration_ms=\" << durationMs << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "Which is one identifier following the course convention?",
+      "options": [
+        "2count",
+        "sample-count",
+        "sampleCount"
+      ],
+      "correct": 2,
+      "feedback": "sampleCount starts with a letter and contains no minus operator.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "Which edit changes output data?",
+      "options": [
+        "Indent std::cout",
+        "Replace \"a b\" with \"ab\"",
+        "Add spaces around *"
+      ],
+      "correct": 1,
+      "feedback": "A space inside a string literal belongs to its content.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "The compiler accepted __cache. Is that sufficient to approve the name?",
+      "options": [
+        "Yes, compilation proves everything",
+        "No: the form is reserved and a diagnostic is not required",
+        "Yes, if the value is small"
+      ],
+      "correct": 1,
+      "feedback": "Naming review supplements compiler checks. Compiler rejection is not a mandatory test expectation here.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "concept-3",
+      "kind": "choice",
+      "prompt": "Why is durationMs better than value4 in this calculation?",
+      "options": [
+        "C++ forbids digits in names",
+        "It describes role and unit rather than an incidental value",
+        "It automatically validates units"
+      ],
+      "correct": 1,
+      "feedback": "This helps a person; it is not a new type system and does not make an incorrect formula impossible.",
+      "recall": "concept-5"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain which tokens you replaced and which you preserved. Why does a successful build alone not verify the units?",
+      "feedback": "Explain which tokens you replaced and which you preserved. Why does a successful build alone not verify the units?",
+      "recall": "concept-5"
+    }
+  ],
+  "practice": {
+    "title": "Naming review for a panel calculation",
+    "task": "There are 5 panels, each 90 cm long. Rename a, b and c to panelCount, panelLengthCm and totalLengthCm. Preserve the values, formula and external length_cm= label. Then compare both versions for 0 × 90 and 2 × 140.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    int a = 5;\n    int b = 90;\n    int c = a * b;\n    std::cout << \"length_cm=\" << c << '\\n';\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "",
+    "returnAnchor": "concept-5",
+    "recall": "concept-5",
+    "cases": [
+      {
+        "label": "5 × 90",
+        "input": "",
+        "output": "length_cm=450\n"
+      },
+      {
+        "label": "0 × 90",
+        "input": "",
+        "output": "length_cm=0\n"
+      },
+      {
+        "label": "2 × 140",
+        "input": "",
+        "output": "length_cm=280\n"
+      }
+    ],
+    "criteria": [
+      "All uses of each name agree; the names convey meaning and units and avoid reserved forms.",
+      "For each data set, output before and after renaming matches the corresponding result below.",
+      "Explain which tokens you replaced and which you preserved. Why does a successful build alone not verify the units?"
+    ],
+    "hint": "Explain which tokens you replaced and which you preserved. Why does a successful build alone not verify the units?",
+    "steps": [
+      {
+        "where": "My independent work",
+        "action": "Record the original report: length_cm=450.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My independent work",
+        "action": "Map each of the three old names to its new name.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My independent work",
+        "action": "Rename one declaration and all its uses, build and compare output; repeat for the other names.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My independent work",
+        "action": "Check both versions for 5 × 90, 0 × 90 and 2 × 140. Do not change the formula while renaming.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Token",
+      "definition": "A meaningful lexical unit such as a name, literal, or operator; not necessarily one character or a word separated by spaces."
+    },
+    {
+      "term": "Identifier",
+      "definition": "A name form used in declarations and references to program entities."
+    },
+    {
+      "term": "Keyword",
+      "definition": "A word with a special grammatical role, such as int or return; it cannot be declared as an ordinary quantity name."
+    },
+    {
+      "term": "Literal",
+      "definition": "A value written directly in source, such as 250 or \"duration_ms=\"."
+    },
+    {
+      "term": "Naming convention",
+      "definition": "A team agreement about readable names that may be stricter than the language syntax."
+    },
+    {
+      "term": "Renaming",
+      "definition": "A consistent name change in a declaration and all corresponding uses while preserving meaning."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-LEX",
+    "CPP20-NAMES",
+    "CPP20-KEYWORDS",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.tokens-identifiers-keywords",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-LEX",
+      "CPP20-NAMES",
+      "CPP20-KEYWORDS",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\tokens-identifiers-keywords.en.json",
+  "reading": [
+    {
+      "id": "cpp20-lex.token",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[lex.token]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.token"
+    },
+    {
+      "id": "cpp20-lex.name",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[lex.name]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.name"
+    },
+    {
+      "id": "cpp20-lex.key",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[lex.key]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.key"
+    }
+  ],
+  "authored": true
+}

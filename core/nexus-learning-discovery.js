@@ -98,7 +98,7 @@ export function bindLearningDiscovery(t){
 }
 
 export function focusLearningSection(focus){
- const selector=focus==='task'?'#cppTask':focus==='lab'?'#memoryLab,#oopLab,#cppLab':null;
+ const selector=focus==='task'?'#cppTask,#cppLab':focus==='lab'?'#memoryLab,#oopLab,#cppLab':null;
  const section=selector&&document.querySelector(selector);if(!section)return false;
  const hash=location.hash;
  section.tabIndex=-1;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!section.isConnected||location.hash!==hash)return;section.scrollIntoView({block:'start',behavior:'auto'});section.focus({preventScroll:true})}));return true;

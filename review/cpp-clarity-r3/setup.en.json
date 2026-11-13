@@ -1,0 +1,87 @@
+{
+  "onec.p2.topic-1": [
+    {
+      "title": "Installed learning platform",
+      "text": "Use the official 1C:Enterprise learning platform for Windows. The official page provides the terms and installer. The PC owner performs installation. Automated execution on the available 8.3.27.2214 does not prove the learning edition 8.3.27.1508 works.",
+      "links": [
+        {
+          "label": "Official 1C learning edition",
+          "href": "https://online.1c.ru/catalog/free/28765768/",
+          "external": true
+        }
+      ]
+    },
+    {
+      "title": "New separate infobase",
+      "text": "In the 1C launcher choose Add → Create a new infobase → Without a configuration. Select a new empty directory with a learning name. Do not select a work infobase. The first addition needs no service configuration, Studio, Sandbox or JSON."
+    },
+    {
+      "title": "Managed application module",
+      "text": "Open this infobase in Designer. Configuration → Open configuration. Select the configuration root, context menu → Open managed application module. Put the whole file below into the empty module. Its ПриНачалеРаботыСистемы procedure contains the four calculation lines. Do not overwrite an existing application handler.",
+      "links": [
+        {
+          "label": "Complete first calculation module (.bsl)",
+          "href": "./code/first-calculation.bsl"
+        }
+      ]
+    },
+    {
+      "title": "Save and execute",
+      "text": "Ctrl+S saves the text. Close the previous Enterprise window for this learning infobase. F7 updates the database configuration; confirm changes for the new learning infobase. F5 starts Enterprise. Find 75 in the messages pane. Return to Designer, change 45 to 20 and repeat: now 50. Сообщить displays a message; it does not create a database record."
+    },
+    {
+      "title": "Independent practice",
+      "text": "In the same new learning module replace only the calculation body with your three durations 10, 25 and 5. Keep a separate copy of the downloaded source. Expect 40; with zero for the second duration expect 15. Nexus cannot observe the external 1C window: record results manually below."
+    }
+  ],
+  "onec.p7.topic-2": [
+    {
+      "title": "An advanced 1C topic",
+      "text": "First understand catalog references, document records and query parameters. Use a new separate learning service infobase for this experiment; this is not part of the first BSL addition. No work data or work configurations are needed."
+    },
+    {
+      "title": "Known structure in a new infobase",
+      "text": "Create a new empty infobase as in first-calculation setup. Open its configuration in Designer. Configuration → Load configuration from file: choose the learning CF below, only in this new infobase. Check Клиенты, Услуги, СтатусыЗаявки and ЗаявкаУслуги with Клиент, Услуга, Статус, ДлительностьМинут. The CF is an existing repository learning artifact; R3 does not modify it.",
+      "links": [
+        {
+          "label": "Learning service configuration (.cf, 84,506 bytes)",
+          "href": "./references/NexusTrainingServiceDeskReportsV2.cf"
+        }
+      ]
+    },
+    {
+      "title": "Complete server module",
+      "text": "Under Common modules create УчебныеСоединенияR3. Enable Server and Server call. Disable Client, Global and Privileged. Open its module and insert the complete file below. The functions create only their own new references, execute both queries and label the results.",
+      "links": [
+        {
+          "label": "Server module (.bsl)",
+          "href": "./code/УчебныеСоединенияR3.bsl"
+        }
+      ]
+    },
+    {
+      "title": "Call and real rows",
+      "text": "Put the entire second file into the new infobase’s empty managed application module. Ctrl+S, close the previous Enterprise window for this base, F7, F5. Messages should show A/J1/30, A/J2/45, B/NULL/NULL, then A/75 and B/0. Without ORDER BY row order is not guaranteed: compare keys, not positions. A/B and J1/J2 label the references just created.",
+      "links": [
+        {
+          "label": "Application module displaying rows (.bsl)",
+          "href": "./code/МодульПриложенияСоединения.bsl"
+        }
+      ]
+    },
+    {
+      "title": "Use your own data set",
+      "text": "Replace the texts of both functions in УчебныеСоединенияR3 with your queries using the instructions below. In the managed application module use ПодготовитьНабор(10, 20, \"Workshop\"); add \"X\", \"Y\" after Данные in both МеткаКлиента calls. Both queries receive Данные.Ключи from this run. In Designer save with Ctrl+S, close the previous session, update with F7 and start with F5. Compare the first set’s rows and totals in the messages. For the second experiment close the session, change the preparation arguments to (15, 20, \"Workshop\"), then repeat Ctrl+S/F7/F5: new X/Y references and requests are created. The first set is neither changed nor deleted. X/Y denote roles within each set; previous data remains and is excluded by the current Данные.Ключи."
+    },
+    {
+      "title": "Put your own query into the executed module",
+      "text": "ЗапросСтрок.bsl and ЗапросИтогов.bsl contain query-language text, not standalone BSL modules. There is no automatic exchange with 1C. Work directly in Designer or manually transfer your text from the optional draft. Below are two complete function examples. Replace only the text between the opening quote after Возврат and the closing quote before ;. Keep the function declaration and КонецФункции. Put the first query line after the opening quote; prefix each following line with |. Double any quotes used within the query inside the BSL string. Keep &Ключи as a parameter.",
+      "code": "Функция ТекстДетальногоЗапроса() Экспорт\n    Возврат \"ВЫБРАТЬ\n    |    К.Ссылка КАК Клиент,\n    |    З.Ссылка КАК Заявка,\n    |    З.ДлительностьМинут КАК Минуты\n    |ИЗ\n    |    Справочник.Клиенты КАК К\n    |        ЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З\n    |        ПО К.Ссылка = З.Клиент\n    |ГДЕ\n    |    К.Ссылка В (&Ключи)\";\nКонецФункции\n\nФункция ТекстИтоговогоЗапроса() Экспорт\n    Возврат \"ВЫБРАТЬ\n    |    К.Ссылка КАК Клиент,\n    |    ЕСТЬNULL(СУММА(З.ДлительностьМинут), 0) КАК Минуты\n    |ИЗ\n    |    Справочник.Клиенты КАК К\n    |        ЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З\n    |        ПО К.Ссылка = З.Клиент\n    |ГДЕ\n    |    К.Ссылка В (&Ключи)\n    |СГРУППИРОВАТЬ ПО\n    |    К.Ссылка\";\nКонецФункции"
+    },
+    {
+      "title": "Call your own functions",
+      "text": "These two calls already follow ПодготовитьНабор in the managed application module. They read the functions you edited and pass the current Данные.Ключи to ВыполнитьЗапрос, where УстановитьПараметр(\"Ключи\", Ключи) restricts the dataset. The Строки loop prints details; the Итоги loop prints groups. Save both modules and run F7/F5. To check the transfer, temporarily replace ЛЕВОЕ with ВНУТРЕННЕЕ in your totals function: Y disappears. Restore ЛЕВОЕ and rerun: two groups return. Each run creates a new set. Recording the result in Nexus is still a self-report.",
+      "code": "Строки = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстДетальногоЗапроса(), Данные.Ключи);\nИтоги = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстИтоговогоЗапроса(), Данные.Ключи);"
+    }
+  ]
+}

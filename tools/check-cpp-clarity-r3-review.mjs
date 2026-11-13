@@ -1,0 +1,5 @@
+import {spawn} from 'node:child_process';
+import path from 'node:path';
+const port=Number(process.env.NEXUS_REVIEW_PORT||47654),origin='http://127.0.0.1:'+port;
+const server=spawn(process.execPath,['tools/preview-cpp-clarity-r3.mjs','--port',String(port)],{stdio:['ignore','pipe','pipe'],windowsHide:true});let log='';server.stdout.on('data',b=>log+=b);server.stderr.on('data',b=>log+=b);
+try{let ready=false;for(let i=0;i<50;i++){if(server.exitCode!==null)throw Error(log);try{const r=await fetch(origin+'/health',{signal:AbortSignal.timeout(500)});if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}if(!ready)throw Error('R3 server did not become ready');const run=spawn(process.execPath,['tests/cpp-clarity-r3-browser.mjs'],{env:{...process.env,NEXUS_REVIEW_ORIGIN:origin},stdio:'inherit',windowsHide:true});const code=await new Promise((resolve,reject)=>{run.on('error',reject);run.on('exit',resolve);});if(code!==0)throw Error('R3 browser checks failed: '+code);}finally{server.kill();}

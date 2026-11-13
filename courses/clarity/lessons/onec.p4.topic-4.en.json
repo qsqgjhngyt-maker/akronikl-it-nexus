@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p4-topic-4-author-v1",
+  "id": "onec.p4.topic-4",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Metadata design",
+  "locale": "en",
+  "title": "An edited value and a stored record: locating the boundary",
+  "goal": "Distinguish manager lookup, editable object and selection cursor while testing the moment a name is saved.",
+  "prerequisites": [
+    {
+      "text": "Complete P1–P3. Distinguish a common-module function from its application caller; preserve your source and run a separate training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "The question we are checking",
+      "paragraphs": [
+        "You changed a name in an object. Will a fresh database read see it? Check when the edit becomes persistent and distinguish manager, reference, editable object, and selection.",
+        "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Managers operate on a type",
+      "paragraphs": [
+        "Catalogs.Customers provides type-wide creation and lookup operations.GetObject belongs to a particular reference; a selection traverses items. A manager is not an already-loaded array of objects: traversal and reads follow the API’s rules.",
+        "Справочники.Клиенты manages this object kind: it creates items and finds references by code within the catalog. ПолучитьОбъект gives an editable state of one record. After changing its name but before Записать, a fresh read should still see the stored name. After writing, lookup by the same code returns the new name."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "The complete function: what happens to the data",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "This is Данные.bsl for the common module. The separate application source below calls it. Do not paste both files into one editor."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция ОпытМенеджераОбъектаВыборки() Экспорт\n    Объект = Справочники.Клиенты.СоздатьЭлемент();\n    Объект.Наименование = \"Учебный API — сохранено\";\n    Объект.Записать();\n    Ссылка = Объект.Ссылка;\n    Код = Объект.Код;\n    Черновик = Ссылка.ПолучитьОбъект();\n    Черновик.Наименование = \"Учебный API — ещё не записано\";\n    ДоЗаписи = Ссылка.ПолучитьОбъект().Наименование;\n    Черновик.Записать();\n    ПослеЗаписи = Справочники.Клиенты.НайтиПоКоду(Код).ПолучитьОбъект().Наименование;\n    Выборка = Справочники.Клиенты.Выбрать();\n    Найден = Ложь;\n    Пока Выборка.Следующий() Цикл\n        Если Выборка.Ссылка = Ссылка Тогда\n            Найден = Истина;\n        КонецЕсли;\n    КонецЦикла;\n    Возврат Новый Структура(\"ДоЗаписиНеИзменилось,ПослеЗаписиИзменилось,НайденВыборкой\",\n        ДоЗаписи = \"Учебный API — сохранено\",\n        ПослеЗаписи = \"Учебный API — ещё не записано\", Найден);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The application call and its observation",
+      "paragraphs": [
+        "The worked example saves an initial name, obtains an editable object, and changes it in memory. A separate read sees the old name before saving and the new one afterward. The selection finds the needed reference by comparison rather than assuming a list position.",
+        "Each message is labelled: identical Да values concern different assertions. Find the expression behind each line and distinguish its truth from the fact that the program ran."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытМенеджераОбъектаВыборки();\n    Сообщить(\"До записи имя прежнее: \" + Строка(Результат.ДоЗаписиНеИзменилось));\n    Сообщить(\"После записи имя новое: \" + Строка(Результат.ПослеЗаписиИзменилось));\n    Сообщить(\"Ссылка найдена обходом: \" + Строка(Результат.НайденВыборкой));\nКонецПроцедуры\n",
+        "output": "До записи имя прежнее: Да\nПосле записи имя новое: Да\nСсылка найдена обходом: Да",
+        "files": {
+          "Данные.bsl": "Функция ОпытМенеджераОбъектаВыборки() Экспорт\n    Объект = Справочники.Клиенты.СоздатьЭлемент();\n    Объект.Наименование = \"Учебный API — сохранено\";\n    Объект.Записать();\n    Ссылка = Объект.Ссылка;\n    Код = Объект.Код;\n    Черновик = Ссылка.ПолучитьОбъект();\n    Черновик.Наименование = \"Учебный API — ещё не записано\";\n    ДоЗаписи = Ссылка.ПолучитьОбъект().Наименование;\n    Черновик.Записать();\n    ПослеЗаписи = Справочники.Клиенты.НайтиПоКоду(Код).ПолучитьОбъект().Наименование;\n    Выборка = Справочники.Клиенты.Выбрать();\n    Найден = Ложь;\n    Пока Выборка.Следующий() Цикл\n        Если Выборка.Ссылка = Ссылка Тогда\n            Найден = Истина;\n        КонецЕсли;\n    КонецЦикла;\n    Возврат Новый Структура(\"ДоЗаписиНеИзменилось,ПослеЗаписиИзменилось,НайденВыборкой\",\n        ДоЗаписи = \"Учебный API — сохранено\",\n        ПослеЗаписи = \"Учебный API — ещё не записано\", Найден);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытМенеджераОбъектаВыборки();\n    Сообщить(\"До записи имя прежнее: \" + Строка(Результат.ДоЗаписиНеИзменилось));\n    Сообщить(\"После записи имя новое: \" + Строка(Результат.ПослеЗаписиИзменилось));\n    Сообщить(\"Ссылка найдена обходом: \" + Строка(Результат.НайденВыборкой));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "Reasoning about the worked observation",
+          "columns": [
+            "Action",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Manager",
+              "НайтиПоКоду",
+              "Reference obtained."
+            ],
+            [
+              "Object",
+              "Name changed in memory",
+              "Storage still has the old name."
+            ],
+            [
+              "Write",
+              "Explicit persistence",
+              "A new read sees the new name."
+            ],
+            [
+              "Selection",
+              "Следующий and reference comparison",
+              "The desired item is found."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "A cursor needs advancing",
+      "paragraphs": [
+        "AfterSelect, advance withNext in a loop. Read fields from the current position, not before the first advance. Test an empty selection separately: zero iterations should produce the agreed empty result. Traversed count alone does not prove there were no hidden conditions.",
+        "A selection starts before its first row. Пока Выборка.Следующий() advances the cursor and reports whether another row exists. The example compares references instead of relying on a fixed position. Additional customers need not be deleted to match an illustration."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction first",
+      "paragraphs": [
+        "The in-memory edit exists, but Записать is omitted. Which name should a fresh read return?",
+        "Identify the changed action and what should remain unchanged. Reveal the explanation after making your own prediction."
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "The old name. Obtaining and editing an object does not replace saving it. A fresh read distinguishes a stored result from a value in an open draft."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Modification needs an object",
+      "paragraphs": [
+        "For one card, obtain the object, validate current data andWrite. Bulk edits during traversal need care: changing selection conditions may affect later membership. In the starter exercise, collect references first and modify them in a separate controlled pass.",
+        "Separate object, reference and selection row. Persistence occurs explicitly through Черновик.Записать(). An in-memory presentation change is not a durable result. Bulk processing needs separate filter, transaction, permission and performance rules; one teaching loop does not establish them."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace preservation step by step",
+      "paragraphs": [
+        "The diagram transfers that order to the independent rate task. An in-memory 800 coexists with saved 600. Only after saving does a fresh read return 800; this is a distinct observable step.",
+        "Read each arrow: what value or relation exists now, and which action changes it? The diagram explains the selected property rather than replacing the source."
+      ],
+      "flow": {
+        "caption": "State and transition",
+        "nodes": [
+          {
+            "title": "Saved",
+            "lines": [
+              "600"
+            ]
+          },
+          {
+            "title": "In memory",
+            "lines": [
+              "800"
+            ]
+          },
+          {
+            "title": "Before save",
+            "lines": [
+              "600"
+            ]
+          },
+          {
+            "title": "After save",
+            "lines": [
+              "800"
+            ]
+          }
+        ],
+        "alternative": [
+          "Saved: 600",
+          "In memory: 800",
+          "Before save: 600",
+          "After save: 800"
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "An error that can look successful",
+      "paragraphs": [
+        "Suppose saving is omitted but the edited object’s own name is printed: the line looks correct. Reread through the preserved reference or manager and compare that value instead. Then restore saving in your own copy.",
+        "Keep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Operations need an observable trace",
+      "paragraphs": [
+        "For reporting reads, compare identities and call counts with no writes. For one-card editing, compare only expected fields. Include empty sets and repeated execution. This shows the API choice follows the task rather than an accidental chain of unnecessary object accesses.",
+        "The original returns three true claims: unchanged storage before write, changed storage afterward and the desired reference found in selection. The incorrect variant omits writing: syntax remains valid and the item is found, but its new name is not stored. Each execution creates one test item; remove its startup call and record its code afterward."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a new independent task",
+      "paragraphs": [
+        "Create a new training service with saved rate 600. Obtain its editable object and set 800, but first reread the stored rate. Then save and reread by code. Display the draft rate, the stored value before saving, the value afterward, and reference preservation.",
+        "The worked example addresses another question. Begin with this task’s starter and reveal the reference after your attempt. Viewing an example or reference does not replace your code."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Where to run it and what to observe in 1C",
+      "paragraphs": [
+        "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields.",
+        "Preserve the previous handler separately. Run the experiment once in your copy, compare labelled messages and specific new records, then remove only the added startup call. Do not delete records to match a screenshot."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p4-api-main-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "a3bfca61fade5bba0ad2016ddf60e0bd3037d9a6b8ead20afa523a7f51630e80",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "caption": "Actual result of calling the worked function in a separate training infobase on installed 1C 8.3.27.2214. Labels distinguish the checked properties. This is the worked example, not the new independent task. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits of the observation and your explanation",
+      "paragraphs": [
+        "The chosen training path is checked in a file infobase. This does not establish all permissions, bulk changes, network-server behaviour, or learner understanding. A run, a saved completion mark, and an explanation are separate facts.",
+        "Explain manager, object, and selection roles; one experiment does not validate bulk transactions."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "The in-memory edit exists, but Записать is omitted. Which name should a fresh read return?",
+      "options": [
+        "The old saved name",
+        "Always the new in-memory name",
+        "The last list item’s name"
+      ],
+      "correct": 0,
+      "feedback": "The old name. Obtaining and editing an object does not replace saving it. A fresh read distinguishes a stored result from a value in an open draft.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Which mechanism finds an item by code?",
+      "options": [
+        "Manager",
+        "Course heading",
+        "Form colour"
+      ],
+      "correct": 0,
+      "feedback": "Lookup belongs to the catalog manager.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Saving an in-memory change requires",
+      "options": [
+        "Sorting",
+        "Записать",
+        "A new chat"
+      ],
+      "correct": 1,
+      "feedback": "An explicit write changes persistent state.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Reading the next selection row requires",
+      "options": [
+        "Resetting the base",
+        "Deleting customers",
+        "A successful Следующий"
+      ],
+      "correct": 2,
+      "feedback": "It advances and tests row existence.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "The draft shows 800 while a fresh database read gives 600. What should be checked first?",
+      "options": [
+        "Whether the intended object was saved explicitly",
+        "Whether old data should be deleted",
+        "Whether window captions match"
+      ],
+      "correct": 0,
+      "feedback": "Explain manager, object, and selection roles; one experiment does not validate bulk transactions.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
+      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "An edited value and a stored record: locating the boundary",
+    "task": "Create a new training service with saved rate 600. Obtain its editable object and set 800, but first reread the stored rate. Then save and reread by code. Display the draft rate, the stored value before saving, the value afterward, and reference preservation.",
+    "environment": "Installed training 1C 8.3 and a separate copy with the starter metadata. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Общие → Общие модули → УчебныеДанные",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Данные.bsl",
+        "content": "Функция ОпытСохраненияТарифа() Экспорт\n    // TODO: implement the independent task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСохраненияТарифа();\n    Сообщить(\"В редактируемом объекте: \" + Строка(Результат.ТарифЧерновика));\n    Сообщить(\"В базе до записи: \" + Строка(Результат.ТарифДоЗаписи));\n    Сообщить(\"В базе после записи: \" + Строка(Результат.ТарифПослеЗаписи));\n    Сообщить(\"Ссылка сохранена: \" + Строка(Результат.ТаЖеСсылка));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Функция ОпытСохраненияТарифа() Экспорт\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебное сохранение тарифа\";\n    Услуга.ТарифЗаЧас = 600;\n    Услуга.Записать();\n    СсылкаДо = Услуга.Ссылка;\n    Код = Услуга.Код;\n    Черновик = СсылкаДо.ПолучитьОбъект();\n    Черновик.ТарифЗаЧас = 800;\n    ДоЗаписи = СсылкаДо.ПолучитьОбъект().ТарифЗаЧас;\n    Черновик.Записать();\n    ПослеЗаписи = Справочники.Услуги.НайтиПоКоду(Код).ПолучитьОбъект();\n    Возврат Новый Структура(\"ТарифЧерновика,ТарифДоЗаписи,ТарифПослеЗаписи,ТаЖеСсылка\",\n        Черновик.ТарифЗаЧас, ДоЗаписи, ПослеЗаписи.ТарифЗаЧас,\n        ПослеЗаписи.Ссылка = СсылкаДо);\nКонецФункции\n",
+      "files": {
+        "Данные.bsl": "Функция ОпытСохраненияТарифа() Экспорт\n    Услуга = Справочники.Услуги.СоздатьЭлемент();\n    Услуга.Наименование = \"Учебное сохранение тарифа\";\n    Услуга.ТарифЗаЧас = 600;\n    Услуга.Записать();\n    СсылкаДо = Услуга.Ссылка;\n    Код = Услуга.Код;\n    Черновик = СсылкаДо.ПолучитьОбъект();\n    Черновик.ТарифЗаЧас = 800;\n    ДоЗаписи = СсылкаДо.ПолучитьОбъект().ТарифЗаЧас;\n    Черновик.Записать();\n    ПослеЗаписи = Справочники.Услуги.НайтиПоКоду(Код).ПолучитьОбъект();\n    Возврат Новый Структура(\"ТарифЧерновика,ТарифДоЗаписи,ТарифПослеЗаписи,ТаЖеСсылка\",\n        Черновик.ТарифЗаЧас, ДоЗаписи, ПослеЗаписи.ТарифЗаЧас,\n        ПослеЗаписи.Ссылка = СсылкаДо);\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеДанные.ОпытСохраненияТарифа();\n    Сообщить(\"В редактируемом объекте: \" + Строка(Результат.ТарифЧерновика));\n    Сообщить(\"В базе до записи: \" + Строка(Результат.ТарифДоЗаписи));\n    Сообщить(\"В базе после записи: \" + Строка(Результат.ТарифПослеЗаписи));\n    Сообщить(\"Ссылка сохранена: \" + Строка(Результат.ТаЖеСсылка));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "This is the common-module function reference. The separate application caller is included below. Compare stored state and relations, not just the last line. Viewing it does not modify your work."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent task",
+        "input": "New service: save 600, set the draft to 800, and read before and after saving.",
+        "output": "В редактируемом объекте: 800\nВ базе до записи: 600\nВ базе после записи: 800\nСсылка сохранена: Да"
+      }
+    ],
+    "criteria": [
+      "Distinguish the locations: draft 800, database before saving 600, database after saving 800.",
+      "The final check compares the preserved reference, not only a displayed name or code.",
+      "Explain manager, object, and selection roles; one experiment does not validate bulk transactions."
+    ],
+    "hint": "The diagram transfers that order to the independent rate task. An in-memory 800 coexists with saved 600. Only after saving does a fresh read return 800; this is a distinct observable step.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → prediction",
+        "action": "Record concrete inputs, expected fields, and an explanation before running.",
+        "why": "Comparison requires an independent expectation.",
+        "expected": "A labelled prediction is recorded."
+      },
+      {
+        "where": "Separate training infobase → Designer → metadata",
+        "action": "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
+        "why": "Preserve previous work; do not load a full configuration over it.",
+        "expected": "A new copy contains Клиенты, Услуги, ЗаявкаУслуги, and СтатусыЗаявки."
+      },
+      {
+        "where": "Общие → Общие модули → УчебныеДанные",
+        "action": "УчебныеДанные common module: Server and Server call enabled; Client, Global, and Privileged disabled. Functions are outside procedures. The application module has one handler that calls the function and displays labelled result fields. Add your new function while preserving existing definitions.",
+        "why": "The common module and application handler have different roles.",
+        "expected": "The new function is in its own module with no duplicate definitions."
+      },
+      {
+        "where": "Application module → Ctrl+S → F7 → F5 → messages",
+        "action": "Use the separate Приложение.bsl file. Run once and compare every labelled line, then remove only the added startup call.",
+        "why": "Otherwise restarting can create more training records.",
+        "expected": "The new observation is recorded and automatic repetition is stopped."
+      },
+      {
+        "where": "Your files and Nexus → self-report",
+        "action": "Save sources, actual training record codes where applicable, and an explanation of one changed case of your own.",
+        "why": "A success message replaces neither observation nor understanding.",
+        "expected": "Work and explanation are distinct; prior data is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "catalog",
+    "reference",
+    "metadata",
+    "module",
+    "attribute",
+    "document",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p4-api.json",
+  "assessment": {
+    "contentRevision": "onec-p4-topic-4-author-v1",
+    "quiz": [
+      {
+        "question": "The in-memory edit exists, but Записать is omitted. Which name should a fresh read return?",
+        "options": [
+          "The old saved name",
+          "Always the new in-memory name",
+          "The last list item’s name"
+        ],
+        "correct": 0,
+        "explanation": "The old name. Obtaining and editing an object does not replace saving it. A fresh read distinguishes a stored result from a value in an open draft."
+      },
+      {
+        "question": "Which mechanism finds an item by code?",
+        "options": [
+          "Manager",
+          "Course heading",
+          "Form colour"
+        ],
+        "correct": 0,
+        "explanation": "Lookup belongs to the catalog manager."
+      },
+      {
+        "question": "Saving an in-memory change requires",
+        "options": [
+          "Sorting",
+          "Записать",
+          "A new chat"
+        ],
+        "correct": 1,
+        "explanation": "An explicit write changes persistent state."
+      },
+      {
+        "question": "Reading the next selection row requires",
+        "options": [
+          "Resetting the base",
+          "Deleting customers",
+          "A successful Следующий"
+        ],
+        "correct": 2,
+        "explanation": "It advances and tests row existence."
+      },
+      {
+        "question": "The draft shows 800 while a fresh database read gives 600. What should be checked first?",
+        "options": [
+          "Whether the intended object was saved explicitly",
+          "Whether old data should be deleted",
+          "Whether window captions match"
+        ],
+        "correct": 0,
+        "explanation": "Explain manager, object, and selection roles; one experiment does not validate bulk transactions."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-metadata-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Configuration, metadata, and script",
+      "language": "English",
+      "purpose": "Optional reference after your attempt; the lesson already explains the necessary actions.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p4.topic-4.en.json"
+}

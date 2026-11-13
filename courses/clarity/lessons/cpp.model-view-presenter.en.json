@@ -1,0 +1,452 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "b6-author-v1",
+  "id": "cpp.model-view-presenter",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.visual-programming",
+  "course": "C++ programming",
+  "module": "Event-driven applications",
+  "locale": "en",
+  "title": "Model, view and presenter",
+  "goal": "Separate model updates, displaying values and command handling, and test them without a window.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–5: functions, STL, ownership, testing and multi-file builds."
+    },
+    {
+      "text": "Study the linked prerequisite topics below before this lesson."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Responsibility boundaries",
+      "paragraphs": [
+        "A stock model can check quantity without a screen. A view displays a number; a Presenter connects an incoming command to the model and a view update. Later, real Qt widgets can replace the fake.",
+        "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make.",
+        "The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Cannot ship 3 from stock 2",
+      "paragraphs": [
+        "change checks the proposed quantity first. The example uses a small delta; the lab also bounds delta before addition so a very large value cannot overflow."
+      ],
+      "prediction": [
+        "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal output and walkthrough",
+        "paragraphs": [
+          "Rejection leaves 2. In the lab the Presenter still shows the current stock after every command, including a rejected one."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Create Stock",
+                "—",
+                "quantity=2",
+                "The member is initialized."
+              ],
+              [
+                "change(-3)",
+                "quantity=2",
+                "quantity=2; false",
+                "2−3 is below 0: return precedes assignment."
+              ],
+              [
+                "Print result and stock",
+                "false,2",
+                "0 2",
+                "Both observations are needed to check rejection."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 2\n"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Dependency injection through references",
+      "paragraphs": [
+        "Presenter(Stock&, View&) receives existing collaborators and stores references. It neither owns them nor creates a global stock object. main declares the model and view before the presenter, so they are destroyed after it. This is a concrete lifetime obligation; allowing the presenter to escape its owners’ scope would make those references unsafe.",
+        "A virtual hierarchy is unnecessary for this small example. View stores last and exposes show, allowing tests to observe a result without a window. If multiple adapters later share a contract, compare a templated presenter with a virtual interface. Choose according to extension needs, ownership cost and testability, rather than introducing a pattern solely for its name."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "A fake view",
+      "paragraphs": [
+        "A test double replaces a real collaborator with controlled behaviour. Our fake records the last displayed value; it does not emulate a graphics engine. A presenter test checks that the displayed number agrees with the model. This does not prove button accessibility, text placement or keyboard operation; those properties require a real interface and separate acceptance checks.",
+        "Extend the fake to record every show call. Check the initial display and update count after commands. Then consider updating only when quantity changes. Both policies can be valid, but tests must match the selected contract. An update count cannot change silently when a client uses updates for history or notifications."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A fake remembers the displayed 8",
+      "paragraphs": [
+        "last records the latest show. To verify every update, give the fake a log: one final value does not prove how many calls occurred."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct View {\n    int last = -1;\n    void show(int value) { last = value; }\n};\nvoid present(View &view, int value) { view.show(value); }\nint main() {\n    View fake;\n    present(fake, 8);\n    std::cout << \"shown \" << fake.last << '\\n';\n}\n",
+        "stdin": "",
+        "output": "shown 8\n"
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "Checks before arithmetic",
+      "paragraphs": [
+        "A command can contain INT_MAX. Validate delta in -20…20 before computing quantity+delta. Logical || evaluates left to right with short-circuiting, so the potentially dangerous sum is not evaluated for a huge delta. Reversing the checks could cause signed overflow before the program decides to reject the command.",
+        "A domain error differs from a formatting error. The integer 2147483647 is a valid int input rejected by the model; a word in place of an integer violates the driver protocol. Demonstrate both cases separately. In the final application this separation supports distinct messages for insufficient stock, an invalid number and a malformed file."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Requirement changes and dependencies",
+      "paragraphs": [
+        "Adding a graphical interface should change the adapter and command wiring, not the stock boundary. Adding multiple warehouses changes the domain model. Separate these changes in the work plan. If changing a button colour requires editing Stock rules, dependency direction is poorly chosen and class contracts need to be reconsidered.",
+        "Write a short ADR explaining the concrete View, object ownership, rejection test and limitations of the fake. Then propose an independent finance example storing money in integer minor units. Preserve the separation of parsing, domain decisions and presentation without copying stock limits into a different domain without justification."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected.",
+        "Before running, trace the reference case. Write the state after each action and explain any expected rejection. Then compare the observed result with the labelled expectation below."
+      ],
+      "casePreview": {
+        "kind": "console",
+        "input": "3 5 -3 20",
+        "output": "stock 4 rejected 1\n"
+      }
+    },
+    {
+      "id": "concept-7",
+      "title": "Reading a working example",
+      "paragraphs": [
+        "Stock starts with two items. Minus three would violate the lower bound. false and two demonstrate preservation. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "fake.last starts at minus one. present calls show(8). The last displayed value is checked without a GUI. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "id": "concept-8",
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Connect a text adapter without adding cin to Stock. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Design a finance model using the same responsibility boundaries. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Independently complete the final assessment control-change task and explain which files, tests and observations it affects. An additional peer or teacher requirement is optional review."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Complete Stock::change and Presenter::onChange. Keep reference dependencies and ensure model and view outlive Presenter.",
+        "Trace 3 5 -3 20 from stock 2."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which two values does Stock produce after change(-3)?",
+      "correct": 0,
+      "feedback": "Rejection leaves 2. In the lab the Presenter still shows the current stock after every command, including a rejected one.",
+      "code": {
+        "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "recall": "example-1",
+      "options": [
+        "0 2\n",
+        "1 -1\n",
+        "0 -1\n"
+      ],
+      "execution": {
+        "source": "#include <iostream>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        if (quantity_ + delta < 0 || quantity_ + delta > 20) {\n            return false;\n        }\n        quantity_ += delta;\n        return true;\n    }\n    int quantity() const { return quantity_; }\n};\nint main() {\n    Stock m;\n    std::cout << m.change(-3) << ' ' << m.quantity() << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 2\n"
+      }
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Stock starts at 2 and receives+5,-3,+20. What should model and View show at the end?",
+      "options": [
+        "Both 20, rejected 0 after clamping.",
+        "Both 4, rejected 1.",
+        "Model 4, View 24, rejected 1."
+      ],
+      "correct": 1,
+      "feedback": "The first two commands produce 7 and 4. The last is rejected, and Presenter displays actual 4 rather than proposed 24.",
+      "recall": "concept-6"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Why check delta before quantity+delta?",
+      "options": [
+        "INT_MAX may cause signed overflow before a later result check.",
+        "Addition automatically clamps to the Stock range.",
+        "Rejection at the end of a condition undoes an earlier overflow."
+      ],
+      "correct": 0,
+      "feedback": "Rejecting after undefined behaviour does not provide safety. Short-circuiting must avoid the unsafe calculation.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Stock/View are constructed before Presenter in one scope. Why are its references valid during destruction?",
+      "options": [
+        "Every reference extends its target lifetime.",
+        "Presenter silently copies both dependencies.",
+        "Local objects are destroyed in reverse construction order."
+      ],
+      "correct": 2,
+      "feedback": "Presenter is destroyed first while dependencies remain. Retaining it beyond their scope would be a different, unsafe contract.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "A fake View stores only last. What cannot be checked without extending it?",
+      "options": [
+        "Whether last equals current Stock.",
+        "The exact count and order of all show calls.",
+        "The last supplied value."
+      ],
+      "correct": 1,
+      "feedback": "Overwriting last loses call history. Count and ordering checks require recording each call.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "Adding a GUI button is said to require moving cin into Stock. What does this indicate?",
+      "options": [
+        "That domain rules must be duplicated in every button.",
+        "Mixing the input adapter with the domain model.",
+        "That every model must select its own input device."
+      ],
+      "correct": 1,
+      "feedback": "The button should form a command for Presenter. The model need not know the input device or depend on GUI for that change.",
+      "recall": "concept-5"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "For 5,−3,20, list every show call, including Presenter construction. Why is last insufficient?",
+      "feedback": "show receives 2,7,4,4; the final command is rejected. last stores only 4 and cannot detect missing intermediate updates.",
+      "recall": "independent-work"
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Model, view and presenter",
+    "task": "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <vector>\nclass Stock {\n    int quantity_ = 2;\n\n  public:\n    bool change(int delta) {\n        // TODO: Check delta before addition; change quantity_ only on\n        // success.\n        (void)delta;\n        return false;\n    }\n    int quantity() const { return quantity_; }\n};\nstruct View {\n    int last = -1;\n    void show(int value) { last = value; }\n};\nclass Presenter {\n    Stock &model_;\n    View &view_;\n\n  public:\n    Presenter(Stock &m, View &v) : model_(m), view_(v) {\n        view_.show(model_.quantity());\n    }\n    bool onChange(int delta) {\n        bool ok = model_.change(delta);\n        view_.show(model_.quantity());\n        return ok;\n    }\n};\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> commands(n);\n    for (int &x : commands) {\n        if (!(std::cin >> x)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Stock model;\n    View view;\n    Presenter presenter(model, view);\n    int rejected = 0;\n    for (int x : commands) {\n        if (!presenter.onChange(x)) {\n            ++rejected;\n        }\n    }\n    std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "3 5 -3 20",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "First substantive run",
+        "input": "3 5 -3 20",
+        "output": "stock 4 rejected 1\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "0",
+        "output": "stock 2 rejected 0\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "1 -2",
+        "output": "stock 0 rejected 0\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "1 18",
+        "output": "stock 20 rejected 0\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "1 -3",
+        "output": "stock 2 rejected 1\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "1 2147483647",
+        "output": "stock 2 rejected 1\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 8",
+        "input": "0 junk",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Stock 7,4,4; one rejection.",
+      "stock 4 rejected 1.",
+      "Log 2,7,4,4; INT_MAX leaves stock 2 with one rejection.",
+      "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
+    ],
+    "hint": "show receives 2,7,4,4; the final command is rejected. last stores only 4 and cannot detect missing intermediate updates.",
+    "steps": [
+      {
+        "where": "Before running",
+        "action": "Trace 3 5 -3 20 from stock 2.",
+        "why": "The model decides; the Presenter forwards its current state.",
+        "expected": "Stock 7,4,4; one rejection."
+      },
+      {
+        "where": "In my program",
+        "action": "Check delta before arithmetic and show the model after each command.",
+        "why": "Do not add INT_MAX before validating it.",
+        "expected": "stock 4 rejected 1."
+      },
+      {
+        "where": "After running",
+        "action": "Add a show log and an INT_MAX test.",
+        "why": "The log checks interaction; the separate test checks bounds.",
+        "expected": "Log 2,7,4,4; INT_MAX leaves stock 2 with one rejection."
+      }
+    ],
+    "starterRevision": "b6-starter-v1",
+    "recall": "example-1",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "stock 2 rejected 3\n",
+      "exitCode": 0
+    }
+  },
+  "terms": [
+    {
+      "term": "Model",
+      "definition": "The component containing domain data and mutation rules."
+    },
+    {
+      "term": "View",
+      "definition": "The component that presents state to a user."
+    },
+    {
+      "term": "Presenter",
+      "definition": "Connects user intention, the model and presentation."
+    },
+    {
+      "term": "Test double",
+      "definition": "A controlled replacement for a collaborator in a test."
+    },
+    {
+      "term": "Dependency injection",
+      "definition": "Supplying collaborators explicitly through an object interface."
+    },
+    {
+      "term": "Short-circuit evaluation",
+      "definition": "A logical chain stops once an operand determines its result."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.model-view-presenter",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Model, view and presenter",
+      "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+      "steps": [
+        {
+          "title": "Responsibility boundaries",
+          "description": "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make."
+        },
+        {
+          "title": "Dependency injection through references",
+          "description": "Presenter(Stock&, View&) receives existing collaborators and stores references. It neither owns them nor creates a global stock object. main declares the model and view before the presenter, so they are destroyed after it. This is a concrete lifetime obligation; allowing the presenter to escape its owners’ scope would make those references unsafe."
+        },
+        {
+          "title": "A fake view",
+          "description": "A test double replaces a real collaborator with controlled behaviour. Our fake records the last displayed value; it does not emulate a graphics engine. A presenter test checks that the displayed number agrees with the model. This does not prove button accessibility, text placement or keyboard operation; those properties require a real interface and separate acceptance checks."
+        },
+        {
+          "title": "Checks before arithmetic",
+          "description": "A command can contain INT_MAX. Validate delta in -20…20 before computing quantity+delta. Logical || evaluates left to right with short-circuiting, so the potentially dangerous sum is not evaluated for a huge delta. Reversing the checks could cause signed overflow before the program decides to reject the command."
+        },
+        {
+          "title": "Requirement changes and dependencies",
+          "description": "Adding a graphical interface should change the adapter and command wiring, not the stock boundary. Adding multiple warehouses changes the domain model. Separate these changes in the work plan. If changing a button colour requires editing Stock rules, dependency direction is poorly chosen and class contracts need to be reconsidered."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-CLASS",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\events\\model-view-presenter.en.json",
+  "reading": [
+    {
+      "id": "cpp20-class",
+      "title": "WG21 N4861 (C++20 draft) — class",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "WG21 N4861 (C++20 draft) — class",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+    },
+    {
+      "id": "cpp-guidelines",
+      "title": "C++ Core Guidelines",
+      "author": "Bjarne Stroustrup, Herb Sutter et al.",
+      "edition": "C++ Core Guidelines",
+      "section": "C++ Core Guidelines",
+      "language": "English",
+      "purpose": "Consult the primary source after working through the example.",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+    }
+  ],
+  "authored": true
+}

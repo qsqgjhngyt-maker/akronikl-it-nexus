@@ -1,0 +1,585 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P1",
+  "id": "onec.p1.architecture",
+  "locale": "en",
+  "revision": "onec-p1-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p1-architecture.json",
+    "sha256": "0a9e78e965aff45561a2773138ef928d0654749cfb510cf2e1283f8783da3af1"
+  },
+  "title": "How 1C works: platform, service design and your data",
+  "goal": "Distinguish platform, configuration and infobase using your own service desk.",
+  "prerequisites": [
+    {
+      "text": "Open an application and create a separate directory. No prior applied-course completion is required.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "Where we begin",
+      "paragraphs": [
+        "A service desk asks you to correct a customer's name and add a Repair deadline field. Both changes appear on a screen, yet they belong in different places. Start with one question: are we changing one record, or the rule used to build all records? This distinction lets you choose the right 1C mode and identify your own learning infobase."
+      ]
+    },
+    {
+      "id": "theory-1",
+      "title": "Three different things in one application",
+      "paragraphs": [
+        "A service desk stores customers and repair requests. The 1C platform is installed software that displays windows, stores records and executes instructions. A configuration describes a particular application: its catalogs, fields, documents and actions. An infobase contains the application definition in use and its stored information. A notebook analogy helps initially: page structure resembles the definition and filled rows resemble data. A real infobase additionally maintains relationships, states and execution rules.",
+        "Renaming a customer changes one record; adding a document type changes the application definition. Two infobases can use identical configurations and contain different customers. Matching window titles therefore do not identify a working copy. Check the selected startup entry and its directory."
+      ],
+      "flow": {
+        "caption": "How the three concepts relate",
+        "nodes": [
+          {
+            "title": "Platform",
+            "lines": [
+              "Executes the rules"
+            ]
+          },
+          {
+            "title": "Configuration",
+            "lines": [
+              "Defines the application"
+            ]
+          },
+          {
+            "title": "Infobase",
+            "lines": [
+              "Definition and records"
+            ]
+          }
+        ],
+        "alternative": [
+          "The platform executes application rules.",
+          "The configuration defines application objects, forms and behaviour.",
+          "An infobase stores the definition in use and its records; two infobases with the same definition may hold different data."
+        ],
+        "textLabel": "Diagram in plain text"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "One customer, two different changes",
+      "paragraphs": [
+        "Window color and file extension do not determine the task."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Rename Training North → edit a record.\nAdd a Services catalog → edit the configuration.",
+        "output": "Different targets of change are identified."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Customer name",
+              "A particular card’s data",
+              "Edit in Enterprise mode."
+            ],
+            [
+              "New catalog definition",
+              "Application structure",
+              "Develop in Designer."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Make a prediction first",
+      "paragraphs": [
+        "Two independent file infobases use the same configuration. In the first, customer Training North is renamed Training Beacon. No exchange is configured. What happens to the customer in the second infobase?",
+        "Answer before opening the reasoning."
+      ],
+      "reveal": {
+        "title": "Compare your prediction with the reasoning",
+        "paragraphs": [
+          "The configuration defines a structure; each infobase stores its own records. Identical definitions do not establish synchronisation between two independent stores."
+        ],
+        "tables": [
+          {
+            "caption": "What changes at each step",
+            "columns": [
+              "Step",
+              "Observation",
+              "Reason"
+            ],
+            "rows": [
+              [
+                "Before the edit",
+                "Each infobase has its own Training North record",
+                "Similar contents do not make them one store"
+              ],
+              [
+                "Edit in the first",
+                "Only its record becomes Training Beacon",
+                "A value in the selected store changed"
+              ],
+              [
+                "Open the second",
+                "Training North remains",
+                "No exchange or transfer operation took place"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "variation",
+      "title": "Change the condition",
+      "paragraphs": [
+        "Now every future request needs a Repair deadline field. This changes the application definition. The developer adds an attribute in the configuration and applies the change to the intended infobase. Existing values and transfer of the definition to another infobase require separate actions."
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Using the application or developing it",
+      "paragraphs": [
+        "Enterprise mode is where users create and read records through application windows. Designer changes the definition and code. An empty infobase can have no Customers command because the catalog has not been defined. A missing command does not automatically mean the platform is broken.",
+        "We need no third-party accounting configuration. Exercises use our own service desk and invented data. First identify the right infobase; then create a small action with a visible result. The Start from zero link supplies official training-edition setup instructions before the first required launch."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p1-architecture-designer.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "3309831fc8fd92d2dfc47ec323fdfe19cb4031ed1d6ba7329f7eac49872a6c33",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "callouts": [],
+          "caption": "The learning configuration tree: object definitions are opened in Designer.",
+          "alt": "The learning configuration tree: object definitions are opened in Designer.",
+          "focus": {
+            "x": 0,
+            "y": 105,
+            "width": 310,
+            "height": 450
+          }
+        },
+        {
+          "src": "media/tutorials/v2/19-empty-enterprise.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "3e9624f016ac756ae0da10d6724505597b1781723e8f8c9d8a1497228b9c2030",
+          "caption": "A new empty infobase starts without application sections. This is the expected first result.",
+          "alt": "A new empty infobase starts without application sections. This is the expected first result.",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "focus": {
+            "x": 0,
+            "y": 0,
+            "width": 1000,
+            "height": 350
+          },
+          "callouts": [
+            {
+              "number": 1,
+              "x": 0.06,
+              "y": 0,
+              "width": 0.23,
+              "height": 0.04
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Program, instruction and module",
+      "paragraphs": [
+        "A program describes actions in a particular order. An instruction is an individual action such as displaying a message. BSL is a common label for the 1C scripting language; .bsl identifies a module source-text file. A module belongs to a particular part of an application. A text file alone does not automatically create catalogs and forms.",
+        "Our first code lesson opens the managed application module in Designer and displays a message when the learner’s infobase starts. Saving source and executing it are different operations: update the database configuration and start the application after making changes. Exact buttons are explained before the first code task."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Two similarly named infobases",
+      "paragraphs": [
+        "The configuration name shown in a title can be identical in both copies."
+      ],
+      "code": {
+        "language": "text",
+        "source": "MyService → C:\\Training\\Mine\nServiceCopy → C:\\Training\\Copy",
+        "output": "Choose the intended startup entry and location."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Matching titles",
+              "Do not infer storage location",
+              "Compare startup entries."
+            ],
+            [
+              "Different directories",
+              "Independent data",
+              "Select your own infobase."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Where execution really happens",
+      "paragraphs": [
+        "Interactive Nexus diagrams explain relationships; switching them does not execute BSL. Studio syntax highlighting does not run it either. Install the official training platform normally on your computer for native practice. Obtain its distribution from the rights holder; the course transfers no licenses and requires no paid service for the beginner route.",
+        "The training edition supports our small file infobase but has limitations. It cannot establish server-cluster behavior, concurrent users or professional access protection. OneScript is a separate environment with a similar language, not an automatic replacement for the platform. Identify the environment and action actually observed."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "When the result differs",
+      "paragraphs": [
+        "If an empty application has no Addresses section, this does not establish an installation failure: the application object has not been created. This exercise identifies the boundaries and windows; it does not create an address catalog.",
+        "I think the Nexus page executes 1C. The page explains; BSL executes in the specified 1C environment.",
+        "I expect customer records in an empty configuration. Define the application object or use the prepared original training configuration first."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new task for your own work",
+      "paragraphs": [
+        "For your fictional service desk, classify three requests: update the installed platform, add a Floor attribute to every address card, and enter floor 4 in one address. Name the layer and working mode. Then identify your own learning infobase by its launch entry and directory, and compare Designer with 1C:Enterprise. Do not change records or structure.",
+        "In Practice keep your prediction and actual observations. Viewing the example or reference preserves your work; you record the results of execution in installed 1C yourself."
+      ]
+    }
+  ],
+  "coverage": {
+    "0": "theory-1",
+    "1": "theory-2",
+    "2": "theory-4"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Three different things in one application",
+      "anchor": "theory-1",
+      "adapted": false
+    },
+    {
+      "sourceTitle": "Using the application or developing it",
+      "anchor": "theory-2",
+      "adapted": false
+    },
+    {
+      "sourceTitle": "Program, instruction and module",
+      "anchor": "theory-3",
+      "adapted": false
+    },
+    {
+      "sourceTitle": "Where execution really happens",
+      "anchor": "theory-4",
+      "adapted": false
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Two independent file infobases use the same configuration. In the first, customer Training North is renamed Training Beacon. No exchange is configured. What happens to the customer in the second infobase?",
+      "options": [
+        "Both infobases change the name",
+        "The second keeps the old name",
+        "The platform stops launching"
+      ],
+      "correct": 1,
+      "feedback": "The configuration defines a structure; each infobase stores its own records. Identical definitions do not establish synchronisation between two independent stores.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Adding a document type changes…",
+      "options": [
+        "One customer record",
+        "The application configuration",
+        "Only a startup shortcut"
+      ],
+      "correct": 1,
+      "feedback": "It changes an object definition rather than one record.",
+      "recall": "theory-1"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Two infobases show matching titles. How do you identify yours?",
+      "options": [
+        "By color",
+        "By the shortest entry",
+        "Verify the startup entry and its registered directory"
+      ],
+      "correct": 2,
+      "feedback": "Titles can show the same configuration name.",
+      "recall": "example-2"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What does switching a Nexus diagram establish?",
+      "options": [
+        "A learning model to explain, not BSL execution",
+        "1C execution",
+        "A customer saved in external 1C"
+      ],
+      "correct": 0,
+      "feedback": "Models, static analysis and native execution differ.",
+      "recall": "theory-4"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Draw the three layers of your service desk and one action per layer.",
+      "feedback": "Platform, definition and data are present; the diagram is not called BSL execution.",
+      "recall": "independent-work"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p1-author-v1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.consolidated-labs.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Two independent file infobases use the same configuration. In the first, customer Training North is renamed Training Beacon. No exchange is configured. What happens to the customer in the second infobase?",
+        "options": [
+          "Both infobases change the name",
+          "The second keeps the old name",
+          "The platform stops launching"
+        ],
+        "correct": 1,
+        "explanation": "The configuration defines a structure; each infobase stores its own records. Identical definitions do not establish synchronisation between two independent stores."
+      },
+      {
+        "question": "Adding a document type changes…",
+        "options": [
+          "One customer record",
+          "The application configuration",
+          "Only a startup shortcut"
+        ],
+        "correct": 1,
+        "explanation": "It changes an object definition rather than one record."
+      },
+      {
+        "question": "Two infobases show matching titles. How do you identify yours?",
+        "options": [
+          "By color",
+          "By the shortest entry",
+          "Verify the startup entry and its registered directory"
+        ],
+        "correct": 2,
+        "explanation": "Titles can show the same configuration name."
+      },
+      {
+        "question": "What does switching a Nexus diagram establish?",
+        "options": [
+          "A learning model to explain, not BSL execution",
+          "1C execution",
+          "A customer saved in external 1C"
+        ],
+        "correct": 0,
+        "explanation": "Models, static analysis and native execution differ."
+      }
+    ]
+  },
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Identify your environment and both modes",
+    "task": "For your fictional service desk, classify three requests: update the installed platform, add a Floor attribute to every address card, and enter floor 4 in one address. Name the layer and working mode. Then identify your own learning infobase by its launch entry and directory, and compare Designer with 1C:Enterprise. Do not change records or structure.",
+    "environment": "Your own separate infobase in the official training platform. Use the common setup guide if not installed.",
+    "externalRoute": "Official locally installed 1C:Enterprise",
+    "files": [],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "prepare",
+        "title": "Open setup instructions",
+        "where": "Nexus → Start from zero",
+        "action": "Read installation and empty-infobase creation. If 1C is absent, download it from the official link and install normally; use no unofficial activation.",
+        "why": "A real action needs installed software.",
+        "expected": "You know which software is required and where to obtain it.",
+        "troubleshooting": "A phone can display lessons; defer native execution until a computer is available.",
+        "before": "You do not yet have a working training infobase; first read the Start from zero route."
+      },
+      {
+        "id": "identify",
+        "title": "Select your own infobase",
+        "where": "Standard 1C startup window",
+        "action": "Create a separate empty infobase using the guide or select your existing training entry. Check its name and registered directory.",
+        "why": "Keep practice separate from other data.",
+        "expected": "Your own startup entry is identified.",
+        "troubleshooting": "Check directories when names are similar.",
+        "before": "You know which software is required and where to obtain it."
+      },
+      {
+        "id": "designer",
+        "title": "Inspect the definition",
+        "where": "Startup list → Designer",
+        "action": "Open your infobase, select Configuration → Open configuration and locate the object tree. Close your session without changes.",
+        "why": "Recognize where structure is defined.",
+        "expected": "The configuration tree is visible; data is unchanged.",
+        "troubleshooting": "Application cards indicate Enterprise mode instead.",
+        "before": "Your own startup entry is identified.",
+        "figures": [
+          {
+            "src": "media/tutorials/v2/18-empty-designer.jpg",
+            "width": 1426,
+            "height": 746,
+            "sha256": "68a2ff2309a30f2035c16633366577f4212bba220ec701822bb2a2aa0a6120d0",
+            "caption": "Your new personal infobase: the Designer tree is on the left; no application data exists yet.",
+            "alt": "Your new personal infobase: the Designer tree is on the left; no application data exists yet.",
+            "uiLocale": "ru",
+            "platformVersion": "8.3.27.2214",
+            "focus": {
+              "x": 0,
+              "y": 105,
+              "width": 380,
+              "height": 460
+            },
+            "callouts": [
+              {
+                "number": 1,
+                "x": 0.01,
+                "y": 0.21,
+                "width": 0.15,
+                "height": 0.035
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "application",
+        "title": "Inspect the application",
+        "where": "Startup list → same entry → Enterprise",
+        "action": "Start the application. Compare it with the developer tree; an empty application can have no sections. Close only your own window.",
+        "why": "Connect terminology to real windows.",
+        "expected": "You distinguish definition and user interface.",
+        "troubleshooting": "If busy, first close your own preceding session.",
+        "before": "The configuration tree is visible; data is unchanged.",
+        "figures": [
+          {
+            "src": "media/tutorials/v2/19-empty-enterprise.jpg",
+            "width": 1438,
+            "height": 753,
+            "sha256": "3e9624f016ac756ae0da10d6724505597b1781723e8f8c9d8a1497228b9c2030",
+            "caption": "A new empty infobase starts without application sections. This is the expected first result.",
+            "alt": "A new empty infobase starts without application sections. This is the expected first result.",
+            "uiLocale": "ru",
+            "platformVersion": "8.3.27.2214",
+            "focus": {
+              "x": 0,
+              "y": 0,
+              "width": 1000,
+              "height": 350
+            },
+            "callouts": [
+              {
+                "number": 1,
+                "x": 0.06,
+                "y": 0,
+                "width": 0.23,
+                "height": 0.04
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "cases": [
+      {
+        "label": "Action to check",
+        "input": "For your fictional service desk, classify three requests: update the installed platform, add a Floor attribute to every address card, and enter floor 4 in one address. Name the layer and working mode. Then identify your own learning infobase by its launch entry and directory, and compare Designer with 1C:Enterprise. Do not change records or structure.",
+        "output": "Updating the executable program changes the platform; it is installation, rather than a card edit.\nAdding an attribute to address cards changes the configuration in Designer.\nEntering a floor in one card changes data through 1C:Enterprise.\nIdentify an infobase by its launch entry and directory. Similar window captions do not establish a shared store."
+      }
+    ],
+    "criteria": [
+      "Updating the executable program changes the platform; it is installation, rather than a card edit.",
+      "Adding an attribute to address cards changes the configuration in Designer.",
+      "Entering a floor in one card changes data through 1C:Enterprise.",
+      "Identify an infobase by its launch entry and directory. Similar window captions do not establish a shared store.",
+      "Expectation is recorded before the action; the actual observation is separate. Opening a reference does not complete the task."
+    ],
+    "hint": "If an empty application has no Addresses section, this does not establish an installation failure: the application object has not been created. This exercise identifies the boundaries and windows; it does not create an address catalog.",
+    "exercises": [
+      {
+        "level": "Guided",
+        "task": "Classify installing 1C, adding a Phone field and entering an invented phone number.",
+        "criteria": "Platform; configuration; data. Identify what each action changes."
+      },
+      {
+        "level": "Changed condition",
+        "task": "Two infobases use the same configuration. A customer appears in the first. Must it appear in the second?",
+        "criteria": "No automatic transfer: independent infobases, with no exchange configured."
+      },
+      {
+        "level": "Independent",
+        "task": "For your fictional service desk, classify three requests: update the installed platform, add a Floor attribute to every address card, and enter floor 4 in one address. Name the layer and working mode. Then identify your own learning infobase by its launch entry and directory, and compare Designer with 1C:Enterprise. Do not change records or structure.",
+        "criteria": "Updating the executable program changes the platform; it is installation, rather than a card edit. Adding an attribute to address cards changes the configuration in Designer. Entering a floor in one card changes data through 1C:Enterprise. Identify an infobase by its launch entry and directory. Similar window captions do not establish a shared store."
+      }
+    ],
+    "sourceFile": null,
+    "setupGuide": true,
+    "recall": "independent-work",
+    "referenceSolution": {
+      "paragraphs": [
+        "Updating the executable program changes the platform; it is installation, rather than a card edit.",
+        "Adding an attribute to address cards changes the configuration in Designer.",
+        "Entering a floor in one card changes data through 1C:Enterprise.",
+        "Identify an infobase by its launch entry and directory. Similar window captions do not establish a shared store."
+      ],
+      "scope": "explanatory-reference-not-native-verification"
+    }
+  },
+  "reading": [
+    {
+      "id": "platform-architecture",
+      "title": "Platform architecture",
+      "author": "1C",
+      "edition": "1C:Enterprise 8",
+      "section": "Platform and application",
+      "language": "Russian",
+      "purpose": "Clarify the boundary between the platform and an application definition.",
+      "url": "https://v8.1c.ru/platforma/obzor-arkhitektury-platformy/"
+    },
+    {
+      "id": "designer",
+      "title": "Designer",
+      "author": "1C",
+      "edition": "1C:Enterprise 8",
+      "section": "Development mode",
+      "language": "Russian",
+      "purpose": "Check the purpose of the development and administration mode.",
+      "url": "https://v8.1c.ru/platforma/konfigurator/"
+    },
+    {
+      "id": "bsl-language",
+      "title": "Built-in language",
+      "author": "1C",
+      "edition": "1C:Enterprise 8",
+      "section": "Events and modules",
+      "language": "Russian",
+      "purpose": "Understand why application events invoke module code.",
+      "url": "https://v8.1c.ru/platforma/vstroennyy-yazyk/"
+    }
+  ]
+}

@@ -1,0 +1,441 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "onec-p8-3-author-v1",
+  "id": "onec.p8.topic-3",
+  "courseId": "onec",
+  "moduleId": "onec.p8",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Managed forms and contexts",
+  "locale": "en",
+  "title": "77 in the form, 90 in an argument: what each directive sees",
+  "goal": "Separate form context, no-context server calculation and client interaction.",
+  "prerequisites": [
+    {
+      "text": "onec.p7; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "A question before observation",
+      "paragraphs": [
+        "The form contains 77 minutes, but a call with 90 returns 1.5 hours. This difference is intentional: a context-free method needs its explicit input, not accidental window state."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Directives select execution context",
+      "paragraphs": [
+        "AtClient selects client execution; AtServer uses the form’s server context; AtServerNoContext does not automatically receive it. Method names do not select execution location. Compiler and runtime availability follow actual directives and module type.",
+        "One complete module demonstrates three boundaries. &НаКлиенте manages messages/dialogs; &НаСервере СверитьБуфер uses form data; &НаСервереБезКонтекста ЧасыНаСервере consumes only its numeric input. Directives express dependencies rather than decoration."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Continue your own form",
+      "paragraphs": [
+        "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work.",
+        "In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "In the form editor create the command ПоказатьДирективы, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link ПроверитьСтоимость similarly for the independent task.",
+        "Worked setup: open your own saved 30-minute request. For buffer/directive observations set 77 without saving; the callback command sets 90 and version 2 itself. The server experiment explicitly supplies 90, 1441, and the string “90”."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "Methods for the worked experiment",
+      "paragraphs": [
+        "Only methods needed for this experiment are shown. If a previous topic already added a method, retain its single definition. The course retains the original complete module."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The client command and its actual output",
+      "paragraphs": [
+        "With &НаСервере, СверитьБуфер reads form data and the persisted reference. With &НаСервереБезКонтекста, ЧасыНаСервере receives 90 and returns 1.5 independently of the buffer’s 77. The client command displays these observations."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "&НаКлиенте\nПроцедура ПоказатьДирективы(Команда) Экспорт\n    Объект.ДлительностьМинут = 77;\n    Сообщить(\"В буфере: \" + Строка(СверитьБуфер().ВФорме));\n    Сообщить(\"Явные 90 минут: \" + Строка(ЧасыНаСервере(90)));\n    Сообщить(\"В базе: \" + Строка(СверитьБуфер().ВБазе));\nКонецПроцедуры\n",
+        "output": "В буфере: 77\nЯвные 90 минут: 1,5\nВ базе: 30",
+        "files": {
+          "Форма.bsl": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n",
+          "Команда.bsl": "&НаКлиенте\nПроцедура ПоказатьДирективы(Команда) Экспорт\n    Объект.ДлительностьМинут = 77;\n    Сообщить(\"В буфере: \" + Строка(СверитьБуфер().ВФорме));\n    Сообщить(\"Явные 90 минут: \" + Строка(ЧасыНаСервере(90)));\n    Сообщить(\"В базе: \" + Строка(СверитьБуфер().ВБазе));\nКонецПроцедуры\n"
+        }
+      },
+      "tables": [
+        {
+          "caption": "From action to observation",
+          "columns": [
+            "Action",
+            "Observation and reason"
+          ],
+          "rows": [
+            [
+              "UI",
+              "&НаКлиенте — Message/dialog."
+            ],
+            [
+              "Form data",
+              "&НаСервере — Explicit form dependency."
+            ],
+            [
+              "Pure input",
+              "&НаСервереБезКонтекста — Number only."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "No-context calls need explicit inputs",
+      "paragraphs": [
+        "A pure calculation can use a no-context server method with explicit minutes/rate. Reading form attributes there reveals a hidden dependency to remove. Passing the whole form is not parameter design. A no-context call alone does not prove speedup without data-volume measurements.",
+        "The no-context function cannot read Объект. Minutes suffice, so avoid passing an entire document. Persisted reading needs a separate keyed function with appropriate rights. Minimal inputs simplify testing and reduce accidental state transfer."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Predict before running",
+      "paragraphs": [
+        "Which input does the context-free method use to calculate hours?"
+      ],
+      "reveal": "90. The directive determines available context; the argument supplies this call’s data. Matching field names do not transfer the form into a context-free function."
+    },
+    {
+      "id": "concept-2",
+      "title": "Use context deliberately",
+      "paragraphs": [
+        "A form-state operation may legitimately need context. Do not move everything toNoContext as a slogan. Separate data acquisition, pure computation and UI updates. A matrix shows what can be tested without a window and what actually requires form state.",
+        "Check Thin client, Server and Thick managed client compilation. This checks name/context availability, not an actual network installation. An ordinary run separately verifies 90 → 1.5 and rejection of 1441."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Follow the source and action boundary",
+      "paragraphs": [
+        "Reading and calculation are independent: 77 does not become the supplied 90. This maps responsibilities; it does not count network packets."
+      ],
+      "flow": {
+        "kind": "sequence",
+        "caption": "Reading and calculation are independent: 77 does not become the supplied 90. This maps responsibilities; it does not count network packets.",
+        "nodes": [
+          {
+            "title": "Client",
+            "lines": [
+              "command"
+            ]
+          },
+          {
+            "title": "With context",
+            "lines": [
+              "buffer 77"
+            ]
+          },
+          {
+            "title": "No context",
+            "lines": [
+              "argument 90"
+            ]
+          },
+          {
+            "title": "Database",
+            "lines": [
+              "30"
+            ]
+          }
+        ],
+        "alternative": [
+          "Client: command",
+          "With context: buffer 77",
+          "No context: argument 90",
+          "Database: 30"
+        ]
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "The mistake this experiment distinguishes",
+      "paragraphs": [
+        "Reading Объект inside a context-free function introduces a hidden form dependency. In a separate experimental copy, compilation should report the unavailable name. Keep explicit arguments in your working version."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Include a wrong-context check",
+      "paragraphs": [
+        "Compare two calculation versions with identical explicit inputs. In an experimental copy, access a form attribute fromNoContext and detect the dependency. Do not hide it in a global variable. Test missing input and repeats so prior form state cannot influence the next result.",
+        "In another source copy intentionally read Объект inside the no-context function, retain the diagnostic and restore the argument. Do not fix it with Privileged or by moving all database work to the client; that changes the trust boundary."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new independent task",
+      "paragraphs": [
+        "Write СтоимостьРаботы with explicit Минуты and Тариф arguments under &НаСервереБезКонтекста. Reuse ЧасыНаСервере to validate minutes; the rate must be a nonnegative number. Return hours × rate. Regardless of other minutes in the form, (45,800) must return 600; reject a negative rate. Preserve earlier methods without moving or duplicating them.",
+        "Preserve your prediction and code before viewing the reference. The worked example does not solve this new task. Viewing its files does not replace your work."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The actual training 1C window",
+      "paragraphs": [
+        "The yellow area is the installed 1C interface; the Nexus lesson remains matte. A command driver calls the same managed form, without a real account or other infobases."
+      ],
+      "figures": [
+        {
+          "height": 753,
+          "src": "media/tutorials/v2/p8-directives-main-output.jpg",
+          "sha256": "368487fbe99e63bf1bc8819168b284614940010fd5c9b555dcafa5a541cc1474",
+          "sourcePngSha256": "14d597b6dc632a198e3aa84d65f172d800bcd86a939330a8550e7573ab4f2f85",
+          "width": 1438,
+          "id": "directives-main",
+          "assetRoot": "clarity",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "alt": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "caption": "Actual worked-command result in a separate training infobase. Form data and labelled messages are visible. The callback is invoked directly; this screenshot does not establish physical dialog interaction. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What was established and what you explain",
+      "paragraphs": [
+        "A local file infobase establishes the chosen branches and contexts, not network latency, clustering, all permissions, or learner understanding. Record direct callbacks and physical dialog interaction separately.",
+        "Explain the roles of the client command, context-bound reading, and context-free calculation."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which input does the context-free method use to calculate hours?",
+      "options": [
+        "The explicitly supplied number 90",
+        "The form’s 77 automatically",
+        "The persisted 30 automatically"
+      ],
+      "correct": 0,
+      "feedback": "90. The directive determines available context; the argument supplies this call’s data. Matching field names do not transfer the form into a context-free function.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "NoContext means",
+      "options": [
+        "No validation",
+        "No form context",
+        "No server"
+      ],
+      "correct": 1,
+      "feedback": "Inputs must be explicit.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "The form object is needed by",
+      "options": [
+        "The context method",
+        "Every calculation",
+        "Only colour"
+      ],
+      "correct": 0,
+      "feedback": "СверитьБуфер depends on form data.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Fix context errors with",
+      "options": [
+        "Privilege",
+        "Removing checks",
+        "A correct contract/directive"
+      ],
+      "correct": 2,
+      "feedback": "Do not weaken protections to compile.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "What should the cost calculation receive instead of the entire form?",
+      "options": [
+        "Explicit minutes and rate",
+        "Global window state",
+        "Its title text"
+      ],
+      "correct": 0,
+      "feedback": "Explain the roles of the client command, context-bound reading, and context-free calculation.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain your new task: where did each value come from, which action was permitted, and what establishes preservation?",
+      "feedback": "This answer is not graded automatically. Compare it with your own observations.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "77 in the form, 90 in an argument: what each directive sees",
+    "task": "Write СтоимостьРаботы with explicit Минуты and Тариф arguments under &НаСервереБезКонтекста. Reuse ЧасыНаСервере to validate minutes; the rate must be a nonnegative number. Return hours × rate. Regardless of other minutes in the form, (45,800) must return 600; reject a negative rate. Preserve earlier methods without moving or duplicating them.",
+    "environment": "Installed 1C 8.3 and a separate own infobase. Nexus can store an optional draft; the platform executes BSL.",
+    "externalRoute": "Managed УчебнаяФормаЗаявки module",
+    "setupGuide": true,
+    "files": [
+      {
+        "path": "Форма.bsl",
+        "content": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция СтоимостьРаботы(Минуты,Тариф) Экспорт\n    // TODO: implement the new task contract.\n    ВызватьИсключение \"TODO\";\nКонецФункции\n"
+      },
+      {
+        "path": "Команда.bsl",
+        "content": "&НаКлиенте\nПроцедура ПроверитьСтоимость(Команда) Экспорт\n    Сообщить(\"Стоимость: \" + Строка(СтоимостьРаботы(45,800)));\n    Отказ = Ложь;\n    Попытка СтоимостьРаботы(45,-1); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Отрицательный тариф отклонён: \" + Строка(Отказ));\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция СтоимостьРаботы(Минуты,Тариф) Экспорт\n    Если ТипЗнч(Тариф) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужен числовой тариф\"; КонецЕсли;\n    Если Тариф < 0 Тогда ВызватьИсключение \"Тариф неотрицательный\"; КонецЕсли;\n    Возврат ЧасыНаСервере(Минуты) * Тариф;\nКонецФункции\n",
+      "files": {
+        "Форма.bsl": "&НаСервере\nФункция СверитьБуфер() Экспорт\n    ДокументОбъект = РеквизитФормыВЗначение(\"Объект\");\n    Сохранено = Объект.Ссылка.ПолучитьОбъект();\n    Возврат Новый Структура(\"ВФорме,ВОбъекте,ВБазе\",Объект.ДлительностьМинут,ДокументОбъект.ДлительностьМинут,Сохранено.ДлительностьМинут);\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужно число\"; КонецЕсли;\n    Если Минуты < 0 Или Минуты > 1440 Тогда ВызватьИсключение \"Диапазон0..1440\"; КонецЕсли;\n    Возврат Минуты / 60;\nКонецФункции\n\n&НаСервереБезКонтекста\nФункция СтоимостьРаботы(Минуты,Тариф) Экспорт\n    Если ТипЗнч(Тариф) <> Тип(\"Число\") Тогда ВызватьИсключение \"Нужен числовой тариф\"; КонецЕсли;\n    Если Тариф < 0 Тогда ВызватьИсключение \"Тариф неотрицательный\"; КонецЕсли;\n    Возврат ЧасыНаСервере(Минуты) * Тариф;\nКонецФункции\n",
+        "Команда.bsl": "&НаКлиенте\nПроцедура ПроверитьСтоимость(Команда) Экспорт\n    Сообщить(\"Стоимость: \" + Строка(СтоимостьРаботы(45,800)));\n    Отказ = Ложь;\n    Попытка СтоимостьРаботы(45,-1); Исключение Отказ = Истина; КонецПопытки;\n    Сообщить(\"Отрицательный тариф отклонён: \" + Строка(Отказ));\nКонецПроцедуры\n"
+      },
+      "paragraphs": [
+        "Append both files to the form module, retaining one copy of each earlier method. This is the independent solution, not the worked example. Opening the reference does not modify your code."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New task: input and result",
+        "input": "Explicitly pass 45 minutes and rate 800; then rate −1.",
+        "output": "Стоимость: 600\nОтрицательный тариф отклонён: Да"
+      }
+    ],
+    "criteria": [
+      "45 / 60 × 800 = 600 while the form buffer contains 77; the field is not a hidden input.",
+      "Rate −1 is rejected; numbers and strings are distinguished.",
+      "Explain the roles of the client command, context-bound reading, and context-free calculation."
+    ],
+    "hint": "Reading and calculation are independent: 77 does not become the supplied 90. This maps responsibilities; it does not count network packets.",
+    "steps": [
+      {
+        "where": "Nexus → Practice",
+        "action": "Before running, record inputs, expected value sources, and one refusal.",
+        "why": "Keep the prediction independent of the supplied output.",
+        "expected": "An own prediction is recorded."
+      },
+      {
+        "where": "Own copy → Designer → form",
+        "action": "Continue your own separate copy with Клиенты, Услуги and ЗаявкаУслуги. The code belongs in the managed УчебнаяФормаЗаявки module, not a common module or startup handler. The form already contains Объект. Append only missing methods; do not duplicate existing definitions or load a full CF over your work. In the form attributes add ИтогОпыта: String(120) and ВерсияЗапроса: Number(10,0). These belong to the form, not the document. The duplicate-reply task additionally needs ОбработаннаяВерсия and РасчетовОпыта: Number(10,0), initially 0.",
+        "why": "Preserve work and choose the correct module type.",
+        "expected": "Prior definitions are preserved; new attributes belong to the form."
+      },
+      {
+        "where": "Form module and commands",
+        "action": "In the form editor create the command ПоказатьДирективы, select its existing procedure as the action, and place it on the command bar. Append Команда.bsl to the same form module; do not generate a duplicate empty procedure. Link ПроверитьСтоимость similarly for the independent task.",
+        "why": "Both files belong to the form; no startup handler is required.",
+        "expected": "The command points to its single intended procedure."
+      },
+      {
+        "where": "Save → F7 → Enterprise",
+        "action": "Write СтоимостьРаботы with explicit Минуты and Тариф arguments under &НаСервереБезКонтекста. Reuse ЧасыНаСервере to validate minutes; the rate must be a nonnegative number. Return hours × rate. Regardless of other minutes in the form, (45,800) must return 600; reject a negative rate. Preserve earlier methods without moving or duplicating them.",
+        "why": "The new task checks independent transfer of the idea.",
+        "expected": "Стоимость: 600\nОтрицательный тариф отклонён: Да"
+      },
+      {
+        "where": "Own source and self-report",
+        "action": "Save your source and expected/actual observations. Explain a changed or initially mismatching case. Close without saving wherever the contract requires it.",
+        "why": "A run and understanding are different facts.",
+        "expected": "Source, observations, and explanation are recorded; earlier work is preserved."
+      }
+    ]
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p8-directives.json",
+  "assessment": {
+    "contentRevision": "onec-p8-3-author-v1",
+    "quiz": [
+      {
+        "question": "Which input does the context-free method use to calculate hours?",
+        "options": [
+          "The explicitly supplied number 90",
+          "The form’s 77 automatically",
+          "The persisted 30 automatically"
+        ],
+        "correct": 0,
+        "explanation": "90. The directive determines available context; the argument supplies this call’s data. Matching field names do not transfer the form into a context-free function."
+      },
+      {
+        "question": "NoContext means",
+        "options": [
+          "No validation",
+          "No form context",
+          "No server"
+        ],
+        "correct": 1,
+        "explanation": "Inputs must be explicit."
+      },
+      {
+        "question": "The form object is needed by",
+        "options": [
+          "The context method",
+          "Every calculation",
+          "Only colour"
+        ],
+        "correct": 0,
+        "explanation": "СверитьБуфер depends on form data."
+      },
+      {
+        "question": "Fix context errors with",
+        "options": [
+          "Privilege",
+          "Removing checks",
+          "A correct contract/directive"
+        ],
+        "correct": 2,
+        "explanation": "Do not weaken protections to compile."
+      },
+      {
+        "question": "What should the cost calculation receive instead of the entire form?",
+        "options": [
+          "Explicit minutes and rate",
+          "Global window state",
+          "Its title text"
+        ],
+        "correct": 0,
+        "explanation": "Explain the roles of the client command, context-bound reading, and context-free calculation."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-forms-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Managed forms and client/server contexts",
+      "language": "English",
+      "purpose": "Optional reading after your attempt; the lesson explains its required route.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "authored": true,
+  "authoringPath": "courses/clarity/authoring/onec.p8.topic-3.en.json"
+}

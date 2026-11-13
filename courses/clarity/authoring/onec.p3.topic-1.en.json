@@ -1,0 +1,567 @@
+{
+  "schemaVersion": 1,
+  "block": "ONEC-P3",
+  "id": "onec.p3.topic-1",
+  "locale": "en",
+  "revision": "onec-p3-topic-1-author-v1",
+  "source": {
+    "path": "courses/onec/lessons/en/p3-contexts.json",
+    "sha256": "bd6ab95906524359d4d39dd5d63361973a808eb9f176347ad077d3bc36a33813"
+  },
+  "title": "Two modules, one calculation: pass data and receive a result",
+  "goal": "Locate a function and its caller, pass inputs explicitly, and explain an allowed external call without inventing permissions.",
+  "prerequisites": [
+    {
+      "text": "Complete BSL fundamentals: variables, types, conditions, and loops. Know how to preserve a separate source and run your training infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "Why this task matters",
+      "paragraphs": [
+        "A form, a document, and a report may need the same cost. Duplicating the formula makes it easy to fix just one copy. Put the calculation in one place and pass its minutes and rate explicitly.",
+        "Read the worked example and predict a changed input. The independent task uses a different contract. Save the previous training source before replacing a module; a personal Nexus mark is not an assessment of your explanation."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "Code location determines available data",
+      "paragraphs": [
+        "The managed application module handles application events. Object modules belong to particular objects; form modules have form-specific data and context. A common module contains procedures and functions for other permitted callers. Identical procedure names in two modules do not create one shared implementation.",
+        "A cost formula may be needed by a form, a document and a report. Copying it into every place creates diverging implementations. A common module provides one calculation location but does not automatically receive the current form’s minutes. Pass minutes and the rate explicitly so identical inputs produce identical results."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "The complete worked example and its result",
+      "paragraphs": [
+        "There are two separate sources: Стоимость belongs to the УчебныеРасчеты common module; ПриНачалеРаботыСистемы belongs to the application module. Do not paste both files into one editor. Match the call with its returned number 600.",
+        "Match code and result by each statement’s role. Explain matching output through inputs, execution order, and state; one observed run does not check every possible variant."
+      ],
+      "code": {
+        "language": "bsl",
+        "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Стоимость(30, 1200);\n    Сообщить(Результат);\nКонецПроцедуры\n",
+        "files": {
+          "УчебныеРасчеты.bsl": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n",
+          "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Стоимость(30, 1200);\n    Сообщить(Результат);\nКонецПроцедуры\n"
+        },
+        "output": "600"
+      }
+    },
+    {
+      "id": "concept-1",
+      "title": "Two settings answer different questions",
+      "paragraphs": [
+        "Экспорт makes the method callable from another permitted module. The common module properties determine execution contexts. This exercise enables Server and Server call and disables Managed application client, Global and Privileged. Return values reuse is DontUse. These are settings for this particular calculation, not a universal module template.",
+        "Server call exposes the module through the platform’s client-to-server mechanism. It does not create an HTTP API or bypass user rights. A file infobase still distinguishes logical client and server contexts; this exercise does not prove a separately deployed network server or license a training client-server installation."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Trace the important transitions",
+      "paragraphs": [
+        "600 does not appear because the common module read an open form. The calling handler supplied two numbers. A calculation without hidden form reads or document writes is easier to test independently of the interface.",
+        "Before the next statement, record state separately from messages already displayed. This finds the first divergence rather than guessing from the final line."
+      ],
+      "tables": [
+        {
+          "caption": "Worked-example state",
+          "columns": [
+            "Step or value",
+            "Role and observation"
+          ],
+          "rows": [
+            [
+              "30;1200",
+              "Call arguments"
+            ],
+            [
+              "УчебныеРасчеты.Стоимость",
+              "Allowed shared method"
+            ],
+            [
+              "30×1200/60=600",
+              "Returned number"
+            ],
+            [
+              "Сообщить(Результат)",
+              "Display in application"
+            ]
+          ],
+          "kind": "state"
+        }
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Your prediction before revealing",
+      "paragraphs": [
+        "Change only 30 minutes to 45, keeping the rate 1200. What should the caller receive?",
+        "Write your answer before revealing it. Identify the changed input and unchanged rule, then compare with the changed example."
+      ],
+      "reveal": {
+        "title": "Check the prediction",
+        "paragraphs": [
+          "Match the changed values with the same rule. This checks transfer rather than memorisation of the previous final line."
+        ],
+        "code": {
+          "language": "bsl",
+          "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Стоимость(45, 1200);\n    Сообщить(Результат);\nКонецПроцедуры\n",
+          "files": {
+            "УчебныеРасчеты.bsl": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n",
+            "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Стоимость(45, 1200);\n    Сообщить(Результат);\nКонецПроцедуры\n"
+          },
+          "output": "900"
+        }
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Pass only the necessary inputs",
+      "paragraphs": [
+        "The first editor contains the exported function. The second contains a startup handler calling УчебныеРасчеты.Стоимость(30, 1200). Before the dot is the common module name; after it is the method name. The function validates types and ranges, returns a rounded number and writes no documents.",
+        "Do not replace parameters with an implicit “current request” global. That would make tests depend on earlier windows and execution order. If database access becomes necessary, isolate and name it explicitly and test it on an original synthetic dataset. Moving code into a common module alone does not make it pure or secure."
+      ]
+    },
+    {
+      "id": "counterexample",
+      "title": "A faulty variant and its first divergence",
+      "paragraphs": [
+        "Remove Экспорт only in a separate training copy and repeat the external call. Validation or invocation must reject it. Record where rejection occurs, restore Экспорт, and repeat the positive call. Do not enable privileged mode to hide the error.",
+        "Keep the faulty variant separately. Restore the working version and repeat the positive case. Do not change an expectation merely because the program printed something else."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Test an allowed and a prohibited call",
+      "paragraphs": [
+        "First obtain 600 and preserve the working version. Only in a separate copy remove Экспорт, save, update and retry the external call. It must become unavailable. Do not enable every context or privileged mode to conceal the cause.",
+        "Restore Экспорт and repeat the positive run. Changing only 30 to 45 must give 900 while the function stays unchanged. Record whether rejection occurred during checking or execution. One rejected call is not proof of all permissions or all environments."
+      ]
+    },
+    {
+      "id": "algorithm",
+      "title": "See the values and direction",
+      "paragraphs": [
+        "The diagram unfolds the selected sequence. Labels do not replace code: match each transition to a statement and record what remains unchanged.",
+        "The call arrow carries 30 and 1200 into Стоимость; the return carries only 600 back. Сообщить runs in the calling handler. Identify the boundary between modules: this is where method availability and explicit parameters matter."
+      ],
+      "flow": {
+        "caption": "Order of observable actions",
+        "nodes": [
+          {
+            "title": "Event",
+            "lines": [
+              "30,1200"
+            ]
+          },
+          {
+            "title": "Common module",
+            "lines": [
+              "Стоимость"
+            ]
+          },
+          {
+            "title": "Return",
+            "lines": [
+              "600"
+            ]
+          },
+          {
+            "title": "Display",
+            "lines": [
+              "Сообщить"
+            ]
+          }
+        ],
+        "textLabel": "Read the diagram as text",
+        "alternative": [
+          "Event: 30,1200",
+          "Common module: Стоимость",
+          "Return: 600",
+          "Display: Сообщить"
+        ]
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now a different independent task",
+      "paragraphs": [
+        "Create a different common-module function Остаток(Лимит, Занято): return unreserved minutes and reject wrong types, negative values, or reservations exceeding the limit. The application passes 120 and 45 and displays 75. Also test 0,120,121 reserved minutes; keep this task separate from Стоимость.",
+        "The worked example is not a ready solution to this task. Use a separate starter; reveal the reference on request after your own attempt. Viewing it must not replace saved or unsaved work."
+      ]
+    },
+    {
+      "id": "independent-trace",
+      "title": "How to check transfer",
+      "paragraphs": [
+        "The exported function is in the common module; the application contains one event handler and a qualified call.",
+        "Label each control input, expected observation, and reason in advance. Use rejection where the contract requires it; do not turn an unknown result into a convenient zero."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "The exact work location in 1C",
+      "paragraphs": [
+        "There are two separate sources: Стоимость belongs to the УчебныеРасчеты common module; ПриНачалеРаботыСистемы belongs to the application module. Do not paste both files into one editor. Match the call with its returned number 600.",
+        "In your separate training infobase, save the source, update the database configuration, and launch a new session from Designer. Distinguish the editor, saved configuration, and running version; an old session does not prove the new text ran."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-contexts-main30-designer.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "ea8912e62f2cff20316ce715c7a8ea5fde412f58c950a8a3d6fccee685fceb01",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "caption": "The complete worked handler in Designer of a separate training infobase. The application module is open; this is the worked example, not the independent task reference.",
+          "callouts": []
+        },
+        {
+          "src": "media/tutorials/v2/p3-contexts-main30-common-module.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "28108b1cdf73c94d791c9ea8fb738f506b48290bc61720c5919fdade5469ff2d",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "The УчебныеРасчеты common module contains only the exported Стоимость function. The caller is in the separate application module; the new Остаток task solution is not shown here. The native UI is Russian.",
+          "caption": "The УчебныеРасчеты common module contains only the exported Стоимость function. The caller is in the separate application module; the new Остаток task solution is not shown here. The native UI is Russian.",
+          "callouts": []
+        },
+        {
+          "src": "media/tutorials/v2/p3-contexts-main30-properties.jpg",
+          "width": 1426,
+          "height": 746,
+          "sha256": "0040fa4e080740eaf93e0005c11192402ec0a5fd6e2bdeb85da721c265d482cf",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Properties of this training common module: Server and Server call enabled; Client, Global, and Privileged disabled; return-value reuse disabled. The native UI is Russian.",
+          "caption": "Properties of this training common module: Server and Server call enabled; Client, Global, and Privileged disabled; return-value reuse disabled. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "native-observation",
+      "title": "Compare the observation with your explanation",
+      "paragraphs": [
+        "Reserved minutes 45/0/120 produce 75/120/0;121 is rejected rather than converted to 0.",
+        "The source and expected messages accompany the explanation. Actual images of the complete worked example come from a separate training infobase; they are not your run or proof of your authorship. Record your independent work separately."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/p3-contexts-main30-client.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "c0b1e494474bba1f0481692dc9659333c9e28ddf68fa72f0e23298c6867b0ade",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "caption": "Actual messages from the complete worked example in installed 1C 8.3.27.2214. Compare them with the expected observation and explain each line. The native UI is Russian.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What is established and what still needs explanation",
+      "paragraphs": [
+        "The file infobase checks this logical call path. It does not deploy a network server or prove arbitrary user permissions. Export and context flags explain method availability; they do not replace access design.",
+        "Before marking completion, explain one changed input of your own. A technical pass, matching messages, and your completion mark are different facts; understanding is discussed through explanation and transfer."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Change only 30 minutes to 45, keeping the rate 1200. What should the caller receive?",
+      "options": [
+        "600",
+        "900",
+        "45"
+      ],
+      "correct": 1,
+      "feedback": "Compare the prediction with the unchanged rule and explain the first important transition.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What appears before the dot in УчебныеРасчеты.Стоимость?",
+      "options": [
+        "The common module name",
+        "The document name",
+        "The hourly rate"
+      ],
+      "correct": 0,
+      "feedback": "The qualified name identifies a module and method.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does Экспорт do?",
+      "options": [
+        "Enables every permission",
+        "Makes a method available to another permitted context",
+        "Publishes an HTTP endpoint"
+      ],
+      "correct": 1,
+      "feedback": "Export does not replace module contexts or access rights.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Where is ПриНачалеРаботыСистемы in this lab?",
+      "options": [
+        "In a catalog",
+        "In the common module",
+        "In the managed application module"
+      ],
+      "correct": 2,
+      "feedback": "The application event calls the separate shared calculation.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "The code works only after Privileged is enabled. Has the original cause of rejection been shown to be fixed?",
+      "options": [
+        "No: a wider contract changed; inspect the actual cause",
+        "Yes:600 proves all permissions",
+        "Yes: Экспорт means administration"
+      ],
+      "correct": 0,
+      "feedback": "Remove Экспорт only in a separate training copy and repeat the external call. Validation or invocation must reject it. Record where rejection occurs, restore Экспорт, and repeat the positive call. Do not enable privileged mode to hide the error.",
+      "recall": "counterexample"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain one changed case of your own: input, important transition, actual result, and limits of the conclusion.",
+      "feedback": "This answer is not graded automatically. Compare it with the trace and your own work.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Two modules, one calculation: pass data and receive a result",
+    "task": "Create a different common-module function Остаток(Лимит, Занято): return unreserved minutes and reject wrong types, negative values, or reservations exceeding the limit. The application passes 120 and 45 and displays 75. Also test 0,120,121 reserved minutes; keep this task separate from Стоимость.",
+    "environment": "Installed training 1C8.3 and your separate file infobase. Nexus stores a draft; actual BSL runs in the platform.",
+    "setupGuide": true,
+    "externalRoute": "Designer → Общие → Общие модули → УчебныеРасчеты → properties",
+    "files": [
+      {
+        "path": "УчебныеРасчеты.bsl",
+        "content": "Функция Остаток(Знач Лимит, Знач Занято) Экспорт\n    // TODO: validate inputs and return the unreserved minutes.\n    ВызватьИсключение \"TODO: допишите функцию\";\nКонецФункции\n"
+      },
+      {
+        "path": "Приложение.bsl",
+        "content": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Остаток(120, 45);\n    Сообщить(Результат);\nКонецПроцедуры\n"
+      }
+    ],
+    "referenceSolution": {
+      "language": "bsl",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Остаток(120, 45);\n    Сообщить(Результат);\nКонецПроцедуры\n",
+      "paragraphs": [
+        "The reference opens on request. Compare state, rejection, and reasoning as well as the final line. Your editor is not replaced."
+      ],
+      "files": {
+        "УчебныеРасчеты.bsl": "Функция Остаток(Знач Лимит, Знач Занято) Экспорт\n    Если ТипЗнч(Лимит) <> Тип(\"Число\") Или ТипЗнч(Занято) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Лимит < 0 Или Занято < 0 Или Занято > Лимит Тогда\n        ВызватьИсключение \"Неверный резерв\";\n    КонецЕсли;\n    Возврат Лимит - Занято;\nКонецФункции\n",
+        "Приложение.bsl": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Остаток(120, 45);\n    Сообщить(Результат);\nКонецПроцедуры\n"
+      }
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "Control case 1",
+        "input": "Лимит = 120; Занято = 45.",
+        "output": "75"
+      },
+      {
+        "label": "Control case 2",
+        "input": "Лимит = 120; Занято = 0.",
+        "output": "120"
+      },
+      {
+        "label": "Control case 3",
+        "input": "Лимит = 120; Занято = 120.",
+        "output": "0"
+      },
+      {
+        "label": "Control case 4",
+        "input": "Лимит = 120; Занято = 121.",
+        "output": "Rejection: Неверный резерв"
+      }
+    ],
+    "criteria": [
+      "The exported function is in the common module; the application contains one event handler and a qualified call.",
+      "Reserved minutes 45/0/120 produce 75/120/0;121 is rejected rather than converted to 0.",
+      "Identify Server, Server call, and disabled Privileged. This does not test a separate network server or all permissions."
+    ],
+    "hint": "600 does not appear because the common module read an open form. The calling handler supplied two numbers. A calculation without hidden form reads or document writes is easier to test independently of the interface.",
+    "steps": [
+      {
+        "where": "Nexus → Practice → own prediction",
+        "action": "Create a different common-module function Остаток(Лимит, Занято): return unreserved minutes and reject wrong types, negative values, or reservations exceeding the limit. The application passes120 and45 and displays75. Also test0,120,121 reserved minutes; keep this task separate from Стоимость.",
+        "why": "An expectation must precede the observation.",
+        "expected": "Inputs and expectations are recorded."
+      },
+      {
+        "where": "Designer → Общие → Общие модули → УчебныеРасчеты → properties",
+        "action": "Create your common module: enable Server and Server call; disable Client, Global, and Privileged; do not enable return-value reuse.",
+        "why": "This is the specific allowed invocation context.",
+        "expected": "Properties are recorded and checked."
+      },
+      {
+        "where": "УчебныеРасчеты common module → Остаток function editor",
+        "action": "Complete the TODO contract. Do not nest a function declaration inside the procedure.",
+        "why": "Declaration and invocation have different locations.",
+        "expected": "Your complete source is ready to check."
+      },
+      {
+        "where": "Configuration root → Открыть модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Place УчебныеРасчеты.Остаток(120,45) and result display in the separate application module; do not move the function here.",
+        "why": "The caller is separate from implementation.",
+        "expected": "Two separate sources occupy their correct modules."
+      },
+      {
+        "where": "Designer → Ctrl+S → F7 → F5 → client messages",
+        "action": "Update your own infobase and read the new run for each case.",
+        "why": "Nexus does not execute this BSL.",
+        "expected": "Actual messages or a precise rejection are available."
+      },
+      {
+        "where": "Result recording → BSL file and Nexus → self-report",
+        "action": "Save the source and a prediction/fact/explanation table, including the faulty copy.",
+        "why": "Matching output does not establish understanding.",
+        "expected": "Facts and your explanation are distinct."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-language-8327",
+      "title": "1C:Enterprise Developer Guide8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Script: modules, methods, collections, and exceptions",
+      "language": "English",
+      "purpose": "Look up syntax after your independent work; the lesson contains the required steps.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "scope": "limits"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "Code location determines available data",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Two settings answer different questions",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Pass only the necessary inputs",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Test an allowed and a prohibited call",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "onec-p3-topic-1-author-v1",
+    "quiz": [
+      {
+        "question": "Change only 30 minutes to 45, keeping the rate 1200. What should the caller receive?",
+        "options": [
+          "600",
+          "900",
+          "45"
+        ],
+        "correct": 1,
+        "explanation": "Compare the prediction with the unchanged rule and explain the first important transition."
+      },
+      {
+        "question": "What appears before the dot in УчебныеРасчеты.Стоимость?",
+        "options": [
+          "The common module name",
+          "The document name",
+          "The hourly rate"
+        ],
+        "correct": 0,
+        "explanation": "The qualified name identifies a module and method."
+      },
+      {
+        "question": "What does Экспорт do?",
+        "options": [
+          "Enables every permission",
+          "Makes a method available to another permitted context",
+          "Publishes an HTTP endpoint"
+        ],
+        "correct": 1,
+        "explanation": "Export does not replace module contexts or access rights."
+      },
+      {
+        "question": "Where is ПриНачалеРаботыСистемы in this lab?",
+        "options": [
+          "In a catalog",
+          "In the common module",
+          "In the managed application module"
+        ],
+        "correct": 2,
+        "explanation": "The application event calls the separate shared calculation."
+      },
+      {
+        "question": "The code works only after Privileged is enabled. Has the original cause of rejection been shown to be fixed?",
+        "options": [
+          "No: a wider contract changed; inspect the actual cause",
+          "Yes:600 proves all permissions",
+          "Yes: Экспорт means administration"
+        ],
+        "correct": 0,
+        "explanation": "Remove Экспорт only in a separate training copy and repeat the external call. Validation or invocation must reject it. Record where rejection occurs, restore Экспорт, and repeat the positive call. Do not enable privileged mode to hide the error."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE QA AUTOMATED PASS + PLAIN HANDLER GUI PASS",
+    "platformVersion": "8.3.27.2214",
+    "cases": [
+      "contexts-main30",
+      "contexts-main45",
+      "contexts-independent45",
+      "contexts-independent0",
+      "contexts-independent120",
+      "contexts-independent121"
+    ],
+    "scope": "42 неизменных тела/функции проверены в отдельных серверных QA common modules. 10 полных не обёрнутых обработчиков выполнены отдельно в исходном клиентском контексте и дали фактические сообщения. Тексты пяти основных обработчиков и общего метода дополнительно сверены в Конфигураторе. Файловая база не доказывает сетевой сервер или права произвольного пользователя.",
+    "studentAuthorshipVerified": false,
+    "GUIcases": [
+      "contexts-main30",
+      "contexts-independent45"
+    ]
+  }
+}
