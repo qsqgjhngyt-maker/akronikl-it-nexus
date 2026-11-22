@@ -49,7 +49,11 @@ for(const locale of ['ru','en']){
  const prefs={uiLocale:locale,courseLocale:locale},t=translator(await json('locales/'+locale+'/ui.json'));
  const ctx={prefs,t,cpp,catalog,academyViewFilter:{category:'all',availability:'all',query:'SYNTHETIC <query>'},visualIcon:v=>v,e,textFor,learnerAcademyEntries,visualShell:body=>body};
  const keys=Object.keys(ctx),baseline=new Function(...keys,before.slice(before.indexOf('function academy(){'),before.indexOf('function bindAcademyView(){'))+';return academy')(...keys.map(k=>ctx[k]));
- assert.equal(academyCatalogMarkup(ctx),baseline());
+ const catalogMarkup=academyCatalogMarkup(ctx),previousCatalog=baseline();
+ const decorativeNumber=/<span class="visual-step-number">[0-9]+<\/span>/g;
+ assert.match(previousCatalog,decorativeNumber);
+ assert.doesNotMatch(catalogMarkup,/\bvisual-step-number\b/);
+ assert.equal(catalogMarkup,previousCatalog.replace(decorativeNumber,''));
  // Snapshot предшествует разрешённому открытию 1С. В прежнем planned-состоянии
  // сохраняется полное byte-equivalence; новый вход проверяется отдельно.
  const legacyProgramming=structuredClone(programming);legacyProgramming.tracks.find(x=>x.id==='onec').status='planned';
@@ -62,4 +66,4 @@ for(const locale of ['ru','en']){
  for(const track of programming.tracks.filter(x=>x.id!=='onec'))assert.equal(card(active,track.id),card(legacy,track.id),'Unchanged language '+track.id);
  assert.equal((active.match(/class="programming-language-card available"/g)||[]).length,2,'Only C++ and approved onec are available');
 }
-console.log('PASS: Academy catalog and Code Hub byte-equivalent with accepted online RU/EN renderers');
+console.log('PASS: RU/EN Academy matches the accepted catalog after removing decorative numbers; Code Hub byte-equivalent');
