@@ -5,7 +5,7 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 const repo=process.cwd(),out=process.env.NEXUS_CLARITY_EVIDENCE||'cpp-clarity-evidence';
 const source=await readFile('tools/check-cpp-clarity-preservation.mjs','utf8');
-const resolved=source.replace("'../tests/helpers/reference-course-contract.mjs'",JSON.stringify(pathToFileURL(path.join(repo,'tests/helpers/reference-course-contract.mjs')).href)).replace("'../core/academy-gold-catalog.js'",JSON.stringify(pathToFileURL(path.join(repo,'core/academy-gold-catalog.js')).href));
+const resolved=source.replace("'../tests/helpers/reference-course-contract.mjs'",JSON.stringify(pathToFileURL(path.join(repo,'tests/helpers/reference-course-contract.mjs')).href)).replace("'../core/academy-gold-catalog.js'",JSON.stringify(pathToFileURL(path.join(repo,'core/academy-gold-catalog.js')).href)).replace("'../tests/helpers/course-rollout-bytes.mjs'",JSON.stringify(pathToFileURL(path.join(repo,'tests/helpers/course-rollout-bytes.mjs')).href));
 const cases=[
  ['new-css','styles/clarity-onec-p2-types.css',/Approved 1C presentation bytes/],
  ['import-css','courses/onec-education/candidate.css',/Approved 1C presentation bytes/],
