@@ -87,7 +87,12 @@
           "source": "#include <iostream>\n#include <memory>\nstruct Resource {\n    int &active;\n    explicit Resource(int &n) : active(n) { ++active; }\n    Resource(const Resource &) = delete;\n    Resource &operator=(const Resource &) = delete;\n    ~Resource() { --active; }\n};\nvoid work(int &active) {\n    auto owner = std::make_unique<Resource>(active);\n    std::cout << active << ' ';\n    return;\n}\nint main() {\n    int active = 0;\n    work(active);\n    std::cout << active << '\\n';\n}\n",
           "stdin": "",
           "output": "1 0\n"
-        }
+        },
+        "steps": [
+          "Resource increments the count to one.",
+          "Early return destroys the local owner.",
+          "After work the count is zero: output 1 0."
+        ]
       }
     },
     {
@@ -152,7 +157,12 @@
         "source": "#include <iostream>\n#include <memory>\nstruct Node {\n    std::weak_ptr<Node> parent;\n};\nint main() {\n    auto root = std::make_shared<Node>();\n    auto child = std::make_shared<Node>();\n    child->parent = root;\n    {\n        auto observed = child->parent.lock();\n        std::cout << bool(observed) << ' ';\n    }\n    root.reset();\n    std::cout << child->parent.expired() << '\\n';\n}\n",
         "stdin": "",
         "output": "1 1\n"
-      }
+      },
+      "steps": [
+        "weak_ptr does not keep root alive.",
+        "Temporary observed lives in its own scope.",
+        "After root.reset(), expired is true: output 1 1."
+      ]
     },
     {
       "id": "concept-6",
@@ -375,6 +385,91 @@
       "case": 1,
       "stdout": "active 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}Resource(const Resource&)=delete;Resource& operator=(const Resource&)=delete;~Resource(){--active;}};\nvoid work(int n,int& active){auto a=std::make_unique<Resource>(active);if(n==0)return;\n auto b=std::make_unique<Resource>(active);std::cout<<active<<' ';}\nint main(){int n;if(!(std::cin>>n)||n<0||n>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;work(n,active);std::cout<<\"active \"<<active<<'\\n';}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Draw ownership and observation arrows.",
+        "criteria": "Give every link a lifetime boundary."
+      },
+      {
+        "task": "Check weak_ptr before and after reset.",
+        "criteria": "lock succeeds before the last owner disappears."
+      },
+      {
+        "task": "Design a tree with a back-reference.",
+        "criteria": "Strong ownership has no cycle."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: RAII and smart pointers",
+      "start": "Running the starter with its default input produces:\nactive 0\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "RAII — Tying resource ownership to the lifetime of an owning object.\nUnique pointer — A movable, noncopyable exclusive owner.\nMake unique — Construction that immediately places an object under a unique_ptr.",
+      "change": "Read exactly n=0 or 1. work creates a unique_ptr<Resource> and returns immediately for zero. For one it creates a second owner and prints active followed by a space. Resource increments active at construction and decrements at destruction. After work print active 0 and a newline. Invalid input: invalid.",
+      "inputs": "Case: Case 1\nstdin:\n0\nExpected:\nactive 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "One owner on early return, two on normal return.\nThe line 2 active 0.\nExpect active 0 and invalid respectively.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+      "errors": "lock() created a shared_ptr that keeps the parent alive. Once it is destroyed, root is the last owner.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "active 0"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "2 active 0"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "2",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1.5",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -486,5 +581,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/util.smartptr.weak"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.raii-smart-pointers.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

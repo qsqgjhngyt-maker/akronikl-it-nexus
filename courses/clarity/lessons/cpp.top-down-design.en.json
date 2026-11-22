@@ -44,7 +44,13 @@
         "source": "#include <iostream>\nbool valid(int price, int qty) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint main() {\n    int price, qty;\n    if (!(std::cin >> price >> qty)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << subtotal(price, qty) << '\\n';\n}",
         "stdin": "120 3\n",
         "output": "360\n"
-      }
+      },
+      "steps": [
+        "valid checks whether the inputs are acceptable.",
+        "subtotal computes the product.",
+        "main coordinates the sequence.",
+        "Each function can be tested separately."
+      ]
     },
     {
       "id": "concept-3",
@@ -126,6 +132,12 @@
               ]
             ]
           }
+        ],
+        "steps": [
+          "Inputs pass validation.",
+          "subtotal returns 300.",
+          "discountPrice subtracts 10% using integer arithmetic.",
+          "main prints 270; invalid input prints invalid."
         ]
       }
     },
@@ -301,22 +313,109 @@
       {
         "where": "My program",
         "action": "State the contracts of the three functions.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates your prediction from the run result.",
+        "expected": "Case: Receipt for 37 × 3\nstdin:\n37 3 15\n\nExpected:\n111 16 95\n"
       },
       {
         "where": "My program",
         "action": "Check the intermediate values 111 and 16.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My program",
         "action": "Connect the functions in main and check all three fields at the endpoint rates.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates an ordinary successful result from boundary behaviour.",
+        "expected": "Case: No discount\nstdin:\n50 2 0\n\nExpected:\n100 0 100\n"
       }
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    const int amount = subtotal(price, qty);\n    const int payable = discountPrice(amount, discount);\n    std::cout << amount << ' ' << amount - payable << ' ' << payable << '\\n';\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.cpp"
+      }
+    },
+    "exercises": [
+      {
+        "task": "Name the responsibilities validate, compute and report.",
+        "criteria": "Each has explicit inputs, outputs and one responsibility."
+      },
+      {
+        "task": "Refactor the order calculator into independent functions.",
+        "criteria": "Use valid, subtotal and discountPrice, preserving the output."
+      },
+      {
+        "task": "Design a ride-fare calculator as a small call graph.",
+        "criteria": "Separate validation, fare calculation and output."
+      }
+    ],
+    "passport": {
+      "goal": "Discounted receipt",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Decomposition — Breaking a large problem into smaller problems with explicit boundaries.\nFunction — A named operation that receives arguments and can return a result.\nFunction contract — The expected inputs, outputs and valid calling conditions.",
+      "change": "Build a detailed receipt for price 37, quantity 3 and discount 15%. Print three space-separated numbers: subtotal, saving in whole units and total due. Implement valid, subtotal and discountPrice separately. Price and quantity are integers 0..1000, discount is 0..100. Round down the saving before subtraction. Print invalid on failed extraction or range checks.",
+      "inputs": "Case: Receipt for 37 × 3\nstdin:\n37 3 15\n\nExpected:\n111 16 95\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Each function receives only the data needed for its step.\nCheck the result of discountPrice separately, then verify all three receipt fields for 37 3 15.\nExplain where 16 comes from and why saving plus the amount due reconstructs the subtotal.",
+      "errors": "The difference between subtotal and the amount due gives the saving in whole units.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "37 3 15\n",
+          "lines": [
+            "111 16 95"
+          ]
+        },
+        {
+          "stdin": "50 2 0\n",
+          "lines": [
+            "100 0 100"
+          ]
+        },
+        {
+          "stdin": "1000 1000 100\n",
+          "lines": [
+            "1000000 1000000 0"
+          ]
+        },
+        {
+          "stdin": "1 1 1\n",
+          "lines": [
+            "1 0 1"
+          ]
+        },
+        {
+          "stdin": "50 2 101\n",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1001 1 0\n",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "oops\n",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -373,5 +472,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.top-down-design.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

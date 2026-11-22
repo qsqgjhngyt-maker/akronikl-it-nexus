@@ -537,7 +537,12 @@
           "source": "#include <iostream>\nint main() {\n    int value{};\n    std::cin >> value;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << ' ' << bool(std::cin) << '\\n';\n}\n",
           "stdin": "8",
           "output": "0 1 1\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       },
       {
         "id": "concept-2",
@@ -600,7 +605,12 @@
             "source": "#include <iostream>\n#include <limits>\nint main() {\n    int value{};\n    if (!(std::cin >> value)) {\n        std::cin.clear();\n        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    }\n    if (std::cin >> value) { std::cout << value << '\\n'; }\n    else { std::cout << \"invalid\\n\"; }\n}\n",
             "stdin": "bad\n7\n",
             "output": "7\n"
-          }
+          },
+          "steps": [
+            "Read the contract and independently derive the expected result for the given input.",
+            "Trace state after each significant operation and identify the established preconditions.",
+            "Run the source, compare stdout and exit code, then check the additional cases."
+          ]
         }
       },
       {
@@ -833,6 +843,79 @@
         "case": 1,
         "stdout": "0 3 0\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <sstream>\n#include <string>\nbool parse(const std::string& line, int& value) {\n    std::istringstream input{line};\n    int candidate{};\n    if (!(input >> candidate) || candidate < -1000 || candidate > 1000) { return false; }\n    input >> std::ws;\n    if (!input.eof()) { return false; }\n    value = candidate;\n    return true;\n}\nint main() {\n    std::string line;\n    int lines{}, accepted{}, rejected{};\n    long long sum{};\n    while (std::getline(std::cin, line)) {\n        if (++lines > 100 || line.size() > 200) { std::cout << \"invalid\\n\"; return 0; }\n        int value{};\n        if (parse(line, value)) { ++accepted; sum += value; }\n        else { ++rejected; }\n    }\n    if (std::cin.bad()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << accepted << ' ' << rejected << ' ' << sum << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Manually trace the first example and explain every expected output line.",
+          "criteria": "Resetting a flag and removing malformed input are different operations."
+        },
+        {
+          "task": "Process up to 100 lines of at most 200 bytes each. Each must contain exactly one integer in -1000…1000. Print accepted rejected sum; skip malformed lines and reject resource-limit excess as invalid.",
+          "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+        },
+        {
+          "task": "Extend the format to id value and report rejected line numbers without losing the following record.",
+          "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+        }
+      ],
+      "passport": {
+        "goal": "Parse a line-based log",
+        "start": "Running the starter with its default input produces:\n0 3 0\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "failbit — failure of formatted extraction or a similar operation.\nRecord boundary — the point where one logical record ends.\neofbit — a flag indicating an already encountered end.",
+        "change": "Process up to 100 lines of at most 200 bytes each. Each must contain exactly one integer in -1000…1000. Print accepted rejected sum; skip malformed lines and reject resource-limit excess as invalid.",
+        "inputs": "Case: No lines\nstdin:\n(empty input)\nExpected:\n0 0 0\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Verify that 2, bad, 3 gives 2 1 5. Distinguish an empty stream, a blank line and a line with two numbers.\nResetting a flag and removing malformed input are different operations.\nDo not treat fail&&eof as a successful number. Do not discard blank records using ws.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+        "errors": "A good record must contain exactly one number. Reaching the end of the outer stream does not validate the final token.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "",
+            "lines": [
+              "0 0 0"
+            ]
+          },
+          {
+            "stdin": "2\nbad\n3",
+            "lines": [
+              "2 1 5"
+            ]
+          },
+          {
+            "stdin": "\n",
+            "lines": [
+              "0 1 0"
+            ]
+          },
+          {
+            "stdin": "1 2\n4\n",
+            "lines": [
+              "1 1 4"
+            ]
+          },
+          {
+            "stdin": "999999999999999999999999",
+            "lines": [
+              "0 1 0"
+            ]
+          },
+          {
+            "stdin": "1001\n-1000\n",
+            "lines": [
+              "1 1 -1000"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -903,6 +986,7 @@
         "sourceTitle": "Recovery evidence",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

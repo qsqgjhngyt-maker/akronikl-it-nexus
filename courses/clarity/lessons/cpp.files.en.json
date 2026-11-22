@@ -82,7 +82,12 @@
           "outputFiles": {
             "sample.txt": "73\n"
           }
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -126,7 +131,12 @@
         "files": {
           "input.txt": "NEXUS_LOG_V1\n"
         }
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-5",
@@ -369,6 +379,40 @@
       "case": 0,
       "stdout": "todo\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <fstream>\n#include <sstream>\n#include <string>\nint main() {\n    std::ifstream input{\"records.txt\"};\n    if (!input) { std::cout << \"missing\\n\"; return 0; }\n    std::string line;\n    int count{};\n    long long sum{};\n    while (std::getline(input, line)) {\n        if (++count > 100 || line.size() > 200) { std::cout << \"invalid\\n\"; return 0; }\n        std::istringstream parser{line};\n        int value{};\n        if (!(parser >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        parser >> std::ws;\n        if (!parser.eof()) { std::cout << \"invalid\\n\"; return 0; }\n        sum += value;\n    }\n    if (input.bad() || (!input.eof() && input.fail())) { std::cout << \"invalid\\n\"; return 0; }\n    std::ofstream output{\"report.txt\"};\n    output << count << ' ' << sum << '\\n';\n    output.close();\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::cout << \"exported\\n\";\n}\n",
+      "files": {
+        "records.txt": "2\n-1\n4\n"
+      },
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "Creating a runtime file and saving it into a personal project are separate actions."
+      },
+      {
+        "task": "Read records.txt under the stated format. On success create report.txt containing count sum and print exported. Missing input prints missing, malformed data invalid, and write failure write-error. Verify the artifact separately.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Add a NEXUS_LOG_V1 format header and reject unknown versions while preserving the input file.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Import records.txt and produce report.txt",
+      "start": "Running the starter with its default input produces:\ntodo\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Runtime FS — the isolated file set for one program execution.\nArtifact — an execution result that can be inspected and explicitly saved.\nifstream — an input file stream.",
+      "change": "Read at most 100 lines of up to 200 bytes from records.txt, exactly one integer in −1000 through 1000 per line. An empty file is valid; a blank line is invalid. On success, write the count and sum separated by a space and followed by a newline to report.txt, then print exported. A missing file gives missing, malformed input gives invalid and a write failure gives write-error. Check the artifact separately.",
+      "inputs": "Case: Three records\nstdin:\n(empty input)\nExpected:\nexported\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Verify the status and artifact bytes separately. On success expect exported and 3 5 followed by a newline in the file. Test missing input and a malformed record.\nCreating a runtime file and saving it into a personal project are separate actions.\nDo not open the input with ofstream before validation. Do not assume ambient runtime persistence between runs.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "For the empty-file test, keep records.txt in the bundle with zero bytes. For missing, remove it only from a separate test copy.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     }
   },
   "terms": [
@@ -460,5 +504,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.files.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

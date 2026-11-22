@@ -38,7 +38,12 @@
         "source": "#include <iostream>\nstruct Rate {\n    int multiplier;\n    int apply(int n) const { return multiplier * n; }\n};\nclass Report {\n    Rate rate_;\n\n  public:\n    explicit Report(Rate r) : rate_(r) {}\n    int total(int n) const { return rate_.apply(n); }\n};\nint main() {\n    Report r{Rate{3}};\n    std::cout << r.total(4) << '\\n';\n}\n",
         "stdin": "",
         "output": "12\n"
-      }
+      },
+      "steps": [
+        "Report содержит Rate по значению.",
+        "total делегирует применение множителя 3.",
+        "Для 4 получается 12 без наследования."
+      ]
     },
     {
       "id": "concept-2",
@@ -142,7 +147,12 @@
           "source": "#include <iostream>\n#include <memory>\nstruct Rule {\n    virtual int apply(int) const = 0;\n    virtual ~Rule() = default;\n};\nstruct Double final : Rule {\n    int apply(int n) const override { return n * 2; }\n};\nint main() {\n    std::unique_ptr<Rule> r = std::make_unique<Double>();\n    std::cout << r->apply(4) << ' ';\n    std::cout << (dynamic_cast<Double *>(r.get()) != nullptr) << '\\n';\n}\n",
           "stdin": "",
           "output": "8 1\n"
-        }
+        },
+        "steps": [
+          "unique_ptr<Rule> владеет Double.",
+          "apply вызывается динамически и даёт 8.",
+          "Pointer cast успешен; виртуальный деструктор корректно завершит жизнь."
+        ]
       }
     },
     {
@@ -394,7 +404,110 @@
     "outputFields": [
       "Результат правила",
       "Выбран Urgent"
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <memory>\nstruct Rule {virtual int apply(int n)const=0;virtual ~Rule()=default;};\nstruct Regular final:Rule {int apply(int n)const override{return n;}};\nstruct Urgent final:Rule {int apply(int n)const override{return n*2;}};\nint main(){int mode,n;if(!(std::cin>>mode>>n)||mode<0||mode>1||n<0||n>100){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::unique_ptr<Rule> r;if(mode==0)r=std::make_unique<Regular>();else r=std::make_unique<Urgent>();\n std::cout<<r->apply(n)<<' '<<(dynamic_cast<Urgent*>(r.get())!=nullptr)<<'\\n';}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Нарисуйте Report и Rate как композицию.",
+        "criteria": "Нет необоснованного отношения является."
+      },
+      {
+        "task": "Измените const в override и изучите отказ сборки.",
+        "criteria": "Объяснена несовпадающая сигнатура."
+      },
+      {
+        "task": "Добавьте третью стратегию.",
+        "criteria": "Общий вызов apply не требует нового if."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Композиция, наследование и полиморфизм",
+      "start": "При запуске заготовки со штатным вводом получается:\n7 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Композиция — Включение объектов как частей с делегированием работы.\nНаследование — Связь производного типа с базовым по правилам языка.\nПодстановка — Соответствие производного типа всему обещанному контракту базы.",
+      "change": "Прочитайте mode=0…1 и n=0…100 без хвоста. Через unique_ptr<Rule> выберите Regular (n) или Urgent (2n). Напечатайте результат и bool успешного dynamic_cast<Urgent*> через пробел. База имеет virtual destructor. Неверный ввод: invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0 7\nОжидается:\n7 0\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "7 0 и 14 1.\nВвод 1 7 даёт 14 1.\n0 1, затем 200 1, затем invalid.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+      "errors": "Результаты равны нулю, но Urgent должен давать признак 1, Regular — 0.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0 7",
+          "lines": [
+            "7 0"
+          ]
+        },
+        {
+          "stdin": "1 7",
+          "lines": [
+            "14 1"
+          ]
+        },
+        {
+          "stdin": "1 0",
+          "lines": [
+            "0 1"
+          ]
+        },
+        {
+          "stdin": "1 100",
+          "lines": [
+            "200 1"
+          ]
+        },
+        {
+          "stdin": "0 100",
+          "lines": [
+            "100 0"
+          ]
+        },
+        {
+          "stdin": "2 7",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 -1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 101",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 1 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -481,5 +594,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.composition-inheritance-polymorphism.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

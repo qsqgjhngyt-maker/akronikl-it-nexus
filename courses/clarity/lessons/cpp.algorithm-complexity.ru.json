@@ -119,7 +119,14 @@
         "source": "#include <iostream>\nint main() {\n    long long n = 8;\n    long long pairs = n * (n - 1) / 2;\n    long long doubled = (2 * n) * (2 * n - 1) / 2;\n    std::cout << pairs << ' ' << doubled << '\\n';\n}",
         "stdin": "",
         "output": "28 120\n"
-      }
+      },
+      "steps": [
+        "Сначала вычислите 8·7/2=28 и 16·15/2=120 вручную.",
+        "Отношение 120/28 не обязано равняться четырём: линейный член ещё заметен.",
+        "Для n>0 перепишите отношение T(2n)/T(n)=2(2n−1)/(n−1), исключая n=1.",
+        "Предел отношения равен 4, но это не универсальная формула времени запуска.",
+        "Зафиксируйте модель и область; long long здесь защищён небольшими константами."
+      ]
     },
     {
       "id": "concept-5",
@@ -391,6 +398,149 @@
       "case": 5,
       "stdout": "linear 5\npairs 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nint main(){\n int n;\n if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::cin >> std::ws; if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n long long linear=0,pairs=0;\n for(int i=0;i<n;++i) ++linear;\n for(int i=0;i<n;++i) for(int j=i+1;j<n;++j) ++pairs;\n std::cout<<\"linear \"<<linear<<\"\\npairs \"<<pairs<<'\\n';\n}",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Выпишите пары для n=3 и n=0.",
+        "criteria": "Получены 3 и 0 пар без запуска."
+      },
+      {
+        "task": "Реализуйте два счётчика по контракту лабораторной.",
+        "criteria": "Нет вычислений для неверного ввода; верхняя граница даёт 8128."
+      },
+      {
+        "task": "Оцените обработку n запросов по m элементам.",
+        "criteria": "Двухпараметрическая оценка O(nm) и объяснение памяти."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Сложность, инварианты и корректность",
+      "start": "При запуске заготовки со штатным вводом получается:\nlinear 5\npairs 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Размер входа — Параметр, относительно которого оценивается ресурс, например число записей n.\nМодель стоимости — Явно выбранные операции и их относительная цена; не частота процессора.\nO — Асимптотическая верхняя граница с постоянным множителем после некоторого n.",
+      "change": "Прочитайте ровно одно целое n в 0…128. Выведите linear n и pairs n(n−1)/2 двумя строками, считая операции циклами. При пустом, неверном, выходящем за границы вводе или лишних токенах — только invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\nlinear 0\npairs 0\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Получаются (0,1), (0,2), (1,2).\nДве строки: linear 5 и pairs 10.\nСчётчики 0 и 0, затем 128 и 8128, затем только invalid.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+      "errors": "Выпишите три новые пары (i, i). Получится 6 вместо 3.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "linear 0",
+            "pairs 0"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "linear 1",
+            "pairs 0"
+          ]
+        },
+        {
+          "stdin": "2",
+          "lines": [
+            "linear 2",
+            "pairs 1"
+          ]
+        },
+        {
+          "stdin": "3",
+          "lines": [
+            "linear 3",
+            "pairs 3"
+          ]
+        },
+        {
+          "stdin": "4",
+          "lines": [
+            "linear 4",
+            "pairs 6"
+          ]
+        },
+        {
+          "stdin": "5",
+          "lines": [
+            "linear 5",
+            "pairs 10"
+          ]
+        },
+        {
+          "stdin": "6",
+          "lines": [
+            "linear 6",
+            "pairs 15"
+          ]
+        },
+        {
+          "stdin": "7",
+          "lines": [
+            "linear 7",
+            "pairs 21"
+          ]
+        },
+        {
+          "stdin": "8",
+          "lines": [
+            "linear 8",
+            "pairs 28"
+          ]
+        },
+        {
+          "stdin": "128",
+          "lines": [
+            "linear 128",
+            "pairs 8128"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "129",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "4 extra",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "999999999999999999999999999999",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -478,5 +628,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/algorithms.requirements"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.algorithm-complexity.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

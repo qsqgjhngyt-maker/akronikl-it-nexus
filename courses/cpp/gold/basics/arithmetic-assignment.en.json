@@ -501,7 +501,12 @@
             "source": "#include <iostream>\n\nint main() {\n    int dividend{-7};\n    int divisor{3};\n    std::cout << dividend / divisor << ' ' << dividend % divisor << '\\n';\n    return 0;\n}\n",
             "stdin": "",
             "output": "-2 -1\n"
-          }
+          },
+          "steps": [
+            "The mathematical quotient is about −2.333; truncation gives −2.",
+            "Recover the remainder: −7 − (−2 × 3) = −1.",
+            "Compare both values with stdout."
+          ]
         }
       },
       {
@@ -524,7 +529,12 @@
           "source": "#include <iostream>\n\nint main() {\n    int stock{10};\n    stock += 4;\n    stock -= 3;\n    stock *= 2;\n    std::cout << stock << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "22\n"
-        }
+        },
+        "steps": [
+          "10 + 4 = 14.",
+          "14 − 3 = 11.",
+          "11 × 2 = 22; this is the printed state."
+        ]
       },
       {
         "id": "concept-4",
@@ -538,7 +548,12 @@
           "source": "#include <iostream>\n\nint main() {\n    int width{50000};\n    int height{50000};\n    long long area = 1LL * width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "2500000000\n"
-        }
+        },
+        "steps": [
+          "Read the LL suffix on one.",
+          "Check that the first product is already long long.",
+          "Compare with the independent result 2500000000."
+        ]
       },
       {
         "id": "concept-5",
@@ -698,28 +713,75 @@
         {
           "where": "My independent work",
           "action": "Write valid ranges before coding.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates your prediction from the run result.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nfull=2\nremainder=2\nneeded=3\n"
         },
         {
           "where": "My independent work",
           "action": "Prove the numerator upper bound.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "Add remainder and rounding up.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "For block size 1024, test volumes 0, 1024, 1025 and 2050; then check that size 0 is rejected before division.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates an ordinary successful result from boundary behaviour.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nfull=2\nremainder=2\nneeded=3\n"
         }
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    long long bytes{2050};\n    long long blockBytes{1024};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+        "files": {},
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      "exercises": [
+        {
+          "task": "Predict q and r for 8/3, −8/3, and 8/−3 before running.",
+          "criteria": "Quotient and remainder satisfy the identity."
+        },
+        {
+          "task": "Trace count=20; count/=3; count%=4;.",
+          "criteria": "The states are 6 then 2, with type and bounds explained."
+        },
+        {
+          "task": "Propose a container count for volumes up to 10^12 bytes with an explicit maximum container size.",
+          "criteria": "Prove the numerator bound and exclude zero size and negative volume."
+        }
+      ],
+      "passport": {
+        "goal": "Volume and whole blocks",
+        "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Integer quotient — The result of integer / with the fractional part discarded toward zero.\nRemainder — For valid integer division, related to the quotient by a = (a / b) * b + a % b.\nCompound assignment — An operation such as stock += 4 that updates the left object using its previous value.",
+        "change": "Complete the starter with complete blocks, remaining bytes and required blocks. The protective if already precedes division; explain its conditions first. Start with a different volume: 2050 bytes and 1024-byte blocks. Predict complete blocks, remainder and required blocks. Then check 0, 1024 and 1025 bytes; keep the zero-size guard before division.",
+        "inputs": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nfull=2\nremainder=2\nneeded=3\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Division happens only after validation.\nAn exact multiple needs no extra block.\nNo signed overflow or division by zero was executed.\nRecord stdout for each case and a range proof.\nExplain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\n% here requires integer operands. Do not guess a cast that changes the task meaning.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "",
+            "lines": [
+              "full=2",
+              "remainder=2",
+              "needed=3"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -897,6 +959,7 @@
         "anchor": "concept-6"
       }
     ],
-    "starterExpected": "full=2\n"
+    "starterExpected": "full=2\n",
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

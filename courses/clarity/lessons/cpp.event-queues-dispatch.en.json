@@ -86,7 +86,12 @@
           "source": "#include <iostream>\n#include <queue>\nint main() {\n    std::queue<int> q;\n    q.push(2);\n    q.push(5);\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << event << '\\n';\n    }\n}\n",
           "stdin": "",
           "output": "2\n5\n"
-        }
+        },
+        "steps": [
+          "push places two before five.",
+          "front is copied and pop removes the element.",
+          "The empty queue ends the loop after two iterations."
+        ]
       }
     },
     {
@@ -361,6 +366,91 @@
       "case": 0,
       "stdout": "total 0 processed 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> input(n);\n  for (int& x : input) if (!(std::cin >> x) || x < 0 || x > 9) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  std::queue<int> q;\n  for (int x : input) q.push(x);\n  int total = 0, processed = 0;\n  std::function<void(int)> handler = [&](int x) {\n    total += x;\n    if (x == 3) q.push(1);\n  };\n  while (!q.empty()) {\n    int event = q.front(); q.pop();\n    if (handler) handler(event);\n    ++processed;\n  }\n  std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Show the processing order for 3, 2, 3.",
+        "criteria": "Show FIFO contents and the five dispatches 3,2,3,1,1; independently derive total 10 and processed 5."
+      },
+      {
+        "task": "Complete the queue and callback in the starter.",
+        "criteria": "The starter fills FIFO before draining, invokes the callback for each item and appends 1 after 3; verify reference cases and termination."
+      },
+      {
+        "task": "Design enqueue with capacity three.",
+        "criteria": "Specify capacity 3, the enqueue result and overflow policy; after four requests size remains at most 3 and the caller can observe rejection."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Event queues and dispatch",
+      "start": "Running the starter with its default input produces:\ntotal 0 processed 0\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "FIFO — The earliest enqueued item is processed first.\nCallback — A callable supplied for execution at a later point.\nCapture — How a lambda obtains access to surrounding values.",
+      "change": "Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid.",
+      "inputs": "Case: First substantive run\nstdin:\n3 3 2 3\nExpected:\ntotal 10 processed 5\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Order 3,2,3,1,1; five dispatches.\ntotal 10 processed 5.\n24 dispatches; overflow rejects insertion without losing the three existing items.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
+      "errors": "Each 3 appends 1 at the tail; the queued 2 stays ahead of the new ones. Total 10 does not distinguish another permutation: record the processing order.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "3 3 2 3",
+          "lines": [
+            "total 10 processed 5"
+          ]
+        },
+        {
+          "stdin": "0",
+          "lines": [
+            "total 0 processed 0"
+          ]
+        },
+        {
+          "stdin": "1 3",
+          "lines": [
+            "total 4 processed 2"
+          ]
+        },
+        {
+          "stdin": "2 0 9",
+          "lines": [
+            "total 9 processed 2"
+          ]
+        },
+        {
+          "stdin": "12 3 3 3 3 3 3 3 3 3 3 3 3",
+          "lines": [
+            "total 48 processed 24"
+          ]
+        },
+        {
+          "stdin": "1 -1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "13",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 3 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -460,5 +550,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/func.wrap.func"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.event-queues-dispatch.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

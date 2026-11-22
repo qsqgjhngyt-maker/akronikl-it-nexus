@@ -537,7 +537,12 @@
             "source": "#include <iostream>\n#include <string>\n#include <utility>\nstruct Note {\n    std::string text;\n};\nint main() {\n    Note a{\"draft\"};\n    Note b = a;\n    b.text = \"review\";\n    Note c = std::move(a);\n    a.text = \"reused\";\n    std::cout << a.text << ' ' << b.text << ' ' << c.text << '\\n';\n}\n",
             "stdin": "",
             "output": "reused review draft\n"
-          }
+          },
+          "steps": [
+            "Copy b changes independently of a.",
+            "c receives the original value by moving.",
+            "Assign reused to a before reading: reused review draft."
+          ]
         }
       },
       {
@@ -560,7 +565,12 @@
           "source": "#include <iostream>\n#include <memory>\n#include <utility>\nint main() {\n    auto a = std::make_unique<int>(7);\n    auto b = std::move(a);\n    std::cout << bool(a) << ' ' << *b << '\\n';\n    a = std::make_unique<int>(9);\n    std::cout << *a << '\\n';\n}\n",
           "stdin": "",
           "output": "0 7\n9\n"
-        }
+        },
+        "steps": [
+          "Moving unique_ptr leaves a empty.",
+          "b owns seven under the type-specific guarantee.",
+          "Assigning a new owner to a safely produces nine."
+        ]
       },
       {
         "id": "concept-6",
@@ -798,7 +808,104 @@
         "Sum of c",
         "Sum of b",
         "First element of reassigned a"
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\n#include <utility>\nstruct Batch {std::vector<int> values;};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}Batch a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.values.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Batch b=a;for(int& x:b.values)++x;Batch c=std::move(a);a.values.assign(1,42);\n int original=0,changed=0;for(int x:c.values)original+=x;for(int x:b.values)changed+=x;\n std::cout<<original<<' '<<changed<<' '<<a.values[0]<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Distinguish b=a at construction and later.",
+          "criteria": "Identify copy construction and copy assignment."
+        },
+        {
+          "task": "Justify independence of Batch b.",
+          "criteria": "Incrementing the copy preserves the original sum."
+        },
+        {
+          "task": "Analyze std::move on a const string.",
+          "criteria": "Do not promise a move instead of a copy."
+        }
+      ],
+      "passport": {
+        "goal": "Laboratory: Value semantics, copying and moving",
+        "start": "Running the starter with its default input produces:\n0 0 42\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Value semantics — An independent copied value under the type's observable contract.\nCopy constructor — Construction of a new object from an existing value.\nCopy assignment — Replacing an existing object's value with a copy.",
+        "change": "Read n=0…20 and n integers in −100…100. Batch a owns a vector. Copy b=a, increment b elements, move a into c, then assign a.values={42}. Print sums of c and b followed by a.values[0]. Invalid input or trailing tokens: invalid.",
+        "inputs": "Case: Case 1\nstdin:\n0\nExpected:\n0 0 42\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "c and b sum to 6 and 9, and reassigned a contains 42.\nInput 3 1 2 3 gives 6 9 42.\nExpect 0 0 42 and 0 2 42.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+        "errors": "A moved-from string is valid, but its precise contents are unspecified. Assignment establishes a new value.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "0 0 42"
+            ]
+          },
+          {
+            "stdin": "3 1 2 3",
+            "lines": [
+              "6 9 42"
+            ]
+          },
+          {
+            "stdin": "2 -100 100",
+            "lines": [
+              "0 2 42"
+            ]
+          },
+          {
+            "stdin": "1 -7",
+            "lines": [
+              "-7 -6 42"
+            ]
+          },
+          {
+            "stdin": "20 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 ",
+            "lines": [
+              "2000 2020 42"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 101",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "2 3",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -862,6 +969,7 @@
         "sourceTitle": "Measuring without false conclusions",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

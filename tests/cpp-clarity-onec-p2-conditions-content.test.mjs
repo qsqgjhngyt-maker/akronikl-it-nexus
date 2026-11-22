@@ -99,7 +99,10 @@ test('Визуальное исправление сохраняет CONTENT ACC
  for(const locale of ['ru','en'])for(const dir of ['authoring','lessons']){
   const p='courses/clarity/'+dir+'/'+id+'.'+locale+'.json',current=await json(p),old=JSON.parse(git('show',accepted+':'+p));let changed=0;
   for(const s of current.sections)if(s.flowchart){assert.equal(s.flowchart.layout,'roomy');delete s.flowchart.layout;changed++;}
-  assert.equal(changed,2);assert.deepEqual(current,old,'Accepted semantics and revision: '+p);
+  assert.equal(changed,2);assertReferenceEdition(id,locale);
+  // Новый паспорт и редакция разрешены полным распространением формата.
+  const semantic=value=>{const v=structuredClone(value);for(const k of ['revision','contentRevision','editorialRevision','lessonFormat','authoringPath','upstreamAuthoringPath'])delete v[k];if(v.assessment)delete v.assessment.contentRevision;delete v.practice.passport;return v;};
+  assert.deepEqual(semantic(current),semantic(old),'Accepted semantics: '+p);
  }
  const p='courses/onec-education/candidate.css',old=git('show',accepted+':'+p).toString();
  assert.equal(await readFile(p,'utf8'),"@import url('../../styles/clarity-onec-code-studio.css');\n@import url('../../styles/clarity-onec-p2-types.css');\n"+old);
@@ -121,10 +124,12 @@ test('Прежняя геометрия сохранена;разрешён то
   if(!name.endsWith('.json'))continue;const lesson=await json(folder+'/'+name);if(!lesson.authored)continue;if(REFERENCE_IDS.includes(lesson.id)){assertReferenceEdition(lesson.id,lesson.locale);continue;}
   if([id,'onec.p3.topic-4','onec.p3.module-tests','onec.p5.topic-4','onec.p6.topic-4','onec.p7.topic-1','onec.p8.topic-4'].includes(lesson.id))for(const s of lesson.sections)if(s.flowchart)delete s.flowchart.layout;
   for(const s of lesson.sections)if(s.flow&&s.flow.kind!=='while-cycle')assertPreservedOrWrappedFlow(s.flow,currentVisuals.learningFlowMarkup(s.flow),priorVisuals.learningFlowMarkup(s.flow));
+  // Отдельно сравниваем прежнюю геометрию без новых видимых разборов.
+  for(const s of lesson.sections)for(const node of [s,s.reveal].filter(Boolean))for(const key of ['steps','trace','clarifications'])delete node[key];
   const a=authoredMarkup(lesson,render),b=prior.authoredMarkup(lesson,render);
   assert.equal(a.explanation(),b.explanation(),name);assert.equal(a.reading(),b.reading(),name);
   for(const s of lesson.sections)assert.deepEqual(a.recall(s.id),b.recall(s.id),name+' '+s.id);
   compared++;
  }
- assert.equal(compared,280);
+ assert.equal(compared,282); // Включён полный авторский урок соединений RU/EN.
 });

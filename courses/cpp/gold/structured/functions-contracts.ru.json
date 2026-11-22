@@ -396,7 +396,15 @@
           "source": "#include <iostream>\n\nint copied(int value) {\n    ++value;\n    return value;\n}\n\nvoid changed(int& value) {\n    ++value;\n}\n\nint main() {\n    int original = 4;\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
           "stdin": "",
           "output": "4 5\n5\n"
-        }
+        },
+        "steps": [
+          "Сначала original=4. Вызов copied(original) создаёт отдельный параметр value=4; инициализация result ещё не закончена.",
+          "++value меняет параметр с 4 на 5. original остаётся 4: параметр получил копию.",
+          "return value возвращает 5. Вызов заканчивается, result получает 5. Первая строка вывода — 4 5.",
+          "changed(original) связывает параметр int& с original. Отдельной копии целого здесь нет.",
+          "++value теперь меняет original с 4 на 5. result остаётся 5. Вторая строка вывода — 5.",
+          "Для самостоятельного прогноза начните с original=10: получится 10 11, затем 11. До запуска объясните каждое состояние."
+        ]
       },
       {
         "id": "concept-3",
@@ -468,7 +476,13 @@
             "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int result{17};\n    bool ok = checkedArea(-1, 2, result);\n    std::cout << ok << ' ' << result << '\\n';\n    ok = checkedArea(3, 4, result);\n    std::cout << ok << ' ' << result << '\\n';\n}\n",
             "stdin": "",
             "output": "0 17\n1 12\n"
-          }
+          },
+          "steps": [
+            "Сначала result=17. checkedArea(-1,2,result) проверяет ширину: -1 вне 0..1000.",
+            "return false завершает вызов до присваивания result. ok=false, result по-прежнему 17; вывод — 0 17.",
+            "checkedArea(3,4,result) проходит все границы. result становится 12, возвращается true; вывод — 1 12.",
+            "Одна CLI-строка invalid не показывает сохранение 17. Прямой вызов наблюдает и bool, и выходной параметр."
+          ]
         }
       },
       {
@@ -683,6 +697,85 @@
         "case": 0,
         "stdout": "invalid\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Начните с original=10 и предскажите обе строки без запуска.",
+          "criteria": "10 11, затем 11; различены локальная копия и исходный объект по ссылке."
+        },
+        {
+          "task": "Реализуйте bool checkedArea(int w,int h,int& result): размеры 0…1000, при отказе result неизменен. main читает ровно два размера и выводит площадь либо invalid.",
+          "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+        },
+        {
+          "task": "Добавьте checkedPerimeter с тем же правилом отказа и общим набором проверок диапазона; сравните границы ответственности.",
+          "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+        }
+      ],
+      "passport": {
+        "goal": "Безопасная площадь на входе программы",
+        "start": "При запуске заготовки со штатным вводом получается:\ninvalid\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Контракт — обязательства вызывающего кода и гарантии операции.\nПобочный эффект — наблюдаемое изменение кроме возвращаемого значения.\nАргумент — выражение, переданное при вызове функции.",
+        "change": "Реализуйте bool checkedArea(int w, int h, int& result). Для двух размеров в 0–1000 запишите произведение и верните true. При отказе верните false, сохранив result. В main прочитайте ровно два целых. Выведите площадь или invalid.",
+        "inputs": "Случай: Случай 1\nstdin:\n3 4\nОжидается:\n12\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "Сравните 0 1000, 1000 1000 и 3 4 x. Отдельно вызовите функцию с отказом и докажите, что result сохранился.\nПрямой тест отказа наблюдает false и неизменный result=17; допустимый вызов 3×4 — true и 12.\nНе присваивайте result до завершения всех проверок. Не возвращайте ссылку на локальную переменную.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+        "errors": "Разместите единственное присваивание result после всех проверок размеров. Случай ширины 0 допустим.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "3 4",
+            "lines": [
+              "12"
+            ]
+          },
+          {
+            "stdin": "0 1000",
+            "lines": [
+              "0"
+            ]
+          },
+          {
+            "stdin": "1000 1000",
+            "lines": [
+              "1000000"
+            ]
+          },
+          {
+            "stdin": "-1 2",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1001 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "3",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "3 4 x",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -753,6 +846,7 @@
         "sourceTitle": "Проверка функции отдельно от ввода",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

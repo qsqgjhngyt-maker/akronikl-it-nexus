@@ -116,7 +116,12 @@
         "source": "#include <iostream>\n#include <charconv>\n#include <string>\nint main() {\n    const std::string text = \"999999999999999999999\";\n    int value = 17;\n    auto result =\n        std::from_chars(text.data(), text.data() + text.size(), value);\n    std::cout << (result.ec == std::errc::result_out_of_range) << ' '\n              << value << '\\n';\n}\n",
         "stdin": "",
         "output": "1 17\n"
-      }
+      },
+      "steps": [
+        "Число не помещается в int.",
+        "ec сообщает result_out_of_range.",
+        "Значение назначения остаётся 17."
+      ]
     },
     {
       "id": "concept-5",
@@ -349,6 +354,91 @@
       "case": 0,
       "stdout": "value 17 rejected 3\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <charconv>\n#include <string>\nbool update(int& value, const std::string& text) {\n  if (text.empty() || text.size() > 32) return false;\n  int candidate = 0;\n  auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size() || candidate < 0 || candidate > 100) return false;\n  value = candidate; return true;\n}\nint main() {\n  int value = 17, rejected = 0, count = 0;\n  std::string line;\n  while (std::getline(std::cin, line)) {\n    if (++count > 8) { std::cout << \"invalid\\n\"; return 0; }\n    if (!update(value, line)) ++rejected;\n  }\n  std::cout << \"value \" << value << \" rejected \" << rejected << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Разберите ptr и ec для 12x.",
+        "criteria": "Для 12x указаны candidate 12, ec без ошибки преобразования и ptr на x; полный ввод отклонён, прежнее value сохранено."
+      },
+      {
+        "task": "Реализуйте update через candidate.",
+        "criteria": "update использует candidate и проверяет длину, ec, ptr и диапазон до присваивания;12 затем 12x сохраняет 12, а не исходные 17."
+      },
+      {
+        "task": "Спроектируйте ввод суммы в целых копейках.",
+        "criteria": "Описаны единицы, знак, длина и допустимый диапазон денежной строки; проверены overflow, плюс/пробел и отказ после успешного значения."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Валидация команд и сохранность состояния",
+      "start": "При запуске заготовки со штатным вводом получается:\nvalue 17 rejected 3\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Грамматика ввода — Описание допустимой последовательности символов команды.\nПолное потребление — После разбора не остаётся непроверенных символов.\ncandidate — Временное значение до проверки и применения.",
+      "change": "До восьми строк-команд, исходное value=17. Полностью разберите каждую строку длиной 1…32 байта через integer from_chars, без пробелов и плюса. Принимайте 0…100. Отказ сохраняет value и увеличивает rejected. Более восьми строк: invalid.",
+      "inputs": "Случай: Первый содержательный запуск\nstdin:\n12\n12x\n100\nОжидается:\nvalue 100 rejected 1\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "value:17→12→12→100; rejected=1.\nvalue 100 rejected 1.\nОшибочная строка сохраняет value; девятая строка даёт invalid.\nДобавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска.",
+      "errors": "Без строки getline не вызывает update. Пустая строка вызывает update с text.empty(). Commit — value=candidate после проверки ec, ptr и границ.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "12\n12x\n100",
+          "lines": [
+            "value 100 rejected 1"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "value 17 rejected 0"
+          ]
+        },
+        {
+          "stdin": "\n",
+          "lines": [
+            "value 17 rejected 1"
+          ]
+        },
+        {
+          "stdin": "0",
+          "lines": [
+            "value 0 rejected 0"
+          ]
+        },
+        {
+          "stdin": "-1\n101",
+          "lines": [
+            "value 17 rejected 2"
+          ]
+        },
+        {
+          "stdin": "+2\n 2\n2 ",
+          "lines": [
+            "value 17 rejected 3"
+          ]
+        },
+        {
+          "stdin": "999999999999999999999",
+          "lines": [
+            "value 17 rejected 1"
+          ]
+        },
+        {
+          "stdin": "2\n2\n2\n2\n2\n2\n2\n2\n2",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -448,5 +538,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.validated-user-commands.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

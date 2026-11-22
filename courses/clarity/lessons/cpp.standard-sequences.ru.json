@@ -47,7 +47,12 @@
         "source": "#include <iostream>\n#include <vector>\nint main() {\n    std::vector<int> values;\n    values.reserve(10);\n    std::cout << values.size() << ' ' << (values.capacity() >= 10) << '\\n';\n    values.push_back(7);\n    std::cout << values.size() << ' ' << values[0] << '\\n';\n}\n",
         "stdin": "",
         "output": "0 1\n1 7\n"
-      }
+      },
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ]
     },
     {
       "id": "concept-3",
@@ -119,7 +124,12 @@
           "source": "#include <iostream>\n#include <array>\n#include <vector>\n#include <span>\nint sum(std::span<const int> values) {\n    int result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    std::array<int, 3> a{1, 2, 3};\n    std::vector<int> v{4, 5};\n    int raw[2]{6, 7};\n    std::cout << sum(a) << ' ' << sum(v) << ' ' << sum(raw) << ' ' << sum(std::span<const int>{}) << '\\n';\n}\n",
           "stdin": "",
           "output": "6 9 13 0\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       }
     },
     {
@@ -356,6 +366,79 @@
       "case": 2,
       "stdout": "3 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\n#include <span>\nlong long sum(std::span<const int> values) {\n    long long result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> values;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        values.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << values.size() << ' ' << sum(values) << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+        "criteria": "Вид содержит границы, но не владеет элементами и не продлевает их жизнь."
+      },
+      {
+        "task": "Прочитайте n в 0…100 и n значений в -1000…1000 в vector. Функция со span<const int> считает сумму; выведите size и сумму. Лишний ввод — invalid.",
+        "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+      },
+      {
+        "task": "Реализуйте countAbove(span, threshold) и проверьте одну функцию на array и vector без копирования контейнера.",
+        "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+      }
+    ],
+    "passport": {
+      "goal": "Заполнить vector и передать span",
+      "start": "При запуске заготовки со штатным вводом получается:\n3 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Владелец — объект, управляющий временем жизни хранимых элементов.\nПредставление — доступ к чужим элементам с оговорённым временем жизни.\nsize — количество существующих элементов.",
+      "change": "Прочитайте n в 0…100 и n значений в -1000…1000 в vector. Функция со span<const int> считает сумму; выведите size и сумму. Лишний ввод — invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\n0 0\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Проверьте 3 1 2 3, пустой диапазон и неполный набор. Объясните, почему reserve сам по себе не меняет результат.\nВид содержит границы, но не владеет элементами и не продлевает их жизнь.\nНе используйте span после роста vector с перевыделением; создавайте его после заполнения.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+      "errors": "Место в памяти и живые элементы отличаются. Суммируйте только size() элементов, без обращений после перевыделения.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "1 -5",
+          "lines": [
+            "1 -5"
+          ]
+        },
+        {
+          "stdin": "3 1 2 3",
+          "lines": [
+            "3 6"
+          ]
+        },
+        {
+          "stdin": "2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 1001",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 extra",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -447,5 +530,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/views.span"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.standard-sequences.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

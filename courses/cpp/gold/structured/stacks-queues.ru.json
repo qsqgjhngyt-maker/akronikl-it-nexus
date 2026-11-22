@@ -762,7 +762,12 @@
             "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n",
             "stdin": "",
             "output": "3 1\n2 2\n"
-          }
+          },
+          "steps": [
+            "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+            "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+            "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+          ]
         }
       },
       {
@@ -785,7 +790,12 @@
           "source": "#include <iostream>\n#include <stack>\nint main() {\n    int stock{5};\n    std::stack<int> history;\n    history.push(stock);\n    stock += 3;\n    std::cout << stock << '\\n';\n    if (!history.empty()) { stock = history.top(); history.pop(); }\n    std::cout << stock << ' ' << history.empty() << '\\n';\n}\n",
           "stdin": "",
           "output": "8\n5 1\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       },
       {
         "id": "concept-4",
@@ -1358,6 +1368,83 @@
         "case": 2,
         "stdout": "\n\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        stack.push(value); queue.push(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    bool first{true};\n    while (!stack.empty()) { if (!first) { std::cout << ' '; } std::cout << stack.top(); stack.pop(); first = false; }\n    std::cout << '\\n';\n    first = true;\n    while (!queue.empty()) { if (!first) { std::cout << ' '; } std::cout << queue.front(); queue.pop(); first = false; }\n    std::cout << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+          "criteria": "Порядок извлечения — часть предметного контракта."
+        },
+        {
+          "task": "Прочитайте n в 0…100 и n целых в -1000…1000. Заполните stack и queue; выведите порядок извлечения стека и очереди двумя строками. Пустой набор даёт две пустые строки.",
+          "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+        },
+        {
+          "task": "Добавьте redo с отдельным стеком и объясните, почему новая успешная команда должна сбросить прежнюю ветку redo.",
+          "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+        }
+      ],
+      "passport": {
+        "goal": "Полный порядок извлечения",
+        "start": "При запуске заготовки со штатным вводом получается:\n\n\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "LIFO — последним добавлен, первым извлечён.\nFIFO — первым добавлен, первым извлечён.\nАдаптер — интерфейс операций поверх подходящего контейнера.",
+        "change": "Прочитайте n в 0…100 и n целых в -1000…1000. Заполните stack и queue; выведите порядок извлечения стека и очереди двумя строками. Пустой набор даёт две пустые строки.",
+        "inputs": "Случай: Две пустые строки\nstdin:\n0\nОжидается:\n\n\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "Для 3 1 2 3 сравните 3 2 1 с 1 2 3. Для n = 0 проверьте две пустые строки, а при лишнем токене — invalid.\nПорядок извлечения — часть предметного контракта.\nНе добавляйте историю для rejected. Не читайте front/top у пустого адаптера.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+        "errors": "Проверяйте порядок, число значений и повторы. pop вызывайте после того, как считали текущее значение.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "",
+              ""
+            ]
+          },
+          {
+            "stdin": "1 7",
+            "lines": [
+              "7",
+              "7"
+            ]
+          },
+          {
+            "stdin": "3 1 2 3",
+            "lines": [
+              "3 2 1",
+              "1 2 3"
+            ]
+          },
+          {
+            "stdin": "3 2 2 -1",
+            "lines": [
+              "-1 2 2",
+              "2 2 -1"
+            ]
+          },
+          {
+            "stdin": "2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -1428,6 +1515,7 @@
         "sourceTitle": "Проверка порядка и итоговая защита",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

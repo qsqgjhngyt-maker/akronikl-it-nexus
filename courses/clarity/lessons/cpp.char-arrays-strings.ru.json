@@ -88,7 +88,12 @@
           "source": "#include <iostream>\n#include <string>\nint main() {\n    char word[]{\"cat\"};\n    std::string text{\"a\\0b\", 3};\n    std::cout << sizeof(word) << ' ' << text.size() << ' ' << static_cast<int>(text[1]) << '\\n';\n}\n",
           "stdin": "",
           "output": "4 3 0\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       }
     },
     {
@@ -120,7 +125,12 @@
         "source": "#include <iostream>\n#include <string>\n#include <string_view>\nint main() {\n    std::string owner{\"key=value\"};\n    std::string_view view{owner};\n    auto position = view.find('=');\n    if (position == std::string_view::npos) { std::cout << \"missing\\n\"; return 0; }\n    std::cout << view.substr(0, position) << '|' << view.substr(position + 1) << '\\n';\n}\n",
         "stdin": "",
         "output": "key|value\n"
-      }
+      },
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ]
     },
     {
       "id": "concept-5",
@@ -341,6 +351,85 @@
       "case": 0,
       "stdout": "6 0 0 0 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <string>\nint main() {\n    std::string line;\n    if (!std::getline(std::cin, line) || line.size() > 200) { std::cout << \"invalid\\n\"; return 0; }\n    std::string extra;\n    if (std::getline(std::cin, extra)) { std::cout << \"invalid\\n\"; return 0; }\n    int letters{}, digits{}, spaces{}, other{};\n    for (unsigned char ch : line) {\n        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')) { ++letters; }\n        else if (ch >= '0' && ch <= '9') { ++digits; }\n        else if (ch == ' ') { ++spaces; }\n        else { ++other; }\n    }\n    std::cout << line.size() << ' ' << letters << ' ' << digits << ' ' << spaces << ' ' << other << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+        "criteria": "Байтовая длина и длина видимого текста — разные контракты."
+      },
+      {
+        "task": "Прочитайте одну строку до 200 байтов. Выведите bytes letters digits spaces other для ASCII-классов; пустая строка разрешена, отсутствие строки и вторая строка — invalid.",
+        "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+      },
+      {
+        "task": "Добавьте разбор key=value через find и string_view, сохраняя владельца. Опишите политику отсутствующего и повторного =.",
+        "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+      }
+    ],
+    "passport": {
+      "goal": "Отчёт о байтах одной строки",
+      "start": "При запуске заготовки со штатным вводом получается:\n6 0 0 0 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Терминатор — нулевой char, обозначающий конец строки C.\nstring_view — невладеющая последовательность char с длиной.\nUTF-8 — кодирование кодовых точек последовательностями байтов переменной длины.",
+      "change": "Прочитайте одну строку до 200 байтов. Выведите bytes letters digits spaces other для ASCII-классов; пустая строка разрешена, отсутствие строки и вторая строка — invalid.",
+      "inputs": "Случай: Буквы, цифры, пробел и знак\nstdin:\nAb 12!\n\nОжидается:\n6 2 2 1 1\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Сумма letters, digits, spaces и other должна равняться bytes. Сравните пустую строку с пустым вводом и проверьте UTF-8.\nБайтовая длина и длина видимого текста — разные контракты.\nНе сохраняйте string_view на временную string. Не используйте isalpha с потенциально отрицательным char.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+      "errors": "Пустая строка задаётся переводом строки. Для UTF-8 не используйте число байтов как число букв.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "Ab 12!\n",
+          "lines": [
+            "6 2 2 1 1"
+          ]
+        },
+        {
+          "stdin": "\n",
+          "lines": [
+            "0 0 0 0 0"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "  \n",
+          "lines": [
+            "2 0 0 2 0"
+          ]
+        },
+        {
+          "stdin": "é\n",
+          "lines": [
+            "2 0 0 0 2"
+          ]
+        },
+        {
+          "stdin": "one\ntwo",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "a\n\n",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -432,5 +521,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/string.view"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.char-arrays-strings.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

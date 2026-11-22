@@ -38,7 +38,12 @@
         "source": "#include <iostream>\nint calculate(int value, int delta) { return value + delta; }\nint main() {\n    int model = 4;\n    model = calculate(model, 3);\n    std::cout << \"value \" << model << '\\n';\n}\n",
         "stdin": "",
         "output": "value 7\n"
-      }
+      },
+      "steps": [
+        "calculate receives four and three without external state.",
+        "Seven is returned and the handler stores it in model.",
+        "stdout value 7 connects model and observation."
+      ]
     },
     {
       "id": "concept-2",
@@ -365,6 +370,91 @@
       "case": 0,
       "stdout": "value 0 rejected 4\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\nstruct Model { int value = 0, rejected = 0; };\nvoid dispatch(Model& m, int event) {\n  if (event == 0) m.value = 0;\n  else if (event == 1 && m.value < 10) ++m.value;\n  else if (event == -1 && m.value > 0) --m.value;\n  else ++m.rejected;\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> events(n);\n  for (int& e : events) if (!(std::cin >> e)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Model model;\n  for (int e : events) dispatch(model, e);\n  std::cout << \"value \" << model.value << \" rejected \" << model.rejected << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Trace 1, 0, -1 by hand.",
+        "criteria": "A table contains all three commands, the value before/after each and accumulated rejections; decrementing zero is identified as a rejection."
+      },
+      {
+        "task": "Implement dispatch according to the laboratory contract.",
+        "criteria": "dispatch preserves 0…10 and counts exactly one rejection per refused command; all laboratory cases match, including an unknown command."
+      },
+      {
+        "task": "Specify complete and toggle task commands.",
+        "criteria": "Define states and repeated-command outcomes for complete and toggle; two traces distinguish idempotent completion from toggling."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Events, handlers and the application loop",
+      "start": "Running the starter with its default input produces:\nvalue 0 rejected 4\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Event — A report of an occurrence that the application can handle.\nCommand — A request to change a model under specified acceptance conditions.\nHandler — A function that defines the response to an event.",
+      "change": "Read n=0…20 followed by n integer events. Zero resets value, one increments up to ten, and minus one decrements down to zero. Other or forbidden events increase rejected. Missing or trailing tokens produce invalid.",
+      "inputs": "Case: First substantive run\nstdin:\n4 1 1 -1 1\nExpected:\nvalue 2 rejected 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "value:0→1→2→1→2; rejected=0.\nvalue 2 rejected 0.\nFirst input: value 0 rejected 2; second: invalid. Update the boundary test with the rule.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
+      "errors": "States 1,0,0; one rejection. −1 is a parsed command forbidden at 0. x breaks the whole trace format and produces invalid.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "4 1 1 -1 1",
+          "lines": [
+            "value 2 rejected 0"
+          ]
+        },
+        {
+          "stdin": "0",
+          "lines": [
+            "value 0 rejected 0"
+          ]
+        },
+        {
+          "stdin": "2 -1 2",
+          "lines": [
+            "value 0 rejected 2"
+          ]
+        },
+        {
+          "stdin": "3 1 0 -1",
+          "lines": [
+            "value 0 rejected 1"
+          ]
+        },
+        {
+          "stdin": "11 1 1 1 1 1 1 1 1 1 1 1",
+          "lines": [
+            "value 10 rejected 1"
+          ]
+        },
+        {
+          "stdin": "2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -452,5 +542,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.visual-event-model.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

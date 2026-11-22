@@ -370,7 +370,110 @@
     "outputFields": [
       "Stock quantity",
       "Rejection count"
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\nclass Stock {\n int quantity_=0;\npublic:\n bool receive(int n){if(n<0||n>100-quantity_)return false;quantity_+=n;return true;}\n bool ship(int n){if(n<0||n>quantity_)return false;quantity_-=n;return true;}\n int quantity()const{return quantity_;}\n};\nstruct Command {char op;int amount;};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<Command> commands;\n for(int i=0;i<n;++i){Command c;if(!(std::cin>>c.op>>c.amount)||(c.op!='+'&&c.op!='-')){std::cout<<\"invalid\\n\";return 0;}commands.push_back(c);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Stock s;int rejected=0;for(const auto& c:commands)if(!(c.op=='+'?s.receive(c.amount):s.ship(c.amount)))++rejected;\n std::cout<<s.quantity()<<' '<<rejected<<'\\n';}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Write transition tables for receive and ship.",
+        "criteria": "Each has success, rejection and resulting state."
+      },
+      {
+        "task": "Test shipping nine after receiving eight.",
+        "criteria": "Quantity remains eight and the result is false."
+      },
+      {
+        "task": "Design a result with rejection reasons.",
+        "criteria": "A zero quantity remains distinct from failure."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Classes, interfaces and state",
+      "start": "Running the starter with its default input produces:\n0 3\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Encapsulation — Controlling state through an interface that preserves domain meaning.\nPublic access — Members available to ordinary client code.\nPrivate access — Language-restricted access without a promise of encrypted storage.",
+      "change": "Read n=0…20 and n sign/integer pairs. Only + and - are valid. Stock starts at zero and stays in 0…100. + receives and - ships; negative amounts or a violated bound reject without mutation. Print quantity and rejection count. Invalid parsing, sign or extra tokens: invalid.",
+      "inputs": "Case: Case 1\nstdin:\n0\nExpected:\n0 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "0 → 8 → 8 → 5, one rejection.\nOutput 5 1.\nFirst output 0 2, second invalid.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+      "errors": "The object would lose its previous bounds. Check before either assignment.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "3 + 8 - 9 - 3",
+          "lines": [
+            "5 1"
+          ]
+        },
+        {
+          "stdin": "4 + 100 + 1 - 100 - 1",
+          "lines": [
+            "0 2"
+          ]
+        },
+        {
+          "stdin": "2 + -1 - -2",
+          "lines": [
+            "0 2"
+          ]
+        },
+        {
+          "stdin": "2 + 2147483647 - 2147483647",
+          "lines": [
+            "0 2"
+          ]
+        },
+        {
+          "stdin": "2 + 10 - 10",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "1 ? 4",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 +",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "21",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 extra",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -457,5 +560,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.classes-objects-state-control.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

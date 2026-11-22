@@ -47,7 +47,12 @@
         "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item original{7, 10};\n    Item backup = original;\n    bool ok = issue(backup, 3);\n    std::cout << ok << ' ' << original.stock << ' ' << backup.stock << '\\n';\n}\n",
         "stdin": "",
         "output": "1 10 7\n"
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-3",
@@ -119,7 +124,12 @@
           "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value{7, 2};\n    bool ok = issue(value, 3);\n    std::cout << ok << ' ' << value.id << ' ' << value.stock << '\\n';\n}\n",
           "stdin": "",
           "output": "0 7 2\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -338,6 +348,85 @@
       "case": 0,
       "stdout": "rejected 10\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value;\n    int amount{};\n    if (!(std::cin >> value.id >> value.stock >> amount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value.id < 1 || value.id > 1000 || value.stock < 0 || value.stock > 1000 || amount < 0 || amount > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    bool ok = issue(value, amount);\n    std::cout << (ok ? \"ok \" : \"rejected \") << value.stock << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "A record groups data; functions and invariants define valid changes."
+      },
+      {
+        "task": "Read id, stock, and amount: id 1…1000, stock 0…1000, amount 0…1000. issue(Item&,amount) rejects excess without mutation. Print ok/rejected and the resulting stock; malformed input is invalid.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Add transfer between two records: rejection changes neither, and success preserves total stock.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Issue stock with state-preserving rejection",
+      "start": "Running the starter with its default input produces:\nrejected 10\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Field — a named component of a structure object.\nRecord invariant — a condition true of every valid state.\nAggregate — a simple composite object supporting memberwise initialization.",
+      "change": "Read id, stock, and amount: id 1…1000, stock 0…1000, amount 0…1000. issue(Item&,amount) rejects excess without mutation. Print ok/rejected and the resulting stock; malformed input is invalid.",
+      "inputs": "Case: Case 1\nstdin:\n7 10 3\nExpected:\nok 7\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "For an excessive request, compare both fields with the snapshot. id = 0 must give invalid rather than rejected.\nA record groups data; functions and invariants define valid changes.\nRejection must preserve the whole record, not merely stock. Do not serialize sizeof(struct) bytes as a portable format.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "Check amount > stock before modifying stock. Issuing stock never changes id.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "7 10 3",
+          "lines": [
+            "ok 7"
+          ]
+        },
+        {
+          "stdin": "7 0 0",
+          "lines": [
+            "ok 0"
+          ]
+        },
+        {
+          "stdin": "7 2 3",
+          "lines": [
+            "rejected 2"
+          ]
+        },
+        {
+          "stdin": "7 1000 1000",
+          "lines": [
+            "ok 0"
+          ]
+        },
+        {
+          "stdin": "0 2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "7 2 -1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "7 2 1 extra",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -429,5 +518,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.structures.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

@@ -56,7 +56,12 @@
         "source": "#include <iostream>\nusing Count = int;\nenum class State { idle, ready };\nunion Storage { int count; double weight; };\nint main() {\n    Count n{3};\n    State state{State::ready};\n    Storage storage{};\n    storage.count = n;\n    std::cout << (state == State::ready) << ' ' << storage.count << '\\n';\n}\n",
         "stdin": "",
         "output": "1 3\n"
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-4",
@@ -119,7 +124,12 @@
           "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
           "stdin": "",
           "output": "1\n1 7\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -338,6 +348,85 @@
       "case": 0,
       "stdout": "rejected 3\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    int stock{}, amount{};\n    std::string kind;\n    if (!(std::cin >> stock >> kind >> amount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || stock < 0 || stock > 1000 || amount < 0 || amount > 1000 || (kind != \"add\" && kind != \"remove\")) { std::cout << \"invalid\\n\"; return 0; }\n    Command value = Add{amount};\n    if (kind == \"remove\") { value = Remove{amount}; }\n    bool ok = executeStock(stock, value);\n    std::cout << (ok ? \"ok \" : \"rejected \") << stock << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "An alternative’s type does not eliminate validation of its data."
+      },
+      {
+        "task": "Read stock, add/remove, and amount in 0…1000. Store the command in variant<Add,Remove>; print rejected stock if it cannot apply, otherwise ok newStock. Malformed input is invalid.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Add a SetLimit command as a separate struct; specify new rules and tests without exception-throwing std::get.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Add and remove commands",
+      "start": "Running the starter with its default input produces:\nrejected 3\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Alias — another name for an existing type.\nActive alternative — the type of value currently held by a variant.\nenum class — a distinct type with scoped enumerator names.",
+      "change": "Read stock, add/remove, and amount in 0…1000. Store the command in variant<Add,Remove>; print rejected stock if it cannot apply, otherwise ok newStock. Malformed input is invalid.",
+      "inputs": "Case: Case 1\nstdin:\n3 add 4\nExpected:\nok 7\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Check 3 remove 3, 3 remove 4 and 1000 add 1. Verify invalid for an unknown command.\nAn alternative’s type does not eliminate validation of its data.\nusing does not create a strong type. Do not inspect bits by reading an inactive union member.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "Selecting the right type does not validate the amount. The old stock is part of the rejection result.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "3 add 4",
+          "lines": [
+            "ok 7"
+          ]
+        },
+        {
+          "stdin": "3 remove 3",
+          "lines": [
+            "ok 0"
+          ]
+        },
+        {
+          "stdin": "3 remove 4",
+          "lines": [
+            "rejected 3"
+          ]
+        },
+        {
+          "stdin": "1000 add 1",
+          "lines": [
+            "rejected 1000"
+          ]
+        },
+        {
+          "stdin": "0 add 0",
+          "lines": [
+            "ok 0"
+          ]
+        },
+        {
+          "stdin": "3 other 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3 add -1",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -429,5 +518,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/variant.get"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.unions-typedef-enums.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

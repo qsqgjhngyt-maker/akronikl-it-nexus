@@ -114,7 +114,12 @@
         "source": "#include <iostream>\nstruct Subscription {\n    int &count;\n    explicit Subscription(int &n) : count(n) { ++count; }\n    ~Subscription() { --count; }\n    Subscription(const Subscription &) = delete;\n};\nint main() {\n    int active = 0;\n    {\n        Subscription s(active);\n        std::cout << active << '\\n';\n    }\n    std::cout << active << '\\n';\n}\n",
         "stdin": "",
         "output": "1\n0\n"
-      }
+      },
+      "steps": [
+        "Construction increments the active-subscription count.",
+        "One is observed within the scope.",
+        "Destruction at scope exit reduces it to zero."
+      ]
     },
     {
       "id": "concept-4",
@@ -367,6 +372,91 @@
       "case": 0,
       "stdout": "value 0 subscriptions 1\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState { int next = 1; std::map<int, std::function<void()>> handlers; };\nclass Subscription {\n  std::weak_ptr<SignalState> state_; int id_;\npublic:\n  Subscription(std::shared_ptr<SignalState> state, int id) : state_(state), id_(id) {}\n  Subscription(const Subscription&) = delete;\n  Subscription& operator=(const Subscription&) = delete;\n  ~Subscription() { if (auto s = state_.lock()) s->handlers.erase(id_); }\n};\nvoid emit(const std::shared_ptr<SignalState>& s) {\n  std::vector<int> ids;\n  for (const auto& [id, handler] : s->handlers) ids.push_back(id);\n  for (int id : ids) {\n    auto it = s->handlers.find(id);\n    if (it != s->handlers.end()) { auto handler = it->second; if (handler) handler(); }\n  }\n}\nint main() {\n  int mode;\n  if (!(std::cin >> mode) || mode < 0 || mode > 2) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  auto signal = std::make_shared<SignalState>();\n  auto receiver = std::make_shared<int>(0); std::weak_ptr<int> weak = receiver;\n  { int id = signal->next++;\n    signal->handlers.emplace(id, [weak] { if (auto value = weak.lock()) ++*value; });\n    Subscription subscription(signal, id);\n    emit(signal);\n    if (mode == 1) receiver.reset();\n    if (mode == 2) signal->handlers.clear();\n    emit(signal);\n  }\n  emit(signal);\n  std::cout << \"value \" << (receiver ? *receiver : -1) << \" subscriptions \" << signal->handlers.size() << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Draw the laboratory ownership graph.",
+        "criteria": "The graph identifies strong main→source/receiver and weak callback→receiver, subscription→source edges; explain why ownership has no cycle."
+      },
+      {
+        "task": "Implement subscription destruction.",
+        "criteria": "The destructor locks the weak source and removes its own id if it survives; handlers are empty after scope, and earlier source destruction is safe."
+      },
+      {
+        "task": "Add a safe Subscription move operation.",
+        "criteria": "Move transfers id/state and disarms its source; moved-from destruction must not disconnect the live subscription, and move-assignment first releases its old one."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Callback lifetime and RAII subscriptions",
+      "start": "Running the starter with its default input produces:\nvalue 0 subscriptions 1\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Subscription — A handler-registration resource with a defined lifetime.\nWeak reference — Observation of an object without extending its lifetime.\nlock — An attempt to obtain temporary shared ownership of a live object.",
+      "change": "Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count.",
+      "inputs": "Case: First substantive run\nstdin:\n0\nExpected:\nvalue 2 subscriptions 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "receiver can disappear before signal without a dangling access.\nvalue 2 subscriptions 0.\nA destroyed receiver is not invoked; a removed subscription does not remain in the map.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
+      "errors": "mode 0:value 2; mode 1:value−1; mode 2:value 1; subscriptions 0 after scope exit. The std::function copy survives removal of its map entry.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "value 2 subscriptions 0"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "value -1 subscriptions 0"
+          ]
+        },
+        {
+          "stdin": "2",
+          "lines": [
+            "value 1 subscriptions 0"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -478,5 +568,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/class.dtor"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.callback-lifetime-subscriptions.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

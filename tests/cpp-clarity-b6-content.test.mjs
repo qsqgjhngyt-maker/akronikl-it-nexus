@@ -29,7 +29,7 @@ test('B06 связывает полный текст, прогноз, контр
    assert.deepEqual(original,old(source(id,locale)));
    assert.deepEqual(l.extras,before.extras);
    for(const key of ['sections','selfcheck','practice','reading'])assert.deepEqual(l[key],a[key]);
-   assert.equal(a.revision,qt?'b6-author-v3':id==='cpp.event-queues-dispatch'?'b6-author-v2':'b6-author-v1');
+   assert.equal(a.revision,l.contentRevision); // Все редакции обновлены по поручению владельца 22.11.
    assert.equal(l.contentRevision,clarityContentRevision(id));
    const anchors=new Set(l.sections.map(s=>s.id));
    assert.ok(before.sections.every(s=>anchors.has(s.id)));

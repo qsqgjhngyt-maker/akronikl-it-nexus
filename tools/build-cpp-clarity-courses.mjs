@@ -127,8 +127,8 @@ await write('courses/clarity/editorial-map.json',{contentRevision:'clarity-cours
 await writeFile('core/clarity-course-registry.mjs','// Только канонические темы. Получено из программ действующих курсов; PLANNED не включены.\nexport const CLARITY_COURSES = Object.freeze('+JSON.stringify(registry)+');\n');
 console.log(JSON.stringify({courses:catalog.map(c=>({id:c.id,topics:c.topics.length})),adapted:audit.length,preservedPilots:pilots.size,locales:2}));
 
-// Разрешённые эталоны заменяют только свои десять редакций, без массовой переписи.
+// Полное распространение формата поручено владельцем 22.11.2026.
 const {buildReferenceCourses}=await import('./build-reference-courses.mjs');
 await buildReferenceCourses();
-for(const id of (await import('../core/reference-course-routes.mjs')).REFERENCE_IDS){const q=await read('courses/reference/authoring/'+id+'.ru.json');registry[id].contentRevision=q.contentRevision;}
+for(const id of Object.keys(registry)){const q=await read('courses/reference/authoring/'+id+'.ru.json');if(!registry[id].pilot||q.referenceEdition)registry[id].contentRevision=q.contentRevision;}
 await writeFile('core/clarity-course-registry.mjs','// Только канонические темы. Получено из программ действующих курсов; PLANNED не включены.\nexport const CLARITY_COURSES = Object.freeze('+JSON.stringify(registry)+');\n');

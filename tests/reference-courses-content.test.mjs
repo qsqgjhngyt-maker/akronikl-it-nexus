@@ -8,23 +8,24 @@ import {clarityContentRevision} from '../core/cpp-clarity-r3-state.mjs';
 import {evaluateReferenceRun} from '../core/reference-practice-assessment.mjs';
 import {curriculumForClarityProgress} from '../core/clarity-course-progress.mjs';
 import {hasRevisionCompletion,progressFor} from '../courses/onec-education/model.mjs';
+import {assertRolloutEdition} from './helpers/course-rollout-contract.mjs';
 const read=async p=>JSON.parse(await readFile(p,'utf8'));
 const folder=id=>['cpp.programming-process','onec.p2.topic-1'].includes(id)?'cpp-clarity-r3':'clarity';
 const target=(id,locale)=>'courses/'+folder(id)+'/lessons/'+id+'.'+locale+'.json';
 const old=(file)=>JSON.parse(execFileSync('git',['-c','core.longpaths=true','show','9a01de88:'+file],{maxBuffer:4e6}));
-test('Состав 151/302, прежние ID и 141 неизменённая тема',async()=>{
+test('Состав 151/302, прежние ID и явная миграция остальных 141 тем',async()=>{
  assert.equal(REFERENCE_IDS.length,10);assert.equal(new Set(REFERENCE_IDS).size,10);assert.deepEqual(REFERENCE_ROUTES.map(r=>r.topics.length),[4,3,3]);
  assert.equal(Object.keys(CLARITY_COURSES).length,151);
  for(const id of Object.keys(CLARITY_COURSES))for(const locale of ['ru','en']){
   const file='courses/'+(CLARITY_COURSES[id].pilot?'cpp-clarity-r3':'clarity')+'/lessons/'+id+'.'+locale+'.json';
-  const bytes=await readFile(file);if(!REFERENCE_IDS.includes(id)){assert.deepEqual(bytes,execFileSync('git',['-c','core.longpaths=true','show','9a01de88:'+file],{maxBuffer:4e6}),file);continue;}
+  const bytes=await readFile(file);if(!REFERENCE_IDS.includes(id)){assertRolloutEdition(id,locale);continue;}
   const l=JSON.parse(bytes),prior=old(file);assert.equal(l.id,prior.id);assert.equal(l.courseId,prior.courseId);assert.equal(l.moduleId,prior.moduleId);
   assert.deepEqual(l.selfcheck.map(q=>q.id),prior.selfcheck.map(q=>q.id),file+' question IDs');
   assert.equal(l.contentRevision,clarityContentRevision(id));assert.notEqual(l.contentRevision,prior.contentRevision||prior.proposalRevision);
  }
 });
 test('Старая попытка и отметка 1С сохраняются, но не становятся оценкой нового задания',()=>{
- const id='onec.p1.lifecycle',prior='onec-p1-author-v1',entry={completed:true,completionRevision:prior,attempts:[{contentRevision:prior,grade:{passed:true}}]},state={lessons:{[id]:entry}},c={courseId:'onec',modules:[{topics:[{topicId:id,status:'IMPLEMENTED',contentRevision:prior,progressPolicy:'current-revision-required'}]}]};
+ const id='onec.p1.lifecycle',prior='onec-p1-author-v1',entry={completed:true,completionRevision:prior,attempts:[{contentRevision:prior,grade:{passed:true}}]},state={lessons:{[id]:entry}},c={courseId:'onec',modules:[{status:'IMPLEMENTED',topics:[{topicId:id,status:'IMPLEMENTED',contentRevision:prior,progressPolicy:'current-revision-required'}]}]};
  const before=structuredClone(state),adapted=curriculumForClarityProgress(c,state);
  assert.equal(adapted.modules[0].topics[0].contentRevision,clarityContentRevision(id));assert.deepEqual(state,before);
  assert.equal(hasRevisionCompletion(entry,clarityContentRevision(id)),false);assert.equal(progressFor(adapted,state).done,0);

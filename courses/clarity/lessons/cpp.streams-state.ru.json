@@ -38,7 +38,12 @@
         "source": "#include <iostream>\nint main() {\n    int value{};\n    std::cin >> value;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << ' ' << bool(std::cin) << '\\n';\n}\n",
         "stdin": "8",
         "output": "0 1 1\n"
-      }
+      },
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ]
     },
     {
       "id": "concept-2",
@@ -101,7 +106,12 @@
           "source": "#include <iostream>\n#include <limits>\nint main() {\n    int value{};\n    if (!(std::cin >> value)) {\n        std::cin.clear();\n        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    }\n    if (std::cin >> value) { std::cout << value << '\\n'; }\n    else { std::cout << \"invalid\\n\"; }\n}\n",
           "stdin": "bad\n7\n",
           "output": "7\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       }
     },
     {
@@ -334,6 +344,79 @@
       "case": 1,
       "stdout": "0 3 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <sstream>\n#include <string>\nbool parse(const std::string& line, int& value) {\n    std::istringstream input{line};\n    int candidate{};\n    if (!(input >> candidate) || candidate < -1000 || candidate > 1000) { return false; }\n    input >> std::ws;\n    if (!input.eof()) { return false; }\n    value = candidate;\n    return true;\n}\nint main() {\n    std::string line;\n    int lines{}, accepted{}, rejected{};\n    long long sum{};\n    while (std::getline(std::cin, line)) {\n        if (++lines > 100 || line.size() > 200) { std::cout << \"invalid\\n\"; return 0; }\n        int value{};\n        if (parse(line, value)) { ++accepted; sum += value; }\n        else { ++rejected; }\n    }\n    if (std::cin.bad()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << accepted << ' ' << rejected << ' ' << sum << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+        "criteria": "Сброс флага и устранение неверного ввода — две разные операции."
+      },
+      {
+        "task": "Обработайте до 100 строк по <=200 байтов. Каждая должна содержать ровно одно целое в -1000…1000. Выведите accepted rejected sum; неверные строки пропускаются, превышение лимитов — invalid.",
+        "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+      },
+      {
+        "task": "Расширьте формат до id value и добавьте отчёт с номером отклонённой строки, не теряя следующую запись.",
+        "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+      }
+    ],
+    "passport": {
+      "goal": "Разбор построчного журнала",
+      "start": "При запуске заготовки со штатным вводом получается:\n0 3 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "failbit — неудача форматного извлечения или подобной операции.\nГраница записи — место, где одна логическая запись заканчивается.\neofbit — признак уже обнаруженного конца последовательности.",
+      "change": "Обработайте до 100 строк по <=200 байтов. Каждая должна содержать ровно одно целое в -1000…1000. Выведите accepted rejected sum; неверные строки пропускаются, превышение лимитов — invalid.",
+      "inputs": "Случай: Поток без строк\nstdin:\n(пустой ввод)\nОжидается:\n0 0 0\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Проверьте, что 2, bad, 3 дают 2 1 5. Отличите пустой поток, пустую строку и строку с двумя числами.\nСброс флага и устранение неверного ввода — две разные операции.\nНе принимайте fail&&eof за успешное число. Не удаляйте пустые строки через ws, если они являются записями.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+      "errors": "Хорошая запись обязана содержать ровно одно число. Завершение внешнего потока не делает последний токен корректным.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "",
+          "lines": [
+            "0 0 0"
+          ]
+        },
+        {
+          "stdin": "2\nbad\n3",
+          "lines": [
+            "2 1 5"
+          ]
+        },
+        {
+          "stdin": "\n",
+          "lines": [
+            "0 1 0"
+          ]
+        },
+        {
+          "stdin": "1 2\n4\n",
+          "lines": [
+            "1 1 4"
+          ]
+        },
+        {
+          "stdin": "999999999999999999999999",
+          "lines": [
+            "0 1 0"
+          ]
+        },
+        {
+          "stdin": "1001\n-1000\n",
+          "lines": [
+            "1 1 -1000"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -561,5 +644,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/string.io"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.streams-state.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

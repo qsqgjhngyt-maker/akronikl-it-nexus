@@ -38,7 +38,12 @@
         "source": "#include <iostream>\nint main() {\n    int before{};\n    while (false) { ++before; }\n    int after{};\n    do { ++after; } while (false);\n    std::cout << before << ' ' << after << '\\n';\n}\n",
         "stdin": "",
         "output": "0 1\n"
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-2",
@@ -110,7 +115,12 @@
           "source": "#include <iostream>\nint main() {\n    int value{};\n    int sum{};\n    int count{};\n    while (count < 10 && (std::cin >> value)) {\n        if (value == 0) { break; }\n        if (value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        sum += value;\n        ++count;\n    }\n    std::cout << count << ' ' << sum << '\\n';\n}\n",
           "stdin": "2 3 0 99",
           "output": "2 5\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -343,6 +353,91 @@
       "case": 3,
       "stdout": "0 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nint main() {\n    int count{};\n    long long sum{};\n    bool stopped{};\n    while (!stopped) {\n        std::cin >> std::ws;\n        if (std::cin.eof()) { break; }\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        if (value == 0) { stopped = true; }\n        else {\n            if (count == 100) { std::cout << \"invalid\\n\"; return 0; }\n            ++count;\n            sum += value;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << count << ' ' << sum << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "Every repetition either consumes input or terminates."
+      },
+      {
+        "task": "Sum until EOF or 0, accepting at most 100 nonzero integers in -1000…1000. Only whitespace may follow 0. Print count sum; reject errors as invalid.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Add the string command stop as a sentinel and explain why the previous integer parser must change.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Stop and check the remainder",
+      "start": "Running the starter with its default input produces:\n0 0\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Sentinel — a value that terminates a sequence under its contract.\nEOF — a state set after the end of input has been encountered.\nPre-test loop — the condition is checked before the body.",
+      "change": "Sum at most 100 nonzero integers from −1000 through 1000 until EOF or the sentinel 0. Only whitespace may follow 0. Print the count and sum separated by a space. Print invalid for a bad token, out-of-range value, excess count or trailing token.",
+      "inputs": "Case: Case 1\nstdin:\n(empty input)\nExpected:\n0 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Compare 2 3, 2 3 0 and 2 3 0 99. The last input must be rejected by the lab.\nEvery repetition either consumes input or terminates.\nAn oversized final number can set both fail and eof. eof alone does not prove a token was valid.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "Check the remaining input separately after the sentinel. A huge token must produce invalid even at EOF.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "0",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "2 3",
+          "lines": [
+            "2 5"
+          ]
+        },
+        {
+          "stdin": "2 -3 0",
+          "lines": [
+            "2 -1"
+          ]
+        },
+        {
+          "stdin": "2 0 3",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "2 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "999999999999999999999999",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1001",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -434,5 +529,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.while-do-while.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

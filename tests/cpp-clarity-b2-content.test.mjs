@@ -21,7 +21,7 @@ test('B02 покрывает весь модуль из восьми тем и �
  const nextBlock=new Set([...GOLD_STRUCTURED_LESSONS,...GOLD_CLASSIC_LESSONS,...GOLD_OOP_LESSONS,...GOLD_EVENT_LESSONS].flatMap(id=>['ru','en'].flatMap(locale=>[
   goldLessonPath(id,locale).replaceAll('\\','/'),'courses/clarity/lessons/'+id+'.'+locale+'.json'
  ])));
- assert.deepEqual(withoutReferencePaths(changed).filter(file=>!nextBlock.has(file)),expected);
+ assert.deepEqual(withoutReferencePaths(changed).filter(file=>!nextBlock.has(file)),withoutReferencePaths(expected));
 });
 
 test('B02 связывает обязательные разделы, вопросы, прежние ответы и независимую практику',async()=>{

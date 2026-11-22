@@ -40,7 +40,12 @@
         "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n)) { std::cout << \"invalid\\n\"; return 0; }\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
         "stdin": "8\n",
         "output": "even\n"
-      }
+      },
+      "steps": [
+        "8 has zero remainder modulo 2.",
+        "The even branch runs.",
+        "Input 9 reaches odd."
+      ]
     },
     {
       "id": "concept-3",
@@ -110,6 +115,12 @@
               ]
             ]
           }
+        ],
+        "steps": [
+          "sum begins at zero.",
+          "k=2 adds 2.",
+          "k=4 adds 4.",
+          "The loop exits once k becomes 6."
         ]
       }
     },
@@ -296,22 +307,109 @@
       {
         "where": "My program",
         "action": "Trace n = 7.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates your prediction from the run result.",
+        "expected": "Case: Main input\nstdin:\n7\n\nExpected:\n9\n"
       },
       {
         "where": "My program",
         "action": "Complete the loop and filter.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My program",
         "action": "Check n = 0, 5, 6, 7 and the input bounds.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates an ordinary successful result from boundary behaviour.",
+        "expected": "Case: Empty range\nstdin:\n0\n\nExpected:\n0\n"
       }
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.cpp"
+      }
+    },
+    "exercises": [
+      {
+        "task": "Make a state table for n=6.",
+        "criteria": "Even steps result in 2,6,12."
+      },
+      {
+        "task": "Rewrite the even sum using while.",
+        "criteria": "The output matches the for version."
+      },
+      {
+        "task": "Count odd integers from 1 to n.",
+        "criteria": "For n=5 the result is 3, and you state an invariant."
+      }
+    ],
+    "passport": {
+      "goal": "Sum of multiples of three",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Branch — An alternative control path chosen by a condition.\nIteration — One execution of a loop body.\nCounter — A variable recording a step.",
+      "change": "Sum multiples of three from 1 through n inclusive. Accept integers n from 0 to 10000, otherwise print invalid. For n = 0 the sum is zero. Use a loop with a filter so its state can be traced.",
+      "inputs": "Case: Main input\nstdin:\n7\n\nExpected:\n9\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Advance the counter every iteration, including when nothing is added.\nInclude n and return 0 for the empty range.\nExplain why the sum changes only at k = 3 and k = 6 for n = 7.",
+      "errors": "Compare n = 5 and n = 6. Only the latter range contains 6.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "7\n",
+          "lines": [
+            "9"
+          ]
+        },
+        {
+          "stdin": "0\n",
+          "lines": [
+            "0"
+          ]
+        },
+        {
+          "stdin": "5\n",
+          "lines": [
+            "3"
+          ]
+        },
+        {
+          "stdin": "6\n",
+          "lines": [
+            "9"
+          ]
+        },
+        {
+          "stdin": "10000\n",
+          "lines": [
+            "16668333"
+          ]
+        },
+        {
+          "stdin": "-1\n",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "10001\n",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "oops\n",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -378,5 +476,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.sequence-branching-loops.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

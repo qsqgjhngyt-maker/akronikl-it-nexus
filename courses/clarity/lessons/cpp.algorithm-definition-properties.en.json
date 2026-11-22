@@ -32,15 +32,41 @@
       "title": "Definiteness and discreteness",
       "paragraphs": [
         "Discreteness means reasoning about a computation as a sequence of individual steps. Definiteness means the executor can identify the intended operation at each step.",
-        "Different programming languages may implement the same algorithm. Precise transitions let us trace intermediate states and compare implementations.",
-        "Reading and checking the range are two separate steps. With oops instead of an age, the program has no number to compare with 120."
+        "First read the number of seconds. If extraction fails, there is no value to calculate with: print invalid and stop. Then check the sign. Only after these two steps divide by 60: / gives whole minutes and % gives the remaining seconds.",
+        "Try oops in place of the number of seconds. Extraction fails before the sign check. This is a different reason for rejection from reading -1 successfully and then rejecting its value. Both branches must stop before division."
       ],
       "code": {
         "language": "cpp",
-        "source": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}",
-        "stdin": "25\n",
-        "output": "valid\n"
-      }
+        "source": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+        "stdin": "125\n",
+        "output": "2 5\n"
+      },
+      "trace": [
+        [
+          "seconds",
+          "Input 125",
+          "125",
+          "Extraction succeeded and the value is non-negative."
+        ],
+        [
+          "125 / 60",
+          "125",
+          "2",
+          "Two complete groups of 60."
+        ],
+        [
+          "125 % 60",
+          "125",
+          "5",
+          "125 = 60 × 2 + 5; 0 ≤ 5 < 60."
+        ]
+      ],
+      "steps": [
+        "125 seconds equals two minutes and five seconds.",
+        "The remainder is less than 60 for a nonnegative input.",
+        "Never apply remainder reasoning to division by zero.",
+        "The program halts after reporting the pair."
+      ]
     },
     {
       "id": "concept-3",
@@ -48,7 +74,7 @@
       "paragraphs": [
         "A terminating algorithm must finish for every input in its stated domain. A condition such as n >= 0 matters: a loop designed for positive counts may misbehave outside that domain.",
         "Generality means solving a class of related instances, not a single hard-coded example. A sound addition algorithm should work for multiple valid pairs.",
-        "Try 0, 120 and 121. The same rule must give valid, valid and invalid. Checking the boundary separates <= from <."
+        "Try 0, 59 and 60 seconds. The results 0 0, 0 59 and 1 0 follow the same rule. At 60 the number of whole minutes changes; a negative value is rejected before calculation."
       ]
     },
     {
@@ -123,6 +149,12 @@
               ]
             ]
           }
+        ],
+        "steps": [
+          "125 seconds equals two minutes and five seconds.",
+          "The remainder is less than 60 for a nonnegative input.",
+          "Never apply remainder reasoning to division by zero.",
+          "The program halts after reporting the pair."
         ]
       }
     },
@@ -284,29 +316,111 @@
     ],
     "criteria": [
       "Check extraction and nonnegativity before calculating.",
-      "Check 12 × boxes + leftover = the original count and 0 ≤ leftover < 12."
+      "Check 12 × boxes + leftover = the original count and 0 ≤ leftover < 12.",
+      "Explain the result of one new valid case before running it, then compare with the observation. Matching output alone does not assess understanding."
     ],
     "hint": "Name both parts of the result and check them separately for input 11.",
     "steps": [
       {
         "where": "My program",
         "action": "Write the contract and predict the result for 29.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates your prediction from the run result.",
+        "expected": "Case: 29 items\nstdin:\n29\n\nExpected:\n2 5\n"
       },
       {
         "where": "My program",
         "action": "Replace the temporary output with calculations.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My program",
         "action": "Run the boundary cases and explain both result conditions.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates an ordinary successful result from boundary behaviour.",
+        "expected": "Case: Exactly one box\nstdin:\n12\n\nExpected:\n1 0\n"
       }
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.cpp"
+      }
+    },
+    "exercises": [
+      {
+        "task": "Predict both output fields for 0, 59, 60 and 125 seconds. Then check that a negative value and unreadable input are rejected before calculation.",
+        "criteria": "For valid values: 0 0; 0 59; 1 0; 2 5. Explain 60 × minutes + remainder = seconds and 0 ≤ remainder < 60. Rejected input produces invalid."
+      },
+      {
+        "task": "Write four boundary tests for age validation.",
+        "criteria": "Include both endpoints and two invalid inputs."
+      },
+      {
+        "task": "Justify the result of converting seconds into minutes and a remainder.",
+        "criteria": "For accepted input, seconds = 60*minutes + remainder and 0 <= remainder < 60."
+      }
+    ],
+    "passport": {
+      "goal": "Full boxes and leftover parts",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Definiteness — The intended action of each step is unambiguous.\nInvariant — A property that remains true across specified state transitions.\nPostcondition — A property that must hold when the algorithm finishes.",
+      "change": "Pack a nonnegative number of parts into boxes of 12. Print the full boxes and leftover parts separated by a space. Print invalid for a negative, missing or unreadable count.",
+      "inputs": "Case: 29 items\nstdin:\n29\n\nExpected:\n2 5\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Check extraction and nonnegativity before calculating.\nCheck 12 × boxes + leftover = the original count and 0 ≤ leftover < 12.",
+      "errors": "Name both parts of the result and check them separately for input 11.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "29\n",
+          "lines": [
+            "2 5"
+          ]
+        },
+        {
+          "stdin": "12\n",
+          "lines": [
+            "1 0"
+          ]
+        },
+        {
+          "stdin": "11\n",
+          "lines": [
+            "0 11"
+          ]
+        },
+        {
+          "stdin": "0\n",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "-1\n",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "oops\n",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -363,5 +477,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.iter"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.algorithm-definition-properties.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

@@ -73,7 +73,12 @@
           "source": "#include <iostream>\n#include <span>\nint main() {\n    int buffer[5]{4, 7, 0, 0, 0};\n    std::span<const int> values{buffer, 2};\n    int sum{};\n    for (int value : values) { sum += value; }\n    std::cout << values.size() << ' ' << sum << '\\n';\n}\n",
           "stdin": "",
           "output": "2 11\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       }
     },
     {
@@ -105,7 +110,12 @@
         "source": "#include <iostream>\n#include <array>\n#include <span>\nstd::size_t findFirst(std::span<const int> values, int target) {\n    for (std::size_t i = 0; i < values.size(); ++i) { if (values[i] == target) { return i; } }\n    return values.size();\n}\nint main() {\n    std::array<int, 4> values{4, 2, 4, 9};\n    std::cout << findFirst(values, 4) << ' ' << findFirst(values, 7) << '\\n';\n}\n",
         "stdin": "",
         "output": "0 4\n"
-      }
+      },
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ]
     },
     {
       "id": "concept-4",
@@ -323,6 +333,83 @@
       "case": 3,
       "stdout": "0 0\n\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> selected;\n    long long sum{};\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        if (value >= 0) { selected.push_back(value); sum += value; }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << selected.size() << ' ' << sum << '\\n';\n    for (std::size_t i = 0; i < selected.size(); ++i) { if (i != 0) { std::cout << ' '; } std::cout << selected[i]; }\n    std::cout << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+        "criteria": "Длина данных должна сопровождать доступ к элементам."
+      },
+      {
+        "task": "Из n<=100 целых в -1000…1000 выберите неотрицательные, сохраняя порядок. Выведите count sum и затем строку выбранных значений через пробел; для пустого результата вторая строка пустая.",
+        "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+      },
+      {
+        "task": "Сравните фильтрацию в новый vector и в тот же буфер; предъявите инвариант write<=read и тест одинаковых значений.",
+        "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+      }
+    ],
+    "passport": {
+      "goal": "Устойчивый отбор показаний",
+      "start": "При запуске заготовки со штатным вводом получается:\n0 0\n\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Логическая длина — число элементов, относящихся к данным.\nСтабильный отбор — сохранение относительного порядка выбранных элементов.\nИндекс — позиция элемента в диапазоне [0,size).",
+      "change": "Из n<=100 целых в -1000…1000 выберите неотрицательные, сохраняя порядок. Выведите count sum и затем строку выбранных значений через пробел; для пустого результата вторая строка пустая.",
+      "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\n0 0\n\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Сверьте обе строки, включая пустую вторую строку, и проверьте неполный ввод.\nДлина данных должна сопровождать доступ к элементам.\nНе ищите минимум через a[0] до проверки непустоты. Не используйте VLA как стандартный C++20.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+      "errors": "Запишите результат для 0 и −2 отдельно. Одно значение принимается, другое отбрасывается.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "0 0",
+            ""
+          ]
+        },
+        {
+          "stdin": "1 -2",
+          "lines": [
+            "0 0",
+            ""
+          ]
+        },
+        {
+          "stdin": "1 0",
+          "lines": [
+            "1 0",
+            "0"
+          ]
+        },
+        {
+          "stdin": "5 -2 4 0 -1 4",
+          "lines": [
+            "3 8",
+            "4 0 4"
+          ]
+        },
+        {
+          "stdin": "2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -546,5 +633,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/views.span"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.one-dimensional-arrays.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

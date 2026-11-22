@@ -73,7 +73,12 @@
           "source": "#include <iostream>\n#include <span>\nint main() {\n    int buffer[5]{4, 7, 0, 0, 0};\n    std::span<const int> values{buffer, 2};\n    int sum{};\n    for (int value : values) { sum += value; }\n    std::cout << values.size() << ' ' << sum << '\\n';\n}\n",
           "stdin": "",
           "output": "2 11\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -105,7 +110,12 @@
         "source": "#include <iostream>\n#include <array>\n#include <span>\nstd::size_t findFirst(std::span<const int> values, int target) {\n    for (std::size_t i = 0; i < values.size(); ++i) { if (values[i] == target) { return i; } }\n    return values.size();\n}\nint main() {\n    std::array<int, 4> values{4, 2, 4, 9};\n    std::cout << findFirst(values, 4) << ' ' << findFirst(values, 7) << '\\n';\n}\n",
         "stdin": "",
         "output": "0 4\n"
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-4",
@@ -323,6 +333,83 @@
       "case": 3,
       "stdout": "0 0\n\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> selected;\n    long long sum{};\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        if (value >= 0) { selected.push_back(value); sum += value; }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << selected.size() << ' ' << sum << '\\n';\n    for (std::size_t i = 0; i < selected.size(); ++i) { if (i != 0) { std::cout << ' '; } std::cout << selected[i]; }\n    std::cout << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "A data length must accompany element access."
+      },
+      {
+        "task": "Select nonnegative values from n<=100 integers in -1000…1000, preserving order. Print count sum, then selected values separated by spaces; an empty result has an empty second line.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Compare filtering into a new vector with in-place filtering; supply the write<=read invariant and a duplicate-value test.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Stable selection of readings",
+      "start": "Running the starter with its default input produces:\n0 0\n\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Logical length — the number of elements belonging to the data.\nStable filtering — preserving selected elements’ relative order.\nIndex — an element position in [0,size).",
+      "change": "Select nonnegative values from n<=100 integers in -1000…1000, preserving order. Print count sum, then selected values separated by spaces; an empty result has an empty second line.",
+      "inputs": "Case: Case 1\nstdin:\n0\nExpected:\n0 0\n\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Check both lines, including an empty second line, and test incomplete input.\nA data length must accompany element access.\nDo not initialize a minimum from a[0] before checking nonemptiness. Do not use a VLA as standard C++20.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "Write out results for 0 and −2 separately. One is accepted, the other discarded.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "0 0",
+            ""
+          ]
+        },
+        {
+          "stdin": "1 -2",
+          "lines": [
+            "0 0",
+            ""
+          ]
+        },
+        {
+          "stdin": "1 0",
+          "lines": [
+            "1 0",
+            "0"
+          ]
+        },
+        {
+          "stdin": "5 -2 4 0 -1 4",
+          "lines": [
+            "3 8",
+            "4 0 4"
+          ]
+        },
+        {
+          "stdin": "2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -546,5 +633,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/views.span"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.one-dimensional-arrays.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

@@ -87,7 +87,12 @@
           "source": "#include <iostream>\nstruct Part {\n    char id;\n    explicit Part(char c) : id(c) { std::cout << '+' << id << ' '; }\n    ~Part() { std::cout << '-' << id << ' '; }\n};\nstruct Machine {\n    Part a, b;\n    Machine() : a('A'), b('B') { std::cout << \"ready \"; }\n    ~Machine() { std::cout << \"stop \"; }\n};\nint main() {\n    {\n        Machine m;\n    }\n    std::cout << '\\n';\n}\n",
           "stdin": "",
           "output": "+A +B ready stop -B -A \n"
-        }
+        },
+        "steps": [
+          "Members a and b initialize in declaration order.",
+          "The constructor body prints ready.",
+          "Scope exit prints stop, then -B and -A."
+        ]
       }
     },
     {
@@ -110,7 +115,12 @@
         "source": "#include <iostream>\nclass Level {\n    int value_;\n\n  public:\n    explicit Level(int n) : value_(n) {}\n    int value() const { return value_; }\n};\nvoid show(const Level &l) { std::cout << l.value() << '\\n'; }\nint main() {\n    Level l{7};\n    show(l);\n}\n",
         "stdin": "",
         "output": "7\n"
-      }
+      },
+      "steps": [
+        "explicit requires deliberate Level{7} construction.",
+        "show borrows the existing live object.",
+        "value() prints seven without mutating state."
+      ]
     },
     {
       "id": "concept-4",
@@ -351,6 +361,91 @@
       "case": 1,
       "stdout": "0 0 0 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nclass Lease {\n int& active_;\npublic:\n explicit Lease(int& n):active_(n){++active_;}\n Lease(const Lease&)=delete;Lease& operator=(const Lease&)=delete;\n ~Lease(){--active_;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>2){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;{Lease a{active};std::cout<<active<<' ';if(mode){Lease b{active};std::cout<<active<<' ';}std::cout<<active<<' ';}\n std::cout<<active<<'\\n';}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "List the Machine event order.",
+        "criteria": "Obtain +A +B ready stop -B -A."
+      },
+      {
+        "task": "Justify the Lease counter lifetime.",
+        "criteria": "The earlier outer counter outlives both leases."
+      },
+      {
+        "task": "Explain why Lease copying is forbidden.",
+        "criteria": "Two cleanups must not correspond to one acquisition."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Construction and lifetime completion",
+      "start": "Running the starter with its default input produces:\n0 0 0 0\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Constructor — A special function that establishes an object's initial state.\nMember initializer list — Constructor syntax specifying direct initialization of bases and members.\nExplicit constructor — A constructor declaration restricting implicit conversions.",
+      "change": "Read exactly one mode=0…2. Construct Lease a and print active; for a nonzero mode construct b in an inner scope and print active. Print active after the inner scope and again after a is destroyed, ending the line. Lease increments the counter on construction and decrements on destruction; copying is forbidden. Invalid input: invalid.",
+      "inputs": "Case: Case 1\nstdin:\n0\nExpected:\n1 1 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Entries give 1 and 2, exits give 1 and 0.\nOutput 1 2 1 0.\nExpect 1 1 0, then 1 2 1 0, then invalid.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+      "errors": "After creating a, one Lease is active. No inner object is created, and leaving the outer scope destroys a.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "1 1 0"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "1 2 1 0"
+          ]
+        },
+        {
+          "stdin": "2",
+          "lines": [
+            "1 2 1 0"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -565,5 +660,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/class.dtor"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.constructors-destructors.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

@@ -349,6 +349,91 @@
       "case": 0,
       "stdout": "idle rejected 4\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {}; struct Pause {}; struct Resume {}; struct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State& state, const Event& event) {\n  return std::visit([&](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) { if (state == State::idle) { state = State::running; return true; } }\n    else if constexpr (std::is_same_v<T, Pause>) { if (state == State::running) { state = State::paused; return true; } }\n    else if constexpr (std::is_same_v<T, Resume>) { if (state == State::paused) { state = State::running; return true; } }\n    else { if (state == State::running) { state = State::done; return true; } }\n    return false;\n  }, event);\n}\nint main() {\n  std::string trace;\n  if (!std::getline(std::cin, trace) || trace.size() > 100) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  State state = State::idle; int rejected = 0;\n  for (char c : trace) {\n    bool ok = false;\n    if (c == 'S') ok = apply(state, Start{});\n    else if (c == 'P') ok = apply(state, Pause{});\n    else if (c == 'R') ok = apply(state, Resume{});\n    else if (c == 'F') ok = apply(state, Finish{});\n    if (!ok) ++rejected;\n  }\n  const char* names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n  std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Заполните таблицу четырёх состояний и четырёх событий.",
+        "criteria": "Заполнены все 16 пар state/event: четыре разрешённых перехода и 12 отказов без смены состояния; done указан терминальным."
+      },
+      {
+        "task": "Реализуйте apply без чтения cin.",
+        "criteria": "apply принимает Event и состояние без cin, возвращает bool и меняет состояние только по таблице; SPRF и SPF различаются ожидаемым результатом."
+      },
+      {
+        "task": "Спроектируйте автомат проверки документа.",
+        "criteria": "Для документа заданы состояния draft/review/approved, события и таблица отказов; независимая трасса проверяет запрет редактирования approved."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Состояния и типизированные события",
+      "start": "При запуске заготовки со штатным вводом получается:\nidle rejected 4\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Автомат — Состояния и правила переходов под действием событий.\nПереход — Разрешённое изменение состояния при заданном событии.\nАльтернатива — Один из типов, который может хранить variant.",
+      "change": "Одна строка до 100 символов. S: idle→running; P: running→paused; R: paused→running; F: running→done. Иная пара или символ — один отказ без смены состояния. Пустая строка допустима; отсутствующая строка и лишние данные после строки: invalid.",
+      "inputs": "Случай: Первый содержательный запуск\nstdin:\nSPRF\nОжидается:\ndone rejected 0\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "idle/S→running; running/P→paused; paused/R→running; running/F→done.\ndone rejected 0.\nSPF: paused rejected 1; пустая строка: idle rejected 0; X: idle rejected 1.\nДобавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска.",
+      "errors": "idle→running→paused; F разрешён только в running. Сделайте явную ветвь Finish, затем отдельное правило Reopen и тесты всех пар.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "SPRF",
+          "lines": [
+            "done rejected 0"
+          ]
+        },
+        {
+          "stdin": "\n",
+          "lines": [
+            "idle rejected 0"
+          ]
+        },
+        {
+          "stdin": "F",
+          "lines": [
+            "idle rejected 1"
+          ]
+        },
+        {
+          "stdin": "SS",
+          "lines": [
+            "running rejected 1"
+          ]
+        },
+        {
+          "stdin": "SPF",
+          "lines": [
+            "paused rejected 1"
+          ]
+        },
+        {
+          "stdin": "SFF",
+          "lines": [
+            "done rejected 1"
+          ]
+        },
+        {
+          "stdin": "X",
+          "lines": [
+            "idle rejected 1"
+          ]
+        },
+        {
+          "stdin": "S\nX",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -448,5 +533,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/variant.get"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.states-typed-events.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

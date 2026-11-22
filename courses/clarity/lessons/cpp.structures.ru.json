@@ -47,7 +47,12 @@
         "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item original{7, 10};\n    Item backup = original;\n    bool ok = issue(backup, 3);\n    std::cout << ok << ' ' << original.stock << ' ' << backup.stock << '\\n';\n}\n",
         "stdin": "",
         "output": "1 10 7\n"
-      }
+      },
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ]
     },
     {
       "id": "concept-3",
@@ -119,7 +124,12 @@
           "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value{7, 2};\n    bool ok = issue(value, 3);\n    std::cout << ok << ' ' << value.id << ' ' << value.stock << '\\n';\n}\n",
           "stdin": "",
           "output": "0 7 2\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       }
     },
     {
@@ -338,6 +348,85 @@
       "case": 0,
       "stdout": "rejected 10\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value;\n    int amount{};\n    if (!(std::cin >> value.id >> value.stock >> amount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value.id < 1 || value.id > 1000 || value.stock < 0 || value.stock > 1000 || amount < 0 || amount > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    bool ok = issue(value, amount);\n    std::cout << (ok ? \"ok \" : \"rejected \") << value.stock << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+        "criteria": "Запись связывает данные; функции и инварианты задают допустимые изменения."
+      },
+      {
+        "task": "Прочитайте id, stock и amount: id 1…1000, stock 0…1000, amount 0…1000. issue(Item&,amount) отклоняет превышение без изменения. Выведите ok/rejected и итоговый stock; неверный формат — invalid.",
+        "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+      },
+      {
+        "task": "Добавьте transfer между двумя записями: отказ не меняет ни одну, успех сохраняет общую сумму запасов.",
+        "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+      }
+    ],
+    "passport": {
+      "goal": "Выдача товара с сохранным отказом",
+      "start": "При запуске заготовки со штатным вводом получается:\nrejected 10\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Поле — именованная часть объекта структуры.\nИнвариант записи — условие, верное для каждого допустимого состояния.\nАгрегат — простой составной объект, который можно инициализировать по полям.",
+      "change": "Прочитайте id, stock и amount: id 1…1000, stock 0…1000, amount 0…1000. issue(Item&,amount) отклоняет превышение без изменения. Выведите ok/rejected и итоговый stock; неверный формат — invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n7 10 3\nОжидается:\nok 7\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "При превышении запаса сравните оба поля со снимком. Для id = 0 должно быть invalid, а не rejected.\nЗапись связывает данные; функции и инварианты задают допустимые изменения.\nОтказ должен сохранять всю запись, а не только stock. Не сериализуйте sizeof(struct) как переносимый формат.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+      "errors": "Сделайте проверку amount > stock до изменения stock. id никогда не меняется операцией выдачи.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "7 10 3",
+          "lines": [
+            "ok 7"
+          ]
+        },
+        {
+          "stdin": "7 0 0",
+          "lines": [
+            "ok 0"
+          ]
+        },
+        {
+          "stdin": "7 2 3",
+          "lines": [
+            "rejected 2"
+          ]
+        },
+        {
+          "stdin": "7 1000 1000",
+          "lines": [
+            "ok 0"
+          ]
+        },
+        {
+          "stdin": "0 2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "7 2 -1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "7 2 1 extra",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -429,5 +518,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.structures.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

@@ -38,7 +38,12 @@
         "source": "#include <iostream>\nstruct Reading {\n    int value;\n};\nbool acceptable(const Reading &r) { return r.value >= 0 && r.value <= 100; }\nint main() {\n    Reading a{42}, b{101};\n    std::cout << acceptable(a) << ' ' << acceptable(b) << '\\n';\n}\n",
         "stdin": "",
         "output": "1 0\n"
-      }
+      },
+      "steps": [
+        "Создайте две записи с допустимым и недопустимым значением.",
+        "Функция acceptable только наблюдает запись.",
+        "Сравните два bool: 1 и 0."
+      ]
     },
     {
       "id": "concept-2",
@@ -375,7 +380,116 @@
     "outputFields": [
       "Значение Counter",
       "Число отказов"
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nclass Counter {\n int value_=0;\npublic:\n bool add(int n){if(n<0||n>100-value_)return false;value_+=n;return true;}\n int value()const{return value_;}\n};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}\n int amounts[20]{};for(int i=0;i<n;++i)if(!(std::cin>>amounts[i])){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Counter c;int rejected=0;for(int i=0;i<n;++i)if(!c.add(amounts[i]))++rejected;\n std::cout<<c.value()<<' '<<rejected<<'\\n';}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Разделите поля и операции Counter.",
+        "criteria": "Названы значение, add, value и старт 0."
+      },
+      {
+        "task": "Докажите безопасность проверки до сложения.",
+        "criteria": "Указаны границы остатка и опасность value+n."
+      },
+      {
+        "task": "Сравните открытую запись и класс на этой задаче.",
+        "criteria": "Есть сценарий пропуска проверки и цена интерфейса."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Объекты, абстракция и границы ответственности",
+      "start": "При запуске заготовки со штатным вводом получается:\n0 3\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Объект — Область хранения с типом и временем жизни; не обязательно экземпляр пользовательского класса.\nАбстракция — Выбранный набор наблюдаемых свойств, скрывающий ненужные клиенту решения.\nИнвариант — Условие, сохраняемое при создании и после публичных операций.",
+      "change": "Прочитайте n=0…20 и ровно n целых приращений. Counter начинается с 0, принимает только неотрицательное приращение, не превышающее остаток до 100; отказ сохраняет значение. Выведите значение и число отказов через пробел. Неверный синтаксис, размер или лишний токен: invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\n0 0\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Состояния 0 → 30 → 30 → 50, один отказ.\nПолучается 50 1.\nПервый даёт 0 1, второй invalid.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+      "errors": "Состояния 30, 30, 50. Запрос на 80 не помещается в остаток 70, поэтому отказ один.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "3 30 80 20",
+          "lines": [
+            "50 1"
+          ]
+        },
+        {
+          "stdin": "3 -1 100 1",
+          "lines": [
+            "100 2"
+          ]
+        },
+        {
+          "stdin": "2 0 100",
+          "lines": [
+            "100 0"
+          ]
+        },
+        {
+          "stdin": "1 2147483647",
+          "lines": [
+            "0 1"
+          ]
+        },
+        {
+          "stdin": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ",
+          "lines": [
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "21",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 tail",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -462,5 +576,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.oop-principles.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

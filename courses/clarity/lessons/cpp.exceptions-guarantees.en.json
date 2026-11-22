@@ -96,7 +96,12 @@
           "source": "#include <iostream>\n#include <stdexcept>\nstruct Guard {\n    int &active;\n    explicit Guard(int &n) : active(n) { ++active; }\n    Guard(const Guard &) = delete;\n    Guard &operator=(const Guard &) = delete;\n    ~Guard() { --active; }\n};\nint main() {\n    int active = 0;\n    try {\n        Guard g{active};\n        throw std::runtime_error(\"stop\");\n    } catch (const std::exception &) {\n        std::cout << \"caught \" << active << '\\n';\n    }\n}\n",
           "stdin": "",
           "output": "caught 0\n"
-        }
+        },
+        "steps": [
+          "Guard increments active within try.",
+          "An actual throw transfers control and destroys Guard.",
+          "The handler observes active zero: caught 0."
+        ]
       }
     },
     {
@@ -161,7 +166,12 @@
         "source": "#include <iostream>\n#include <stdexcept>\nvoid inner() { throw std::out_of_range(\"index\"); }\nvoid outer() {\n    try {\n        inner();\n    } catch (const std::exception &) {\n        throw;\n    }\n}\nint main() {\n    try {\n        outer();\n    } catch (const std::out_of_range &) {\n        std::cout << \"typed\\n\";\n    }\n}\n",
         "stdin": "",
         "output": "typed\n"
-      }
+      },
+      "steps": [
+        "inner throws out_of_range.",
+        "outer catches a base reference and performs a bare throw;.",
+        "The specific outer catch establishes type preservation: typed."
+      ]
     },
     {
       "id": "concept-7",
@@ -375,6 +385,91 @@
       "case": 1,
       "stdout": "ok 3 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}Guard(const Guard&)=delete;Guard& operator=(const Guard&)=delete;~Guard(){--active;}};\nclass Store {std::vector<int> values_{1,2};public:\n void replace(bool fail,int& active){Guard g{active};auto candidate=values_;candidate.push_back(9);\n  if(fail)throw std::runtime_error(\"injected\");values_.swap(candidate);}\n int sum()const{int n=0;for(int x:values_)n+=x;return n;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Store s;int active=0;try{s.replace(mode==1,active);std::cout<<\"ok \";}catch(const std::runtime_error&){std::cout<<\"rejected \";}\n std::cout<<s.sum()<<' '<<active<<'\\n';}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Trace Guard before entering catch.",
+        "criteria": "active is already zero in the handler."
+      },
+      {
+        "task": "Check mode zero and one.",
+        "criteria": "Sums are twelve and three, with active zero in both."
+      },
+      {
+        "task": "Add a full-snapshot preservation test.",
+        "criteria": "Compare content rather than only the sum."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Exceptions and error guarantees",
+      "start": "Running the starter with its default input produces:\nok 3 0\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Exception — Transfer of control with an error object to a matching handler.\nThrow — An expression initiating an exceptional path or rethrowing an exception.\nCatch handler — An exception handler selected by type-matching rules.",
+      "change": "Read mode=0…1. Store starts with {1,2}; replace prepares a copy with nine appended and throws runtime_error before swap when mode is one. Guard tracks a resource. After the attempt print ok or rejected, current Store sum and active. Invalid input: invalid. Zero gives ok 12 0; one gives rejected 3 0.",
+      "inputs": "Case: Case 1\nstdin:\n0\nExpected:\nok 12 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Store {1,2}, candidate {1,2,9}.\nOutput rejected 3 0.\nOutput ok 12 0.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+      "errors": "Store already holds {1,2,9}, so its sum after rejection is 12 instead of 3. The original state is lost.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "ok 12 0"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "rejected 3 0"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "2",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0.5",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -593,5 +688,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/except"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.exceptions-guarantees.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

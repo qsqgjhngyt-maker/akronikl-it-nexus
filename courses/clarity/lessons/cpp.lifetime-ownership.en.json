@@ -47,7 +47,12 @@
         "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    Trace first{1};\n    { Trace second{2}; }\n    std::cout << \"end\\n\";\n}\n",
         "stdin": "",
         "output": "create 1\ncreate 2\ndestroy 2\nend\ndestroy 1\n"
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-3",
@@ -151,7 +156,12 @@
           "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    auto owner = std::make_unique<Trace>(5);\n    Trace* observer = owner.get();\n    auto next = std::move(owner);\n    std::cout << (!owner) << ' ' << (observer == next.get()) << '\\n';\n    next.reset();\n}\n",
           "stdin": "",
           "output": "create 5\n1 1\ndestroy 5\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -347,6 +357,82 @@
       "case": 1,
       "stdout": "create 4\ndestroy 4\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    int value{};\n    if (!(std::cin >> value)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value < 0 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    auto owner = std::make_unique<Trace>(value);\n    auto next = std::move(owner);\n    std::cout << \"moved \" << (!owner) << ' ' << bool(next) << '\\n';\n    ++next->value;\n    std::cout << \"value \" << next->value << '\\n';\n    next.reset();\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "Transferring ownership does not extend lifetime beyond the final owner."
+      },
+      {
+        "task": "Create an object with value in 0…1000 using make_unique, move its owner, increment value, and release it. Print create N, moved 1 1, value N+1, destroy N+1. Invalid input prints invalid.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Add a nested block owning another object and predict the exact destroy order before running it.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Move, modify and release",
+      "start": "Running the starter with its default input produces:\ncreate 4\ndestroy 4\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "RAII — resource management through object initialization and destruction.\nDangling observer — an address or view whose object no longer exists.\nunique_ptr — a movable but noncopyable unique object owner.",
+      "change": "Create an object with value in 0…1000 using make_unique, move its owner, increment value, and release it. Print create N, moved 1 1, value N+1, destroy N+1. Invalid input prints invalid.",
+      "inputs": "Case: Case 1\nstdin:\n0\nExpected:\ncreate 0\nmoved 1 1\nvalue 1\ndestroy 1\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Check N = 0 and N = 1000, then reject a trailing token without printing create.\nTransferring ownership does not extend lifetime beyond the final owner.\nDo not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "Compare observer with the new owner’s address before reset. After reset, check only the log.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "create 0",
+            "moved 1 1",
+            "value 1",
+            "destroy 1"
+          ]
+        },
+        {
+          "stdin": "4",
+          "lines": [
+            "create 4",
+            "moved 1 1",
+            "value 5",
+            "destroy 5"
+          ]
+        },
+        {
+          "stdin": "1000",
+          "lines": [
+            "create 1000",
+            "moved 1 1",
+            "value 1001",
+            "destroy 1001"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "4 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -438,5 +524,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.lifetime-ownership.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

@@ -791,7 +791,110 @@
       "outputFields": [
         "Остаток Stock",
         "Число отказов"
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\nclass Stock {\n int quantity_=0;\npublic:\n bool receive(int n){if(n<0||n>100-quantity_)return false;quantity_+=n;return true;}\n bool ship(int n){if(n<0||n>quantity_)return false;quantity_-=n;return true;}\n int quantity()const{return quantity_;}\n};\nstruct Command {char op;int amount;};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<Command> commands;\n for(int i=0;i<n;++i){Command c;if(!(std::cin>>c.op>>c.amount)||(c.op!='+'&&c.op!='-')){std::cout<<\"invalid\\n\";return 0;}commands.push_back(c);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Stock s;int rejected=0;for(const auto& c:commands)if(!(c.op=='+'?s.receive(c.amount):s.ship(c.amount)))++rejected;\n std::cout<<s.quantity()<<' '<<rejected<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Запишите таблицу receive и ship.",
+          "criteria": "У каждого метода есть успех, отказ, состояние после."
+        },
+        {
+          "task": "Проверьте отгрузку 9 после приёмки 8.",
+          "criteria": "Количество остаётся 8, возвращён false."
+        },
+        {
+          "task": "Спроектируйте результат с причинами отказа.",
+          "criteria": "Нулевой остаток не смешан с ошибкой."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: Классы, интерфейс и состояние",
+        "start": "При запуске заготовки со штатным вводом получается:\n0 3\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Инкапсуляция — Управление состоянием через интерфейс, сохраняющий предметный смысл.\npublic — Область членов, доступных клиентскому коду.\nprivate — Доступ, ограниченный правилами языка, без обещания шифрования.",
+        "change": "Прочитайте n=0…20 и n пар знак/целое. Только + и - допустимы. Stock имеет остаток 0…100, начально 0. + получает, - отгружает, отрицательная сумма или нарушение диапазона даёт отказ без изменения. Выведите остаток и число отказов. Неверный разбор, знак или лишние токены: invalid.",
+        "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\n0 0\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "0 → 8 → 8 → 5, один отказ.\nВывод 5 1.\nПервый вывод 0 2, второй invalid.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+        "errors": "Объект успеет потерять прежние границы. Проверка должна предшествовать обеим записям.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "3 + 8 - 9 - 3",
+            "lines": [
+              "5 1"
+            ]
+          },
+          {
+            "stdin": "4 + 100 + 1 - 100 - 1",
+            "lines": [
+              "0 2"
+            ]
+          },
+          {
+            "stdin": "2 + -1 - -2",
+            "lines": [
+              "0 2"
+            ]
+          },
+          {
+            "stdin": "2 + 2147483647 - 2147483647",
+            "lines": [
+              "0 2"
+            ]
+          },
+          {
+            "stdin": "2 + 10 - 10",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "1 ? 4",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 +",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 extra",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -845,6 +948,7 @@
         "sourceTitle": "Защита интерфейса",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

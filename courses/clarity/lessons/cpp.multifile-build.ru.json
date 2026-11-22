@@ -38,7 +38,12 @@
         "source": "#include <iostream>\nint twice(int);\nint main() { std::cout << twice(6) << '\\n'; }\nint twice(int value) { return 2 * value; }\n",
         "stdin": "",
         "output": "12\n"
-      }
+      },
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ]
     },
     {
       "id": "concept-2",
@@ -146,7 +151,12 @@
               "include"
             ]
           }
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       }
     },
     {
@@ -393,6 +403,84 @@
       "case": 0,
       "stdout": "invalid\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "files": {
+        "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+        "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+      },
+      "metadata": {
+        "translationUnits": [
+          "main.cpp",
+          "src/domain.cpp"
+        ],
+        "includeRoots": [
+          "include"
+        ]
+      }
+    },
+    "exercises": [
+      {
+        "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+        "criteria": "Заголовок сообщает интерфейс; выбранные TU определяют, что реально собрано."
+      },
+      {
+        "task": "Разделите checkedArea между include/domain.hpp, src/domain.cpp и main.cpp. Проверьте чтение двух размеров 0…1000 и итог area либо invalid. Соберите отдельный тестовый драйвер без второго main в приложении.",
+        "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+      },
+      {
+        "task": "Добавьте checkedPerimeter в общий интерфейс и отдельные unit-тесты; докажите, что main не зависит от внутреннего устройства вычисления.",
+        "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+      }
+    ],
+    "passport": {
+      "goal": "Собрать приложение и тест раздельно",
+      "start": "При запуске заготовки со штатным вводом получается:\ninvalid\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "TU — исходный файл после обработки подключений и директив.\nЛинковка — объединение скомпилированных частей и разрешение внешних имён.\nОбъявление — описание имени и типа без обязательного тела реализации.",
+      "change": "Разделите checkedArea между include/domain.hpp, src/domain.cpp и main.cpp. Проверьте чтение двух размеров 0…1000 и итог area либо invalid. Соберите отдельный тестовый драйвер без второго main в приложении.",
+      "inputs": "Случай: Случай 1\nstdin:\n3 4\nОжидается:\n12\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Сверьте 3 4 и −1 2. В отдельном эксперименте пропустите файл реализации и классифицируйте ошибку. Не добавляйте второй main в эту же сборку.\nЗаголовок сообщает интерфейс; выбранные TU определяют, что реально собрано.\nНе включайте .cpp и не собирайте два main вместе. Header guard не является программной базой определений.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+      "errors": "Добавление include даёт объявление. Для линковки нужен src/domain.cpp в списке единиц трансляции.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "3 4",
+          "lines": [
+            "12"
+          ]
+        },
+        {
+          "stdin": "1000 1000",
+          "lines": [
+            "1000000"
+          ]
+        },
+        {
+          "stdin": "0 2",
+          "lines": [
+            "0"
+          ]
+        },
+        {
+          "stdin": "-1 2",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 2 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -484,5 +572,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.separate"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.multifile-build.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

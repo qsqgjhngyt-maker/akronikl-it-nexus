@@ -544,7 +544,12 @@
           "source": "#include <iostream>\n\nint main() {\n    bool connected{true};\n    bool maintenance{false};\n    std::cout << (connected && !maintenance) << '\\n';\n    std::cout << (connected || maintenance) << '\\n';\n    std::cout << (!connected) << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "1\n1\n0\n"
-        }
+        },
+        "steps": [
+          "!maintenance is true.",
+          "connected && !maintenance permits operation.",
+          "!connected means disconnected, which is false here."
+        ]
       },
       {
         "id": "concept-4",
@@ -583,6 +588,11 @@
               ]
             ]
           }
+        ],
+        "steps": [
+          "For && the left side is false and the right is skipped.",
+          "For || the left side is true and the right is skipped.",
+          "The results differ: safety does not imply equivalence."
         ]
       },
       {
@@ -743,28 +753,74 @@
         {
           "where": "My independent work",
           "action": "Write the two formulas separately.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates your prediction from the run result.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nvalid=1\ncan_start=1\n"
         },
         {
           "where": "My independent work",
           "action": "Check every boundary and a disconnected case.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "Predict both outputs before running.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "Save a data-valid/start-permitted table.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates an ordinary successful result from boundary behaviour.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nvalid=1\ncan_start=1\n"
         }
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int loadPercent{65};\n    bool connected{true};\n    bool validLoad = loadPercent >= 0 && loadPercent <= 100;\n    bool canStart = connected && validLoad && loadPercent <= 80;\n    std::cout << \"valid=\" << validLoad << '\\n';\n    std::cout << \"can_start=\" << canStart << '\\n';\n    return 0;\n}\n",
+        "files": {},
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      "exercises": [
+        {
+          "task": "Fill tables for A&&B, A||B, and !A over the four bool pairs.",
+          "criteria": "Mark where B is skipped."
+        },
+        {
+          "task": "Express a valid temperature of −20…50 inclusive.",
+          "criteria": "Use two comparisons and &&; check −21, −20, 50, 51."
+        },
+        {
+          "task": "Distinguish valid load from a device start permission.",
+          "criteria": "Include a valid but forbidden case."
+        }
+      ],
+      "passport": {
+        "goal": "A start-permission contract",
+        "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Predicate — Here, a bool expression describing a property to check.\nLogical AND — Built-in && is true when both operands are true; the right operand is skipped when the left is false.\nLogical OR — Built-in || is true when at least one operand is true; the right operand is skipped when the left is true.",
+        "change": "Calculate valid and can_start. A valid percentage is 0…100; starting needs a connection and load at most 80. The main task starts with load 65 and an active connection. Then test load 90 separately: the percentage is valid, but starting is forbidden. Explain the two flags valid and can_start without treating them as the same condition.",
+        "inputs": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nvalid=1\ncan_start=1\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "No chained comparisons.\nLogical operators use the correct forms.\n90 is not called an invalid percentage.\nBoundary cases are actually checked.\nExplain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\nSupply a complete right-hand expression rather than a guessed symbol.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "",
+            "lines": [
+              "valid=1",
+              "can_start=1"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -929,6 +985,7 @@
         "anchor": "concept-6"
       }
     ],
-    "starterExpected": "connected=1\n"
+    "starterExpected": "connected=1\n",
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

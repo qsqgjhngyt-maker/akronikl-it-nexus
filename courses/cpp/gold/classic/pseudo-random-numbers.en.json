@@ -688,7 +688,14 @@
             "source": "#include <iostream>\n#include <random>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::mt19937 a(2026), b(2026);\n    std::uniform_int_distribution<int> da(-3, 3), db(-3, 3);\n    std::vector<int> x, y;\n    for (int i = 0; i < 512; ++i) {\n        x.push_back(da(a));\n        y.push_back(db(b));\n    }\n    bool bounded = std::all_of(x.begin(), x.end(),\n                               [](int n) { return n >= -3 && n <= 3; });\n    std::cout << (x == y) << ' ' << bounded << ' ' << x.size() << '\\n';\n}",
             "stdin": "",
             "output": "1 1 512\n"
-          }
+          },
+          "steps": [
+            "Two engines use seed 2026; both distributions have range −3…3.",
+            "Each pair receives the same history of 512 calls.",
+            "x==y checks replay within the current library; bounded checks every element independently.",
+            "Check length 512 separately: an empty sequence could otherwise satisfy all_of.",
+            "libstdc++ and libc++ may produce different arrays while preserving these results. Save the actual input data for cross-environment replay."
+          ]
         }
       },
       {
@@ -1214,6 +1221,137 @@
         "case": 2,
         "stdout": "generated 0\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <random>\n#include <vector>\n#include <fstream>\n#include <algorithm>\nint main(){\n int n,lo,hi;long long seed;\n if(!(std::cin>>n>>seed>>lo>>hi)||n<0||n>128||seed<0||seed>4294967295LL||lo< -1000||hi>1000||lo>hi){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::mt19937 a(static_cast<std::mt19937::result_type>(seed)),b(static_cast<std::mt19937::result_type>(seed));\n std::uniform_int_distribution<int>da(lo,hi),db(lo,hi);\n std::vector<int>x,y;for(int i=0;i<n;++i){x.push_back(da(a));y.push_back(db(b));}\n bool bounded=std::all_of(x.begin(),x.end(),[lo,hi](int value){return value>=lo&&value<=hi;});\n std::ofstream first(\"samples.txt\"),second(\"repeat.txt\");if(!first||!second){std::cout<<\"io-error\\n\";return 0;}\n for(int value:x)first<<value<<'\\n';for(int value:y)second<<value<<'\\n';first.close();second.close();\n if(!first||!second){std::cout<<\"io-error\\n\";return 0;}\n std::cout<<\"count \"<<x.size()<<\"\\nrepeatable \"<<(x==y?\"yes\":\"no\")<<\"\\nbounded \"<<(bounded?\"yes\":\"no\")<<'\\n';\n}",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Separate mt19937 and uniform_int_distribution roles.",
+          "criteria": "Identify bit source and range mapping."
+        },
+        {
+          "task": "Complete the paired-stream laboratory.",
+          "criteria": "Files agree within a run and values stay bounded."
+        },
+        {
+          "task": "Build a sort corpus: empty, equal, reverse and random.",
+          "criteria": "Preserve seeds, sizes and actual data."
+        }
+      ],
+      "passport": {
+        "goal": "Laboratory: Pseudorandomness and reproducibility",
+        "start": "Running the starter with its default input produces:\ngenerated 0\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Engine — A deterministic state machine producing a sequence.\nSeed — An initial value for generator state initialization.\nDistribution — Transforming random bits into values with a chosen distribution.",
+        "change": "Read n seed lo hi with no extra tokens: n=0…128, seed=0…4294967295, −1000<=lo<=hi<=1000. Create two identically initialized mt19937 engines and two uniform_int_distribution objects; save n integers on separate lines in samples.txt and repeat.txt. Print count N, repeatable yes, bounded yes on separate lines. Both files must exist, agree and satisfy the bounds; exact cross-library sequences are unspecified. Invalid input gives invalid.",
+        "inputs": "Case: Case 1\nstdin:\n0 0 0 0\nExpected:\ncount 0\nrepeatable yes\nbounded yes\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Two files, each with a single line containing 7.\nEach file contains 32 integers from −3 through 3, and the contents agree.\nFirst two empty files, then invalid with no output files.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+        "errors": "Each file has one line containing 7. The valid range has only one value.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0 0 0 0",
+            "lines": [
+              "count 0",
+              "repeatable yes",
+              "bounded yes"
+            ]
+          },
+          {
+            "stdin": "1 5489 7 7",
+            "lines": [
+              "count 1",
+              "repeatable yes",
+              "bounded yes"
+            ]
+          },
+          {
+            "stdin": "32 2026 -3 3",
+            "lines": [
+              "count 32",
+              "repeatable yes",
+              "bounded yes"
+            ]
+          },
+          {
+            "stdin": "128 4294967295 -1000 1000",
+            "lines": [
+              "count 128",
+              "repeatable yes",
+              "bounded yes"
+            ]
+          },
+          {
+            "stdin": "5 17 -2 -1",
+            "lines": [
+              "count 5",
+              "repeatable yes",
+              "bounded yes"
+            ]
+          },
+          {
+            "stdin": "-1 0 0 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "129 0 0 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 -1 0 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 4294967296 0 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 0 2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 0 -1001 0",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 0 0 1001",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 0 0 0 extra",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "x",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -1278,6 +1416,7 @@
         "sourceTitle": "Lab artifacts and the next experiment",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

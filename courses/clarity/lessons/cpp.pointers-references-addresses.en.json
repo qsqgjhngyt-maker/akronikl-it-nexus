@@ -67,7 +67,12 @@
           "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    int copy = value;\n    int& alias = value;\n    int* pointer = &value;\n    alias = 12;\n    *pointer = 15;\n    std::cout << value << ' ' << copy << ' ' << alias << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "15 10 15\n"
-        }
+        },
+        "steps": [
+          "copy gets an independent value 10.",
+          "alias changes the original to 12.",
+          "*pointer changes that same object to 15; copy stays 10."
+        ]
       }
     },
     {
@@ -109,6 +114,11 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "selected initially points to first.",
+        "selected = &second changes the target.",
+        "*selected=7 changes only second."
       ]
     },
     {
@@ -137,7 +147,12 @@
         "source": "#include <iostream>\n\nint main() {\n    int* selected{nullptr};\n    if (selected != nullptr) {\n        std::cout << *selected << '\\n';\n    } else {\n        std::cout << \"absent\\n\";\n    }\n    return 0;\n}\n",
         "stdin": "",
         "output": "absent\n"
-      }
+      },
+      "steps": [
+        "selected is explicitly null.",
+        "The access condition is false.",
+        "Only the absent branch executes."
+      ]
     },
     {
       "id": "concept-5",
@@ -151,7 +166,12 @@
         "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    const int* observer = &value;\n    const int& view = value;\n    value = 14;\n    std::cout << *observer << ' ' << view << '\\n';\n    return 0;\n}\n",
         "stdin": "",
         "output": "14 14\n"
-      }
+      },
+      "steps": [
+        "Both access paths refer to value.",
+        "The ordinary value name changes the object to 14.",
+        "Both observers read the updated value."
+      ]
     },
     {
       "id": "concept-6",
@@ -330,28 +350,75 @@
       {
         "where": "My independent work",
         "action": "Draw relationships before running.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates your prediction from the run result.",
+        "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nstock=9\nsnapshot=10\nalias=9\n"
       },
       {
         "where": "My independent work",
         "action": "Separate the updates into statements.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Compare final stock and snapshot.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Repeat with initial values 3 and 20.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates an ordinary successful result from boundary behaviour.",
+        "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nstock=9\nsnapshot=10\nalias=9\n"
       }
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.cpp"
+      }
+    },
+    "exercises": [
+      {
+        "task": "Draw value, copy, alias, and pointer after the first example.",
+        "criteria": "Show two int objects, a reference, and a separate pointer; use symbolic addresses."
+      },
+      {
+        "task": "Reseat a pointer between two live ints and change only the second.",
+        "criteria": "The first stays unchanged, the second changes, and null is not read."
+      },
+      {
+        "task": "Describe a non-owning selected-data contract: when it may be absent and how long it lives.",
+        "criteria": "Specify absence, checks, and lifetime without new/delete."
+      }
+    ],
+    "passport": {
+      "goal": "One stock object, several access paths",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Reference T& — In our declarations, an alias of an existing object; it needs initialization and cannot be reseated.\nPointer T* — A separate object holding a pointer value, such as the address of a suitable live T or nullptr.\nAddress-of & — In &value, produces a pointer to the value object.",
+      "change": "Create a snapshot, reference, and pointer. Sell 3 through the reference and add 2 through the pointer. The snapshot must preserve its initial value. Add a second stock object, otherStock{20}. Redirect only stockPointer to it and add 1 through *stockPointer. Explain why selectedStock still refers to the first stock; report both stocks and the snapshot.",
+      "inputs": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nstock=9\nsnapshot=10\nalias=9\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Every dereference targets live stock.\nThe copy is not presented as an alias.\nProvide a legend, values, and actual stdout.\nNo new/delete, pointer arithmetic, or unsafe reads.\nExplain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+      "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\nThis access path is read-only.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "",
+          "lines": [
+            "stock=9",
+            "snapshot=10",
+            "alias=9"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -432,5 +499,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.pointers-references-addresses.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

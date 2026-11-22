@@ -510,7 +510,12 @@
             "source": "#include <iostream>\n#include <concepts>\ntemplate <std::integral T> T smaller(T a, T b) { return b < a ? b : a; }\nint main() { std::cout << smaller(3, 7) << ' ' << smaller(9L, 4L) << '\\n'; }\n",
             "stdin": "",
             "output": "3 4\n"
-          }
+          },
+          "steps": [
+            "Arguments three and seven both deduce int.",
+            "L suffixes select long in the second invocation.",
+            "Both satisfy integral: output 3 4."
+          ]
         }
       },
       {
@@ -793,7 +798,110 @@
       "outputFields": [
         "int sum",
         "long long sum"
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\ntemplate<std::integral T> T sum(std::span<const T> values){T result{};for(T x:values)result+=x;return result;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<int> a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<long long> b(a.begin(),a.end());std::cout<<sum<int>(std::span<const int>{a})<<' '<<sum<long long>(std::span<const long long>{b})<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Deduce T for both smaller calls.",
+          "criteria": "Obtain int and long and explain the literal suffix."
+        },
+        {
+          "task": "Check sum on an empty span.",
+          "criteria": "The result is zero without dereferencing elements."
+        },
+        {
+          "task": "Justify laboratory arithmetic bounds.",
+          "criteria": "20×100=2000 fits both types."
+        }
+      ],
+      "passport": {
+        "goal": "Laboratory: Templates and constrained generalization",
+        "start": "Running the starter with its default input produces:\n0 0\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Function template — A family of functions parameterized by types or values.\nClass template — A definition of a family of concrete types through parameters.\nInstantiation — Forming a required specialization from a template definition.",
+        "change": "Read n=0…20 and n integers in −100…100 with no trailing token. Implement template<std::integral T> T sum(std::span<const T>). Invoke it for vector<int> and its vector<long long> copy; print both sums. An empty sequence with n zero gives 0 0. Invalid input: invalid.",
+        "inputs": "Case: Case 1\nstdin:\n0\nExpected:\n0 0\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "The sum is 6, with magnitude at most 2000.\nFor 3 1 2 3, the result is 6 6.\n0 gives 0 0, and double fails compilation.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+        "errors": "The allowed input gives 20 × 100 = 2000. The concept describes the type, not the size of these data.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "3 1 2 3",
+            "lines": [
+              "6 6"
+            ]
+          },
+          {
+            "stdin": "2 -100 100",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "1 -100",
+            "lines": [
+              "-100 -100"
+            ]
+          },
+          {
+            "stdin": "20 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 ",
+            "lines": [
+              "2000 2000"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 101",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -857,6 +965,7 @@
         "sourceTitle": "Evidence of the learning outcome",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

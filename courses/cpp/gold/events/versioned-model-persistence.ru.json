@@ -463,7 +463,12 @@
           "source": "#include <iostream>\n#include <sstream>\nint main() {\n    std::ostringstream out;\n    out << \"EV1 \" << 7;\n    std::istringstream in(out.str());\n    std::string version;\n    int value = 0;\n    in >> version >> value;\n    std::cout << version << ' ' << value << '\\n';\n}\n",
           "stdin": "",
           "output": "EV1 7\n"
-        }
+        },
+        "steps": [
+          "ostringstream формирует EV1 и число семь.",
+          "istringstream читает эти байты обратно.",
+          "Совпадение проверяет конкретный простой roundtrip."
+        ]
       },
       {
         "id": "concept-2",
@@ -786,6 +791,91 @@
         "case": 0,
         "stdout": "rejected 99\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream& in, std::vector<int>& model) {\n  std::string version; int count;\n  if (!(in >> version >> count) || version != \"EV1\" || count < 0 || count > 8) return false;\n  std::vector<int> candidate;\n  for (int i = 0; i < count; ++i) { int x; if (!(in >> x) || x < 0 || x > 100) return false; candidate.push_back(x); }\n  in >> std::ws; if (!in.eof()) return false;\n  model.swap(candidate); return true;\n}\nvoid save(std::ostream& out, const std::vector<int>& values) { out << \"EV1 \" << values.size(); for (int x : values) out << ' ' << x; out << '\\n'; }\nint main() {\n  std::vector<int> model{99};\n  if (!load(std::cin, model)) { std::cout << \"rejected \" << model[0] << '\\n'; return 0; }\n  std::ostringstream bytes; save(bytes, model); std::istringstream input(bytes.str()); std::vector<int> copy;\n  if (!load(input, copy) || copy != model) return 1;\n  std::cout << bytes.str();\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Опишите грамматику EV1.",
+          "criteria": "Грамматика EV1 задаёт маркер, count 0…8, ровно count значений 0…100 и только whitespace после них; показаны допустимая и три недопустимые записи."
+        },
+        {
+          "task": "Реализуйте load и save.",
+          "criteria": "load проверяет весь формат до swap, save выдаёт канонический EV1; roundtrip равен исходной модели, все malformed случаи сохраняют старую."
+        },
+        {
+          "task": "Предложите спецификацию и тесты EV0→EV1.",
+          "criteria": "Описаны обе грамматики и однозначное EV0→EV1 преобразование; проверены старый, новый, неизвестный и повреждённый формат без частичного commit."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: Сохранение модели и версия формата",
+        "start": "При запуске заготовки со штатным вводом получается:\nrejected 99\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Сериализация — Преобразование модели в явно определённый формат данных.\nДесериализация — Проверяемое восстановление модели из формата данных.\nMarker версии — Признак, определяющий способ интерпретации записи.",
+        "change": "Формат EV1 count values, count=0…8, каждое value=0…100, хвост только пробельный. При отказе прежняя модель {99} сохраняется и печатается rejected 99. При успехе сохраните в память, загрузите в копию и сравните; stdout — каноническая запись EV1.",
+        "inputs": "Случай: Первый содержательный запуск\nstdin:\nEV1 3 1 2 3\nОжидается:\nEV1 3 1 2 3\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "EV1 3 1 2 3 допустим; EV1 2 1 оборван.\nПервый вход сохраняется как EV1 3 1 2 3; отказ печатает rejected 99.\nПри отказе совпадает весь vector до/после; roundtrip сохраняет значения и количество.\nДобавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска.",
+        "errors": "Commit — model.swap(candidate) после проверки EOF. Нулевое количество не разрешает хвост extra; до commit model остаётся{99}.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "EV1 3 1 2 3",
+            "lines": [
+              "EV1 3 1 2 3"
+            ]
+          },
+          {
+            "stdin": "EV1 0",
+            "lines": [
+              "EV1 0"
+            ]
+          },
+          {
+            "stdin": "EV2 1 7",
+            "lines": [
+              "rejected 99"
+            ]
+          },
+          {
+            "stdin": "EV1 2 1",
+            "lines": [
+              "rejected 99"
+            ]
+          },
+          {
+            "stdin": "EV1 1 -1",
+            "lines": [
+              "rejected 99"
+            ]
+          },
+          {
+            "stdin": "EV1 1 101",
+            "lines": [
+              "rejected 99"
+            ]
+          },
+          {
+            "stdin": "EV1 0 extra",
+            "lines": [
+              "rejected 99"
+            ]
+          },
+          {
+            "stdin": "EV1 9",
+            "lines": [
+              "rejected 99"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -872,6 +962,7 @@
         "stdin": "",
         "output": "rejected preserved 1\nEV1 2 1 2\n"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

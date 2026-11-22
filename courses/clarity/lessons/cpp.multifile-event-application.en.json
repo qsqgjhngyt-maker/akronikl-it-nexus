@@ -38,7 +38,12 @@
         "source": "#include <iostream>\nstruct Command {\n    int amount;\n};\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
         "stdin": "",
         "output": "7\n"
-      }
+      },
+      "steps": [
+        "Command stores a delta.",
+        "update receives its data explicitly.",
+        "Three plus four yields seven without a global dependency."
+      ]
     },
     {
       "id": "concept-2",
@@ -107,7 +112,12 @@
           "source": "#include <iostream>\nstruct Task {\n    bool done = false;\n    void complete() { done = true; }\n};\nint main() {\n    Task task;\n    task.complete();\n    task.complete();\n    std::cout << \"done \" << task.done << '\\n';\n}\n",
           "stdin": "",
           "output": "done 1\n"
-        }
+        },
+        "steps": [
+          "The first complete sets true.",
+          "The second leaves true.",
+          "Counting state must not count two completed tasks."
+        ]
       }
     },
     {
@@ -370,6 +380,102 @@
       "case": 0,
       "stdout": "tasks 0 done 0 rejected 4\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Board board; int rejected = 0;\n  for (int command : commands) if (!board.apply(command)) ++rejected;\n  std::cout << \"tasks \" << board.count() << \" done \" << board.done() << \" rejected \" << rejected << '\\n';\n}\n",
+      "files": {
+        "include/model.hpp": "#pragma once\n#include <vector>\nclass Board {\n  std::vector<bool> done_;\npublic:\n  bool apply(int command);\n  int count() const;\n  int done() const;\n};\n",
+        "src/model.cpp": "#include \"model.hpp\"\n#include <algorithm>\nbool Board::apply(int command) {\n  if (command == 0) { if (done_.size() == 8) return false; done_.push_back(false); return true; }\n  if (command < 1 || command > int(done_.size())) return false;\n  done_[command - 1] = true; return true;\n}\nint Board::count() const { return int(done_.size()); }\nint Board::done() const { return int(std::count(done_.begin(), done_.end(), true)); }\n"
+      },
+      "metadata": {
+        "includeRoots": [
+          "include"
+        ],
+        "translationUnits": [
+          "main.cpp",
+          "src/model.cpp"
+        ]
+      }
+    },
+    "exercises": [
+      {
+        "task": "Name the responsibilities of the three files.",
+        "criteria": "Assign interface, implementation and adapter roles to model.hpp, model.cpp and main.cpp; identify header inclusions and single definition locations."
+      },
+      {
+        "task": "Build the laboratory from two translation units.",
+        "criteria": "The project builds main.cpp and src/model.cpp with includeRoots include; removing a definition yields a linker error and restoration reproduces reference results."
+      },
+      {
+        "task": "Replace vector<bool> with vector<Task> without changing results.",
+        "criteria": "vector<Task> preserves the public contract and all old results; explain the vector<bool> proxy difference and check done after a repeated command."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: A multi-file event-driven application",
+      "start": "Running the starter with its default input produces:\ntasks 0 done 0 rejected 4\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Translation unit — A cpp source after preprocessing its includes.\nODR — Rules governing permitted definitions of program entities.\nLinking — Combining compiled units and resolving definitions.",
+      "change": "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid.",
+      "inputs": "Case: First substantive run\nstdin:\n4 0 0 1 1\nExpected:\ntasks 2 done 1 rejected 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Two TUs: main.cpp and src/model.cpp; the header is found through include.\n4 0 0 1 1 → tasks 2 done 1 rejected 0.\nThe ninth addition is rejected; the original eight tasks remain.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
+      "errors": "Two tasks, the first completed, done 1, rejected 0. A missing definition fails linking before execution; a domain rejection occurs in a running program.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "4 0 0 1 1",
+          "lines": [
+            "tasks 2 done 1 rejected 0"
+          ]
+        },
+        {
+          "stdin": "0",
+          "lines": [
+            "tasks 0 done 0 rejected 0"
+          ]
+        },
+        {
+          "stdin": "1 1",
+          "lines": [
+            "tasks 0 done 0 rejected 1"
+          ]
+        },
+        {
+          "stdin": "3 0 1 2",
+          "lines": [
+            "tasks 1 done 1 rejected 1"
+          ]
+        },
+        {
+          "stdin": "9 0 0 0 0 0 0 0 0 0",
+          "lines": [
+            "tasks 8 done 0 rejected 1"
+          ]
+        },
+        {
+          "stdin": "1 -1",
+          "lines": [
+            "tasks 0 done 0 rejected 1"
+          ]
+        },
+        {
+          "stdin": "2 0",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -481,5 +587,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.multifile-event-application.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

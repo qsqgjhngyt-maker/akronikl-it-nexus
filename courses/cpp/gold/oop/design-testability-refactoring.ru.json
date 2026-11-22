@@ -893,7 +893,12 @@
           "source": "#include <iostream>\nstruct Discount {\n    int percent;\n    int apply(int cents) const { return cents * (100 - percent) / 100; }\n};\nint price(int cents, const Discount &policy) { return policy.apply(cents); }\nint main() {\n    std::cout << price(1000, Discount{10}) << ' '\n              << price(1000, Discount{0}) << '\\n';\n}\n",
           "stdin": "",
           "output": "900 1000\n"
-        }
+        },
+        "steps": [
+          "Discount передаётся явно, без глобального состояния.",
+          "1000 центов с 10% скидкой дают 900.",
+          "Нулевая скидка даёт 1000; сравните два вызова."
+        ]
       },
       {
         "id": "concept-3",
@@ -1645,6 +1650,115 @@
         "case": 1,
         "stdout": "tasks 2 minutes 0\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\nstruct Task {int id,minutes;};\nbool valid(const std::vector<Task>& tasks){for(std::size_t i=0;i<tasks.size();++i){if(tasks[i].id<1||tasks[i].id>100||tasks[i].minutes<0||tasks[i].minutes>100)return false;for(std::size_t j=0;j<i;++j)if(tasks[i].id==tasks[j].id)return false;}return true;}\nint total(const std::vector<Task>& tasks){int n=0;for(const auto& t:tasks)n+=t.minutes;return n;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<Task> tasks;\n for(int i=0;i<n;++i){Task t;if(!(std::cin>>t.id>>t.minutes)){std::cout<<\"invalid\\n\";return 0;}tasks.push_back(t);}\n std::cin>>std::ws;if(!std::cin.eof()||!valid(tasks)){std::cout<<\"invalid\\n\";return 0;}\n std::cout<<\"tasks \"<<tasks.size()<<\" minutes \"<<total(tasks)<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Назовите ответственности main, Board и Policy.",
+          "criteria": "Разбор, инвариант и правило оценки разделены."
+        },
+        {
+          "task": "Вынесите домен лабораторной в cpp/header.",
+          "criteria": "Те же входы дают те же результаты."
+        },
+        {
+          "task": "Напишите ADR выбора virtual Policy.",
+          "criteria": "Есть минимум две альтернативы и ограничение применимости."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: Проектирование, тестируемость и рефакторинг",
+        "start": "При запуске заготовки со штатным вводом получается:\ntasks 2 minutes 0\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Связность — Единство частей модуля вокруг понятной ответственности.\nСцепление — Степень зависимости клиентов от решений другого компонента.\nРефакторинг — Изменение структуры при сохранении согласованного поведения.",
+        "change": "Прочитайте n=0…20 и n пар id/minutes. id=1…100 уникален, minutes=0…100. Сначала проверьте весь ввод и хвост. Отделите valid и total от main. Успех: tasks N minutes S. Неверный ввод или повтор ID: invalid. Затем перенесите домен в отдельную TU без изменения результатов.",
+        "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\ntasks 0 minutes 0\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "Для {1,5},{2,8} valid истинен, total равен 13.\nВывод tasks 2 minutes 13.\nВ обоих вариантах tasks 0 minutes 0 и invalid.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+        "errors": "Повторите корректные и ошибочные входы, сравните stdout и exit. Соединение файлов само по себе не подтверждает прежние расчёты.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "tasks 0 minutes 0"
+            ]
+          },
+          {
+            "stdin": "2 1 5 2 8",
+            "lines": [
+              "tasks 2 minutes 13"
+            ]
+          },
+          {
+            "stdin": "1 100 100",
+            "lines": [
+              "tasks 1 minutes 100"
+            ]
+          },
+          {
+            "stdin": "1 1 0",
+            "lines": [
+              "tasks 1 minutes 0"
+            ]
+          },
+          {
+            "stdin": "2 1 4 1 7",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 0 3",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 1 -1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 1 101",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -1699,6 +1813,7 @@
         "sourceTitle": "Защита накопленного проекта",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

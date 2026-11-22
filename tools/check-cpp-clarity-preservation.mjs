@@ -1,3 +1,4 @@
+import {rolloutDigest,rolloutPins,assertRolloutBytes} from '../tests/helpers/course-rollout-bytes.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
@@ -29,7 +30,7 @@ const approvedOnecUiPaths=new Map([
  ['core/cpp-clarity-authored.mjs','223b1493879e47c6182661324ad3edaf295776cb40f2bf5deb9c3ed3b368a6ad'],
  ['core/clarity-visuals.mjs','186f24da2e4cc44de25c6a00285eaf995c3a11074114b7a3a8f6eb958b962ffb'],
 ]);
-for(const[file,digest]of approvedOnecUiPaths)assert.equal(sha(await readFile(file)),digest,'Approved 1C presentation bytes: '+file);
+for(const[file,digest]of approvedOnecUiPaths)assert.equal(sha(await readFile(file)),rolloutDigest(file,digest),'Approved 1C presentation bytes: '+file);
 // Модульная поставка P2 по решению владельца и MASTER00 / f636357a.
 const p2ModuleSources=new Set(['onec.p2.topic-4','onec.p2.numbers-dates-locales'].flatMap(id=>['ru','en'].map(locale=>'courses/clarity/authoring/'+id+'.'+locale+'.json')));
 const p2ModuleMedia=new Map(JSON.parse(await readFile('docs/ru/03-content/cpp-clarity-01/R65_ONEC_P2_MODULE_NATIVE_CAPTURES.json','utf8')).images.map(f=>['courses/clarity/'+f.src,f.sha256]));
@@ -107,7 +108,9 @@ const ciBasicToolApproved=new Map([
 ]);
 for(const[file,digest]of ciBasicToolApproved){assert.equal(sha(await readFile(file)),digest,'Approved BASIC CI bytes: '+file);sourceAllow.add(file);}
 const referencePins=JSON.parse(await readFile('docs/ru/03-content/reference-courses-20261112/APPROVED_REFERENCE_BYTES.json','utf8')).files;
-for(const pin of referencePins){assert.equal(sha(await readFile(pin.path)),pin.newSha256,'Reference exact bytes: '+pin.path);sourceAllow.add(pin.path);}
+assertRolloutBytes();
+for(const pin of referencePins){assert.equal(sha(await readFile(pin.path)),rolloutDigest(pin.path,pin.newSha256),'Reference exact bytes: '+pin.path);sourceAllow.add(pin.path);}
+for(const pin of rolloutPins)sourceAllow.add(pin.path);
 const referenceQa=new Set(['tests/helpers/reference-course-contract.mjs','tests/reference-courses-content.test.mjs','tests/reference-courses-browser.mjs','tests/reference-courses-before-browser.mjs','tools/build-reference-courses.mjs','tools/check-reference-courses-native.ps1','tools/check-reference-applied-native.ps1']);
 for(const name of names)assert.ok(referenceQa.has(name)||name.startsWith('docs/ru/03-content/reference-courses-20261112/')||sourceAllow.has(name)||qaDiagnosticApproved.has(name)||p1Edition.test(name)||p2TypesEdition.test(name)||p2ConditionsEdition.test(name)||p1Media.has(name)||p2TypesMedia.has(name)||p2ConditionsMedia.has(name)||/^courses\/clarity\/(?:lessons\/|courses\.json$|editorial-map\.json$)/.test(name)||/^courses\/cpp-clarity-r3\/(?:lessons\/|code\/|courses\.json$|setup\.(ru|en)\.json$)/.test(name)||/^review\/cpp-clarity-r3\//.test(name)||/^courses\/cpp\/gold\/(algorithms|basics)\//.test(name)||extendedGoldPaths.has(name)||/^(tests\/(helpers\/)?cpp-clarity-|tools\/(check|build)-cpp-clarity|docs\/ru\/03-content\/cpp-clarity-01\/)/.test(name),'Out of scope: '+name);
 const protectedAreas=['courses/1c-enterprise','courses/onec','courses/onec-education','server-access','cloudflare','sync','sandbox','project-studio','core/migrations','releases','entry-assets','runtime-packs'];

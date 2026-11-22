@@ -260,7 +260,8 @@
         "Correct: an inner join does not retain an unmatched row.",
         "That is the left join result with the missing sum replaced by 0.",
         "One matching request gives one detail row forX."
-      ]
+      ],
+      "recall": "joined-rows"
     },
     {
       "id": "join-name",
@@ -275,14 +276,16 @@
         "Correct: you need two distinct references withX/30 andY/0.",
         "The reference identifies the record; names can coincide.",
         "A grand total may miss a lost or merged group."
-      ]
+      ],
+      "recall": "joined-rows"
     },
     {
       "id": "join-explain",
       "kind": "free",
       "prompt": "Write the three left-join rows forX:10/20 andY: no requests. Explain whereY/0 comes from.",
       "feedback": "Check the NULL row, grouping by reference and explicit replacement of the absent sum. Free text is not graded automatically.",
-      "anchor": "joined-rows"
+      "anchor": "joined-rows",
+      "recall": "joined-rows"
     }
   ],
   "practice": {
@@ -396,6 +399,54 @@
       ],
       "calls": "Строки = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстДетальногоЗапроса(), Данные.Ключи);\nИтоги = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстИтоговогоЗапроса(), Данные.Ключи);",
       "execution": "These two calls already follow ПодготовитьНабор in the managed application module. They read the functions you edited and pass the current Данные.Ключи to ВыполнитьЗапрос, where УстановитьПараметр(\"Ключи\", Ключи) restricts the dataset. The Строки loop prints details; the Итоги loop prints groups. Save both modules and run F7/F5. To check the transfer, temporarily replace ЛЕВОЕ with ВНУТРЕННЕЕ in your totals function: Y disappears. Restore ЛЕВОЕ and rerun: two groups return. Each run creates a new set. Recording the result in Nexus is still a self-report."
+    },
+    "referenceSolution": {
+      "language": "1c-query",
+      "source": "ВЫБРАТЬ\n    К.Ссылка КАК Клиент,\n    ЕСТЬNULL(СУММА(З.ДлительностьМинут), 0) КАК Минуты\nИЗ\n    Справочник.Клиенты КАК К\n        ЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З\n        ПО К.Ссылка = З.Клиент\nГДЕ\n    К.Ссылка В (&Ключи)\nСГРУППИРОВАТЬ ПО\n    К.Ссылка",
+      "paragraphs": [
+        "Compare rows using your own X/Y references: 30 and 0. A matching grand total does not establish that both records survived."
+      ]
+    },
+    "passport": {
+      "goal": "A report for two different training customers",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Installed official training 1C and a separate training-service infobase with Клиенты, Услуги, СтатусыЗаявки and ЗаявкаУслуги. Use only newly created synthetic references.",
+      "knowledge": "You need the Клиенты catalog, ЗаявкаУслуги document and the idea of a reference as record identity. These belong to your training service from earlier lessons, not a working database.\nYou need SELECT/FROM/WHERE and query parameters, covered in the preceding topic.\nYou need variables, arrays and calls to a server common module. Preparation gives exact properties and the frame; if your infobase setup is unknown, start there.",
+      "change": "Run two experiments with new synthetic data in a separate learning database. The first run creates two references X/Y named “Workshop”: X has requests of 10 and 20 minutes; Y has none. Obtain joined rows and totals for those references. Use 15 and 20 for the second run: it creates TWO DIFFERENT X/Y references and new requests, leaving the first set unchanged. X/Y are roles within each experiment. Older records remain; every query is restricted to Данные.Ключи from its own run.",
+      "inputs": "Case: Initial data\nStarting data and actions:\nX:[10;20];Y:[]\nExpected:\nundefined",
+      "result": "Your own observations after performing the work in training 1C. Saving a note in Nexus does not perform the action in the external infobase.",
+      "checks": "Before aggregation, show three rows: two forX and a NULL row forY.\nEach experiment has two distinct references: X/30 and Y/0 in the first set; X/35 and Y/0 in the second separate set. The second result excludes requests from the first set.\nDistinguish an inner join and name-only grouping by the lost group, even when the grand total looks plausible.",
+      "errors": "Join with З.Клиент=К.Ссылка and group by the reference. Use ЕСТЬNULL to state the 0 policy for an absent sum.",
+      "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
     }
-  }
+  },
+  "contentRevision": "r3-stage-a-8bccaf5",
+  "lessonFormat": "guided-v2",
+  "authored": true,
+  "authoringPath": "courses/reference/authoring/onec.p7.topic-2.en.json",
+  "reading": [
+    {
+      "id": "onec-query",
+      "author": "1С",
+      "title": "Query mechanism",
+      "edition": "1С:Предприятие 8",
+      "section": "Selection and joins",
+      "url": "https://v8.1c.ru/platforma/mehanizm-zaprosov/",
+      "purpose": "Understand the purpose of the query language and its standard operations on tables.",
+      "language": "RU",
+      "checkedAt": "2026-11-22"
+    },
+    {
+      "id": "onec-constructor",
+      "author": "1С",
+      "title": "Query builder",
+      "edition": "1С:Предприятие 8",
+      "section": "Relationships, grouping and totals",
+      "url": "https://v8.1c.ru/platforma/konstruktor-zaprosa/",
+      "purpose": "Optionally compare the query text with visual relationship and grouping settings.",
+      "language": "RU",
+      "checkedAt": "2026-11-22"
+    }
+  ],
+  "editorialRevision": "guided-courses-20261122-v1"
 }

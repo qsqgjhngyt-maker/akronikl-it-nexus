@@ -67,7 +67,12 @@
           "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
           "stdin": "8\n",
           "output": "count=8\n"
-        }
+        },
+        "steps": [
+          "Supply 8 and a newline.",
+          "The stream extracts an int and the rejection condition is false.",
+          "Also check empty and nonnumeric input."
+        ]
       }
     },
     {
@@ -90,7 +95,12 @@
         "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    std::cin >> count;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << '\\n';\n    return 0;\n}\n",
         "stdin": "8\n",
         "output": "0 0\n"
-      }
+      },
+      "steps": [
+        "With 8 followed by newline, extraction succeeds and the newline remains.",
+        "An empty buffer produces both fail and eof.",
+        "Input 8 without a newline reaches eof after a successful number and fail stays false."
+      ]
     },
     {
       "id": "concept-4",
@@ -104,7 +114,12 @@
         "source": "#include <iostream>\n#include <string>\n\nint main() {\n    int count{0};\n    std::string line;\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::getline(std::cin, line);\n    std::cout << count << '|' << line << '\\n';\n    return 0;\n}\n",
         "stdin": "8 rest of line\n",
         "output": "8| rest of line\n"
-      }
+      },
+      "steps": [
+        "The number is extracted without the following space.",
+        "getline receives the remaining line, including its leading space.",
+        "For 8 immediately followed by newline the remainder is empty."
+      ]
     },
     {
       "id": "worked-line-ws",
@@ -120,7 +135,12 @@
         "source": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name;\n    if (!std::getline(std::cin >> std::ws, name)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"name=\" << name << '\\n';\n    return 0;\n}\n",
         "stdin": " \n  Nexus Academy\n",
         "output": "name=Nexus Academy\n"
-      }
+      },
+      "steps": [
+        "ws consumes leading spaces and newlines.",
+        "getline retains the internal space in the name.",
+        "Empty input is rejected."
+      ]
     },
     {
       "id": "concept-5",
@@ -142,7 +162,12 @@
         "source": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    double lengthMeters{1.25};\n    std::cout << std::fixed << std::setprecision(2) << lengthMeters << '\\n';\n    return 0;\n}\n",
         "stdin": "",
         "output": "1.25\n"
-      }
+      },
+      "steps": [
+        "Include iomanip for setprecision.",
+        "fixed makes precision mean fractional digits.",
+        "Formatting does not prove exactness of arbitrary decimal fractions."
+      ]
     },
     {
       "id": "concept-7",
@@ -400,28 +425,157 @@
       {
         "where": "My independent work",
         "action": "Separate parsing, range, and tail errors.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates your prediction from the run result.",
+        "expected": "Case: Check 1\nstdin:\n4 6\n\nExpected:\nitems=24\n"
       },
       {
         "where": "My independent work",
         "action": "Check input before multiplying.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Use long long for the entire product.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Preserve every reference input, including empty input.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates an ordinary successful result from boundary behaviour.",
+        "expected": "Case: Check 2\nstdin:\n0 8\nExpected:\nitems=0\n"
       }
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.cpp"
+      }
+    },
+    "exercises": [
+      {
+        "task": "Read two ints and handle incomplete and nonnumeric input.",
+        "criteria": "Use values only after successful extraction."
+      },
+      {
+        "task": "Define a line contract with significant leading spaces. Is ws appropriate?",
+        "criteria": "Answer no and explain the data loss."
+      },
+      {
+        "task": "Propose two new project cases distinguishing a unit error from a rounding error.",
+        "criteria": "Provide independent calculations and explain the defects they expose."
+      }
+    ],
+    "passport": {
+      "goal": "A reliable finite-input interface",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "stdin — Standard input. Nexus supplies a finite character sequence followed by end of input.\nFormatted extraction — Reading a typed value with >> according to parsing and stream-state rules.\nfail() — Reports failed extraction or a more serious error; a value after failure is not treated as validated input.",
+      "change": "Read exactly two integers within 0…1000 and print items=boxes*itemsPerBox. Permit trailing whitespace; reject other tails and parsing failures with invalid. Begin the independent box calculation with input 4 6: expect items=24. Then separately test 4 6 extra, 4 6.5 and empty input: each must produce only invalid. Explain why parsing two numbers without inspecting the tail is insufficient.",
+      "inputs": "Case: Check 1\nstdin:\n4 6\n\nExpected:\nitems=24\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Provide an exact stdin/stdout contract.\nCompare all 13 cases with actual results.\nDo not ignore a fractional tail.\nstdout contains only the contracted answer; preserve source and the test report together.\nExplain in words which object or intermediate value changes. Matching stdout does not replace that explanation.\nRun each displayed input separately against the same source version.",
+      "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\ncin extracts with >>; cout inserts with <<.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "4 6\n",
+          "lines": [
+            "items=24"
+          ]
+        },
+        {
+          "stdin": "0 8",
+          "lines": [
+            "items=0"
+          ]
+        },
+        {
+          "stdin": "1000 1000",
+          "lines": [
+            "items=1000000"
+          ]
+        },
+        {
+          "stdin": "3 8 \n\t",
+          "lines": [
+            "items=24"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x 8",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "-1 8",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1001 8",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3 1001",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3 8 extra",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3 8.5",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "999999999999999999999999999999 8",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "4 6 extra",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "4 6.5",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -881,5 +1035,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/istream.manip"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.standard-io.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

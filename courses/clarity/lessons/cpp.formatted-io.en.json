@@ -47,7 +47,12 @@
         "source": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::fixed << std::setprecision(2) << 1.25 << ' ' << 2.0 << '\\n';\n}\n",
         "stdin": "",
         "output": "1.25 2.00\n"
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-3",
@@ -119,7 +124,12 @@
           "source": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::setfill('0') << std::setw(3) << 7 << '|' << 8 << '|' << std::setw(2) << 123 << '\\n';\n    std::cout << std::boolalpha << true << ' ' << std::noboolalpha << true << '\\n';\n}\n",
           "stdin": "",
           "output": "007|8|123\ntrue 1\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -329,6 +339,79 @@
       "case": 0,
       "stdout": "total=5\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <iomanip>\nint main() {\n    long long price{}, count{};\n    if (!(std::cin >> price >> count)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || price < 0 || price > 100000 || count < 0 || count > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    long long total = price * count;\n    std::cout << \"total=\" << total / 100 << '.' << std::setfill('0') << std::setw(2) << total % 100 << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "Formatting changes representation, not value precision."
+      },
+      {
+        "task": "Read a price in cents in 0…100000 and quantity in 0…1000; print total=X.YY. Require exactly two fields and reject extra input as invalid.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Add price, quantity, and total columns with explicit rules; include values wider than a requested column.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Receipt from integer cents",
+      "start": "Running the starter with its default input produces:\ntotal=5\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Manipulator — an operation changing stream formatting or state.\nMinimum width — a field can grow and does not truncate the value.\nfixed — floating formatting with a fixed number of fractional digits.",
+      "change": "Read a price in cents in 0…100000 and quantity in 0…1000; print total=X.YY. Require exactly two fields and reject extra input as invalid.",
+      "inputs": "Case: Case 1\nstdin:\n5 1\nExpected:\ntotal=0.05\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Compare full lines total=0.05 and total=2.50. Check maximum inputs and a fractional token.\nFormatting changes representation, not value precision.\nDo not confuse setprecision with storage precision. Do not expect setw to truncate long values.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "The remainder needs two positions even when it is zero or below 10.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "5 1",
+          "lines": [
+            "total=0.05"
+          ]
+        },
+        {
+          "stdin": "0 1000",
+          "lines": [
+            "total=0.00"
+          ]
+        },
+        {
+          "stdin": "125 2",
+          "lines": [
+            "total=2.50"
+          ]
+        },
+        {
+          "stdin": "100000 1000",
+          "lines": [
+            "total=1000000.00"
+          ]
+        },
+        {
+          "stdin": "-1 2",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 2.5",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -420,5 +503,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.formatted-io.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

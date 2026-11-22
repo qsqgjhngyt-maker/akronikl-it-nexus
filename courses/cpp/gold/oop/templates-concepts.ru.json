@@ -510,7 +510,12 @@
             "source": "#include <iostream>\n#include <concepts>\ntemplate <std::integral T> T smaller(T a, T b) { return b < a ? b : a; }\nint main() { std::cout << smaller(3, 7) << ' ' << smaller(9L, 4L) << '\\n'; }\n",
             "stdin": "",
             "output": "3 4\n"
-          }
+          },
+          "steps": [
+            "Оба аргумента 3 и 7 выводят int.",
+            "Суффиксы L выбирают long для второго вызова.",
+            "Ограничение integral выполнено: вывод 3 4."
+          ]
         }
       },
       {
@@ -793,7 +798,110 @@
       "outputFields": [
         "Сумма int",
         "Сумма long long"
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\ntemplate<std::integral T> T sum(std::span<const T> values){T result{};for(T x:values)result+=x;return result;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<int> a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<long long> b(a.begin(),a.end());std::cout<<sum<int>(std::span<const int>{a})<<' '<<sum<long long>(std::span<const long long>{b})<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Выведите T для двух вызовов smaller.",
+          "criteria": "Получены int и long с объяснением суффикса."
+        },
+        {
+          "task": "Проверьте sum для пустого span.",
+          "criteria": "Результат 0, разыменования нет."
+        },
+        {
+          "task": "Докажите отсутствие переполнения лабораторной.",
+          "criteria": "20×100=2000 помещается в оба типа."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: Шаблоны и ограниченные обобщения",
+        "start": "При запуске заготовки со штатным вводом получается:\n0 0\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Шаблон функции — Семейство функций, параметризованное типами или значениями.\nШаблон класса — Описание семейства конкретных типов по параметрам.\nИнстанцирование — Получение требуемой специализации из определения шаблона.",
+        "change": "Прочитайте n=0…20 и n чисел −100…100 без лишнего токена. Реализуйте template<std::integral T> T sum(std::span<const T>). Вызовите для vector<int> и его копии vector<long long>, напечатайте обе суммы. Пустой ввод последовательности при n=0 даёт 0 0. Неверный ввод: invalid.",
+        "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\n0 0\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "Сумма 6, модуль не больше 2000.\nДля 3 1 2 3 получается 6 6.\n0 даёт 0 0, double даёт отказ компиляции.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+        "errors": "Границу даёт 20 × 100 = 2000 из допустимого ввода. Concept описывает тип, а не размер конкретных данных.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "3 1 2 3",
+            "lines": [
+              "6 6"
+            ]
+          },
+          {
+            "stdin": "2 -100 100",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "1 -100",
+            "lines": [
+              "-100 -100"
+            ]
+          },
+          {
+            "stdin": "20 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 ",
+            "lines": [
+              "2000 2000"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 101",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -857,6 +965,7 @@
         "sourceTitle": "Доказательство результата обучения",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

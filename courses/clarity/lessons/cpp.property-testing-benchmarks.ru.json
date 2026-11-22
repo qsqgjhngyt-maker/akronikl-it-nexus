@@ -917,6 +917,119 @@
       "case": 2,
       "stdout": "warmup 4\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <chrono>\n#include <fstream>\nvoid insertion(std::vector<int>&a){for(std::size_t i=1;i<a.size();++i){int x=a[i];auto j=i;while(j>0&&x<a[j-1]){a[j]=a[j-1];--j;}a[j]=x;}}\nbool contract(const std::vector<int>&source,const std::vector<int>&result){return std::is_sorted(result.begin(),result.end())&&std::is_permutation(source.begin(),source.end(),result.begin(),result.end());}\nint main(){int n;if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>base;for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -10000||x>10000){std::cout<<\"invalid\\n\";return 0;}base.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n using Clock=std::chrono::steady_clock;\n std::ofstream out(\"timings.tsv\");if(!out){std::cout<<\"io-error\\n\";return 0;}out<<\"algorithm\\titeration\\telapsed_ns\\n\";\n for(int algorithm=0;algorithm<2;++algorithm){\n  auto warm=base;if(algorithm==0)std::sort(warm.begin(),warm.end());else insertion(warm);if(!contract(base,warm))return 2;\n  for(int iteration=0;iteration<5;++iteration){\n   auto values=base;const auto start=Clock::now();\n   if(algorithm==0)std::sort(values.begin(),values.end());else insertion(values);\n   const auto end=Clock::now();if(!contract(base,values))return 3;\n   const auto elapsed=std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();if(elapsed<0)return 4;\n   out<<(algorithm==0?\"std_sort\":\"insertion\")<<'\\t'<<iteration<<'\\t'<<elapsed<<'\\n';\n  }\n }\n out.close();if(!out){std::cout<<\"io-error\\n\";return 0;}\n std::vector<int>counterexample{1,3,2},mutant=counterexample;\n for(std::size_t i=1;i+1<mutant.size();++i){int x=mutant[i];auto j=i;while(j>0&&x<mutant[j-1]){mutant[j]=mutant[j-1];--j;}mutant[j]=x;}\n if(contract(counterexample,mutant))return 5;\n std::cout<<\"contracts PASS\\nsamples 10\\nmutation detected\\n\";\n}",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Назовите три свойства sort.",
+        "criteria": "Упорядоченность, перестановка, идемпотентность разделены."
+      },
+      {
+        "task": "Выполните лабораторный протокол 2×5 замеров.",
+        "criteria": "Сохранены 10 строк timing-table и проверки до/после."
+      },
+      {
+        "task": "Улучшите протокол для сравнения библиотек.",
+        "criteria": "Чередуется порядок, записаны compiler, flags, среда и ограничения."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Проверка свойств и честный эксперимент",
+      "start": "При запуске заготовки со штатным вводом получается:\nwarmup 4\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Свойство — Утверждение о классе входов, например сохранение мультимножества.\nOracle — Независимый способ получить ожидаемый результат.\nМетаморфное отношение — Связь результатов преобразованных входов, когда полный ответ неизвестен.",
+      "change": "Прочитайте n=0…128 и n целых в −10000…10000 без лишних токенов. Сравните std::sort и вставки с независимыми копиями: один нерегистрируемый прогрев и пять измерений каждого; копирование и проверки вне замера. timings.tsv содержит заголовок algorithm<TAB>iteration<TAB>elapsed_ns, затем по пять строк std_sort и insertion с iteration=0…4 и неотрицательными целыми ns. Проверьте порядок, сохранность данных, идемпотентность и обнаружение безопасной мутации. stdout: contracts PASS, samples 10, mutation detected отдельными строками. Неверный ввод — invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\ncontracts PASS\nsamples 10\nmutation detected\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Результат −2, 1, 3, 3 проходит, ряд без второй 3 отклоняется.\nДесять строк измерений после заголовка, по пять для каждого алгоритма.\nДля 0 записаны десять измерений; для 2 1 только invalid и нет timings.tsv.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+      "errors": "Например −2, 1, 3. Порядок верный, но потеряна одна тройка.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "contracts PASS",
+            "samples 10",
+            "mutation detected"
+          ]
+        },
+        {
+          "stdin": "1 5",
+          "lines": [
+            "contracts PASS",
+            "samples 10",
+            "mutation detected"
+          ]
+        },
+        {
+          "stdin": "4 3 1 3 -2",
+          "lines": [
+            "contracts PASS",
+            "samples 10",
+            "mutation detected"
+          ]
+        },
+        {
+          "stdin": "4 1 2 3 4",
+          "lines": [
+            "contracts PASS",
+            "samples 10",
+            "mutation detected"
+          ]
+        },
+        {
+          "stdin": "128 127 126 125 124 123 122 121 120 119 118 117 116 115 114 113 112 111 110 109 108 107 106 105 104 103 102 101 100 99 98 97 96 95 94 93 92 91 90 89 88 87 86 85 84 83 82 81 80 79 78 77 76 75 74 73 72 71 70 69 68 67 66 65 64 63 62 61 60 59 58 57 56 55 54 53 52 51 50 49 48 47 46 45 44 43 42 41 40 39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0",
+          "lines": [
+            "contracts PASS",
+            "samples 10",
+            "mutation detected"
+          ]
+        },
+        {
+          "stdin": "129",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 extra",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 10001",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -1421,5 +1534,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/alg.sorting"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.property-testing-benchmarks.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

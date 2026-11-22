@@ -38,7 +38,12 @@
         "source": "#include <iostream>\n#include <sstream>\nint main() {\n    std::ostringstream out;\n    out << \"EV1 \" << 7;\n    std::istringstream in(out.str());\n    std::string version;\n    int value = 0;\n    in >> version >> value;\n    std::cout << version << ' ' << value << '\\n';\n}\n",
         "stdin": "",
         "output": "EV1 7\n"
-      }
+      },
+      "steps": [
+        "ostringstream produces EV1 and seven.",
+        "istringstream reads those bytes back.",
+        "Agreement checks one simple concrete roundtrip."
+      ]
     },
     {
       "id": "concept-2",
@@ -361,6 +366,91 @@
       "case": 0,
       "stdout": "rejected 99\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream& in, std::vector<int>& model) {\n  std::string version; int count;\n  if (!(in >> version >> count) || version != \"EV1\" || count < 0 || count > 8) return false;\n  std::vector<int> candidate;\n  for (int i = 0; i < count; ++i) { int x; if (!(in >> x) || x < 0 || x > 100) return false; candidate.push_back(x); }\n  in >> std::ws; if (!in.eof()) return false;\n  model.swap(candidate); return true;\n}\nvoid save(std::ostream& out, const std::vector<int>& values) { out << \"EV1 \" << values.size(); for (int x : values) out << ' ' << x; out << '\\n'; }\nint main() {\n  std::vector<int> model{99};\n  if (!load(std::cin, model)) { std::cout << \"rejected \" << model[0] << '\\n'; return 0; }\n  std::ostringstream bytes; save(bytes, model); std::istringstream input(bytes.str()); std::vector<int> copy;\n  if (!load(input, copy) || copy != model) return 1;\n  std::cout << bytes.str();\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Specify the EV1 grammar.",
+        "criteria": "The EV1 grammar specifies a marker, count 0…8, exactly count values 0…100 and whitespace-only trailing input; show one valid and three invalid records."
+      },
+      {
+        "task": "Implement load and save.",
+        "criteria": "load validates the complete format before swap; save produces canonical EV1, roundtrip equals the original model and malformed cases preserve the old one."
+      },
+      {
+        "task": "Propose an EV0→EV1 specification and tests.",
+        "criteria": "Specify both grammars and an unambiguous EV0→EV1 conversion; test old, new, unknown and corrupt formats without partial commit."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Model persistence and format versioning",
+      "start": "Running the starter with its default input produces:\nrejected 99\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Serialization — Converting a model into an explicitly specified data format.\nDeserialization — Validated reconstruction of a model from a data format.\nVersion marker — A marker selecting how a record is interpreted.",
+      "change": "The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record.",
+      "inputs": "Case: First substantive run\nstdin:\nEV1 3 1 2 3\nExpected:\nEV1 3 1 2 3\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "EV1 3 1 2 3 is valid; EV1 2 1 is truncated.\nThe first input saves as EV1 3 1 2 3; rejection prints rejected 99.\nOn rejection the entire vector matches before/after; roundtrip preserves values and count.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
+      "errors": "The commit is model.swap(candidate) after EOF validation. A zero count does not permit trailing extra; before commit model remains{99}.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "EV1 3 1 2 3",
+          "lines": [
+            "EV1 3 1 2 3"
+          ]
+        },
+        {
+          "stdin": "EV1 0",
+          "lines": [
+            "EV1 0"
+          ]
+        },
+        {
+          "stdin": "EV2 1 7",
+          "lines": [
+            "rejected 99"
+          ]
+        },
+        {
+          "stdin": "EV1 2 1",
+          "lines": [
+            "rejected 99"
+          ]
+        },
+        {
+          "stdin": "EV1 1 -1",
+          "lines": [
+            "rejected 99"
+          ]
+        },
+        {
+          "stdin": "EV1 1 101",
+          "lines": [
+            "rejected 99"
+          ]
+        },
+        {
+          "stdin": "EV1 0 extra",
+          "lines": [
+            "rejected 99"
+          ]
+        },
+        {
+          "stdin": "EV1 9",
+          "lines": [
+            "rejected 99"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -472,5 +562,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/except"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.versioned-model-persistence.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

@@ -450,7 +450,12 @@
             "source": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    int sum{};\n    for (int i = 0; i < n; ++i) { sum += i; }\n    std::cout << sum << '\\n';\n}\n",
             "stdin": "5",
             "output": "10\n"
-          }
+          },
+          "steps": [
+            "Read the contract and independently derive the expected result for the given input.",
+            "Trace state after each significant operation and identify the established preconditions.",
+            "Run the source, compare stdout and exit code, then check the additional cases."
+          ]
         }
       },
       {
@@ -491,7 +496,12 @@
           "source": "#include <iostream>\nint main() {\n    int sum{};\n    for (int i = 1; i <= 6; ++i) {\n        if (i % 2 != 0) { continue; }\n        sum += i;\n    }\n    std::cout << sum << '\\n';\n}\n",
           "stdin": "",
           "output": "12\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       },
       {
         "id": "concept-6",
@@ -705,6 +715,91 @@
         "case": 2,
         "stdout": "0 0\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    long long sum{};\n    int positive{};\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        sum += value;\n        if (value > 0) { ++positive; }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << sum << ' ' << positive << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Manually trace the first example and explain every expected output line.",
+          "criteria": "Before each iteration state which portion is already processed."
+        },
+        {
+          "task": "Read n from 0 to 100 followed by exactly n integers from -1000 to 1000; print their sum and positive count. Reject extra tokens and incomplete data as invalid.",
+          "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+        },
+        {
+          "task": "Count sign changes between adjacent nonzero measurements and explain which previous-step state is needed.",
+          "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+        }
+      ],
+      "passport": {
+        "goal": "Two accumulators in one pass",
+        "start": "Running the starter with its default input produces:\n0 0\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Invariant — a statement preserved by each loop iteration.\nTermination variant — a bounded quantity that decreases on every iteration.\nIteration — one execution of a loop body.",
+        "change": "Read n from 0 through 100, followed by exactly n integers from −1000 through 1000. Print the total and the count strictly above zero separated by a space. Print invalid for an invalid n, extra input, a missing value or failed extraction.",
+        "inputs": "Case: Case 1\nstdin:\n0\nExpected:\n0 0\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Explain 5 2 for 4 −2 0 3 4, then remove the last value and verify that no partial total is printed.\nBefore each iteration state which portion is already processed.\nDo not reset the sum in the body. Test < versus <= only with a safe scalar counter.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+        "errors": "Before step i, exactly i values have been processed. On failed extraction, return before printing a result.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "1 -1",
+            "lines": [
+              "-1 0"
+            ]
+          },
+          {
+            "stdin": "4 -2 0 3 4",
+            "lines": [
+              "5 2"
+            ]
+          },
+          {
+            "stdin": "2 1000 1000",
+            "lines": [
+              "2000 2"
+            ]
+          },
+          {
+            "stdin": "2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 2 3",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "101",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 1001",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -774,6 +869,7 @@
         "sourceTitle": "Measuring work",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

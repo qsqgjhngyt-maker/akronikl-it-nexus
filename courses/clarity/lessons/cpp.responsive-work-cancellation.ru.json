@@ -361,6 +361,91 @@
       "case": 1,
       "stdout": "cancelled processed 1 result 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nclass Job {\n  int size_, done_ = 0, candidate_ = 0; bool cancelled_ = false;\npublic:\n  explicit Job(int n) : size_(n) {}\n  void cancel() { if (done_ < size_) cancelled_ = true; }\n  void step() { if (cancelled_) return; int budget = 3; while (budget-- > 0 && done_ < size_) { ++done_; candidate_ += done_; } }\n  bool finished() const { return done_ == size_; }\n  bool cancelled() const { return cancelled_; }\n  int done() const { return done_; }\n  int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n  int n, cancelAt;\n  if (!(std::cin >> n >> cancelAt) || n < 0 || n > 100 || cancelAt < -1 || cancelAt > 40) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Job job(n); int tick = 0;\n  while (!job.finished() && !job.cancelled()) { if (tick == cancelAt) job.cancel(); if (!job.cancelled()) { job.step(); ++tick; } }\n  std::cout << (job.cancelled() ? \"cancelled\" : \"done\") << \" processed \" << job.done() << \" result \" << job.result() << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Проследите три шага для n=8.",
+        "criteria": "Для трёх step при n=8 указаны done, candidate и committed result после каждого вызова; ни один шаг не обрабатывает больше трёх элементов."
+      },
+      {
+        "task": "Реализуйте step с бюджетом три.",
+        "criteria": "step расходует budget 3, сохраняет done≤size и после cancel ничего не делает; обычный, максимальный, пустой и ранний cancel случаи совпадают."
+      },
+      {
+        "task": "Спроектируйте политику переполнения очереди.",
+        "criteria": "Для очереди заданы ёмкость и различимые accept/reject, тест burst проверяет максимум размера и порядок принятых событий; потеря команд не маскируется успехом."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Отзывчивость, порции работы и отмена",
+      "start": "При запуске заготовки со штатным вводом получается:\ncancelled processed 1 result 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Бюджет шага — Максимальный объём работы одного кооперативного вызова.\nКооперативное выполнение — Операция явно возвращает управление между порциями работы.\nОтмена — Запрос прекратить незавершённую работу согласно контракту.",
+      "change": "Введите n=0…100 и cancelAt=-1…40. Один step обрабатывает до трёх чисел 1…n. -1 не отменяет; иначе отмена запрашивается перед шагом с индексом cancelAt. Завершённую задачу поздняя отмена не меняет. Незавершённый результат не применяется.",
+      "inputs": "Случай: Случай 1\nstdin:\n8 -1\nОжидается:\ndone processed 8 result 36\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "done 3,6,8; итоговая сумма 36.\ndone processed 8 result 36; cancelled processed 3 result 0.\nПосле отмены done неизменно; пустая задача done processed 0 result 0.\nДобавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска.",
+      "errors": "После первого шага отмена блокирует дальнейшую работу. candidate=6 не публикуется до finished. Пустая задача уже finished до проверки отмены.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "8 -1",
+          "lines": [
+            "done processed 8 result 36"
+          ]
+        },
+        {
+          "stdin": "8 1",
+          "lines": [
+            "cancelled processed 3 result 0"
+          ]
+        },
+        {
+          "stdin": "8 0",
+          "lines": [
+            "cancelled processed 0 result 0"
+          ]
+        },
+        {
+          "stdin": "0 0",
+          "lines": [
+            "done processed 0 result 0"
+          ]
+        },
+        {
+          "stdin": "3 1",
+          "lines": [
+            "done processed 3 result 6"
+          ]
+        },
+        {
+          "stdin": "100 -1",
+          "lines": [
+            "done processed 100 result 5050"
+          ]
+        },
+        {
+          "stdin": "101 -1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "8 -2",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -460,5 +545,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.responsive-work-cancellation.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

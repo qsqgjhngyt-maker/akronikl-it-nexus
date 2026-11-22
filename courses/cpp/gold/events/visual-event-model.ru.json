@@ -474,7 +474,12 @@
           "source": "#include <iostream>\nint calculate(int value, int delta) { return value + delta; }\nint main() {\n    int model = 4;\n    model = calculate(model, 3);\n    std::cout << \"value \" << model << '\\n';\n}\n",
           "stdin": "",
           "output": "value 7\n"
-        }
+        },
+        "steps": [
+          "calculate получает 4 и 3 без внешнего состояния.",
+          "Возвращается 7; обработчик сохраняет его в model.",
+          "stdout value 7 связывает модель и наблюдение."
+        ]
       },
       {
         "id": "concept-2",
@@ -801,6 +806,91 @@
         "case": 0,
         "stdout": "value 0 rejected 4\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\nstruct Model { int value = 0, rejected = 0; };\nvoid dispatch(Model& m, int event) {\n  if (event == 0) m.value = 0;\n  else if (event == 1 && m.value < 10) ++m.value;\n  else if (event == -1 && m.value > 0) --m.value;\n  else ++m.rejected;\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> events(n);\n  for (int& e : events) if (!(std::cin >> e)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Model model;\n  for (int e : events) dispatch(model, e);\n  std::cout << \"value \" << model.value << \" rejected \" << model.rejected << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Проследите 1, 0, -1 вручную.",
+          "criteria": "Таблица содержит три команды, значение до/после каждой и накопленный rejected; отказ декремента на нуле отмечен отдельно."
+        },
+        {
+          "task": "Реализуйте dispatch по контракту лабораторной.",
+          "criteria": "dispatch сохраняет диапазон 0…10 и учитывает ровно один отказ для каждой запрещённой команды; все лабораторные случаи совпадают, включая неизвестную команду."
+        },
+        {
+          "task": "Задайте команды complete и toggle для задачи.",
+          "criteria": "Для complete и toggle определены состояния и результат повтора; две трассы различают идемпотентное завершение и переключение."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: События, обработчики и цикл приложения",
+        "start": "При запуске заготовки со штатным вводом получается:\nvalue 0 rejected 4\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Событие — Сообщение о произошедшем действии, которое приложение может обработать.\nКоманда — Запрос на изменение модели с определёнными условиями принятия.\nОбработчик — Функция, определяющая реакцию на событие.",
+        "change": "n=0…20, затем n целых событий. 0 сбрасывает value, 1 увеличивает до 10, -1 уменьшает до 0. Другие и запрещённые события увеличивают rejected. Неполный ввод или лишний токен: invalid.",
+        "inputs": "Случай: Первый содержательный запуск\nstdin:\n4 1 1 -1 1\nОжидается:\nvalue 2 rejected 0\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "value:0→1→2→1→2; rejected=0.\nvalue 2 rejected 0.\nПервый вход: value 0 rejected 2; второй: invalid. Тест границы меняется вместе с правилом.\nДобавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска.",
+        "errors": "Состояния 1,0,0; отказ один. −1 — прочитанная команда, запрещённая в 0. x нарушает формат всей трассы и даёт invalid.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "4 1 1 -1 1",
+            "lines": [
+              "value 2 rejected 0"
+            ]
+          },
+          {
+            "stdin": "0",
+            "lines": [
+              "value 0 rejected 0"
+            ]
+          },
+          {
+            "stdin": "2 -1 2",
+            "lines": [
+              "value 0 rejected 2"
+            ]
+          },
+          {
+            "stdin": "3 1 0 -1",
+            "lines": [
+              "value 0 rejected 1"
+            ]
+          },
+          {
+            "stdin": "11 1 1 1 1 1 1 1 1 1 1 1",
+            "lines": [
+              "value 10 rejected 1"
+            ]
+          },
+          {
+            "stdin": "2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -867,6 +957,7 @@
     "adaptedSourceSections": [
       "concept-9"
     ],
-    "contractAnchor": "concept-9"
+    "contractAnchor": "concept-9",
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

@@ -5,9 +5,11 @@ import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {REFERENCE_IDS} from '../../core/reference-course-routes.mjs';
 import {CLARITY_COURSES} from '../../core/clarity-course-registry.mjs';
-export function referencePathId(file){const m=String(file).replaceAll('\\','/').match(/^courses\/(clarity|cpp-clarity-r3)\/lessons\/(.+)\.(ru|en)\.json$/);return m&&REFERENCE_IDS.includes(m[2])?{id:m[2],locale:m[3]}:null;}
+import {rolloutPathId,assertRolloutEdition} from './course-rollout-contract.mjs';
+export function referencePathId(file){const rollout=rolloutPathId(file);if(rollout)return rollout;const m=String(file).replaceAll('\\','/').match(/^courses\/(clarity|cpp-clarity-r3)\/lessons\/(.+)\.(ru|en)\.json$/);return m&&REFERENCE_IDS.includes(m[2])?{id:m[2],locale:m[3]}:null;}
 const validated=new Map();
 export function assertReferenceEdition(id,locale){
+ if(!REFERENCE_IDS.includes(id))return assertRolloutEdition(id,locale);
  assert.ok(REFERENCE_IDS.includes(id));const folder=CLARITY_COURSES[id].pilot?'cpp-clarity-r3':'clarity',file=`courses/${folder}/lessons/${id}.${locale}.json`,source=`courses/reference/authoring/${id}.${locale}.json`;
  const bytes=readFileSync(file),cacheKey=id+'.'+locale;if(validated.get(cacheKey)?.bytes.equals(bytes)&&validated.get(cacheKey)?.source.equals(readFileSync(source)))return validated.get(cacheKey).lesson;const l=JSON.parse(bytes),a=JSON.parse(readFileSync(source));assert.deepEqual(l,a,file+' explicit new authoring source');
  const prior=JSON.parse(execFileSync('git',['-c','core.longpaths=true','show','9a01de88:'+file],{maxBuffer:4e6}));

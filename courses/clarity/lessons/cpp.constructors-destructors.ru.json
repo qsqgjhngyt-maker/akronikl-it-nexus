@@ -87,7 +87,12 @@
           "source": "#include <iostream>\nstruct Part {\n    char id;\n    explicit Part(char c) : id(c) { std::cout << '+' << id << ' '; }\n    ~Part() { std::cout << '-' << id << ' '; }\n};\nstruct Machine {\n    Part a, b;\n    Machine() : a('A'), b('B') { std::cout << \"ready \"; }\n    ~Machine() { std::cout << \"stop \"; }\n};\nint main() {\n    {\n        Machine m;\n    }\n    std::cout << '\\n';\n}\n",
           "stdin": "",
           "output": "+A +B ready stop -B -A \n"
-        }
+        },
+        "steps": [
+          "Сначала создаются a и b в порядке объявления.",
+          "Тело конструктора печатает ready.",
+          "При выходе сначала stop, затем -B и -A."
+        ]
       }
     },
     {
@@ -110,7 +115,12 @@
         "source": "#include <iostream>\nclass Level {\n    int value_;\n\n  public:\n    explicit Level(int n) : value_(n) {}\n    int value() const { return value_; }\n};\nvoid show(const Level &l) { std::cout << l.value() << '\\n'; }\nint main() {\n    Level l{7};\n    show(l);\n}\n",
         "stdin": "",
         "output": "7\n"
-      }
+      },
+      "steps": [
+        "explicit требует явный Level{7}.",
+        "show получает ссылку на уже живой объект.",
+        "value() печатает 7 без изменения состояния."
+      ]
     },
     {
       "id": "concept-4",
@@ -351,6 +361,91 @@
       "case": 1,
       "stdout": "0 0 0 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nclass Lease {\n int& active_;\npublic:\n explicit Lease(int& n):active_(n){++active_;}\n Lease(const Lease&)=delete;Lease& operator=(const Lease&)=delete;\n ~Lease(){--active_;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>2){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;{Lease a{active};std::cout<<active<<' ';if(mode){Lease b{active};std::cout<<active<<' ';}std::cout<<active<<' ';}\n std::cout<<active<<'\\n';}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Распишите порядок Machine.",
+        "criteria": "Получена +A +B ready stop -B -A."
+      },
+      {
+        "task": "Докажите время жизни счётчика Lease.",
+        "criteria": "Счётчик объявлен раньше и переживает оба Lease."
+      },
+      {
+        "task": "Объясните запрет копии Lease.",
+        "criteria": "Две очистки не должны соответствовать одному acquire."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Конструирование и завершение жизни",
+      "start": "При запуске заготовки со штатным вводом получается:\n0 0 0 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Конструктор — Специальная функция, устанавливающая начальное состояние объекта.\nСписок инициализации — Часть конструктора, задающая непосредственное создание баз и членов.\nexplicit — Ограничение неявных преобразований через конструктор.",
+      "change": "Прочитайте ровно одно mode=0…2. Создайте Lease a, печатайте active; при ненулевом mode во вложенной области создайте b и печатайте active. После неё печатайте active, после разрушения a — active и перевод строки. Lease увеличивает счётчик при создании и уменьшает при разрушении, копирование запрещено. Неверный ввод: invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\n1 1 0\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Входы дают 1 и 2, выходы 1 и 0.\nВывод 1 2 1 0.\nСоответственно 1 1 0, затем 1 2 1 0, затем invalid.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+      "errors": "После создания a активен один Lease. Внутренний объект не создаётся, затем выход из внешней области разрушает a.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0",
+          "lines": [
+            "1 1 0"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "1 2 1 0"
+          ]
+        },
+        {
+          "stdin": "2",
+          "lines": [
+            "1 2 1 0"
+          ]
+        },
+        {
+          "stdin": "-1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -565,5 +660,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/class.dtor"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.constructors-destructors.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

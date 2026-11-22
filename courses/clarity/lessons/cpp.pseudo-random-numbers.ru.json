@@ -127,7 +127,14 @@
           "source": "#include <iostream>\n#include <random>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::mt19937 a(2026), b(2026);\n    std::uniform_int_distribution<int> da(-3, 3), db(-3, 3);\n    std::vector<int> x, y;\n    for (int i = 0; i < 512; ++i) {\n        x.push_back(da(a));\n        y.push_back(db(b));\n    }\n    bool bounded = std::all_of(x.begin(), x.end(),\n                               [](int n) { return n >= -3 && n <= 3; });\n    std::cout << (x == y) << ' ' << bounded << ' ' << x.size() << '\\n';\n}",
           "stdin": "",
           "output": "1 1 512\n"
-        }
+        },
+        "steps": [
+          "Два engine создаются с seed=2026; обе distribution имеют один диапазон −3…3.",
+          "Для каждой пары создаётся одинаковая история вызовов из 512 шагов.",
+          "x==y проверяет повтор в текущей библиотеке; bounded проверяет каждый элемент независимо.",
+          "Размер 512 проверяется отдельно: пустая последовательность могла бы пройти только проверку all_of.",
+          "libstdc++ и libc++ могут получить разные массивы, сохранив эти три результата. Для межсредового повтора сохраните сами входные данные."
+        ]
       }
     },
     {
@@ -653,6 +660,137 @@
       "case": 2,
       "stdout": "generated 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <random>\n#include <vector>\n#include <fstream>\n#include <algorithm>\nint main(){\n int n,lo,hi;long long seed;\n if(!(std::cin>>n>>seed>>lo>>hi)||n<0||n>128||seed<0||seed>4294967295LL||lo< -1000||hi>1000||lo>hi){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::mt19937 a(static_cast<std::mt19937::result_type>(seed)),b(static_cast<std::mt19937::result_type>(seed));\n std::uniform_int_distribution<int>da(lo,hi),db(lo,hi);\n std::vector<int>x,y;for(int i=0;i<n;++i){x.push_back(da(a));y.push_back(db(b));}\n bool bounded=std::all_of(x.begin(),x.end(),[lo,hi](int value){return value>=lo&&value<=hi;});\n std::ofstream first(\"samples.txt\"),second(\"repeat.txt\");if(!first||!second){std::cout<<\"io-error\\n\";return 0;}\n for(int value:x)first<<value<<'\\n';for(int value:y)second<<value<<'\\n';first.close();second.close();\n if(!first||!second){std::cout<<\"io-error\\n\";return 0;}\n std::cout<<\"count \"<<x.size()<<\"\\nrepeatable \"<<(x==y?\"yes\":\"no\")<<\"\\nbounded \"<<(bounded?\"yes\":\"no\")<<'\\n';\n}",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Разделите роли mt19937 и uniform_int_distribution.",
+        "criteria": "Названы источник битов и отображение диапазона."
+      },
+      {
+        "task": "Выполните лабораторную двух потоков.",
+        "criteria": "Файлы совпадают в одном запуске, значения в границах."
+      },
+      {
+        "task": "Создайте корпус для сортировки: пустой, равный, обратный, случайный.",
+        "criteria": "Сохранены seed, размеры и сами наборы."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Псевдослучайность и воспроизводимость",
+      "start": "При запуске заготовки со штатным вводом получается:\ngenerated 0\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Engine — Детерминированный автомат, выдающий последовательность из внутреннего состояния.\nSeed — Начальное значение для инициализации состояния генератора.\nDistribution — Преобразование случайных битов в значения заданного распределения.",
+      "change": "Прочитайте n seed lo hi без лишних токенов: n=0…128, seed=0…4294967295, −1000<=lo<=hi<=1000. Создайте два одинаково инициализированных mt19937 и две uniform_int_distribution; сохраните n целых построчно в samples.txt и repeat.txt. Выведите count N, repeatable yes, bounded yes отдельными строками. Файлы должны существовать, совпадать друг с другом и соблюдать границы; точная последовательность между библиотеками не фиксируется. Неверный ввод — invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0 0 0 0\nОжидается:\ncount 0\nrepeatable yes\nbounded yes\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Два файла по одной строке с 7.\nВ каждом файле 32 числа от −3 до 3, содержимое файлов одинаково.\nСначала два пустых файла, затем invalid без файлов результата.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+      "errors": "В каждом файле одна строка с 7. У допустимого диапазона только одно значение.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0 0 0 0",
+          "lines": [
+            "count 0",
+            "repeatable yes",
+            "bounded yes"
+          ]
+        },
+        {
+          "stdin": "1 5489 7 7",
+          "lines": [
+            "count 1",
+            "repeatable yes",
+            "bounded yes"
+          ]
+        },
+        {
+          "stdin": "32 2026 -3 3",
+          "lines": [
+            "count 32",
+            "repeatable yes",
+            "bounded yes"
+          ]
+        },
+        {
+          "stdin": "128 4294967295 -1000 1000",
+          "lines": [
+            "count 128",
+            "repeatable yes",
+            "bounded yes"
+          ]
+        },
+        {
+          "stdin": "5 17 -2 -1",
+          "lines": [
+            "count 5",
+            "repeatable yes",
+            "bounded yes"
+          ]
+        },
+        {
+          "stdin": "-1 0 0 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "129 0 0 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 -1 0 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 4294967296 0 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0 2 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0 -1001 0",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0 0 1001",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 0 0 0 extra",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -752,5 +890,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/rand.dist.general"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.pseudo-random-numbers.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

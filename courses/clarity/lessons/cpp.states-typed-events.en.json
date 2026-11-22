@@ -349,6 +349,91 @@
       "case": 0,
       "stdout": "idle rejected 4\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {}; struct Pause {}; struct Resume {}; struct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State& state, const Event& event) {\n  return std::visit([&](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) { if (state == State::idle) { state = State::running; return true; } }\n    else if constexpr (std::is_same_v<T, Pause>) { if (state == State::running) { state = State::paused; return true; } }\n    else if constexpr (std::is_same_v<T, Resume>) { if (state == State::paused) { state = State::running; return true; } }\n    else { if (state == State::running) { state = State::done; return true; } }\n    return false;\n  }, event);\n}\nint main() {\n  std::string trace;\n  if (!std::getline(std::cin, trace) || trace.size() > 100) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  State state = State::idle; int rejected = 0;\n  for (char c : trace) {\n    bool ok = false;\n    if (c == 'S') ok = apply(state, Start{});\n    else if (c == 'P') ok = apply(state, Pause{});\n    else if (c == 'R') ok = apply(state, Resume{});\n    else if (c == 'F') ok = apply(state, Finish{});\n    if (!ok) ++rejected;\n  }\n  const char* names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n  std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Complete the four-state, four-event transition table.",
+        "criteria": "Fill all 16 state/event pairs: four permitted transitions and 12 unchanged-state rejections; identify done as terminal."
+      },
+      {
+        "task": "Implement apply without reading cin.",
+        "criteria": "apply accepts an Event and state without cin, returns bool and mutates state only according to the table; SPRF and SPF have the specified distinct outcomes."
+      },
+      {
+        "task": "Design a document-review state machine.",
+        "criteria": "Specify draft/review/approved states, events and rejected pairs; an independent trace checks that approved documents cannot be edited."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: States and typed events",
+      "start": "Running the starter with its default input produces:\nidle rejected 4\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "State machine — States and transition rules driven by events.\nTransition — A permitted state change for a specified event.\nAlternative — One of the types a variant can hold.",
+      "change": "Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid.",
+      "inputs": "Case: First substantive run\nstdin:\nSPRF\nExpected:\ndone rejected 0\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "idle/S→running; running/P→paused; paused/R→running; running/F→done.\ndone rejected 0.\nSPF: paused rejected 1; empty line: idle rejected 0; X: idle rejected 1.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
+      "errors": "idle→running→paused; F is legal only in running. Use an explicit Finish branch, then a separate Reopen rule and tests for all pairs.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "SPRF",
+          "lines": [
+            "done rejected 0"
+          ]
+        },
+        {
+          "stdin": "\n",
+          "lines": [
+            "idle rejected 0"
+          ]
+        },
+        {
+          "stdin": "F",
+          "lines": [
+            "idle rejected 1"
+          ]
+        },
+        {
+          "stdin": "SS",
+          "lines": [
+            "running rejected 1"
+          ]
+        },
+        {
+          "stdin": "SPF",
+          "lines": [
+            "paused rejected 1"
+          ]
+        },
+        {
+          "stdin": "SFF",
+          "lines": [
+            "done rejected 1"
+          ]
+        },
+        {
+          "stdin": "X",
+          "lines": [
+            "idle rejected 1"
+          ]
+        },
+        {
+          "stdin": "S\nX",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -448,5 +533,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/variant.get"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.states-typed-events.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

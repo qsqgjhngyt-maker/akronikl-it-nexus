@@ -762,7 +762,12 @@
             "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n",
             "stdin": "",
             "output": "3 1\n2 2\n"
-          }
+          },
+          "steps": [
+            "Read the contract and independently derive the expected result for the given input.",
+            "Trace state after each significant operation and identify the established preconditions.",
+            "Run the source, compare stdout and exit code, then check the additional cases."
+          ]
         }
       },
       {
@@ -785,7 +790,12 @@
           "source": "#include <iostream>\n#include <stack>\nint main() {\n    int stock{5};\n    std::stack<int> history;\n    history.push(stock);\n    stock += 3;\n    std::cout << stock << '\\n';\n    if (!history.empty()) { stock = history.top(); history.pop(); }\n    std::cout << stock << ' ' << history.empty() << '\\n';\n}\n",
           "stdin": "",
           "output": "8\n5 1\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       },
       {
         "id": "concept-4",
@@ -1358,6 +1368,83 @@
         "case": 2,
         "stdout": "\n\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        stack.push(value); queue.push(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    bool first{true};\n    while (!stack.empty()) { if (!first) { std::cout << ' '; } std::cout << stack.top(); stack.pop(); first = false; }\n    std::cout << '\\n';\n    first = true;\n    while (!queue.empty()) { if (!first) { std::cout << ' '; } std::cout << queue.front(); queue.pop(); first = false; }\n    std::cout << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Manually trace the first example and explain every expected output line.",
+          "criteria": "Removal order is part of the domain contract."
+        },
+        {
+          "task": "Read n in 0…100 and n integers in -1000…1000. Fill a stack and queue, then print their removal orders on two lines. Empty input data produces two empty lines.",
+          "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+        },
+        {
+          "task": "Add redo using a separate stack and explain why a new successful command must clear the previous redo branch.",
+          "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+        }
+      ],
+      "passport": {
+        "goal": "Complete removal order",
+        "start": "Running the starter with its default input produces:\n\n\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "LIFO — last in, first out.\nFIFO — first in, first out.\nAdapter — an operation interface over a suitable container.",
+        "change": "Read n in 0…100 and n integers in -1000…1000. Fill a stack and queue, then print their removal orders on two lines. Empty input data produces two empty lines.",
+        "inputs": "Case: Two blank lines\nstdin:\n0\nExpected:\n\n\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "For 3 1 2 3 compare 3 2 1 with 1 2 3. For n = 0 check two blank lines; for extra input expect invalid.\nRemoval order is part of the domain contract.\nDo not add history for a rejected command. Do not read front/top on an empty adapter.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+        "errors": "Check order, count and duplicates. Call pop after reading the current value.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "",
+              ""
+            ]
+          },
+          {
+            "stdin": "1 7",
+            "lines": [
+              "7",
+              "7"
+            ]
+          },
+          {
+            "stdin": "3 1 2 3",
+            "lines": [
+              "3 2 1",
+              "1 2 3"
+            ]
+          },
+          {
+            "stdin": "3 2 2 -1",
+            "lines": [
+              "-1 2 2",
+              "2 2 -1"
+            ]
+          },
+          {
+            "stdin": "2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -1428,6 +1515,7 @@
         "sourceTitle": "Order tests and final defence",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

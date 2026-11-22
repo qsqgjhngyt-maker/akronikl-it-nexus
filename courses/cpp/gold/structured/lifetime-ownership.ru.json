@@ -385,7 +385,12 @@
           "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    Trace first{1};\n    { Trace second{2}; }\n    std::cout << \"end\\n\";\n}\n",
           "stdin": "",
           "output": "create 1\ncreate 2\ndestroy 2\nend\ndestroy 1\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       },
       {
         "id": "concept-3",
@@ -489,7 +494,12 @@
             "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    auto owner = std::make_unique<Trace>(5);\n    Trace* observer = owner.get();\n    auto next = std::move(owner);\n    std::cout << (!owner) << ' ' << (observer == next.get()) << '\\n';\n    next.reset();\n}\n",
             "stdin": "",
             "output": "create 5\n1 1\ndestroy 5\n"
-          }
+          },
+          "steps": [
+            "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+            "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+            "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+          ]
         }
       },
       {
@@ -685,6 +695,82 @@
         "case": 1,
         "stdout": "create 4\ndestroy 4\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    int value{};\n    if (!(std::cin >> value)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value < 0 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    auto owner = std::make_unique<Trace>(value);\n    auto next = std::move(owner);\n    std::cout << \"moved \" << (!owner) << ' ' << bool(next) << '\\n';\n    ++next->value;\n    std::cout << \"value \" << next->value << '\\n';\n    next.reset();\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+          "criteria": "Перенос владельца не продлевает жизнь за пределы последнего владельца."
+        },
+        {
+          "task": "Создайте через make_unique объект с value от 0 до 1000, перенесите владельца, увеличьте value на 1 и освободите. Выведите create N, moved 1 1, value N+1, destroy N+1. Неверный ввод — invalid.",
+          "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+        },
+        {
+          "task": "Добавьте вложенный блок со вторым владельцем другого объекта и предскажите точный порядок destroy до запуска.",
+          "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+        }
+      ],
+      "passport": {
+        "goal": "Перенести, изменить и освободить",
+        "start": "При запуске заготовки со штатным вводом получается:\ncreate 4\ndestroy 4\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "RAII — управление ресурсом через инициализацию и разрушение объекта.\nВисячий наблюдатель — адрес или вид, чей объект уже не существует.\nunique_ptr — перемещаемый, но не копируемый единственный владелец объекта.",
+        "change": "Создайте через make_unique объект с value от 0 до 1000, перенесите владельца, увеличьте value на 1 и освободите. Выведите create N, moved 1 1, value N+1, destroy N+1. Неверный ввод — invalid.",
+        "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\ncreate 0\nmoved 1 1\nvalue 1\ndestroy 1\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "Проверьте N = 0 и N = 1000, затем отказ на лишнем токене без строки create.\nПеренос владельца не продлевает жизнь за пределы последнего владельца.\nНе переносите правило пустоты unique_ptr на все типы после move. Не запускайте dangling-доступ.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+        "errors": "Сравнивайте observer с адресом нового владельца до reset. После reset проверяйте только журнал.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "create 0",
+              "moved 1 1",
+              "value 1",
+              "destroy 1"
+            ]
+          },
+          {
+            "stdin": "4",
+            "lines": [
+              "create 4",
+              "moved 1 1",
+              "value 5",
+              "destroy 5"
+            ]
+          },
+          {
+            "stdin": "1000",
+            "lines": [
+              "create 1000",
+              "moved 1 1",
+              "value 1001",
+              "destroy 1001"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "4 x",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -755,6 +841,7 @@
         "sourceTitle": "Безопасные эксперименты",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

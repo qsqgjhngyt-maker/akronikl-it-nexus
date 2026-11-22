@@ -539,7 +539,12 @@
           "source": "#include <iostream>\nstruct Subscription {\n    int &count;\n    explicit Subscription(int &n) : count(n) { ++count; }\n    ~Subscription() { --count; }\n    Subscription(const Subscription &) = delete;\n};\nint main() {\n    int active = 0;\n    {\n        Subscription s(active);\n        std::cout << active << '\\n';\n    }\n    std::cout << active << '\\n';\n}\n",
           "stdin": "",
           "output": "1\n0\n"
-        }
+        },
+        "steps": [
+          "Конструктор увеличивает число активных подписок.",
+          "Внутри scope наблюдается один.",
+          "Деструктор при выходе уменьшает его до нуля."
+        ]
       },
       {
         "id": "concept-4",
@@ -792,6 +797,91 @@
         "case": 0,
         "stdout": "value 0 subscriptions 1\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState { int next = 1; std::map<int, std::function<void()>> handlers; };\nclass Subscription {\n  std::weak_ptr<SignalState> state_; int id_;\npublic:\n  Subscription(std::shared_ptr<SignalState> state, int id) : state_(state), id_(id) {}\n  Subscription(const Subscription&) = delete;\n  Subscription& operator=(const Subscription&) = delete;\n  ~Subscription() { if (auto s = state_.lock()) s->handlers.erase(id_); }\n};\nvoid emit(const std::shared_ptr<SignalState>& s) {\n  std::vector<int> ids;\n  for (const auto& [id, handler] : s->handlers) ids.push_back(id);\n  for (int id : ids) {\n    auto it = s->handlers.find(id);\n    if (it != s->handlers.end()) { auto handler = it->second; if (handler) handler(); }\n  }\n}\nint main() {\n  int mode;\n  if (!(std::cin >> mode) || mode < 0 || mode > 2) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  auto signal = std::make_shared<SignalState>();\n  auto receiver = std::make_shared<int>(0); std::weak_ptr<int> weak = receiver;\n  { int id = signal->next++;\n    signal->handlers.emplace(id, [weak] { if (auto value = weak.lock()) ++*value; });\n    Subscription subscription(signal, id);\n    emit(signal);\n    if (mode == 1) receiver.reset();\n    if (mode == 2) signal->handlers.clear();\n    emit(signal);\n  }\n  emit(signal);\n  std::cout << \"value \" << (receiver ? *receiver : -1) << \" subscriptions \" << signal->handlers.size() << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Нарисуйте граф владения лабораторной.",
+          "criteria": "На графе отмечены сильные main→source/receiver и слабые callback→receiver, subscription→source; объяснено отсутствие цикла владения."
+        },
+        {
+          "task": "Реализуйте деструктор подписки.",
+          "criteria": "Деструктор lock-ит слабый source и удаляет свой id, если source жив; после scope handlers пусты, разрушение source раньше подписки безопасно."
+        },
+        {
+          "task": "Добавьте безопасный перенос Subscription.",
+          "criteria": "Move передаёт id/state и обезвреживает источник; уничтожение moved-from не отключает активную подписку, move-assignment сначала освобождает прежнюю."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: Время жизни callbacks и RAII-подписки",
+        "start": "При запуске заготовки со штатным вводом получается:\nvalue 0 subscriptions 1\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Подписка — Ресурс регистрации обработчика с определённым сроком жизни.\nСлабая ссылка — Наблюдение за объектом без продления его времени жизни.\nlock — Попытка получить временное совместное владение живым объектом.",
+        "change": "Введите mode 0, 1 или 2 без хвоста. Подпишитесь, вызовите emit. В mode 1 уничтожьте получателя; в mode 2 удалите handlers. Вызовите emit снова, выйдите из scope подписки и вызовите третий emit. Выведите значение получателя (-1 при отсутствии) и число подписок.",
+        "inputs": "Случай: Первый содержательный запуск\nstdin:\n0\nОжидается:\nvalue 2 subscriptions 0\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "receiver может исчезнуть до signal без висячего доступа.\nvalue 2 subscriptions 0.\nПолучатель не вызывается после разрушения; удалённая подписка не остаётся в map.\nДобавьте свой корректный сценарий и один отказ. Сохраните исходники, вход/действия и фактическое наблюдение. Объяснение проверяется отдельно от результата запуска.",
+        "errors": "mode 0: value 2; mode 1: value−1; mode 2: value 1; после области subscriptions 0. Копия std::function живёт независимо от удаляемой записи map.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "value 2 subscriptions 0"
+            ]
+          },
+          {
+            "stdin": "1",
+            "lines": [
+              "value -1 subscriptions 0"
+            ]
+          },
+          {
+            "stdin": "2",
+            "lines": [
+              "value 1 subscriptions 0"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "3",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -878,6 +968,7 @@
         "stdin": "",
         "output": "calls 1 subscriptions 0\nexpired source cleanup safe\n"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

@@ -454,7 +454,12 @@
           "source": "#include <iostream>\nstruct Reading {\n    int value;\n};\nbool acceptable(const Reading &r) { return r.value >= 0 && r.value <= 100; }\nint main() {\n    Reading a{42}, b{101};\n    std::cout << acceptable(a) << ' ' << acceptable(b) << '\\n';\n}\n",
           "stdin": "",
           "output": "1 0\n"
-        }
+        },
+        "steps": [
+          "Create records with an accepted and a rejected value.",
+          "acceptable only observes each record.",
+          "Compare bool results one and zero."
+        ]
       },
       {
         "id": "concept-2",
@@ -791,7 +796,116 @@
       "outputFields": [
         "Counter value",
         "Rejection count"
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\nclass Counter {\n int value_=0;\npublic:\n bool add(int n){if(n<0||n>100-value_)return false;value_+=n;return true;}\n int value()const{return value_;}\n};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}\n int amounts[20]{};for(int i=0;i<n;++i)if(!(std::cin>>amounts[i])){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Counter c;int rejected=0;for(int i=0;i<n;++i)if(!c.add(amounts[i]))++rejected;\n std::cout<<c.value()<<' '<<rejected<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Separate Counter fields from operations.",
+          "criteria": "Identify the value, add, value() and initial zero."
+        },
+        {
+          "task": "Justify checking before adding.",
+          "criteria": "Explain remaining-capacity bounds and the risk of value+n."
+        },
+        {
+          "task": "Compare an open record with a class for this task.",
+          "criteria": "Provide a missed-validation scenario and the interface cost."
+        }
+      ],
+      "passport": {
+        "goal": "Laboratory: Objects, abstraction and responsibility boundaries",
+        "start": "Running the starter with its default input produces:\n0 3\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Object — Storage with a type and lifetime; it need not be an instance of a user-defined class.\nAbstraction — Selected observable properties that hide decisions a client does not need.\nInvariant — A condition established at construction and preserved by public operations.",
+        "change": "Read n=0…20 and exactly n integer increments. Counter starts at zero and accepts a nonnegative increment only if it fits the remaining capacity of 100; rejection preserves state. Print the value and rejection count separated by a space. Invalid syntax, count or trailing tokens: invalid.",
+        "inputs": "Case: Case 1\nstdin:\n0\nExpected:\n0 0\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "States 0 → 30 → 30 → 50, one rejection.\nThe output is 50 1.\nThe first gives 0 1, the second invalid.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+        "errors": "The states are 30, 30, 50. The request for 80 exceeds the remaining 70, so there is one rejection.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "3 30 80 20",
+            "lines": [
+              "50 1"
+            ]
+          },
+          {
+            "stdin": "3 -1 100 1",
+            "lines": [
+              "100 2"
+            ]
+          },
+          {
+            "stdin": "2 0 100",
+            "lines": [
+              "100 0"
+            ]
+          },
+          {
+            "stdin": "1 2147483647",
+            "lines": [
+              "0 1"
+            ]
+          },
+          {
+            "stdin": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ",
+            "lines": [
+              "0 0"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "2 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 tail",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -845,6 +959,7 @@
         "sourceTitle": "Choosing a model",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

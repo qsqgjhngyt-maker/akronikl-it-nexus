@@ -401,7 +401,12 @@
           "source": "#include <iostream>\nusing Count = int;\nenum class State { idle, ready };\nunion Storage { int count; double weight; };\nint main() {\n    Count n{3};\n    State state{State::ready};\n    Storage storage{};\n    storage.count = n;\n    std::cout << (state == State::ready) << ' ' << storage.count << '\\n';\n}\n",
           "stdin": "",
           "output": "1 3\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       },
       {
         "id": "concept-4",
@@ -464,7 +469,12 @@
             "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
             "stdin": "",
             "output": "1\n1 7\n"
-          }
+          },
+          "steps": [
+            "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+            "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+            "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+          ]
         }
       },
       {
@@ -683,6 +693,85 @@
         "case": 0,
         "stdout": "rejected 3\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    int stock{}, amount{};\n    std::string kind;\n    if (!(std::cin >> stock >> kind >> amount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || stock < 0 || stock > 1000 || amount < 0 || amount > 1000 || (kind != \"add\" && kind != \"remove\")) { std::cout << \"invalid\\n\"; return 0; }\n    Command value = Add{amount};\n    if (kind == \"remove\") { value = Remove{amount}; }\n    bool ok = executeStock(stock, value);\n    std::cout << (ok ? \"ok \" : \"rejected \") << stock << '\\n';\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+          "criteria": "Тип варианта не отменяет проверку его данных."
+        },
+        {
+          "task": "Прочитайте stock, add/remove и amount в 0…1000. Храните команду в variant<Add,Remove>; при невозможном изменении выведите rejected stock, иначе ok newStock. Неверный формат — invalid.",
+          "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+        },
+        {
+          "task": "Добавьте команду SetLimit отдельной структурой; перечислите новые правила и тесты, не используя std::get с исключением.",
+          "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+        }
+      ],
+      "passport": {
+        "goal": "Команды add и remove",
+        "start": "При запуске заготовки со штатным вводом получается:\nrejected 3\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Alias — другое имя существующего типа.\nАктивная альтернатива — тип значения, которое вариант содержит сейчас.\nenum class — отдельный тип с областью имён перечислителей.",
+        "change": "Прочитайте stock, add/remove и amount в 0…1000. Храните команду в variant<Add,Remove>; при невозможном изменении выведите rejected stock, иначе ok newStock. Неверный формат — invalid.",
+        "inputs": "Случай: Случай 1\nstdin:\n3 add 4\nОжидается:\nok 7\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "Проверьте 3 remove 3, 3 remove 4 и 1000 add 1. Для неизвестной команды проверьте invalid.\nТип варианта не отменяет проверку его данных.\nusing не создаёт сильный тип. Не читайте неактивный union для исследования битов.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+        "errors": "Выбор правильного типа не доказывает допустимость количества. Для отказа старый stock нужен в ответе.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "3 add 4",
+            "lines": [
+              "ok 7"
+            ]
+          },
+          {
+            "stdin": "3 remove 3",
+            "lines": [
+              "ok 0"
+            ]
+          },
+          {
+            "stdin": "3 remove 4",
+            "lines": [
+              "rejected 3"
+            ]
+          },
+          {
+            "stdin": "1000 add 1",
+            "lines": [
+              "rejected 1000"
+            ]
+          },
+          {
+            "stdin": "0 add 0",
+            "lines": [
+              "ok 0"
+            ]
+          },
+          {
+            "stdin": "3 other 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "3 add -1",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -754,6 +843,7 @@
         "sourceTitle": "Проверка выбора",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

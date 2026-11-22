@@ -947,6 +947,124 @@
         "case": 2,
         "stdout": "",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <string>\n#include <vector>\n#include <unordered_map>\n#include <algorithm>\nbool valid(const std::string&s){if(s.empty()||s.size()>12)return false;for(char c:s)if(c<'a'||c>'z')return false;return true;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>64){std::cout<<\"invalid\\n\";return 0;}\n std::unordered_map<std::string,int>counts;\n for(int i=0;i<n;++i){std::string word;if(!(std::cin>>word)||!valid(word)){std::cout<<\"invalid\\n\";return 0;}++counts[word];}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<std::pair<std::string,int>>report(counts.begin(),counts.end());\n std::sort(report.begin(),report.end(),[](const auto&a,const auto&b){return a.first<b.first;});\n if(report.empty())std::cout<<\"empty\\n\";\n else for(const auto&entry:report)std::cout<<entry.first<<' '<<entry.second<<'\\n';\n}",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Сравните find и [] на отсутствующем слове.",
+          "criteria": "Размер меняется только при вставке через []."
+        },
+        {
+          "task": "Реализуйте лабораторный частотный отчёт.",
+          "criteria": "Вывод отсортирован, границы длины проверены."
+        },
+        {
+          "task": "Добавьте сравнение двух словарей частот.",
+          "criteria": "Отчёт различает новое, удалённое и изменённое."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: Ассоциативные контейнеры и выбор структуры",
+        "start": "При запуске заготовки со штатным вводом получается:\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Ключ — Значение, по которому контейнер определяет идентичность записи.\nmap — Упорядоченное множество уникальных ключей с сопоставленными значениями.\nset — Упорядоченное множество уникальных ключей без отдельного mapped value.",
+        "change": "Прочитайте n в 0…64 и ровно n слов из a…z длиной 1…12. Подсчитайте частоты и выведите word count по одному на строку в лексическом порядке. При n=0 — empty. При нарушении границ, неверном или лишнем вводе — только invalid.",
+        "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\nempty\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "В лексическом порядке a 2, b 3, c 1.\nСтроки apple 1 и pear 2.\nПустой набор даёт empty, оба других ввода дают invalid.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+        "errors": "Чтение через [] вставит absent со значением 0. Размер станет 3, проверка размера завершит демонстрацию с ошибкой.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "empty"
+            ]
+          },
+          {
+            "stdin": "1 pear",
+            "lines": [
+              "pear 1"
+            ]
+          },
+          {
+            "stdin": "3 pear apple pear",
+            "lines": [
+              "apple 1",
+              "pear 2"
+            ]
+          },
+          {
+            "stdin": "6 b a b c a b",
+            "lines": [
+              "a 2",
+              "b 3",
+              "c 1"
+            ]
+          },
+          {
+            "stdin": "64 same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same",
+            "lines": [
+              "same 64"
+            ]
+          },
+          {
+            "stdin": "65",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 Upper",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 abc123",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 abcdefghijklm",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "2 one",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 tail",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 a-b",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -1001,6 +1119,7 @@
         "sourceTitle": "Выбор по нагрузке и независимые проверки",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

@@ -77,7 +77,12 @@
           "source": "#include <iostream>\n\nint main() {\n    int a = 4;\n    int b = 250;\n    int c = a * b;\n    std::cout << \"duration_ms=\" << c << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "duration_ms=1000\n"
-        }
+        },
+        "steps": [
+          "Locate the declarations and uses of a, b, and c.",
+          "Independently calculate 4 × 250 = 1000 milliseconds.",
+          "Save stdout as the baseline contract."
+        ]
       }
     },
     {
@@ -92,7 +97,12 @@
         "source": "#include <iostream>\n\nint main() {\n    int sampleCount=4; int periodMs=250;\n    int durationMs=sampleCount*periodMs;\n    std::cout<<\"duration_ms=\"<<durationMs<<'\\n';\n    return 0;\n}\n",
         "stdin": "",
         "output": "duration_ms=1000\n"
-      }
+      },
+      "steps": [
+        "Map a → sampleCount, b → periodMs, c → durationMs.",
+        "Check every use, including the output statement.",
+        "Compare stdout with the first example; the text inside quotes was not renamed."
+      ]
     },
     {
       "id": "concept-3",
@@ -122,7 +132,12 @@
         "source": "#include <iostream>\n\nint main() {\n    int sampleCount = 4;\n    int periodMs = 250;\n    int durationMs = sampleCount * periodMs;\n    std::cout << \"duration_ms=\" << durationMs << '\\n';\n    return 0;\n}\n",
         "stdin": "",
         "output": "duration_ms=1000\n"
-      }
+      },
+      "steps": [
+        "Map a → sampleCount, b → periodMs, c → durationMs.",
+        "Check every use, including the output statement.",
+        "Compare stdout with the first example; the text inside quotes was not renamed."
+      ]
     },
     {
       "id": "concept-6",
@@ -323,12 +338,30 @@
       {
         "label": "0 × 90",
         "input": "",
-        "output": "length_cm=0\n"
+        "output": "length_cm=0\n",
+        "sourceVariant": {
+          "source": "#include <iostream>\n\nint main() {\n    int panelCount = 0;\n    int panelLengthCm = 90;\n    int totalLengthCm = panelCount * panelLengthCm;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    return 0;\n}\n",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int panelCount = 0;\n    int panelLengthCm = 90;\n    int totalLengthCm = panelCount * panelLengthCm;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
       },
       {
         "label": "2 × 140",
         "input": "",
-        "output": "length_cm=280\n"
+        "output": "length_cm=280\n",
+        "sourceVariant": {
+          "source": "#include <iostream>\n\nint main() {\n    int panelCount = 2;\n    int panelLengthCm = 140;\n    int totalLengthCm = panelCount * panelLengthCm;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    return 0;\n}\n",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int panelCount = 2;\n    int panelLengthCm = 140;\n    int totalLengthCm = panelCount * panelLengthCm;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
       }
     ],
     "criteria": [
@@ -341,28 +374,62 @@
       {
         "where": "My independent work",
         "action": "Record the original report: length_cm=450.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates your prediction from the run result.",
+        "expected": "Case: 5 × 90\nstdin:\n(empty input)\nExpected:\nlength_cm=450\n"
       },
       {
         "where": "My independent work",
         "action": "Map each of the three old names to its new name.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Rename one declaration and all its uses, build and compare output; repeat for the other names.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Check both versions for 5 × 90, 0 × 90 and 2 × 140. Do not change the formula while renaming.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates an ordinary successful result from boundary behaviour.",
+        "expected": "Case: 0 × 90\nstdin:\n(empty input)\nExpected:\nlength_cm=0\n"
       }
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n\nint main() {\n    int panelCount = 5;\n    int panelLengthCm = 90;\n    int totalLengthCm = panelCount * panelLengthCm;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.cpp"
+      }
+    },
+    "exercises": [
+      {
+        "task": "Split int panelCount = 3; into meaningful pieces and state each role.",
+        "criteria": "Explain int, panelCount, =, 3, and ; rather than merely listing five words."
+      },
+      {
+        "task": "Choose names for a sensor count, a period in milliseconds, and total duration. Explain why sensor-count and 2period do not work.",
+        "criteria": "Separate language rules from the lowerCamelCase convention and expose units."
+      },
+      {
+        "task": "Propose a review of someone else’s a*b calculation without changing the external label. Plan verification before editing.",
+        "criteria": "Include baseline stdout, consistent replacements, and two other data sets."
+      }
+    ],
+    "passport": {
+      "goal": "Naming review for a panel calculation",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Token — A meaningful lexical unit such as a name, literal, or operator; not necessarily one character or a word separated by spaces.\nIdentifier — A name form used in declarations and references to program entities.\nKeyword — A word with a special grammatical role, such as int or return; it cannot be declared as an ordinary quantity name.",
+      "change": "There are 5 panels, each 90 cm long. Rename a, b and c to panelCount, panelLengthCm and totalLengthCm. Preserve the values, formula and external length_cm= label. Then compare both versions for 0 × 90 and 2 × 140.",
+      "inputs": "Case: 5 × 90\nstdin:\n(empty input)\nExpected:\nlength_cm=450\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "All uses of each name agree; the names convey meaning and units and avoid reserved forms.\nFor each data set, output before and after renaming matches the corresponding result below.\nExplain which tokens you replaced and which you preserved. Why does a successful build alone not verify the units?",
+      "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\nreturn has a grammatical role. Replace it with sampleCount everywhere.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    }
   },
   "terms": [
     {
@@ -441,5 +508,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.key"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.tokens-identifiers-keywords.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

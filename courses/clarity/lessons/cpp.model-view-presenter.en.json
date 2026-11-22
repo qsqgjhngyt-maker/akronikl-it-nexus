@@ -108,7 +108,12 @@
         "source": "#include <iostream>\nstruct View {\n    int last = -1;\n    void show(int value) { last = value; }\n};\nvoid present(View &view, int value) { view.show(value); }\nint main() {\n    View fake;\n    present(fake, 8);\n    std::cout << \"shown \" << fake.last << '\\n';\n}\n",
         "stdin": "",
         "output": "shown 8\n"
-      }
+      },
+      "steps": [
+        "fake.last starts at minus one.",
+        "present calls show(8).",
+        "The last displayed value is checked without a GUI."
+      ]
     },
     {
       "id": "concept-4",
@@ -349,6 +354,91 @@
       "case": 0,
       "stdout": "stock 2 rejected 3\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) {\n    if (delta < -20 || delta > 20 || quantity_ + delta < 0 || quantity_ + delta > 20) return false;\n    quantity_ += delta; return true;\n  }\n  int quantity() const { return quantity_; }\n};\nstruct View { int last = -1; void show(int value) { last = value; } };\nclass Presenter {\n  Stock& model_; View& view_;\npublic:\n  Presenter(Stock& m, View& v) : model_(m), view_(v) { view_.show(model_.quantity()); }\n  bool onChange(int delta) { bool ok = model_.change(delta); view_.show(model_.quantity()); return ok; }\n};\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Stock model; View view; Presenter presenter(model, view); int rejected = 0;\n  for (int x : commands) if (!presenter.onChange(x)) ++rejected;\n  std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Name each class’s responsibility.",
+        "criteria": "Assign the invariant to Stock, display to View and command/update coordination to Presenter; give one responsibility and one forbidden dependency for each."
+      },
+      {
+        "task": "Complete change and onChange.",
+        "criteria": "change validates delta before addition; onChange displays actual stock even after rejection; all reference cases match, including INT_MAX."
+      },
+      {
+        "task": "Connect a text adapter without adding cin to Stock.",
+        "criteria": "The text adapter parses input outside Stock; the same model tests work with fake and text views, and the model contains no cin dependency."
+      }
+    ],
+    "passport": {
+      "goal": "Laboratory: Model, view and presenter",
+      "start": "Running the starter with its default input produces:\nstock 2 rejected 3\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Model — The component containing domain data and mutation rules.\nView — The component that presents state to a user.\nPresenter — Connects user intention, the model and presentation.",
+      "change": "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected.",
+      "inputs": "Case: First substantive run\nstdin:\n3 5 -3 20\nExpected:\nstock 4 rejected 1\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Stock 7,4,4; one rejection.\nstock 4 rejected 1.\nLog 2,7,4,4; INT_MAX leaves stock 2 with one rejection.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
+      "errors": "show receives 2,7,4,4; the final command is rejected. last stores only 4 and cannot detect missing intermediate updates.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "3 5 -3 20",
+          "lines": [
+            "stock 4 rejected 1"
+          ]
+        },
+        {
+          "stdin": "0",
+          "lines": [
+            "stock 2 rejected 0"
+          ]
+        },
+        {
+          "stdin": "1 -2",
+          "lines": [
+            "stock 0 rejected 0"
+          ]
+        },
+        {
+          "stdin": "1 18",
+          "lines": [
+            "stock 20 rejected 0"
+          ]
+        },
+        {
+          "stdin": "1 -3",
+          "lines": [
+            "stock 2 rejected 1"
+          ]
+        },
+        {
+          "stdin": "1 2147483647",
+          "lines": [
+            "stock 2 rejected 1"
+          ]
+        },
+        {
+          "stdin": "1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 junk",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -448,5 +538,8 @@
       "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.model-view-presenter.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

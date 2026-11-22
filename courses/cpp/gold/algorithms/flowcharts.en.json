@@ -478,7 +478,13 @@
             "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
             "stdin": "1000\n",
             "output": "free\n"
-          }
+          },
+          "steps": [
+            "Reject negative totals first.",
+            "Only valid orders reach the threshold.",
+            "1000 satisfies >=1000.",
+            "999 must print 150."
+          ]
         },
         "flowchart": {
           "caption": "Flowchart for the shipping fee",
@@ -560,7 +566,13 @@
           "source": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
           "stdin": "60\n",
           "output": "pass\n"
-        }
+        },
+        "steps": [
+          "Accept only 0..100.",
+          "60 is included in the pass range.",
+          "59 returns retry.",
+          "101 returns invalid."
+        ]
       },
       {
         "id": "concept-5",
@@ -755,22 +767,121 @@
         {
           "where": "My program",
           "action": "Draw the input, validation and fare branches.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates your prediction from the run result.",
+          "expected": "Case: New main input\nstdin:\n12\n\nExpected:\n240\n"
         },
         {
           "where": "My program",
           "action": "Complete the starter while retaining distance validation.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My program",
           "action": "Compare 0, 5, 6 and 12 in the diagram and the program.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates an ordinary successful result from boundary behaviour.",
+          "expected": "Case: Check 1\nstdin:\n0\n\nExpected:\ninvalid\n"
         }
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "files": {},
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      "exercises": [
+        {
+          "task": "Draw a flowchart for exam-score validation.",
+          "criteria": "Show invalid/pass/retry and labeled edges."
+        },
+        {
+          "task": "Trace free-shipping logic at the boundary.",
+          "criteria": "All three input classes follow intended paths."
+        },
+        {
+          "task": "Design a distance-based fare model.",
+          "criteria": "Validate the input, then apply a threshold and an incremental formula."
+        }
+      ],
+      "passport": {
+        "goal": "Distance fare",
+        "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Decision node — A conditional split with explicitly labeled outcomes.\nExecution path — The sequence of nodes visited by a particular input.\nBranch coverage — Tests that exercise each alternative outcome of a decision.",
+        "change": "Draw the distance fare flowchart and implement it. Distances of 1–5 km cost 100 and every kilometre after the fifth adds 20. Accept integer distances 1..1000000. Print invalid for disallowed or unreadable input.",
+        "inputs": "Case: New main input\nstdin:\n12\n\nExpected:\n240\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Label each decision exit.\nCheck extraction and range before applying the fare.\nExplain which paths yield 100 at 5 km and 120 at 6 km.",
+        "errors": "The boundary of the new fare is 5 km. Follow the diagram for 5 and 6 before coding.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "12\n",
+            "lines": [
+              "240"
+            ]
+          },
+          {
+            "stdin": "0\n",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "5\n",
+            "lines": [
+              "100"
+            ]
+          },
+          {
+            "stdin": "8\n",
+            "lines": [
+              "160"
+            ]
+          },
+          {
+            "stdin": "oops\n",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1\n",
+            "lines": [
+              "100"
+            ]
+          },
+          {
+            "stdin": "6\n",
+            "lines": [
+              "120"
+            ]
+          },
+          {
+            "stdin": "1000000\n",
+            "lines": [
+              "20000000"
+            ]
+          },
+          {
+            "stdin": "1000001\n",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -1001,6 +1112,7 @@
         "sourceSection": 6,
         "anchor": "concept-7"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

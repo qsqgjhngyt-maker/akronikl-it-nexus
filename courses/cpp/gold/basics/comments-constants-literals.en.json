@@ -554,7 +554,12 @@
           "source": "#include <iostream>\n\nint main() {\n    const int packetBytes = 1'024;\n    const int enabledFlags = 0b1010;\n    const char grade = 'A';\n    std::cout << packetBytes << ' ' << enabledFlags << ' ' << grade << '\\n';\n    std::cout << \"path=C:\\\\temp\\n\";\n    return 0;\n}\n",
           "stdin": "",
           "output": "1024 10 A\npath=C:\\temp\n"
-        }
+        },
+        "steps": [
+          "Ignore the separator when reading the value: 1'024 means 1024.",
+          "Expand 0b1010 as 8 + 2; std::cout prints 10.",
+          "Read \\\\ as one backslash and \\n as the line ending."
+        ]
       },
       {
         "id": "concept-6",
@@ -568,7 +573,12 @@
           "source": "#include <iostream>\n\nint main() {\n    // Reserve two seats for the demonstration equipment.\n    const int reservedSeats = 2;\n    int availableSeats = 18 - reservedSeats;\n    std::cout << \"available=\" << availableSeats << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "available=16\n"
-        }
+        },
+        "steps": [
+          "Recover the policy from the comment: equipment uses two seats.",
+          "Explain 18 − 2 = 16 in domain terms.",
+          "State what to review if the reserved-seat count changes."
+        ]
       },
       {
         "id": "concept-7",
@@ -747,34 +757,79 @@
         {
           "where": "My independent work",
           "action": "Write 15 × 60 = 900 independently of the program.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates your prediction from the run result.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nduration_s=900\n"
         },
         {
           "where": "My independent work",
           "action": "Separate the fixed factor from this scenario’s parameter.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "Explain why units are converted, not what * does.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "Test 0, 15, and 40 minutes with the same formula.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "In a separate copy, trigger and repair an assignment-to-const error.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates an ordinary successful result from boundary behaviour.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nduration_s=900\n"
         }
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    // The schedule records whole minutes; the report uses seconds.\n    constexpr int secondsPerMinute = 60;\n    const int lessonMinutes = 15;\n    int durationSeconds = lessonMinutes * secondsPerMinute;\n    std::cout << \"duration_s=\" << durationSeconds << '\\n';\n    return 0;\n}\n",
+        "files": {},
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      "exercises": [
+        {
+          "task": "Classify 60, secondsPerMinute, and // unit conversion as literal, name, or comment.",
+          "criteria": "Roles are distinguished without relying on visual length."
+        },
+        {
+          "task": "Convert 7 minutes to seconds using a named constexpr factor.",
+          "criteria": "Expect duration_s=420, explain the unit, and leave no unexplained 60 in the formula."
+        },
+        {
+          "task": "A plan uses 100 for centimeters per meter and 100 as an attendee limit. Propose two names and explain why they must stay separate.",
+          "criteria": "The names distinguish independent rules, and a comment explains the attendee limit."
+        }
+      ],
+      "passport": {
+        "goal": "A unit contract without magic numbers",
+        "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Literal — A value written directly in source: 60, 0b1010, 'A', or \"done\".\nconst — For the simple objects in this lesson, prevents changing the value after initialization by ordinary assignment.\nconstexpr — In our integer constant declaration, requires a valid constant-expression initializer and makes the object const.",
+        "change": "Refactor the conversion of 15 minutes to seconds. Preserve stdout, introduce secondsPerMinute and lessonMinutes, and add a comment explaining the unit contract. Also represent room A as a char and separately as a string followed by a newline. Explain the quotation marks. In a separate copy, check 1'024 and 0b1010 without changing the main task’s minutes-to-seconds contract.",
+        "inputs": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\nduration_s=900\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Both names express roles and the factor is specified once.\nExplain const versus constexpr without a speed claim.\nRecord actual outputs of 0, 900, and 2400 seconds.\nThe comment matches the formula; the const diagnostic is separate from the working solution.\nExplain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\nAn existing const int cannot be changed by this assignment.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "",
+            "lines": [
+              "duration_s=900"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -883,6 +938,7 @@
         "anchor": "concept-7"
       }
     ],
-    "starterExpected": "duration_s=900\n"
+    "starterExpected": "duration_s=900\n",
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

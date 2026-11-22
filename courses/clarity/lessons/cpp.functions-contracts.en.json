@@ -47,7 +47,15 @@
         "source": "#include <iostream>\n\nint copied(int value) {\n    ++value;\n    return value;\n}\n\nvoid changed(int& value) {\n    ++value;\n}\n\nint main() {\n    int original = 4;\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
         "stdin": "",
         "output": "4 5\n5\n"
-      }
+      },
+      "steps": [
+        "original starts at 4. Calling copied(original) creates a separate parameter value=4; result initialization is not complete yet.",
+        "++value changes the parameter from 4 to 5. original is still 4 because the parameter is a copy.",
+        "return value yields 5. The call ends and result is initialized to 5. The first output line is 4 5.",
+        "changed(original) binds its int& parameter to original. There is no separate copied integer here.",
+        "++value now changes original from 4 to 5. result stays 5. The second output line is 5.",
+        "For your own prediction, start at original=10: expect 10 11, then 11. Explain each state before running."
+      ]
     },
     {
       "id": "concept-3",
@@ -119,7 +127,13 @@
           "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int result{17};\n    bool ok = checkedArea(-1, 2, result);\n    std::cout << ok << ' ' << result << '\\n';\n    ok = checkedArea(3, 4, result);\n    std::cout << ok << ' ' << result << '\\n';\n}\n",
           "stdin": "",
           "output": "0 17\n1 12\n"
-        }
+        },
+        "steps": [
+          "result starts at 17. checkedArea(-1,2,result) checks width first: -1 is outside 0..1000.",
+          "return false ends this call before assigning result. ok is false and result remains 17; output is 0 17.",
+          "checkedArea(3,4,result) passes all bounds. result becomes 12 and the call returns true; output is 1 12.",
+          "A CLI line invalid alone cannot show that result stayed 17. This direct call observes both the returned bool and the output parameter."
+        ]
       }
     },
     {
@@ -334,6 +348,85 @@
       "case": 0,
       "stdout": "invalid\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Start original at 10 and predict both output lines without running.",
+        "criteria": "10 11, then 11; distinguish the local copy from the referenced object."
+      },
+      {
+        "task": "Implement bool checkedArea(int w,int h,int& result): dimensions are 0…1000 and rejection leaves result unchanged. main reads exactly two dimensions and prints the area or invalid.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Add checkedPerimeter with the same rejection rule and shared range checks; compare responsibility boundaries.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Checked area at the input boundary",
+      "start": "Running the starter with its default input produces:\ninvalid\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Contract — caller obligations and operation guarantees.\nSide effect — an observable change beyond the return value.\nArgument — an expression supplied in a function call.",
+      "change": "Implement bool checkedArea(int w, int h, int& result). For dimensions in 0–1000, store their product and return true. On rejection, return false and preserve result. In main read exactly two integers. Print the area or invalid.",
+      "inputs": "Case: Case 1\nstdin:\n3 4\nExpected:\n12\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Compare 0 1000, 1000 1000 and 3 4 x. Separately call the function with invalid dimensions and demonstrate that result stayed unchanged.\nA direct rejection test observes false and unchanged result=17; a valid 3×4 call observes true and 12.\nDo not assign result before every check succeeds. Do not return a reference to a local variable.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "Place the one assignment to result after all dimension checks. A width of 0 is valid.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "3 4",
+          "lines": [
+            "12"
+          ]
+        },
+        {
+          "stdin": "0 1000",
+          "lines": [
+            "0"
+          ]
+        },
+        {
+          "stdin": "1000 1000",
+          "lines": [
+            "1000000"
+          ]
+        },
+        {
+          "stdin": "-1 2",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1001 1",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "3 4 x",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -425,5 +518,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.ref"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.functions-contracts.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

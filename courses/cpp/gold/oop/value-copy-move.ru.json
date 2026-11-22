@@ -537,7 +537,12 @@
             "source": "#include <iostream>\n#include <string>\n#include <utility>\nstruct Note {\n    std::string text;\n};\nint main() {\n    Note a{\"draft\"};\n    Note b = a;\n    b.text = \"review\";\n    Note c = std::move(a);\n    a.text = \"reused\";\n    std::cout << a.text << ' ' << b.text << ' ' << c.text << '\\n';\n}\n",
             "stdin": "",
             "output": "reused review draft\n"
-          }
+          },
+          "steps": [
+            "Копия b меняется независимо от a.",
+            "c получает исходное значение a перемещением.",
+            "a присваивается reused до чтения: reused review draft."
+          ]
         }
       },
       {
@@ -560,7 +565,12 @@
           "source": "#include <iostream>\n#include <memory>\n#include <utility>\nint main() {\n    auto a = std::make_unique<int>(7);\n    auto b = std::move(a);\n    std::cout << bool(a) << ' ' << *b << '\\n';\n    a = std::make_unique<int>(9);\n    std::cout << *a << '\\n';\n}\n",
           "stdin": "",
           "output": "0 7\n9\n"
-        }
+        },
+        "steps": [
+          "Перемещение unique_ptr оставляет a пустым.",
+          "b владеет 7, это отдельная гарантия типа.",
+          "Новое присваивание владельца a даёт безопасный вывод 9."
+        ]
       },
       {
         "id": "concept-6",
@@ -798,7 +808,104 @@
         "Сумма c",
         "Сумма b",
         "Первый элемент нового a"
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\n#include <utility>\nstruct Batch {std::vector<int> values;};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}Batch a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.values.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Batch b=a;for(int& x:b.values)++x;Batch c=std::move(a);a.values.assign(1,42);\n int original=0,changed=0;for(int x:c.values)original+=x;for(int x:b.values)changed+=x;\n std::cout<<original<<' '<<changed<<' '<<a.values[0]<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Различите b=a при создании и после него.",
+          "criteria": "Названы copy constructor и copy assignment."
+        },
+        {
+          "task": "Докажите независимость Batch b.",
+          "criteria": "Сумма исходных данных не меняется при инкременте копии."
+        },
+        {
+          "task": "Разберите std::move от const строки.",
+          "criteria": "Не обещано фактическое перемещение вместо копии."
+        }
+      ],
+      "passport": {
+        "goal": "Лабораторная: Семантика значения, копирование и перемещение",
+        "start": "При запуске заготовки со штатным вводом получается:\n0 0 42\n",
+        "where": "Практика → Задание и Code Studio → Моя программа",
+        "knowledge": "Семантика значения — Независимое значение копии по наблюдаемому контракту типа.\nКонструктор копирования — Создание нового объекта из существующего значения.\nКопирующее присваивание — Замена значения уже живого объекта копией.",
+        "change": "Прочитайте n=0…20 и n чисел −100…100. Batch a хранит vector. Скопируйте b=a, увеличьте элементы b на 1, переместите a в c, затем присвойте a.values={42}. Напечатайте суммы c и b, затем a.values[0]. Неверный ввод или хвост: invalid.",
+        "inputs": "Случай: Случай 1\nstdin:\n0\nОжидается:\n0 0 42\n",
+        "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+        "checks": "Суммы c и b равны 6 и 9, новое a содержит 42.\nВвод 3 1 2 3 даёт 6 9 42.\nСоответственно 0 0 42 и 0 2 42.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+        "errors": "Перемещённая string допустима, но её конкретное содержимое не закреплено. Присваивание задаёт новое значение.",
+        "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "0 0 42"
+            ]
+          },
+          {
+            "stdin": "3 1 2 3",
+            "lines": [
+              "6 9 42"
+            ]
+          },
+          {
+            "stdin": "2 -100 100",
+            "lines": [
+              "0 2 42"
+            ]
+          },
+          {
+            "stdin": "1 -7",
+            "lines": [
+              "-7 -6 42"
+            ]
+          },
+          {
+            "stdin": "20 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 ",
+            "lines": [
+              "2000 2020 42"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 101",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "2 3",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -862,6 +969,7 @@
         "sourceTitle": "Измерение без ложных выводов",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

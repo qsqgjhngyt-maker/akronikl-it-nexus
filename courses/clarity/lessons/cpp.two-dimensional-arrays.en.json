@@ -79,7 +79,12 @@
         "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    int cols{3};\n    std::cout << data[1 * cols + 2] << '\\n';\n}\n",
         "stdin": "",
         "output": "6\n"
-      }
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
     },
     {
       "id": "concept-4",
@@ -151,7 +156,12 @@
           "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    std::array<int, 6> result{};\n    for (int r = 0; r < 2; ++r) { for (int c = 0; c < 3; ++c) { result[c * 2 + r] = data[r * 3 + c]; } }\n    for (int r = 0; r < 3; ++r) { std::cout << result[r * 2] << ' ' << result[r * 2 + 1] << '\\n'; }\n}\n",
           "stdin": "",
           "output": "1 4\n2 5\n3 6\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       }
     },
     {
@@ -376,6 +386,90 @@
       "case": 0,
       "stdout": "0\n0 0\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\nint main() {\n    int rows{}, cols{};\n    if (!(std::cin >> rows >> cols) || rows < 0 || rows > 10 || cols < 0 || cols > 10) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> data(rows * cols);\n    for (int& value : data) { if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; } }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    long long total{};\n    for (int value : data) { total += value; }\n    std::cout << total << '\\n';\n    for (int r = 0; r < rows; ++r) {\n        long long rowSum{};\n        for (int c = 0; c < cols; ++c) { rowSum += data[r * cols + c]; }\n        if (r != 0) { std::cout << ' '; }\n        std::cout << rowSum;\n    }\n    std::cout << '\\n';\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Manually trace the first example and explain every expected output line.",
+        "criteria": "Establish the shape before applying an index formula."
+      },
+      {
+        "task": "Read rows and cols in 0…10 and exactly rows*cols integers in -1000…1000. Print the total and a line of row sums; with rows=0 the second line is empty.",
+        "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+      },
+      {
+        "task": "Transpose into a new flat buffer and verify that transposing twice restores both data and shape.",
+        "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+      }
+    ],
+    "passport": {
+      "goal": "Sums by row in a rectangle",
+      "start": "Running the starter with its default input produces:\n0\n0 0\n",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Shape — row and column counts together with their consistency.\nRow-major — elements of each row are contiguous.\nMatrix row — elements with a fixed first coordinate.",
+      "change": "Read rows and cols in 0…10 and exactly rows*cols integers in -1000…1000. Print the total and a line of row sums; with rows=0 the second line is empty.",
+      "inputs": "Case: Case 1\nstdin:\n2 3 1 2 3 4 5 6\nExpected:\n21\n6 15\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Compare 2×3 and 3×2 using the same six numbers. Check 0×3 and an input missing the final value.\nEstablish the shape before applying an index formula.\nDo not test matrix code only with a square shape. Do not obtain cols from a[0] when there are no rows.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+      "errors": "Two shapes may share a grand total yet have different row sums.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "2 3 1 2 3 4 5 6",
+          "lines": [
+            "21",
+            "6 15"
+          ]
+        },
+        {
+          "stdin": "0 3",
+          "lines": [
+            "0",
+            ""
+          ]
+        },
+        {
+          "stdin": "2 0",
+          "lines": [
+            "0",
+            "0 0"
+          ]
+        },
+        {
+          "stdin": "1 1 -5",
+          "lines": [
+            "-5",
+            "-5"
+          ]
+        },
+        {
+          "stdin": "3 2 1 2 3 4 5 6",
+          "lines": [
+            "21",
+            "3 7 11"
+          ]
+        },
+        {
+          "stdin": "1 2 4",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "-1 3",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -467,5 +561,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.two-dimensional-arrays.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

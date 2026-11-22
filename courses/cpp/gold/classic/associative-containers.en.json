@@ -947,6 +947,124 @@
         "case": 2,
         "stdout": "",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <string>\n#include <vector>\n#include <unordered_map>\n#include <algorithm>\nbool valid(const std::string&s){if(s.empty()||s.size()>12)return false;for(char c:s)if(c<'a'||c>'z')return false;return true;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>64){std::cout<<\"invalid\\n\";return 0;}\n std::unordered_map<std::string,int>counts;\n for(int i=0;i<n;++i){std::string word;if(!(std::cin>>word)||!valid(word)){std::cout<<\"invalid\\n\";return 0;}++counts[word];}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<std::pair<std::string,int>>report(counts.begin(),counts.end());\n std::sort(report.begin(),report.end(),[](const auto&a,const auto&b){return a.first<b.first;});\n if(report.empty())std::cout<<\"empty\\n\";\n else for(const auto&entry:report)std::cout<<entry.first<<' '<<entry.second<<'\\n';\n}",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Compare find and [] for a missing word.",
+          "criteria": "Only insertion through [] changes size."
+        },
+        {
+          "task": "Implement the frequency-report lab.",
+          "criteria": "Output is sorted; word-length bounds are checked."
+        },
+        {
+          "task": "Compare two frequency dictionaries.",
+          "criteria": "Distinguish new, removed and changed entries."
+        }
+      ],
+      "passport": {
+        "goal": "Laboratory: Associative containers and data-structure choice",
+        "start": "Running the starter with its default input produces:\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Key — A value used to determine record identity.\nmap — An ordered collection of unique keys and mapped values.\nset — An ordered collection of unique keys without a separate mapped value.",
+        "change": "Read n in 0…64 and exactly n words containing a…z with length 1…12. Count frequencies and print word count on separate lines in lexical order. For n=0 print empty. Bounds violations, malformed or extra input produce only invalid.",
+        "inputs": "Case: Case 1\nstdin:\n0\nExpected:\nempty\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "In lexicographic order, a 2, b 3, c 1.\nLines apple 1 and pear 2.\nThe empty set gives empty, and both other inputs give invalid.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+        "errors": "The [] access inserts absent with value 0. Size becomes 3 and the size check makes the demonstration fail.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "empty"
+            ]
+          },
+          {
+            "stdin": "1 pear",
+            "lines": [
+              "pear 1"
+            ]
+          },
+          {
+            "stdin": "3 pear apple pear",
+            "lines": [
+              "apple 1",
+              "pear 2"
+            ]
+          },
+          {
+            "stdin": "6 b a b c a b",
+            "lines": [
+              "a 2",
+              "b 3",
+              "c 1"
+            ]
+          },
+          {
+            "stdin": "64 same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same",
+            "lines": [
+              "same 64"
+            ]
+          },
+          {
+            "stdin": "65",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "-1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 Upper",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 abc123",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 abcdefghijklm",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "2 one",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 tail",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 a-b",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -1001,6 +1119,7 @@
         "sourceTitle": "Choose by workload and check independently",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

@@ -17,7 +17,8 @@ export const REFERENCE_ROUTES=Object.freeze([
 ]);
 export const REFERENCE_IDS=Object.freeze(REFERENCE_ROUTES.flatMap(r=>r.topics.map(t=>t[0])));
 export const referenceRouteFor=id=>REFERENCE_ROUTES.find(r=>r.topics.some(t=>t[0]===id));
-export const referenceBadge=(id,locale='ru')=>REFERENCE_IDS.includes(id)?`<span class="reference-badge" data-reference-badge>◇ ${locale==='en'?'Reference · under review':'Эталон · на проверке'}</span>`:'';
+// Формат распространён на весь каталог; прежние маршруты и ID сохраняются.
+export const referenceBadge=()=>'';
 export const referenceHref=(id,locale='ru',stage='explanation')=>'#'+new URLSearchParams({course:referenceRouteFor(id)?.course||id.split('.')[0],lesson:id,stage,locale,learningRoute:'reference-start'});
 export function lessonNavigationPlan(id,catalog,{referenceMode=false,locale='ru'}={}){
  const route=referenceMode?referenceRouteFor(id):null,course=catalog.find(c=>c.topics.some(t=>t.id===id));

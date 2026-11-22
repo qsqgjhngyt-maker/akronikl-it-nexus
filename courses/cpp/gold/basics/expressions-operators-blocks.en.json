@@ -468,7 +468,12 @@
             "source": "#include <iostream>\n\nint main() {\n    int ordinary = 2 + 3 * 4;\n    int grouped = (2 + 3) * 4;\n    std::cout << ordinary << ' ' << grouped << '\\n';\n    return 0;\n}\n",
             "stdin": "",
             "output": "14 20\n"
-          }
+          },
+          "steps": [
+            "Mark the nested expressions on paper.",
+            "For the ordinary form derive 3 × 4 = 12, then 2 + 12.",
+            "For the parenthesized form derive 5 × 4 = 20."
+          ]
         }
       },
       {
@@ -491,7 +496,12 @@
           "source": "#include <iostream>\n\nint main() {\n    int unitPriceCents{125};\n    int count{4};\n    int shippingCents{50};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "total_cents=550\n"
-        }
+        },
+        "steps": [
+          "125 × 4 = 500 cents for goods.",
+          "500 + 50 = 550 cents total.",
+          "Names and labels use one unit."
+        ]
       },
       {
         "id": "concept-5",
@@ -513,7 +523,12 @@
           "source": "#include <iostream>\n\nint main() {\n    std::cout << (20 - 5 - 3) << ' ' << (20 - (5 - 3)) << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "12 18\n"
-        }
+        },
+        "steps": [
+          "The first chain groups left.",
+          "In the second, 5 − 3 gives 2.",
+          "Explain that parentheses changed calculation rather than output format."
+        ]
       },
       {
         "id": "diagnose-incomplete-expression",
@@ -657,28 +672,73 @@
         {
           "where": "My independent work",
           "action": "Derive 3 × 120 + 40 = 400 by hand.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates your prediction from the run result.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\ntotal_cents=400\n"
         },
         {
           "where": "My independent work",
           "action": "Extract goods cost and then total cost.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "Compare before/after for the baseline and two variants.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My independent work",
           "action": "Explain the bounded-integer assumptions behind the demonstrated rewrite.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates an ordinary successful result from boundary behaviour.",
+          "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\ntotal_cents=400\n"
         }
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{40};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+        "files": {},
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      "exercises": [
+        {
+          "task": "Calculate 3 + 2 * 5 and (3 + 2) * 5 before running.",
+          "criteria": "Obtain 13 and 25 with explained grouping."
+        },
+        {
+          "task": "Split unitPriceCents * count + shippingCents into two named stages.",
+          "criteria": "Preserve types, units, and result."
+        },
+        {
+          "task": "Design tests distinguishing one-time shipping from per-item shipping.",
+          "criteria": "Include count>1 with nonzero shipping and an independent calculation."
+        }
+      ],
+      "passport": {
+        "goal": "A readable order formula",
+        "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Expression — A combination of operands and operations producing a typed value in our calculations.\nOperand — A value or nested expression to which an operation applies.\nPrecedence — A rule for grouping operators when parentheses are absent.",
+        "change": "Extract goodsCents while preserving total_cents output. State the type and unit of each intermediate result. For a 120-cent item, quantity 3 and a single 40-cent delivery charge, explain goodsCents and totalCents separately. Why does (unitPriceCents + shippingCents) * count model a different charge? Check one item and zero delivery charge.",
+        "inputs": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\ntotal_cents=400\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "The formula represents one-time shipping.\nNo unnecessary state changes inside expressions.\nThree cases are recorded with expectations.\nPrecedence is distinguished from evaluation order.\nExplain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\n+ has no right operand. Restore the expression rather than guessing another type.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "",
+            "lines": [
+              "total_cents=400"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -783,6 +843,7 @@
         "anchor": "concept-6"
       }
     ],
-    "starterExpected": "total_cents=400\n"
+    "starterExpected": "total_cents=400\n",
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

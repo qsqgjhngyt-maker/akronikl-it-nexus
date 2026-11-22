@@ -74,7 +74,14 @@
         "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<int> a{1, 2, 3};\n    auto pos = std::find(a.begin(), a.end(), 2) - a.begin();\n    a.reserve(a.capacity() + 20);\n    std::cout << a[static_cast<std::size_t>(pos)] << '\\n';\n}",
         "stdin": "",
         "output": "2\n"
-      }
+      },
+      "steps": [
+        "Найдите 2 и убедитесь по исходному набору, что результат не равен end.",
+        "Разность итераторов даёт целую позицию 1 до изменения контейнера.",
+        "reserve(capacity()+20) запрашивает большую ёмкость; прежние итераторы нельзя использовать после перераспределения.",
+        "Индекс снова применяется к текущему vector: значения и их порядок не менялись.",
+        "Вставка или удаление перед позицией меняет смысл индекса; в таком сценарии нужен устойчивый предметный ID и новый поиск."
+      ]
     },
     {
       "id": "concept-6",
@@ -145,7 +152,14 @@
           "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <numeric>\n#include <iterator>\nint main() {\n    std::vector<int> a{4, 1, 3, 2}, b;\n    int offset = 10;\n    std::transform(a.begin(), a.end(), std::back_inserter(b),\n                   [offset](int x) { return x + offset; });\n    std::sort(b.begin(), b.end(), [](int a, int b) { return a > b; });\n    auto p =\n        std::find_if(b.begin(), b.end(), [](int x) { return x % 2 == 0; });\n    std::cout << std::accumulate(b.begin(), b.end(), 0) << ' ' << *p << ' '\n              << std::distance(b.begin(), p) << '\\n';\n    std::vector<int> empty;\n    std::cout << (std::find(empty.begin(), empty.end(), 7) == empty.end())\n              << ' ' << std::accumulate(empty.begin(), empty.end(), 0)\n              << '\\n';\n}",
           "stdin": "",
           "output": "50 14 0\n1 0\n"
-        }
+        },
+        "steps": [
+          "a.begin()/a.end() ограничивают ровно четыре элемента; end не является последним значением.",
+          "back_inserter(b) добавляет выходные элементы через push_back, поэтому пустой b подходит как приёмник.",
+          "[offset] копирует 10 в объект lambda; (int x) — параметр её вызова, return даёт преобразованный элемент.",
+          "Предикат a>b задаёт строгий обратный порядок. find_if возвращает первый чётный элемент — итератор на 14.",
+          "Отдельный пустой вектор показывает find==end и нулевую сумму; разыменовывать end нельзя."
+        ]
       }
     },
     {
@@ -376,6 +390,128 @@
       "case": 1,
       "stdout": "0 0\n\n",
       "exitCode": 0
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <iterator>\n#include <numeric>\nint main(){\n int n,threshold;\n if(!(std::cin>>n>>threshold)||n<0||n>64||threshold< -10000||threshold>10000){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>input;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -10000||x>10000){std::cout<<\"invalid\\n\";return 0;}input.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>selected;\n std::copy_if(input.begin(),input.end(),std::back_inserter(selected),[threshold](int x){return x>=threshold;});\n std::sort(selected.begin(),selected.end(),[](int a,int b){return a>b;});\n std::transform(selected.begin(),selected.end(),selected.begin(),[](int x){return 2*x;});\n long long sum=std::accumulate(selected.begin(),selected.end(),0LL);\n std::cout<<selected.size()<<' '<<sum<<'\\n';\n for(std::size_t i=0;i<selected.size();++i){if(i)std::cout<<' ';std::cout<<selected[i];}\n std::cout<<'\\n';\n}",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Перечислите позиции [begin,end) для пустого vector.",
+        "criteria": "Ни одного разыменования end."
+      },
+      {
+        "task": "Выполните фильтр, сортировку по убыванию, удвоение и сумму.",
+        "criteria": "Промежуточные наборы совпали с ручной трассой."
+      },
+      {
+        "task": "Добавьте проекцию записи по ключу без изменения исходного vector.",
+        "criteria": "Сохранены исходник и отдельный результат, есть тест повторов."
+      }
+    ],
+    "passport": {
+      "goal": "Лабораторная: Итераторы, алгоритмы STL и lambda",
+      "start": "При запуске заготовки со штатным вводом получается:\n0 0\n\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Полуинтервал — Диапазон включает first и исключает last; пуст при first==last.\nИтератор — Объект навигации по последовательности с определёнными допустимыми операциями.\nRandom access — Категория с постоянным временем смещения и разности позиций.",
+      "change": "Прочитайте n в 0…64, порог в −10000…10000 и n значений того же диапазона. Отберите значения >= порога, отсортируйте по убыванию и удвойте. Первая строка: count и sum через пробел; вторая: полученные значения через пробел, даже для пустого набора. Неверный или лишний ввод — invalid.",
+      "inputs": "Случай: Случай 1\nstdin:\n0 0\nОжидается:\n0 0\n\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Проходят 3 и 2.\nПервая строка 2 10, вторая 6 4.\nСначала 0 0 и пустая строка, затем 2 -6 и -2 -4.\nДобавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче.",
+      "errors": "Остаются −2, −1, затем порядок −1, −2, затем −2, −4. Сумма −6.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "0 0",
+          "lines": [
+            "0 0",
+            ""
+          ]
+        },
+        {
+          "stdin": "4 2 1 3 2 -1",
+          "lines": [
+            "2 10",
+            "6 4"
+          ]
+        },
+        {
+          "stdin": "3 -2 -3 -2 -1",
+          "lines": [
+            "2 -6",
+            "-2 -4"
+          ]
+        },
+        {
+          "stdin": "3 2 2 2 2",
+          "lines": [
+            "3 12",
+            "4 4 4"
+          ]
+        },
+        {
+          "stdin": "3 5 -1 0 1",
+          "lines": [
+            "0 0",
+            ""
+          ]
+        },
+        {
+          "stdin": "3 -10000 10000 -10000 0",
+          "lines": [
+            "3 0",
+            "20000 0 -20000"
+          ]
+        },
+        {
+          "stdin": "64 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000",
+          "lines": [
+            "64 1280000",
+            "20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000"
+          ]
+        },
+        {
+          "stdin": "-1 0",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "65 0",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 10001",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0 x",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "1 0",
+          "lines": [
+            "invalid"
+          ]
+        },
+        {
+          "stdin": "0 0 trailing",
+          "lines": [
+            "invalid"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -475,5 +611,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/alg.sorting"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.iterators-algorithms-lambdas.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

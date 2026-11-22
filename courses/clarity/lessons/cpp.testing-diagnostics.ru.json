@@ -47,7 +47,12 @@
         "source": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 3> values{-2, 0, 4};\n    bool pass = countPositive(values) == 1;\n    std::cout << (pass ? \"PASS\\n\" : \"FAIL\\n\");\n    return pass ? 0 : 1;\n}\n",
         "stdin": "",
         "output": "PASS\n"
-      }
+      },
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ]
     },
     {
       "id": "concept-3",
@@ -128,7 +133,12 @@
           "source": "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n",
           "stdin": "",
           "output": "0 1 1\n"
-        }
+        },
+        "steps": [
+          "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+          "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+          "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        ]
       }
     },
     {
@@ -304,6 +314,49 @@
       "case": 0,
       "stdout": "FAIL\n",
       "exitCode": 1
+    },
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 1> zero{0};\n    std::array<int, 1> negative{-1};\n    std::array<int, 3> mixed{-2, 0, 4};\n    std::array<int, 3> positive{1, 2, 3};\n    int failures{};\n    if (countPositive(std::span<const int>{}) != 0) { ++failures; }\n    if (countPositive(zero) != 0) { ++failures; }\n    if (countPositive(negative) != 0) { ++failures; }\n    if (countPositive(mixed) != 1) { ++failures; }\n    if (countPositive(positive) != 3) { ++failures; }\n    if (failures != 0) { std::cout << \"FAIL\\n\"; return 1; }\n    std::cout << \"PASS 5\\n\";\n}\n",
+      "files": {},
+      "metadata": {}
+    },
+    "exercises": [
+      {
+        "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+        "criteria": "Хороший тест различает правильную и правдоподобно неправильную реализацию."
+      },
+      {
+        "task": "Напишите countPositive(span<const int>) и драйвер с пятью независимыми наборами, включая пустой, нули и смешанные знаки. Итог PASS 5; при любом несовпадении FAIL и ненулевой exit code.",
+        "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех."
+      },
+      {
+        "task": "Замените >0 на >=0, покажите падающий тест, затем восстановите функцию и сохраните отчёт о регрессии.",
+        "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения."
+      }
+    ],
+    "passport": {
+      "goal": "Пять проверок для счётчика",
+      "start": "При запуске заготовки со штатным вводом получается:\nFAIL\n",
+      "where": "Практика → Задание и Code Studio → Моя программа",
+      "knowledge": "Регрессия — повторное появление ранее исправленного дефекта.\nOracle — независимое правило определения ожидаемого результата.\nUnit-тест — проверка отдельной операции через её интерфейс.",
+      "change": "Напишите countPositive(span<const int>) и драйвер с пятью независимыми наборами, включая пустой, нули и смешанные знаки. Итог PASS 5; при любом несовпадении FAIL и ненулевой exit code.",
+      "inputs": "Случай: Случай 1\nstdin:\n(пустой ввод)\nОжидается:\nPASS 5\n",
+      "result": "Исходник, точный ввод и фактический stdout. Если указаны файлы результата, их содержимое проверяется отдельно.",
+      "checks": "Докажите, что версия с >= 0 приводит к FAIL. После возврата > 0 должна остаться строка PASS 5.\nХороший тест различает правильную и правдоподобно неправильную реализацию.\nНе получайте expected запуском проверяемой функции. Не считайте provider-limit ошибкой знания ученика.\nДобавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.\nСохраните исходник, точный ввод и фактический вывод.",
+      "errors": "Ожидание должно быть готово до вызова функции. Самый короткий тест на эту мутацию — один ноль.",
+      "recovery": "Сохраните ошибочную версию отдельно. Сопоставьте первый отличающийся шаг с разбором; исправьте одну причину и повторите обычный и граничный случаи. Открытие эталона не заменяет ваш код."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "",
+          "lines": [
+            "PASS 5"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
     }
   },
   "terms": [
@@ -395,5 +448,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.testing-diagnostics.ru.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

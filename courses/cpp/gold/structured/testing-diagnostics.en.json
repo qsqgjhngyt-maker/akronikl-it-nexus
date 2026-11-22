@@ -384,7 +384,12 @@
           "source": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 3> values{-2, 0, 4};\n    bool pass = countPositive(values) == 1;\n    std::cout << (pass ? \"PASS\\n\" : \"FAIL\\n\");\n    return pass ? 0 : 1;\n}\n",
           "stdin": "",
           "output": "PASS\n"
-        }
+        },
+        "steps": [
+          "Read the contract and independently derive the expected result for the given input.",
+          "Trace state after each significant operation and identify the established preconditions.",
+          "Run the source, compare stdout and exit code, then check the additional cases."
+        ]
       },
       {
         "id": "concept-3",
@@ -465,7 +470,12 @@
             "source": "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n",
             "stdin": "",
             "output": "0 1 1\n"
-          }
+          },
+          "steps": [
+            "Read the contract and independently derive the expected result for the given input.",
+            "Trace state after each significant operation and identify the established preconditions.",
+            "Run the source, compare stdout and exit code, then check the additional cases."
+          ]
         }
       },
       {
@@ -641,6 +651,49 @@
         "case": 0,
         "stdout": "FAIL\n",
         "exitCode": 1
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 1> zero{0};\n    std::array<int, 1> negative{-1};\n    std::array<int, 3> mixed{-2, 0, 4};\n    std::array<int, 3> positive{1, 2, 3};\n    int failures{};\n    if (countPositive(std::span<const int>{}) != 0) { ++failures; }\n    if (countPositive(zero) != 0) { ++failures; }\n    if (countPositive(negative) != 0) { ++failures; }\n    if (countPositive(mixed) != 1) { ++failures; }\n    if (countPositive(positive) != 3) { ++failures; }\n    if (failures != 0) { std::cout << \"FAIL\\n\"; return 1; }\n    std::cout << \"PASS 5\\n\";\n}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Manually trace the first example and explain every expected output line.",
+          "criteria": "A useful test distinguishes the correct implementation from a plausible wrong one."
+        },
+        {
+          "task": "Write countPositive(span<const int>) and a driver with five independent datasets including empty, zero, and mixed-sign cases. Print PASS 5 on success; on mismatch print FAIL and return a nonzero exit code.",
+          "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success."
+        },
+        {
+          "task": "Replace >0 with >=0, show the failing test, restore the function, and keep a regression report.",
+          "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour."
+        }
+      ],
+      "passport": {
+        "goal": "Five tests for a counter",
+        "start": "Running the starter with its default input produces:\nFAIL\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Regression — recurrence of a previously fixed defect.\nOracle — an independent rule determining the expected result.\nUnit test — checking one operation through its interface.",
+        "change": "Write countPositive(span<const int>) and a driver with five independent datasets including empty, zero, and mixed-sign cases. Print PASS 5 on success; on mismatch print FAIL and return a nonzero exit code.",
+        "inputs": "Case: Case 1\nstdin:\n(empty input)\nExpected:\nPASS 5\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Show that the >= 0 version gives FAIL. Restoring > 0 should leave the line PASS 5.\nA useful test distinguishes the correct implementation from a plausible wrong one.\nDo not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors.\nAdd two cases of your own, including a rejection if the interface allows one. Explain one boundary result.\nKeep the source, exact input and observed output.",
+        "errors": "Have the expectation ready before calling the function. One zero is the smallest test that catches this mutation.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "",
+            "lines": [
+              "PASS 5"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -711,6 +764,7 @@
         "sourceTitle": "Limits of the evidence",
         "anchor": "concept-6"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

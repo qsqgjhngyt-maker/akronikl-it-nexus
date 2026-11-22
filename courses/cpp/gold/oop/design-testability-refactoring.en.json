@@ -893,7 +893,12 @@
           "source": "#include <iostream>\nstruct Discount {\n    int percent;\n    int apply(int cents) const { return cents * (100 - percent) / 100; }\n};\nint price(int cents, const Discount &policy) { return policy.apply(cents); }\nint main() {\n    std::cout << price(1000, Discount{10}) << ' '\n              << price(1000, Discount{0}) << '\\n';\n}\n",
           "stdin": "",
           "output": "900 1000\n"
-        }
+        },
+        "steps": [
+          "Discount is supplied explicitly without global state.",
+          "Ten percent off one thousand cents yields nine hundred.",
+          "Zero discount yields one thousand; compare the calls."
+        ]
       },
       {
         "id": "concept-3",
@@ -1645,6 +1650,115 @@
         "case": 1,
         "stdout": "tasks 2 minutes 0\n",
         "exitCode": 0
+      },
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\nstruct Task {int id,minutes;};\nbool valid(const std::vector<Task>& tasks){for(std::size_t i=0;i<tasks.size();++i){if(tasks[i].id<1||tasks[i].id>100||tasks[i].minutes<0||tasks[i].minutes>100)return false;for(std::size_t j=0;j<i;++j)if(tasks[i].id==tasks[j].id)return false;}return true;}\nint total(const std::vector<Task>& tasks){int n=0;for(const auto& t:tasks)n+=t.minutes;return n;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<Task> tasks;\n for(int i=0;i<n;++i){Task t;if(!(std::cin>>t.id>>t.minutes)){std::cout<<\"invalid\\n\";return 0;}tasks.push_back(t);}\n std::cin>>std::ws;if(!std::cin.eof()||!valid(tasks)){std::cout<<\"invalid\\n\";return 0;}\n std::cout<<\"tasks \"<<tasks.size()<<\" minutes \"<<total(tasks)<<'\\n';}\n",
+        "files": {},
+        "metadata": {}
+      },
+      "exercises": [
+        {
+          "task": "Name main, Board and Policy responsibilities.",
+          "criteria": "Separate parsing, invariant and scoring rule."
+        },
+        {
+          "task": "Extract laboratory domain into cpp/header.",
+          "criteria": "The same inputs produce the same results."
+        },
+        {
+          "task": "Write an ADR for virtual Policy.",
+          "criteria": "Discuss at least two alternatives and applicability limits."
+        }
+      ],
+      "passport": {
+        "goal": "Laboratory: Design, testability and refactoring",
+        "start": "Running the starter with its default input produces:\ntasks 2 minutes 0\n",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Cohesion — How closely a module's parts serve one coherent responsibility.\nCoupling — The degree to which clients depend on another component's decisions.\nRefactoring — Changing structure while preserving agreed observable behaviour.",
+        "change": "Read n=0…20 and n id/minutes pairs. IDs in 1…100 must be unique; minutes are 0…100. Validate the entire input and trailing tokens first. Separate valid and total from main. Success: tasks N minutes S. Invalid input or duplicate IDs: invalid. Then extract the domain into another TU without changing results.",
+        "inputs": "Case: Case 1\nstdin:\n0\nExpected:\ntasks 0 minutes 0\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "For {1,5},{2,8}, valid is true and total is 13.\nOutput tasks 2 minutes 13.\nBoth versions give tasks 0 minutes 0 and invalid.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
+        "errors": "Repeat valid and invalid inputs, comparing stdout and exit. Linkage alone does not confirm the previous calculations.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "0",
+            "lines": [
+              "tasks 0 minutes 0"
+            ]
+          },
+          {
+            "stdin": "2 1 5 2 8",
+            "lines": [
+              "tasks 2 minutes 13"
+            ]
+          },
+          {
+            "stdin": "1 100 100",
+            "lines": [
+              "tasks 1 minutes 100"
+            ]
+          },
+          {
+            "stdin": "1 1 0",
+            "lines": [
+              "tasks 1 minutes 0"
+            ]
+          },
+          {
+            "stdin": "2 1 4 1 7",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 0 3",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 1 -1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 1 101",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1 1",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "21",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "0 x",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
       }
     },
     "reading": [
@@ -1699,6 +1813,7 @@
         "sourceTitle": "Defending the cumulative project",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }

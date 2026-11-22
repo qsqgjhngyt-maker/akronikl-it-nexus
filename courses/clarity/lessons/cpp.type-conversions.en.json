@@ -62,7 +62,12 @@
           "source": "#include <iostream>\n\nint main() {\n    int total{7};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
           "stdin": "",
           "output": "3 3.5\n"
-        }
+        },
+        "steps": [
+          "First derive integer 7/2=3 for late.",
+          "For early, double is introduced before /.",
+          "Compare 3 and 3.5 without expecting a cast to restore lost information."
+        ]
       }
     },
     {
@@ -85,7 +90,12 @@
         "source": "#include <iostream>\n#include <limits>\n\nint main() {\n    int debt{-1};\n    unsigned int credit{1};\n    std::cout << (debt < credit) << '\\n';\n    std::cout << (static_cast<unsigned int>(debt) == std::numeric_limits<unsigned int>::max()) << '\\n';\n    return 0;\n}\n",
         "stdin": "",
         "output": "0\n1\n"
-      }
+      },
+      "steps": [
+        "Locate int and unsigned int before comparison.",
+        "Trace −1 converting to the unsigned maximum.",
+        "The second one checks max() without assuming a bit count."
+      ]
     },
     {
       "id": "concept-4",
@@ -99,7 +109,12 @@
         "source": "#include <iostream>\n\nint main() {\n    double positive{3.75};\n    double negative{-3.75};\n    std::cout << static_cast<int>(positive) << ' ' << static_cast<int>(negative) << '\\n';\n    return 0;\n}\n",
         "stdin": "",
         "output": "3 -3\n"
-      }
+      },
+      "steps": [
+        "Both truncated values fit int.",
+        "The fractional part is discarded while the sign is retained.",
+        "Do not extend this experiment to out-of-range values."
+      ]
     },
     {
       "id": "concept-5",
@@ -259,28 +274,73 @@
       {
         "where": "My independent work",
         "action": "Record the original incorrect result 3.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates your prediction from the run result.",
+        "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\naverage=2.75\n"
       },
       {
         "where": "My independent work",
         "action": "Identify the division type before repair.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Move conversion to an operand.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates implementing the rule from copying the answer.",
+        "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
       },
       {
         "where": "My independent work",
         "action": "Test a multiple, nonmultiple, zero total, and zero count.",
-        "why": "",
-        "expected": ""
+        "why": "This step separates an ordinary successful result from boundary behaviour.",
+        "expected": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\naverage=2.75\n"
       }
-    ]
+    ],
+    "referenceSolution": {
+      "language": "cpp",
+      "source": "#include <iostream>\n\nint main() {\n    int totalPoints{11};\n    int participantCount{4};\n    // Protective scaffold: domain checks precede the division.\n    if (totalPoints < 0 || totalPoints > 1000 || participantCount < 1 || participantCount > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    double average = static_cast<double>(totalPoints) / participantCount;\n    std::cout << \"average=\" << average << '\\n';\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.cpp"
+      }
+    },
+    "exercises": [
+      {
+        "task": "Predict 9/2, static_cast<double>(9/2), and static_cast<double>(9)/2.",
+        "criteria": "Values are 4, 4, and 4.5 with the conversion point identified."
+      },
+      {
+        "task": "Repair the average of total 10 and count 4 without changing the original integer data.",
+        "criteria": "The result is 2.5 and zero count is rejected before /."
+      },
+      {
+        "task": "Propose exact storage for money totals and a separate approximate average.",
+        "criteria": "Specify range and rounding policy as separate requirements."
+      }
+    ],
+    "passport": {
+      "goal": "An average without premature truncation",
+      "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+      "where": "Practice → Task and Code Studio → My program",
+      "knowledge": "Implicit conversion — Conversion to a required type without an explicit cast in source.\nIntegral promotion — Promotion of a small integer type to int or unsigned int according to representability.\nstatic_cast<T>(value) — An explicit permitted conversion to T, not a universal safety check.",
+      "change": "Correct the average calculation without changing the input types. The protective if is provided: explain its bounds before running. In the independent task, share 11 points between 4 participants. Keep the original int values, validate ranges before calculating, and obtain average=2.75. Explain why converting after / would give another value.",
+      "inputs": "Case: Main transfer task\nstdin:\n(empty input)\nExpected:\naverage=2.75\n",
+      "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+      "checks": "Source values remain exact integers.\nDivision follows count validation.\nIdentify where double is introduced.\nRecord actual before/after results.\nExplain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+      "errors": "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.\nDo not bypass the rejection without explaining required precision.",
+      "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+    },
+    "runAssessment": {
+      "cases": [
+        {
+          "stdin": "",
+          "lines": [
+            "average=2.75"
+          ]
+        }
+      ],
+      "scope": "stdout-and-exit-only"
+    }
   },
   "terms": [
     {
@@ -489,5 +549,8 @@
       "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.arith.conv"
     }
   ],
-  "authored": true
+  "authored": true,
+  "lessonFormat": "guided-v2",
+  "authoringPath": "courses/reference/authoring/cpp.type-conversions.en.json",
+  "editorialRevision": "guided-courses-20261122-v1"
 }

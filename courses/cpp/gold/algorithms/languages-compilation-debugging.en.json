@@ -689,7 +689,13 @@
           "source": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\";\n}",
           "stdin": "",
           "output": "Nexus C++\n"
-        }
+        },
+        "steps": [
+          "iostream provides stream output.",
+          "main starts the user-written part.",
+          "std::cout writes the message.",
+          "\\n ends the line."
+        ]
       },
       {
         "id": "concept-2",
@@ -716,7 +722,13 @@
           "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a + b << '\\n';\n}",
           "stdin": "10 2\n",
           "output": "12\n"
-        }
+        },
+        "steps": [
+          "Attempt to read two integers.",
+          "Check both ranges before addition: successful extraction alone does not prevent overflow.",
+          "On failure print invalid and stop.",
+          "Otherwise add the bounded inputs and compare against the stated tests."
+        ]
       },
       {
         "id": "concept-4",
@@ -991,22 +1003,115 @@
         {
           "where": "My program",
           "action": "Record a prediction and run the starter.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates your prediction from the run result.",
+          "expected": "Case: New main input\nstdin:\n17 -5\n\nExpected:\n-3\n"
         },
         {
           "where": "My program",
           "action": "Fix one operation.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates implementing the rule from copying the answer.",
+          "expected": "Your starter has changed; the explanation’s example remains intact. Compare the actual result with your written prediction."
         },
         {
           "where": "My program",
           "action": "Repeat the run and test zero, sign and range.",
-          "why": "",
-          "expected": ""
+          "why": "This step separates an ordinary successful result from boundary behaviour.",
+          "expected": "Case: Check 1\nstdin:\n10 3\n\nExpected:\n3\n"
         }
-      ]
+      ],
+      "referenceSolution": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "files": {},
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      "exercises": [
+        {
+          "task": "Classify syntax, linking, runtime and logic failures.",
+          "criteria": "Give an example and a diagnosis for each."
+        },
+        {
+          "task": "Protect integer division against zero.",
+          "criteria": "10 3 → 3, 10 0 → invalid."
+        },
+        {
+          "task": "Document a diagnosis of an incorrect order total.",
+          "criteria": "Include input, expectation, observation, hypothesis and regression evidence."
+        }
+      ],
+      "passport": {
+        "goal": "Fixing integer division",
+        "start": "Open this task’s separate starter. Save your current work before making changes. The worked example remains available separately.",
+        "where": "Practice → Task and Code Studio → My program",
+        "knowledge": "Compilation — Checking and translating C++ source into object representation.\nLinking — Resolving cross-module symbols and dependencies into an executable.\nRuntime — The environment where a built program reads inputs and produces results.",
+        "change": "Debug the integer quotient program. The starter reads input and checks −1000000..1000000 and a nonzero divisor, but its formula is wrong. First reproduce the difference for 17 −5, then fix the operation. Print invalid for disallowed or unreadable input.",
+        "inputs": "Case: New main input\nstdin:\n17 -5\n\nExpected:\n-3\n",
+        "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
+        "checks": "Retain the guard before division and check b=0.\nCheck truncation toward zero with a negative quotient.\nName the starter’s failure mode and record source, input, expected and observed output before and after.",
+        "errors": "This version must be rejected during the build. Look at the first message near std::cout and the closing brace. Restore the semicolon and verify the control output Nexus C++.",
+        "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
+      },
+      "runAssessment": {
+        "cases": [
+          {
+            "stdin": "17 -5\n",
+            "lines": [
+              "-3"
+            ]
+          },
+          {
+            "stdin": "10 3\n",
+            "lines": [
+              "3"
+            ]
+          },
+          {
+            "stdin": "10 0\n",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "-8 3\n",
+            "lines": [
+              "-2"
+            ]
+          },
+          {
+            "stdin": "oops\n",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "-2147483648 -1\n",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "1000000 -1000000\n",
+            "lines": [
+              "-1"
+            ]
+          },
+          {
+            "stdin": "1000001 1\n",
+            "lines": [
+              "invalid"
+            ]
+          },
+          {
+            "stdin": "",
+            "lines": [
+              "invalid"
+            ]
+          }
+        ],
+        "scope": "stdout-and-exit-only"
+      }
     },
     "reading": [
       {
@@ -1211,6 +1316,7 @@
         "sourceSection": 6,
         "anchor": "concept-7"
       }
-    ]
+    ],
+    "editorialRevision": "guided-courses-20261122-v1"
   }
 }
