@@ -53,7 +53,7 @@ try{
  if(!before){
   if(algorithmization){
    // Старый блок уточнений заменён новым начальным маршрутом; проверяем его реальные ссылки.
-   for(const locale of ['ru','en']){await p.evaluate(locale=>location.hash='#course=cpp&lesson=cpp.programming-process&locale='+locale+'&learningRoute=reference-start',locale);await p.locator('[data-reference-badge]').waitFor();const next=p.locator('a[href*="lesson=cpp.first-cpp-program"]').first();await next.focus();await p.keyboard.press('Enter');await p.locator('[data-r3-topic="cpp.first-cpp-program"]').waitFor();checks.push({id:'cpp.programming-process',locale,status:'PASS',scope:'New reference route: named next lesson and keyboard navigation'});}
+   for(const locale of ['ru','en']){await p.evaluate(locale=>location.hash='#course=cpp&lesson=cpp.programming-process&locale='+locale+'&learningRoute=reference-start',locale);await p.locator('[data-r3-topic="cpp.programming-process"][data-r3-ready="true"][lang="'+locale+'"]').waitFor();assert.equal(await p.locator('[data-reference-badge]').count(),0,'Временный маркер снят; начальный маршрут сохранён');const next=p.locator('a[href*="lesson=cpp.first-cpp-program"]').first();await next.focus();await p.keyboard.press('Enter');await p.locator('[data-r3-topic="cpp.first-cpp-program"]').waitFor();checks.push({id:'cpp.programming-process',locale,status:'PASS',scope:'New reference route: named next lesson and keyboard navigation'});}
    for(const id of ['cpp.algorithm-representations','cpp.flowcharts'])for(const locale of ['ru','en']){
     await go(id,locale);
     const figure=p.locator('.lesson-flowchart'),svg=figure.getByRole('img'),transcript=figure.locator('details');
