@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Check authorisation per action. A readable row can be unwritable even when the data is valid.",
         "A reader opens a 30-minute request and enters a valid 25, but the update is refused. This is not a range error: action permission and visible-data scope are separate checks.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -95,6 +96,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "The example verifies visible rows and their sum. A valid change is still rejected.",
+        "A fresh read preserves the previous value, so the restriction held before saving."
       ]
     },
     {
@@ -295,8 +300,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "A reader sees the 30-minute request, but 31 is rejected. How can you show that write access, rather than the input range, explains the rejection?",
+      "feedback": "Under the training reader role, the 30/35 pair has one visible row at 30. Reread it under that role after rejection. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -388,7 +393,13 @@
       "checks": "Reader:1 new row/30;35 hidden; update 25 refused;30 preserved. Administrator:2/65.\nUse a separate training infobase and two fictional profiles; change no real permissions or Nexus Account.\nDistinguish action permission, row restriction, client filtering and the complete role set.",
       "errors": "A second role grants broad reading to the restricted profile. Analysing only its first role is now incomplete. Check the full role set and direct data access; hiding a button does not establish a prohibition.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "For your pair, record row visible, value valid and write allowed. Try a valid change from 30 to 31.",
+        "criteria": "For 30, visibility and value validity hold, but writing remains disallowed. It stays at 30 and the role rules stay in force."
+      }
+    ]
   },
   "terms": [
     "bsl",

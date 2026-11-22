@@ -2,7 +2,7 @@ import {loadPreparedKnowledge} from '../core/offline.js';
 
 // Привязка к manifest из проверенного Core candidate. При обновлении индекса
 // pin меняется вместе с manifest и проходит тест согласованности.
-export const KNOWLEDGE_MANIFEST_SHA256 = 'f5fdfc9f66e68d3c8055e2e08a0fb161a93f8dbe24e7e875d61553216bad4509';
+export const KNOWLEDGE_MANIFEST_SHA256 = 'eadf071a543f38836dd615c1bb8ad52c8516ad317c369c95348e77e652abea30';
 const cache = new Map();
 export async function readBoundedJsonBytes(url, {signal, maxBytes, fetchImpl = globalThis.fetch} = {}) {
   const response = await fetchImpl(url, {credentials:'omit', redirect:'error', cache:'no-store', signal});

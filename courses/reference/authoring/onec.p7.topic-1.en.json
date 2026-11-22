@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Adjacent time windows must not count a request twice. Include the start and exclude the end when the contract says so.",
         "A request was created exactly at 13:00. Does it belong to a “12 to 13” report? Define the exact period contract before checking references and minutes.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -91,6 +92,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "The request at the start boundary is selected.",
+        "An empty key does not disable the filter. The rule gives an empty result."
       ]
     },
     {
@@ -281,8 +286,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Which of the windows 12–13 and 13–14 contains a request at 13:00 exactly? State count, duration and key.",
+      "feedback": "Requests at 12:00 and 13:00 belong to [12,13) and [13,14), respectively, with 20 and 40 minutes. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -371,7 +376,13 @@
       "checks": "Labelled results:20, 40, Да, Да.\nThe exact references of both requests are checked, not just their totals.\nExplain why the boundary request belongs to the second window and not the first.",
       "errors": "Replacing < with <= gives two requests and 75 minutes in the first window. Without a request exactly at the boundary, the error could go unnoticed. Fix the comparison contract instead of changing the expected total.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Query the combined noon-to-14:00 window for the same customer.",
+        "criteria": "Two distinct requests and 60 minutes, the union of both results with no duplicate."
+      }
+    ]
   },
   "terms": [
     "bsl",

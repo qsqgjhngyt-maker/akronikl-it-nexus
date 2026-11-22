@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "A format is an interface",
       "paragraphs": [
+        "Validate loaded data independently of the active model. Accept it only after checking version, entries and the end of input.",
         "A saved file may be old or truncated. Updating the live model while reading can leave mixed old and new data on failure. Build a separate candidate and replace the model only after validating the complete format.",
         "Saved data may outlive a program version. A format needs an explicit marker and field definitions. Teaching format EV1 stores an element count and values in 0…100. A future EV2 cannot be guessed to mean EV1: identical numbers might have different meanings. Reject unknown versions before mutation, and treat migration as a separate checkable algorithm.",
         "EV1 3 1 2 3 declares three values; EV1 2 1 is incomplete, while EV1 0 extra contains unexpected data. Whitespace between tokens is flexible but extra tokens are forbidden. A count limit of eight bounds memory and the teaching scenarios. If a product needs more data, revise the limit and tests explicitly."
@@ -170,7 +171,11 @@
         "source": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream &in, std::vector<int> &model) {\n    std::string version;\n    int count;\n    if (!(in >> version >> count) || version != \"EV1\" || count < 0 ||\n        count > 8) {\n        return false;\n    }\n    std::vector<int> candidate;\n    for (int i = 0; i < count; ++i) {\n        int x;\n        if (!(in >> x) || x < 0 || x > 100) {\n            return false;\n        }\n        candidate.push_back(x);\n    }\n    in >> std::ws;\n    if (!in.eof()) {\n        return false;\n    }\n    model.swap(candidate);\n    return true;\n}\nvoid save(std::ostream &out, const std::vector<int> &values) {\n    out << \"EV1 \" << values.size();\n    for (int x : values) {\n        out << ' ' << x;\n    }\n    out << '\\n';\n}\nint main() {\n    std::vector<int> model{99};\n    std::istringstream good(\"EV1 2 1 2\");\n    if (!load(good, model)) {\n        return 1;\n    }\n    const auto before = model;\n    std::istringstream bad(\"EV1 2 7\");\n    const bool rejected = !load(bad, model);\n    std::cout << \"rejected preserved \" << (rejected && model == before)\n              << '\\n';\n    save(std::cout, model);\n}\n",
         "stdin": "",
         "output": "rejected preserved 1\nEV1 2 1 2\n"
-      }
+      },
+      "steps": [
+        "A successful load creates model [1,2]. The following bad load is rejected.",
+        "Reserialising still gives EV1 2 1 2, showing the rejection replaced nothing."
+      ]
     },
     {
       "id": "independent-work",
@@ -273,7 +278,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Where is load’s commit? Why must EV1 0 extra preserve 99 even after count was parsed?",
-      "feedback": "The commit is model.swap(candidate) after EOF validation. A zero count does not permit trailing extra; before commit model remains{99}.",
+      "feedback": "Even count=0 requires validation of the tail. EV1 0 extra never reaches the candidate swap and preserves {99}. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -374,6 +379,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Compare EV1 2 0 100 with EV1 2 0 101 in separate runs.",
+        "criteria": "The first passes and reloads [0,100]. The second gives rejected 99."
+      },
       {
         "task": "Specify the EV1 grammar.",
         "criteria": "The EV1 grammar specifies a marker, count 0…8, exactly count values 0…100 and whitespace-only trailing input; show one valid and three invalid records."

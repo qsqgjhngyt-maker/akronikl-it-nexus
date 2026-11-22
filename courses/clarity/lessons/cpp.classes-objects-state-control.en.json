@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "An interface is a set of promises",
       "paragraphs": [
+        "An invariant can involve several fields. Validate the whole proposed pair before changing any field.",
         "A warehouse receives eight items and then a request to ship nine. The caller needs both a rejection result and the unchanged quantity.",
         "Stock models a quantity between zero and one hundred. receive and ship are not merely ways to assign a field: they define valid transitions. Receiving cannot exceed capacity, and shipping cannot create a negative quantity. Before coding, describe the pre-call state, success condition, resulting state and behaviour on rejection.",
         "Test the public interface as a client who cannot access a private field. A quantity() observer can establish a successful delivery and preservation after rejection. A test that bypasses access control becomes tied to implementation. It would obstruct a representation change even if the application's observable result remained unchanged."
@@ -119,7 +120,11 @@
         "source": "#include <iostream>\nclass Window {\n    int low_ = 0, high_ = 0;\n\n  public:\n    bool reset(int a, int b) {\n        if (a > b) {\n            return false;\n        }\n        low_ = a;\n        high_ = b;\n        return true;\n    }\n    bool contains(int n) const { return low_ <= n && n <= high_; }\n};\nint main() {\n    Window w;\n    w.reset(2, 7);\n    bool ok = w.reset(9, 1);\n    std::cout << ok << ' ' << w.contains(4) << ' ' << w.contains(8) << '\\n';\n}\n",
         "stdin": "",
         "output": "0 1 0\n"
-      }
+      },
+      "steps": [
+        "Reversed bounds make reset return failure.",
+        "Both previous bounds stay consistent. Independent assignments provide no such guarantee."
+      ]
     },
     {
       "id": "concept-5",
@@ -258,7 +263,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why is assigning both fields and checking afterward unsuitable for reset(9,1)?",
-      "feedback": "The object would lose its previous bounds. Check before either assignment.",
+      "feedback": "reset(9,1) must reject before writing low_ or high_. Keep the previous pair intact. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -378,6 +383,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "For Stock, run +8, -8, -1, +2.",
+        "criteria": "The states are 8,0,0,2. Only the shipment from zero stock is rejected."
+      },
       {
         "task": "Write transition tables for receive and ship.",
         "criteria": "Each has success, rejection and resulting state."

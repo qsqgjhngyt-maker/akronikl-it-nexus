@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Sequencing is ordered execution",
       "paragraphs": [
+        "Separate “are there more values?” from “should this value be added?”. The first decision ends the loop and the second controls the accumulator inside it.",
         "In a simple program, reading input comes before computation and printing. Reordering these steps may use an uninitialized or outdated result.",
         "Record the values that exist after each statement to reason about execution precisely.",
         "Read n → set the sum to 0 → visit values → print the sum. Move the print before the loop and it shows the initial zero even when the later loop calculates correctly."
@@ -122,7 +123,11 @@
           "k=4 adds 4.",
           "The loop exits once k becomes 6."
         ]
-      }
+      },
+      "steps": [
+        "For n = 5 the program visits 1, 2, 3, 4, 5. The sum changes only twice: 0 → 2 → 6.",
+        "An odd value skips the addition without ending the loop. Printing after the loop gives the final sum, not the last k."
+      ]
     },
     {
       "id": "concept-5",
@@ -234,7 +239,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "For n = 6, explain the difference between k <= n and k < n in the multiples-of-three task. Which test catches the defect?",
-      "feedback": "Explain why the sum changes only at k = 3 and k = 6 for n = 7.",
+      "feedback": "At n = 6, k < n excludes k = 6. For the multiples-of-three task the wrong total is 3 and the correct total is 9. This explanation is not graded automatically.",
       "recall": "concept-4"
     }
   ],
@@ -332,6 +337,10 @@
       }
     },
     "exercises": [
+      {
+        "task": "Run your solution for 8 and 9. List only the values of k where the sum changed.",
+        "criteria": "8 → 9 (3 and 6); 9 → 18 (add 9). Input 9 catches an excluded upper boundary, even if input 8 hides the mistake."
+      },
       {
         "task": "Make a state table for n=6.",
         "criteria": "Even steps result in 2,6,12."

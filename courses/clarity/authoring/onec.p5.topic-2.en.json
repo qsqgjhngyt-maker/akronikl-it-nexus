@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Verify rejection by database state. A new object must not create a record; an existing record must retain its previous values.",
         "A form field looks mandatory, but code can save without opening the form. Where should the rule live so a programmatic save also checks it? Observe refusal, correction, and preservation of the last valid value.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -102,6 +103,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "A missing customer breaks a required reference. Out-of-range minutes break a different rule.",
+        "Messages explain the reasons. Reread afterward to make sure wrong data did not reach the database."
       ]
     },
     {
@@ -302,8 +307,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Which values are accepted when testing 0, 1440 and 1441? What will a fresh read show after rejection at 1441?",
+      "feedback": "At −1 a new object has no record. After saving 1440, attempt 1441 and expect rejection; rereading the reference must still show 1440. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -393,7 +398,13 @@
       "checks": "Two range warnings are expected for -1 and 1441. The four labelled assertions that follow must give Да.\nFour labelled assertions give Да: refusal, lower boundary, upper boundary, and database preservation.\n0 and 1440 are valid; after refusing 1441 a separate read still shows 1440.\nExplain the distinction between an object value, a message, and refusal of a save.",
       "errors": "Displaying a warning in ПередЗаписью without setting Отказ=Истина can still allow invalid data to save. A warning message alone does not refuse the operation.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "After accepting zero, test 1 and then −1 on that same record.",
+        "criteria": "1 is saved. −1 is rejected and rereading the same reference still gives 1."
+      }
+    ]
   },
   "reading": [
     {

@@ -632,6 +632,7 @@
         "id": "concept-1",
         "title": "A build is a reproducible process",
         "paragraphs": [
+          "A filter chooses what to display. It must not remove hidden tasks from the model or saved file.",
           "A filter changes visible rows, not the model’s contents. After filtering, a row index no longer matches the task id. This final lesson connects that rule to NXTF1 persistence and the exact source revision submitted for review.",
           "Sources are not the same as a running application. Project files, CMake settings, target and SDK version determine the build result. The checked pilot uses Qt 6.8.3 and Emscripten 3.1.56; console C++20 uses another runtime. Record these details in README without promising compatibility with arbitrary Qt or browser versions that have not been tested.",
           "A build belongs to a source snapshot. Editing after launch means the old Preview does not establish that the new text works. Check revision status, rebuild and repeat the scenario. Build diagnostics, model tests and interface checks provide different results. A build-service connection error is not a learner variable-declaration error."
@@ -773,7 +774,11 @@
             "target": "qt-wasm",
             "entryFile": "src/gui.cpp"
           }
-        }
+        },
+        "steps": [
+          "An empty model logs zeroes in NEXUS_VIEW and NEXUS_TASKS.",
+          "Once populated, count the entire model and link each row to a task ID rather than to its filtered position."
+        ]
       },
       {
         "id": "concept-5",
@@ -929,7 +934,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "How do saving taskflow.txt, a working-copy checkpoint and an immutable submission differ? Why must filtering not affect save?",
-        "feedback": "The file stores model data; a checkpoint is recoverable project state; submission is an exact snapshot for review. Filtering belongs to the view, so save must include hidden tasks.",
+        "feedback": "taskflow.txt stores task state. A checkpoint restores a work project; a submission freezes its version. Saving reads the model, not visible rows. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -1087,6 +1092,10 @@
         }
       },
       "exercises": [
+        {
+          "task": "Create three tasks, complete the middle one, save with Completed tasks only enabled and reopen.",
+          "criteria": "Only the middle task is visible under the filter, with Open 2 and Done 1. Clearing the filter shows all three and the middle one's correct status."
+        },
         {
           "task": "Identify the files required for a reproducible build.",
           "criteria": "List model/GUI/CLI/tests/CMake/target and the pinned SDK; README enables reproducing application and model builds from the same sources."

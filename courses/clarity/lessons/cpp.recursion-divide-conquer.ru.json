@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Вызов сохраняет продолжение",
       "paragraphs": [
+        "Перед рекурсией запишите меру задачи. Для сортировки это длина интервала; каждый дочерний вызов получает строго меньше элементов.",
         "Когда factorial(5) вызывает factorial(4), множитель 5 остаётся в ожидающем вызове. Он понадобится, когда вернётся ответ для 4.",
         "Рекурсивная функция вызывает себя прямо или через другие функции. У каждого вызова свои параметры и локальные объекты. В factorial(4) выражение 4·factorial(3) ещё не завершено, пока не вернулся внутренний результат. Поэтому трасса должна показывать не только спуск 4→3→2→1, но и возвраты 1→2→6→24.",
         "Обычная реализация хранит состояние продолжения в стеке вызовов. Это не тот же объект, что std::stack из предыдущего модуля: язык организует вызовы, а контейнер хранит ваши данные. Нельзя возвращать ссылку на локальный объект завершившегося вызова. Для рекурсивного изменения vector передавайте ссылку на живой внешний владелец, а границы подзадачи — отдельными значениями."
@@ -128,7 +129,11 @@
         "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nvoid merge_sort(std::vector<int> &a, std::size_t lo, std::size_t hi,\n                int depth, int &maximum) {\n    maximum = std::max(maximum, depth);\n    if (hi - lo < 2) {\n        return;\n    }\n    auto mid = lo + (hi - lo) / 2;\n    merge_sort(a, lo, mid, depth + 1, maximum);\n    merge_sort(a, mid, hi, depth + 1, maximum);\n    std::vector<int> tmp;\n    auto i = lo, j = mid;\n    while (i < mid && j < hi) {\n        if (a[j] < a[i]) {\n            tmp.push_back(a[j++]);\n        } else {\n            tmp.push_back(a[i++]);\n        }\n    }\n    while (i < mid) {\n        tmp.push_back(a[i++]);\n    }\n    while (j < hi) {\n        tmp.push_back(a[j++]);\n    }\n    std::copy(tmp.begin(), tmp.end(),\n              a.begin() + static_cast<std::ptrdiff_t>(lo));\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 128) {\n        std::cout << \"limit\\n\";\n        return 0;\n    }\n    std::vector<int> a;\n    for (int i = 0; i < n; ++i) {\n        int x;\n        if (!(std::cin >> x)) {\n            return 2;\n        }\n        a.push_back(x);\n    }\n    auto expected = a;\n    std::sort(expected.begin(), expected.end());\n    int maximum = 0;\n    merge_sort(a, 0, a.size(), 1, maximum);\n    if (a != expected || maximum > 8) {\n        return 3;\n    }\n    std::cout << \"sorted \" << a.size() << \" bounded\\n\";\n}",
         "stdin": "6 9 1 9 -1 0 2",
         "output": "sorted 6 bounded\n"
-      }
+      },
+      "steps": [
+        "У массива из шести элементов два интервала по три. Они сортируются отдельно.",
+        "Слияние выбирает следующий меньший элемент из готовых половин. Нельзя просто склеить половины."
+      ]
     },
     {
       "id": "concept-6",
@@ -258,7 +263,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Покажите путь максимальной глубины для трёх элементов, начиная с глубины 1.",
-      "feedback": "Размеры по длинной ветке 3 → 2 → 1. Это три вызова, поэтому max-depth 3.",
+      "feedback": "Корень глубины 1 имеет размер 3, более длинная ветвь 2, база 1. Значит глубина 3. Объяснение не оценивается автоматически.",
       "recall": "independent-work"
     }
   ],
@@ -384,6 +389,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Подайте 5 3 1 3 0 -1. Выпишите размеры самой глубокой ветки.",
+        "criteria": "Порядок -1 0 1 3 3. Размеры 5→3→2→1, max-depth 4."
+      },
       {
         "task": "Нарисуйте вызовы для n=3.",
         "criteria": "Есть обе ветви и возвраты, максимальная глубина 3."

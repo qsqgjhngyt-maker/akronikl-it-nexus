@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Why a long handler blocks interaction",
       "paragraphs": [
+        "Split work into ticks with a fixed budget. A cancellation between ticks must not turn a partial sum into a published result.",
         "While a callback processes a whole large input, the queue cannot advance to the next command. Keep progress in Job and handle at most three items per call. Between calls the dispatcher can accept cancellation.",
         "In a single-threaded application, a handler occupying the event loop prevents the next user command from running. A fast average case does not guarantee responsiveness on larger input. Divide the operation into portions and return control to a scheduler between them. Bound both the number of calls and the work performed inside each call.",
         "The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness."
@@ -87,7 +88,11 @@
           "stdin": "",
           "output": "done 3\ndone 6\n"
         }
-      }
+      },
+      "steps": [
+        "The first tick handles three items and the second handles three more.",
+        "done tracks progress. Completion is a separate state that authorises publishing the result."
+      ]
     },
     {
       "id": "concept-3",
@@ -268,7 +273,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why does 8 1 yield processed 3 and result 0, while 0 0 is considered complete?",
-      "feedback": "After one step cancellation blocks further work. candidate=6 is not published before finished. An empty job is already finished before cancellation is checked.",
+      "feedback": "At 8 1, processing 1,2,3 gives candidate 6 and published result 0. An empty job is complete before the first cancellation check. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -369,6 +374,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Compare 6 1 and 6 2.",
+        "criteria": "At index 1, 3 items were processed and result is 0. At index 2, all six are done and result is 21."
+      },
       {
         "task": "Trace three steps for n=8.",
         "criteria": "For three steps with n=8, show done, candidate and committed result after each call; no step processes more than three items."

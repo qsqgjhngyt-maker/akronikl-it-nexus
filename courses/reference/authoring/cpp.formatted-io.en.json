@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "A value is separate from its text",
       "paragraphs": [
+        "Compute the value in the chosen units before formatting it. Presentation must not replace arithmetic.",
         "A report was rejected for 2.5 instead of 2.50. The number is unchanged, but the text interface requires exactly two digits after the point.",
         "double stores a binary value; fixed and setprecision choose textual representation without increasing calculation precision. Money can use integral minor units and print whole and fractional parts separately.",
         "Specify units, permitted signs, rounding, and separators. The lab price is an integer number of cents in 0…100000, quantity is 0…1000, and total is at most 100000000 cents. Integer arithmetic avoids decimal representation error."
@@ -130,7 +131,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "Width 3 with fill 0 turns 7 into 007. The following 8 does not inherit the width.",
+        "The fill character stays, so request the desired width again for the next field."
+      ]
     },
     {
       "id": "concept-5",
@@ -255,7 +260,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why is total=0.5 wrong for 5×1? Which two integer operations give 0 and 5, and where does the leading zero come from?",
-      "feedback": "The remainder needs two positions even when it is zero or below 10.",
+      "feedback": "5 / 100 gives 0 and 5 % 100 gives 5. The cents field needs two positions, yielding 0.05. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -347,6 +352,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Test unit price 109 with quantity 2, then price 99 with quantity 1.",
+        "criteria": "Expect total=2.18 and total=0.99. Split the integer cent total without floating-point rounding."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Formatting changes representation, not value precision."

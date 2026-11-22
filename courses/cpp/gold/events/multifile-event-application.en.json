@@ -461,6 +461,7 @@
         "id": "concept-1",
         "title": "Files follow decision boundaries",
         "paragraphs": [
+          "A repeated completion command should be safe. Count completed tasks from their state rather than from button presses.",
           "As the core grows, main reads commands, model.hpp declares the interface, and model.cpp defines Board rules. Compiling main alone does not prove that the model implementation was linked.",
           "include/model.hpp declares Board, src/model.cpp implements its rules and main.cpp translates input into commands and output. Both cpp files need the header, while ordinary function definitions belong in the implementation. pragma once prevents repeated header inclusion within one translation unit; it does not repair repeated definitions across multiple translation units.",
           "A zero command adds an unfinished task and a positive number completes an existing task. Here an identifier equals its position plus one because deletion is absent. State that teaching restriction explicitly. TaskFlow uses persistent ids: if deletion were added, treating a moving position as identity could select the wrong task."
@@ -557,7 +558,11 @@
             "The second leaves true.",
             "Counting state must not count two completed tasks."
           ]
-        }
+        },
+        "steps": [
+          "Calling complete twice assigns the same bool done.",
+          "Output done 1 confirms the state of the one task after both calls."
+        ]
       },
       {
         "id": "concept-4",
@@ -710,7 +715,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "For 0,0,1,1 show the tasks and done count. How does a missing model.cpp differ from a rejected command?",
-        "feedback": "Two tasks, the first completed, done 1, rejected 0. A missing definition fails linking before execution; a domain rejection occurs in a running program.",
+        "feedback": "0,0,1,1 makes two tasks and completes the first once. Missing model.cpp prevents linking. A command rejection is observable only at runtime. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -838,6 +843,10 @@
         }
       },
       "exercises": [
+        {
+          "task": "Run 0,2,0,2,2.",
+          "criteria": "The first 2 is rejected. Then task two is created and completed. There are 2 tasks, done 1 and rejected 1."
+        },
         {
           "task": "Name the responsibilities of the three files.",
           "criteria": "Assign interface, implementation and adapter roles to model.hpp, model.cpp and main.cpp; identify header inclusions and single definition locations."

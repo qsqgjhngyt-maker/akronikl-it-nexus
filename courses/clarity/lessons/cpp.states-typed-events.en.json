@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "State determines permitted actions",
       "paragraphs": [
+        "A transition table needs a pair: current state and event type. Finish is only valid in particular states.",
         "Pause is legal only while running. Command P alone is insufficient: the result also depends on the current state. A state table makes that dependency testable.",
         "Two independent flags called running and paused admit four combinations, including contradictory ones. enum class State names the meaningful states: idle, running, paused and done. For each event the machine checks its current state and selects a transition. An absent transition means rejection, not an arbitrary choice of a next state.",
         "Draw the transition table: Start takes idle to running, Pause takes running to paused, Resume takes paused to running and Finish takes running to done. All other pairs are rejected. This is the laboratory specification. It supports discussing requirements before implementation: finishing while paused is deliberately forbidden here, although another product could permit it."
@@ -124,7 +125,11 @@
           "stdin": "",
           "output": "0 1\n"
         }
-      }
+      },
+      "steps": [
+        "In idle, finish returns 0.",
+        "The second field confirms the state remains idle. Event type alone does not grant permission."
+      ]
     },
     {
       "id": "concept-6",
@@ -256,7 +261,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Trace SPF. Why is F rejected after P? How can Reopen be added without the general else treating it as Finish?",
-      "feedback": "idle→running→paused; F is legal only in running. Use an explicit Finish branch, then a separate Reopen rule and tests for all pairs.",
+      "feedback": "SPF ends paused with one rejection. Give Reopen its own explicit transition and branch. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -357,6 +362,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Trace SPSRF.",
+        "criteria": "S and P succeed, the second S in paused is rejected, and R and F lead to done. There is one rejection."
+      },
       {
         "task": "Complete the four-state, four-event transition table.",
         "criteria": "Fill all 16 state/event pairs: four permitted transitions and 12 unchanged-state rejections; identify done as terminal."

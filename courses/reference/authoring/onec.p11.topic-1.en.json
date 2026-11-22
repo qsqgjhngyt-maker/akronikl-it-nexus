@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Check connectivity, status and content separately. A successful HTTP response still has to meet the data contract.",
         "The server replied, but its body is not what was promised. Connectivity and status 200 are only part of the contract. Use an own local service to distinguish success, explicit refusal and no timely response.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -95,6 +96,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "The local mock checks the expected 200 body, a real 400 status and a timeout.",
+        "A timeout supplies no successful body. A 200 response still needs validation."
       ]
     },
     {
@@ -296,8 +301,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "How do you distinguish HTTP 404, 200 with malformed JSON, and a valid /health response? Where does each path end?",
+      "feedback": "/missing gives 404, /not-json gives 200 with a parse error, and /health supplies a valid object. Record three distinct outcomes. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -386,7 +391,13 @@
       "checks": "Labelled values: 404, 200, Да, Да. Invalid content is refused despite status 200.\nUse no occupied unknown port, external URL, token or real data. Launch only the lesson’s known helper.\nExplain transport status, body validity, business result and an unknown timeout outcome separately.",
       "errors": "Unparsed text under status 200 is accepted, or a timeout automatically generates a new requestID. The first confuses transport and schema; the second may duplicate an effect. Keep those checks separate and record unknown outcomes explicitly.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "On paper, consider a /health response with status 200 and valid JSON but no service field.",
+        "criteria": "JSON parsing succeeds, but the data contract fails. Rejection occurs after parsing."
+      }
+    ]
   },
   "terms": [
     "bsl",

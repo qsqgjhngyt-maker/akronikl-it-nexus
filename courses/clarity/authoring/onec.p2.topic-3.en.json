@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "Zero fits two comparisons",
       "paragraphs": [
+        "Conditions in a chain are evaluated top to bottom. A broad rule placed first can take a value that needs a special response.",
         "A request says 0 minutes. It needs a separate “no time spent” classification. Zero also satisfies “less than or equal to 60”. Checking short duration first would select “Short” and lose the special meaning of zero.",
         "The previous lesson separated a value’s type from its admissibility. Here the input is already a known integer number of minutes. We need to choose an action, trace that choice, change one line, and then implement a different rule for a new request."
       ]
@@ -78,6 +79,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "At 0, the range is valid and the zero check is true. The program chooses “Без затрат” (No charge).",
+        "It never checks the short-request case below. That case would also catch 0 if moved first."
       ]
     },
     {
@@ -493,8 +498,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Use your trace to explain why zero skips the next check. Give counterexamples for the wrong order and wrong И. For the new request, identify both sides of a boundary and the first selected branch.",
-      "feedback": "The free answer is not graded automatically. Check the sequence, special zero, both range limits, and the actual observations from your own work.",
+      "prompt": "Which branch is selected for 0, 30 and 31 in the request task? Why does reordering checks change the zero case?",
+      "feedback": "The results are “Без затрат” (No charge) at 0, “Срочно” (Urgent) at 30, and “Обычно” (Normal) at 31. Testing “at most 30” first would classify zero as urgent. This explanation is not graded automatically.",
       "recall": "decision-map"
     }
   ],
@@ -621,7 +626,13 @@
       "checks": "Complete the starter with your own solution; replace31 with one integer for each run.\nEach run produces exactly one message. 0 gives Без затрат;1 and30 give Срочно;31 and180 give Обычно;−1 and181 give Ошибка.\nSeparate zero before the general ≤30 check, include30 and180, and detect either range violation.\nKeep separate prediction and actual message for all seven cases, and identify the first divergent step of a wrong version.\nAdd two integer inputs outside the supplied table and explain the selected status.\nSave your source and reasoning; opening the example or reference does not verify authorship.",
       "errors": "If zero gets Срочно, check whether ≤30 appears before the separate zero case. If 30 gets Обычно, compare <30 and ≤30. If −1 or 181 is accepted as a request, inspect the connective in the rejection condition.\nThe deliberately wrong И version produced Срочно for −1 and Обычно for 181 in the native check. Those outputs expose a defect: the new rule requires Ошибка for both.\nIf no message appears, first check syntax errors, the handler name, and the database update. For a successful run, compare prediction with observation and name the first divergent check. Technical execution and your explanation are assessed separately.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Test 179, 180 and 181 and compare the single message from each run.",
+        "criteria": "179 and 180 give “Обычно” (Normal), while 181 gives “Ошибка” (Error). The bound 180 is included."
+      }
+    ]
   },
   "reading": [
     {

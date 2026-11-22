@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "LIFO and FIFO",
       "paragraphs": [
+        "The same values can be served in two different orders. Choose the container by deciding which value should leave first.",
         "Three requests arrive as 1, 2, 3. A queue starts at 1 and a stack starts at 3. Record the required order before choosing an adapter.",
         "std::stack<T> from <stack> provides last in, first out: the most recently pushed element is removed first. std::queue<T> from <queue> provides first in, first out: the earliest element is processed first. These are access disciplines, not physical representations.",
         "Both adapt an underlying suitable container. A teaching queue does not require reimplementing a linked list. Justify the choice by ordering, size, and operations; arbitrary indexed access is not part of these interfaces."
@@ -94,7 +95,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "The example inserts 3 last, putting it on top of the stack. The queue returns the first inserted value, 1.",
+        "After one removal, each container has two values left. Their counts match, but their order differs."
+      ]
     },
     {
       "id": "concept-3",
@@ -278,7 +283,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "How do 1, 2, 3 expose a defect if both branches use a stack? Why would a single element miss it?",
-      "feedback": "Check order, count and duplicates. Call pop after reading the current value.",
+      "feedback": "For 1,2,3 the stack returns 3 2 1 and the queue 1 2 3. A single item gives the same observation for both rules, making a weaker test. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -702,6 +707,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Enter 4 8 2 8 5 and compare both lines, including duplicates.",
+        "criteria": "The stack prints 5 8 2 8 and the queue 8 2 8 5. Neither container removes duplicates."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Removal order is part of the domain contract."

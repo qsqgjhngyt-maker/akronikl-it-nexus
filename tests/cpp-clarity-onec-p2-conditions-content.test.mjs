@@ -94,10 +94,26 @@ test('Условия: шаги точно различают Nexus, редакт
  }
 });
 
-test('Визуальное исправление сохраняет CONTENT ACCEPT и добавляет только две layout-настройки на язык',async()=>{
+test('Условия: содержательная редакция сохраняет принятые схемы, сценарии и оценивание',async()=>{
  const accepted='5ffd3153577c411f6a3031c517542904f6b59c23';
+ const pedagogyBase='093c8166edf748b2bc9cfb959cdca6ad1b5d8205';
  for(const locale of ['ru','en'])for(const dir of ['authoring','lessons']){
   const p='courses/clarity/'+dir+'/'+id+'.'+locale+'.json',current=await json(p),old=JSON.parse(git('show',accepted+':'+p));let changed=0;
+  const previous=JSON.parse(git('show',pedagogyBase+':'+p));
+  assert.deepEqual(current.sections[0].paragraphs.slice(1),previous.sections[0].paragraphs);
+  current.sections[0].paragraphs.shift();
+  const example=current.sections.find(s=>s.id==='example-1'),oldExample=previous.sections.find(s=>s.id===example.id);
+  assert.deepEqual(example.steps.slice(2),oldExample.steps||[]);
+  if(oldExample.steps)example.steps=oldExample.steps;
+  else delete example.steps;
+  const free=current.selfcheck.find(q=>q.kind==='free'),oldFree=previous.selfcheck.find(q=>q.id===free.id);
+  assert.notEqual(free.prompt,oldFree.prompt);
+  assert.notEqual(free.feedback,oldFree.feedback);
+  Object.assign(free,{prompt:oldFree.prompt,feedback:oldFree.feedback});
+  assert.deepEqual(current.practice.exercises.slice(1),previous.practice.exercises||[]);
+  if(previous.practice.exercises)current.practice.exercises=previous.practice.exercises;
+  else delete current.practice.exercises;
+  assert.deepEqual(current,previous,'Предыдущая редакция сохраняется за пределами содержательных правок');
   for(const s of current.sections)if(s.flowchart){assert.equal(s.flowchart.layout,'roomy');delete s.flowchart.layout;changed++;}
   assert.equal(changed,2);assertReferenceEdition(id,locale);
   // Новый паспорт и редакция разрешены полным распространением формата.

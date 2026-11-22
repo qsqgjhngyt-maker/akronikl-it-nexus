@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Reading a packet includes validating its types. Do not coerce a numeric-looking string if the contract calls for a number.",
         "Both packets look plausible, but one stores minutes as a number and the other as text. A JSON parser can read both. Schema validation, rather than parsing success, decides whether they are acceptable.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -92,6 +93,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "In the example, number 30 and text “30” pass only in their proper fields.",
+        "For XML, check the root and attribute. Displaying special characters does not replace reading back their value."
       ]
     },
     {
@@ -292,8 +297,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Why do 0 and \"0\" yield different packet validation outcomes? What do you read back to verify special characters survived?",
+      "feedback": "Verify numeric 0 after reading, the original text after escaping and each rejection independently. A fraction is numeric but violates the integer requirement. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -382,7 +387,13 @@
       "checks": "Five labelled Да values: numeric zero and four independent refusals.\nDo not confuse string length with UTF-8 byte count; they are different limits. Execute no input text.\nSeparate parsing, schema, business rules, persistence and the untested arbitrary-XML import.",
       "errors": "Raw serialization text is compared and another JSON field order is treated as different data, or ПрочитатьJSON is followed by saving without field validation. Compare semantic fields; parsing grants no permission to write.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Compare packets differing only in 0 versus \"0\" in the numeric field.",
+        "criteria": "The first is accepted and the second fails its type check, despite looking like the same digit."
+      }
+    ]
   },
   "reading": [
     {

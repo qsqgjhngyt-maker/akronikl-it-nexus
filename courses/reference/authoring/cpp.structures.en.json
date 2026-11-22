@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Declaring a record",
       "paragraphs": [
+        "Keep related fields in one record and check the precondition before updating it. A rejected operation must leave the record as it was.",
         "A shelf holds item 7 with 10 units. Separate arrays make it easy to mix up indices. An Item record ties the identifier and stock to one object.",
         "struct Item { int id{}; int stock{}; }; defines a type with two fields that are public by default. The closing brace needs a semicolon. Item item{7,12} creates an object; item.stock accesses that object’s field.",
         "{} initializers establish defined initial values. Fields may have different types, such as string name and int stock. A structure is neither a database table nor automatic validation: domain rules determine valid values."
@@ -130,7 +131,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "On rejection the result is 0, id remains 7 and stock remains 2.",
+        "If the function subtracts before rejecting, a test checking only the status will miss the bug."
+      ]
     },
     {
       "id": "concept-5",
@@ -255,7 +260,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "For 7 2 3 explain why rejected differs from invalid and which fields must stay unchanged.",
-      "feedback": "Check amount > stock before modifying stock. Issuing stock never changes id.",
+      "feedback": "Input 7 2 3 parses and has valid fields. Insufficient stock rejects the operation and preserves id=7 and stock=2. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -356,6 +361,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Compare 9 4 4 and 9 4 5.",
+        "criteria": "Expect ok 0 and rejected 4. Also check that id is 9 in both cases."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "A record groups data; functions and invariants define valid changes."

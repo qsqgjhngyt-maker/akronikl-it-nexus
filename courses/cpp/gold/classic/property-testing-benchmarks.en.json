@@ -925,6 +925,7 @@
         "id": "concept-1",
         "title": "Examples, properties and proofs",
         "paragraphs": [
+          "Before timing, establish that both outputs solve the same task. Check element counts and order independently.",
           "The row 3, 1, 3, −2 exercises duplicates and negatives. One example gives an observation, while a property defines a check for every valid row.",
           "An example connects one input to an expected output. A property describes a class of inputs, such as sorted output preserving the input multiset. A proof explains why the algorithm satisfies the condition over its valid modeled domain. These forms of evidence complement one another; a passing test does not turn into a proof.",
           "Start with independent small expectations: [3,1,3] must become [1,3,3], not [1,3]. Add general properties next. They can detect failures on unfamiliar data, but the properties themselves need scrutiny. For record sorting, keys alone are insufficient: check IDs and associated fields, using original labels to check stability."
@@ -1022,7 +1023,11 @@
           "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<int> original{3, 1, 2}, mutant = original;\n    for (std::size_t i = 0; i + 2 < mutant.size(); ++i) {\n        if (mutant[i + 1] < mutant[i]) {\n            std::swap(mutant[i + 1], mutant[i]);\n        }\n    }\n    if (std::is_sorted(mutant.begin(), mutant.end())) {\n        return 2;\n    }\n    std::cout << \"mutation detected\\n\";\n}",
           "stdin": "",
           "output": "mutation detected\n"
-        }
+        },
+        "steps": [
+          "The faulty pass compares 3 with 1 and then stops at 1, 3, 2.",
+          "The item counts are intact, but 3 precedes 2. The order check prints mutation detected."
+        ]
       },
       {
         "id": "concept-5",
@@ -1161,7 +1166,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Give a sorted output that should fail the permutation check for 3, 1, 3, −2.",
-        "feedback": "For example −2, 1, 3. The order is correct, and one of the threes is missing.",
+        "feedback": "−2,1,3 is sorted, but 3,1,3,−2 contains two threes. A permutation check must fail. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -1828,6 +1833,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "For 5,0,5,-1, devise a result of the right length with the wrong item counts.",
+          "criteria": "For instance -1,0,0,5. It is sorted and has four items, but discards a 5 and adds a 0."
+        },
         {
           "task": "Name three sort properties.",
           "criteria": "Separate ordering, permutation and idempotence."

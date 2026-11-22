@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Text is not yet a number",
       "paragraphs": [
+        "Parse into a temporary value. Write it into the model only after checking all characters and the allowed range.",
         "An input field returns text. String 12x begins with a number but is not wholly numeric. Parse into a local candidate and assign only after every check so an error cannot affect the model.",
         "An input field yields text while the model expects a constrained value. The string 12x has a numeric prefix but does not satisfy a contract requiring one complete integer. Silently applying twelve is incorrect. Each laboratory line is a separate command setting a number in 0…100; a rejected line preserves the previous value.",
         "First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases."
@@ -87,7 +88,11 @@
           "stdin": "",
           "output": "0 17\n"
         }
-      }
+      },
+      "steps": [
+        "12x has a parseable prefix 12, but the parser stops before the end.",
+        "The result is false and the old 17 stays."
+      ]
     },
     {
       "id": "concept-3",
@@ -261,7 +266,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why does empty stdin yield no rejections, while one empty line yields one? Where is update’s commit?",
-      "feedback": "With no line, getline never calls update. An empty line calls update with text.empty(). The commit is value=candidate after checking ec, ptr and bounds.",
+      "feedback": "Empty input makes no update call. An empty line makes one invalid command. The commit is the assignment after validation. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -362,6 +367,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Supply lines 100, 100x, 101 and 0. Record the state after each.",
+        "criteria": "100,100,100,0. Two rejections: extra text and a value above the bound."
+      },
       {
         "task": "Explain ptr and ec for 12x.",
         "criteria": "For 12x, identify candidate 12, successful conversion ec and ptr at x; reject the incomplete parse and preserve the previous value."

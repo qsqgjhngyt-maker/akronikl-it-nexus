@@ -480,6 +480,7 @@
         "id": "concept-1",
         "title": "Testing a value rather than changing it",
         "paragraphs": [
+          "Separate two questions: whether a value is valid and whether an action is permitted. The answers can differ for the same input.",
           "score >= 0 produces bool. == compares equality and != inequality; a single = in assignment changes an object. score = 0 can be valid C++ inside a larger expression, but it is not an equality check. Inspect meaning even after a successful build.",
           "Identify operand types first. As seen previously, int and unsigned int can change the expected meaning of a negative comparison. Our ranges use matching ints so that logic is studied without hidden mixed-sign conversions."
         ]
@@ -530,7 +531,11 @@
             "stdin": "",
             "output": "1 0\n"
           }
-        }
+        },
+        "steps": [
+          "At score = 120, 0 <= score gives true and then becomes 1. Comparing 1 <= 100 incorrectly admits the input.",
+          "Check the lower and upper bounds independently and combine them with &&. The output 1 0 exposes the difference."
+        ]
       },
       {
         "id": "concept-3",
@@ -713,7 +718,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "The main task starts with load 65 and an active connection. Then test load 90 separately: the percentage is valid, but starting is forbidden. Explain the two flags valid and can_start without treating them as the same condition.",
-        "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "feedback": "At 90 the percentage is valid, but it exceeds the start threshold of 80. The second flag is false even with a connection. This explanation is not graded automatically.",
         "recall": "concept-2"
       }
     ],
@@ -784,6 +789,10 @@
         }
       },
       "exercises": [
+        {
+          "task": "Test a load of exactly 80 with a connection, then the same load without one.",
+          "criteria": "With a connection: valid=1 and can_start=1. Without it: valid=1 and can_start=0. Only permission changes."
+        },
         {
           "task": "Fill tables for A&&B, A||B, and !A over the four bool pairs.",
           "criteria": "Mark where B is skipped."

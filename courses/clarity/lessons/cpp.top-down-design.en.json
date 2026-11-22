@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Start with the result the user needs",
       "paragraphs": [
+        "Split the problem by intermediate results. Validation decides whether calculation can proceed. Multiplication gives the subtotal. Applying the percentage gives the amount due.",
         "An order calculator can be described as: read input → validate → calculate → report. Instead of writing one long main, state the responsibility of each stage.",
         "At a lower level, calculation splits into a subtotal and a discount operation. Validation enforces nonnegative values and a percentage between 0 and 100.",
         "The receipt needs one final amount. Start there and ask which values are needed just before printing. A discounted total needs a subtotal and a rate, and a subtotal needs price and quantity."
@@ -139,7 +140,11 @@
           "discountPrice subtracts 10% using integer arithmetic.",
           "main prints 270; invalid input prints invalid."
         ]
-      }
+      },
+      "steps": [
+        "For 100 3 10, subtotal returns 300. Then discountPrice reduces it by 30. main prints 270, not the boolean result of valid.",
+        "If the total disagrees with your prediction, check 300 first and then the discount of 30. That tells you which function to inspect."
+      ]
     },
     {
       "id": "concept-7",
@@ -235,7 +240,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "For input 37 3 15, write down the subtotal, the saving, and the amount due. A learner got the incorrect total 94. At which step could the extra rounding have happened?",
-      "feedback": "The subtotal is 111. Round the saving down: 111 × 15 / 100 = 16. Subtracting gives 95. If you round down the amount due instead, 111 × 85 / 100 gives 94.",
+      "feedback": "For 37 3 15, compute 111 × 15 / 100 = 16, then 111 − 16 = 95. You could get 94 by rounding down the amount due after subtracting a fractional discount. This explanation is not graded automatically.",
       "recall": "concept-6"
     }
   ],
@@ -338,6 +343,10 @@
       }
     },
     "exercises": [
+      {
+        "task": "Use price 19, quantity 3 and discount 20%. Write all three numbers and the function responsible for each calculation before running.",
+        "criteria": "The line is 57 11 46. Integer division 1140 / 100 gives the discount 11, and a separate subtraction gives the amount due."
+      },
       {
         "task": "Name the responsibilities validate, compute and report.",
         "criteria": "Each has explicit inputs, outputs and one responsibility."

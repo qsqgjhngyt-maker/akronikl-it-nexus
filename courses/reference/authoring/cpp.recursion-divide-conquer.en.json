@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "A call preserves a continuation",
       "paragraphs": [
+        "State the size of the task before recursing. For sorting it is the interval length, and every child call receives fewer elements.",
         "When factorial(5) calls factorial(4), the pending call keeps its multiplier 5. It needs that value when the answer for 4 returns.",
         "A recursive function calls itself directly or through other functions. Each call has its own parameters and local objects. In factorial(4), 4·factorial(3) remains unfinished until the inner result returns. A trace must therefore show both descent 4→3→2→1 and return values 1→2→6→24.",
         "A conventional implementation stores continuation state on a call stack. This is not the std::stack container from the previous module: calls are managed by the language/runtime, while the container holds application data. Never return a reference to a local object whose call has ended. Mutate a live external vector through a reference and pass subproblem bounds as values."
@@ -128,7 +129,11 @@
         "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nvoid merge_sort(std::vector<int> &a, std::size_t lo, std::size_t hi,\n                int depth, int &maximum) {\n    maximum = std::max(maximum, depth);\n    if (hi - lo < 2) {\n        return;\n    }\n    auto mid = lo + (hi - lo) / 2;\n    merge_sort(a, lo, mid, depth + 1, maximum);\n    merge_sort(a, mid, hi, depth + 1, maximum);\n    std::vector<int> tmp;\n    auto i = lo, j = mid;\n    while (i < mid && j < hi) {\n        if (a[j] < a[i]) {\n            tmp.push_back(a[j++]);\n        } else {\n            tmp.push_back(a[i++]);\n        }\n    }\n    while (i < mid) {\n        tmp.push_back(a[i++]);\n    }\n    while (j < hi) {\n        tmp.push_back(a[j++]);\n    }\n    std::copy(tmp.begin(), tmp.end(),\n              a.begin() + static_cast<std::ptrdiff_t>(lo));\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 128) {\n        std::cout << \"limit\\n\";\n        return 0;\n    }\n    std::vector<int> a;\n    for (int i = 0; i < n; ++i) {\n        int x;\n        if (!(std::cin >> x)) {\n            return 2;\n        }\n        a.push_back(x);\n    }\n    auto expected = a;\n    std::sort(expected.begin(), expected.end());\n    int maximum = 0;\n    merge_sort(a, 0, a.size(), 1, maximum);\n    if (a != expected || maximum > 8) {\n        return 3;\n    }\n    std::cout << \"sorted \" << a.size() << \" bounded\\n\";\n}",
         "stdin": "6 9 1 9 -1 0 2",
         "output": "sorted 6 bounded\n"
-      }
+      },
+      "steps": [
+        "Six items split into two intervals of three and each is sorted separately.",
+        "Merging picks the next smaller item from the two sorted halves. Concatenating them would not suffice."
+      ]
     },
     {
       "id": "concept-6",
@@ -258,7 +263,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Show the deepest path for three elements, starting at depth 1.",
-      "feedback": "The longer branch has sizes 3 → 2 → 1. That visits three calls, so max-depth is 3.",
+      "feedback": "The root has size 3 at depth 1. Its longer path goes through size 2 to the base size 1. The depth is 3. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -384,6 +389,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Enter 5 3 1 3 0 -1. Write the sizes on the deepest path.",
+        "criteria": "The order is -1 0 1 3 3. Sizes are 5→3→2→1, so max-depth 4."
+      },
       {
         "task": "Draw calls for n=3.",
         "criteria": "Include both branches and returns; maximum depth is 3."

@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Two coordinates",
       "paragraphs": [
+        "The column count is the stride between row starts. In flat storage it belongs in the index formula.",
         "A seating table has two dimensions. In a 2×3 shape, the second row starts after three seats, so coordinate (1,2) points at the sixth and final value.",
         "A matrix has rows rows and cols columns. Element (r,c) is valid when 0<=r<rows and 0<=c<cols. In std::array<std::array<int,3>,2>, the outer size is two rows and the inner size is three columns. A built-in int a[2][3] is also an array of rows.",
         "a[r][c] first selects a row and then its element. Swapping indices does not safely transpose an arbitrary matrix: rectangular dimensions may produce out-of-bounds access. Check both coordinates independently."
@@ -81,6 +82,8 @@
         "output": "6\n"
       },
       "steps": [
+        "With three columns, cell (1,2) has flat index 1 × 3 + 2 = 5.",
+        "Index 5 contains 6. A rectangular shape helps detect swapped rows and columns.",
         "Read the contract and independently derive the expected result for the given input.",
         "Trace state after each significant operation and identify the established preconditions.",
         "Run the source, compare stdout and exit code, then check the additional cases."
@@ -297,7 +300,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why does 2×0 print two zero row sums while 0×3 prints an empty second line? Which loop tests determine that?",
-      "feedback": "Two shapes may share a grand total yet have different row sums.",
+      "feedback": "For 2×0, the outer loop makes two zero row totals. For 0×3, it runs no rows and the second line is empty. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -394,6 +397,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Enter 3 2 1 -1 2 3 4 -4.",
+        "criteria": "The total is 5 and row totals are 0 5 0. Print three values even though two are zero."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Establish the shape before applying an index formula."

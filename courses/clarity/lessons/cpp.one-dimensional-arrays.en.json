@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "The object and its elements",
       "paragraphs": [
+        "Mark the active part of the array explicitly. Zero inside it is data; zero beyond that boundary is outside the traversal.",
         "A buffer has five slots but only two readings. The zeroes in the remaining slots do not represent three zero readings. Record capacity 5 and logical length 2 separately.",
         "int values[4]{} creates four zero-initialized ints with indices 0,1,2,3. Four is the count, not the final index. A built-in array’s bound in ordinary C++ must be a constant expression; int a[n] with a runtime n is not a standard solution.",
         "Use vector for a changing size, or a fixed buffer with a separate count<=capacity. {} initialization never permits access beyond the array. All buffer elements exist, but only the first count may represent task data."
@@ -79,7 +80,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "buffer has five slots, but the view takes only 4 and 7.",
+        "The 2 is the active length and 11 is the sum."
+      ]
     },
     {
       "id": "concept-2",
@@ -249,7 +254,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "How do the results for 1 0 and 1 −2 differ? Which lines and element counts show the difference?",
-      "feedback": "Write out results for 0 and −2 separately. One is accepted, the other discarded.",
+      "feedback": "Input 1 0 retains one item. Input 1 −2 retains none. Both sums are zero, but the count and second line differ. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -341,6 +346,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Use input 4 -2 0 3 0.",
+        "criteria": "The first line is 3 3 and the second is 0 3 0. Both zeroes are included and order stays the same."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "A data length must accompany element access."

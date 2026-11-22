@@ -584,6 +584,7 @@
         "id": "concept-1",
         "title": "What does “find” mean?",
         "paragraphs": [
+          "Find the first element not less than the key. Check equality afterward to distinguish a first match from an insertion point.",
           "If shelf labels are 1, 2, 2, 2, 5, saying you found a 2 does not tell you where that group starts.",
           "Search can ask whether a key exists, where its first match is, how many matches exist, or which records satisfy a range. These answers are not interchangeable. For each target, the lab returns the target, its first matching index and its count; absence uses index −1 and count zero.",
           "An index is a position in the current ordered collection, not a permanent record ID. Rearrangement can make an old position identify something else. Store a domain ID in the record and search for it again. Duplicate values may be allowed while duplicate IDs are rejected by a separate project contract."
@@ -668,7 +669,11 @@
             "stdin": "5 2 1 2 2 2 5",
             "output": "1 1\n"
           }
-        }
+        },
+        "steps": [
+          "In 1,2,2,2,5, index 1 is the first element at least 2.",
+          "Further duplicates do not change that index. An absent key can still have a boundary containing a different value."
+        ]
       },
       {
         "id": "concept-5",
@@ -820,7 +825,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Explain how to distinguish a missing key 4, a well-formed unsorted array, and incomplete input.",
-        "feedback": "A missing key gives 4 -1 0, a well-formed unsorted array gives unsorted, and a parse error gives invalid.",
+        "feedback": "For missing key 4 in sorted data, 4 -1 0 is an ordinary result. Valid unsorted data gives unsorted and truncated input gives invalid. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -946,6 +951,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Test 1,3,3,7 with keys 3 and 2.",
+          "criteria": "Key 3 starts at index 1 with two matches. Key 2 has index -1 and zero matches despite having an insertion point."
+        },
         {
           "task": "Find lower/upper for 2 in [1,2,2,5].",
           "criteria": "Positions 1 and 3."

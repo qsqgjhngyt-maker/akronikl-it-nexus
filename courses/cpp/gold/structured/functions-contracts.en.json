@@ -371,6 +371,7 @@
         "id": "concept-1",
         "title": "Calls and definitions",
         "paragraphs": [
+          "Observe a function contract in two places: its return value and the caller's state.",
           "If a sensor asks for a calculation and the result seems to disappear, locate the call. The function has an input, a return value and a caller that decides whether to store or print it.",
           "In int twice(int value), twice names the function, the first int is the return type, and value is a local parameter. The body runs when called, not when the compiler encounters its definition. return 2*value finishes this invocation and supplies its result to the caller.",
           "Define a teaching function before main so its declaration is visible at the call site. int result=twice(4) supplies the argument 4 and stores the result 8. Calling it does not print anything by itself; output is a separate operation."
@@ -483,7 +484,11 @@
             "checkedArea(3,4,result) passes all bounds. result becomes 12 and the call returns true; output is 1 12.",
             "A CLI line invalid alone cannot show that result stayed 17. This direct call observes both the returned bool and the output parameter."
           ]
-        }
+        },
+        "steps": [
+          "On failure, checkedArea returns false and leaves the earlier 17 in result.",
+          "On valid dimensions it returns true and stores 12. The boolean and the area are separate facts."
+        ]
       },
       {
         "id": "concept-5",
@@ -608,7 +613,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "If result is already 12 after a successful call, what happens at checkedArea(-1, 4, result)? Why is invalid from main alone insufficient to prove result was preserved?",
-        "feedback": "Place the one assignment to result after all dimension checks. A width of 0 is valid.",
+        "feedback": "After a success storing 12, dimensions −1 and 4 give false and leave 12. main can hide an erroneous write, so inspect result itself. This explanation is not graded automatically.",
         "recall": "concept-5"
       }
     ],
@@ -705,6 +710,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "In a separate driver, start at result=77. Call the function on (0,6) and then (1001,6).",
+          "criteria": "The first returns true and stores 0. The second returns false and keeps 0."
+        },
         {
           "task": "Start original at 10 and predict both output lines without running.",
           "criteria": "10 11, then 11; distinguish the local copy from the referenced object."

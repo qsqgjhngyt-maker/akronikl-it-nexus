@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Writing within a transaction does not confirm the final result. Compare rollback and commit with a fresh exact lookup by the unique marker.",
         "A card has passed Записать, and then the operation fails. Should the card remain? The answer depends on the transaction boundary. First deliberately roll a change back, then perform a separate successful commit.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -100,6 +101,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "Following failure, an exact lookup is empty. After committing the new transaction, the record can be read.",
+        "A message before commit might have appeared even in an attempt that rolled back. Judge state after the transaction finishes."
       ]
     },
     {
@@ -280,8 +285,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Which lookups after rollback and commit show what happened to the customer and service sharing one training marker?",
+      "feedback": "Check both customer and service by the training marker in both paths. After rollback neither exists; after commit both are available. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -370,7 +375,13 @@
       "checks": "Four labelled assertions give Да:both rejected records absent, both accepted records present.\nA fresh read of the accepted service gives 900; exact names and actual references are checked.\nExplain which writes belong to the boundary and why database rollback does not undo external email or HTTP actions.",
       "errors": "Committing in the exception branch instead of rolling back lets execution continue while leaving the rejected customer behind. The independent expectation “name absent” detects the error even without an unhandled exception.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Use a new training marker and rate 700. Compare a failure immediately after the customer write with a successful two-record path.",
+        "criteria": "After failure neither record with the marker exists. After commit both exist and the service rate is 700."
+      }
+    ]
   },
   "terms": [
     "document",

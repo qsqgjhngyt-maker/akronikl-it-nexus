@@ -446,6 +446,7 @@
         "id": "concept-1",
         "title": "Why a queue is needed",
         "paragraphs": [
+          "When a handler creates an event, decide where it enters relative to those already waiting. A sum does not encode order.",
           "An event can arrive while another is being handled. A queue separates arrival from processing: collect the input, then take the oldest item. Later this boundary will help keep a window responsive.",
           "A handler can generate another action: adding a task may require refreshing a list. Immediately invoking another handler increases stack depth and can expose partially updated state. A queue stores the new event until a later dispatch step. This changes when processing occurs, so ordering must be specified as a contract rather than treated as an implementation detail.",
           "For input 3, 2, 3, the laboratory first enqueues all three numbers. Each three appends a one to the back. Processing therefore visits 3, 2, 3, 1, 1: total ten and five calls. Recursive dispatch would process a one immediately after the first three. Equal final totals do not prove equal behaviour; an event log can distinguish the implementations."
@@ -594,7 +595,11 @@
           "source": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 12) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> input(n);\n    for (int &x : input) {\n        if (!(std::cin >> x) || x < 0 || x > 9) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::queue<int> q;\n    for (int x : input) {\n        q.push(x);\n    }\n    int total = 0, processed = 0;\n    std::function<void(int)> handler = [&](int x) {\n        total += x;\n        if (x == 3) {\n            q.push(1);\n        }\n    };\n    while (!q.empty()) {\n        int event = q.front();\n        q.pop();\n        std::cout << \"event \" << event << '\\n';\n        if (handler) {\n            handler(event);\n        }\n        ++processed;\n    }\n    std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
           "stdin": "3 3 2 3",
           "output": "event 3\nevent 2\nevent 3\nevent 1\nevent 1\ntotal 10 processed 5\n"
-        }
+        },
+        "steps": [
+          "The first 3 appends 1 behind the waiting 2 and 3. The second 3 appends another 1.",
+          "The log is 3,2,3,1,1, then total 10 processed 5."
+        ]
       },
       {
         "id": "independent-work",
@@ -697,7 +702,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why does 3,2,3 become 3,2,3,1,1? Does total 10 prove FIFO order?",
-        "feedback": "Each 3 appends 1 at the tail; the queued 2 stays ahead of the new ones. Total 10 does not distinguish another permutation: record the processing order.",
+        "feedback": "FIFO places the earlier 2 ahead of both new ones. A different order can still total 10. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -798,6 +803,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Test 3,0,3 with a temporary trace in a copy.",
+          "criteria": "Order 3,0,3,1,1, total 8, processed 5. Event 0 affects order and count without changing the total."
+        },
         {
           "task": "Show the processing order for 3, 2, 3.",
           "criteria": "Show FIFO contents and the five dispatches 3,2,3,1,1; independently derive total 10 and processed 5."

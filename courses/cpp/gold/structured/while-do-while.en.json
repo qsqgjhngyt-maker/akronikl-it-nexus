@@ -380,6 +380,7 @@
         "id": "concept-1",
         "title": "Pre-test and post-test loops",
         "paragraphs": [
+          "A stream can end without a zero. Define both what stops the loop and what may follow the marker.",
           "Imagine a button counter. If the button is already released, while may do nothing. If a menu must be shown first, the first action belongs before the test. That difference appears in the output 0 1.",
           "while(condition) tests before the body and can execute zero times. do {body} while(condition); tests after the body and executes at least once. The final semicolon is required for do while; after a regular while it usually creates an unintended empty body.",
           "Choose according to the contract. A sequence should be processed only when another value exists, making while(std::cin>>x) natural. A mandatory initial action may use do while, but this never justifies using an unread x."
@@ -479,7 +480,11 @@
             "Trace state after each significant operation and identify the established preconditions.",
             "Run the source, compare stdout and exit code, then check the additional cases."
           ]
-        }
+        },
+        "steps": [
+          "In the example, 2 and 3 raise count to 2 and sum to 5. Zero ends the loop.",
+          "The example prints 2 5 with 99 unread. The lab also checks the tail."
+        ]
       },
       {
         "id": "concept-4",
@@ -613,7 +618,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why must the lab reject 2 0 3 even though the worked example stops immediately after 0? Where should the tail be checked?",
-        "feedback": "Check the remaining input separately after the sentinel. A huge token must produce invalid even at EOF.",
+        "feedback": "Only whitespace may follow 0. At 2 0 3, count 1 and sum 2 were accumulated, but the final result must be invalid. This explanation is not graded automatically.",
         "recall": "concept-5"
       }
     ],
@@ -719,6 +724,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Compare “-2 2” up to EOF with “-2 2 0 1”.",
+          "criteria": "The first prints 2 0. The second is invalid because a token follows the marker."
+        },
         {
           "task": "Manually trace the first example and explain every expected output line.",
           "criteria": "Every repetition either consumes input or terminates."

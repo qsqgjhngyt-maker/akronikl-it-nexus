@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Формат является интерфейсом",
       "paragraphs": [
+        "Проверяйте загружаемые данные отдельно от активной модели. Новое состояние допускается только после чтения версии, записей и конца потока.",
         "Сохранённый файл может быть старым или оборванным. Если менять рабочую модель по мере чтения, отказ оставит смесь старых и новых данных. Соберём candidate отдельно и заменим модель только после проверки последнего байта формата.",
         "Сохранённые данные могут пережить версию программы. Нужен явный признак формата и описание полей. Учебный EV1 содержит число элементов и значения 0…100. Будущий EV2 нельзя читать как EV1 по догадке: одинаковые числа могут иметь иной смысл. Неизвестная версия отклоняется до изменения модели, а миграция должна быть отдельным проверяемым алгоритмом.",
         "Для EV1 3 1 2 3 количество равно трём; EV1 2 1 неполон, а EV1 0 extra содержит посторонние данные. Пробельное оформление между токенами свободно, но лишние токены запрещены. Предел восемь ограничивает память и учебные сценарии. Если продукту потребуется больше данных, пересмотрите лимит и тесты явно."
@@ -170,7 +171,11 @@
         "source": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream &in, std::vector<int> &model) {\n    std::string version;\n    int count;\n    if (!(in >> version >> count) || version != \"EV1\" || count < 0 ||\n        count > 8) {\n        return false;\n    }\n    std::vector<int> candidate;\n    for (int i = 0; i < count; ++i) {\n        int x;\n        if (!(in >> x) || x < 0 || x > 100) {\n            return false;\n        }\n        candidate.push_back(x);\n    }\n    in >> std::ws;\n    if (!in.eof()) {\n        return false;\n    }\n    model.swap(candidate);\n    return true;\n}\nvoid save(std::ostream &out, const std::vector<int> &values) {\n    out << \"EV1 \" << values.size();\n    for (int x : values) {\n        out << ' ' << x;\n    }\n    out << '\\n';\n}\nint main() {\n    std::vector<int> model{99};\n    std::istringstream good(\"EV1 2 1 2\");\n    if (!load(good, model)) {\n        return 1;\n    }\n    const auto before = model;\n    std::istringstream bad(\"EV1 2 7\");\n    const bool rejected = !load(bad, model);\n    std::cout << \"rejected preserved \" << (rejected && model == before)\n              << '\\n';\n    save(std::cout, model);\n}\n",
         "stdin": "",
         "output": "rejected preserved 1\nEV1 2 1 2\n"
-      }
+      },
+      "steps": [
+        "После успешного чтения модель содержит 1 и 2. Следующая плохая загрузка получает отказ.",
+        "Повторная запись по-прежнему даёт EV1 2 1 2, значит отказ ничего не заменил."
+      ]
     },
     {
       "id": "independent-work",
@@ -273,7 +278,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Где commit у load? Почему EV1 0 extra должно сохранить 99, хотя count уже прочитан?",
-      "feedback": "Commit — model.swap(candidate) после проверки EOF. Нулевое количество не разрешает хвост extra; до commit model остаётся{99}.",
+      "feedback": "Даже count=0 требует проверки хвоста. EV1 0 extra не доходит до swap кандидата, модель остаётся {99}. Объяснение не оценивается автоматически.",
       "recall": "independent-work"
     }
   ],
@@ -374,6 +379,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Сравните EV1 2 0 100 и EV1 2 0 101 в независимых запусках.",
+        "criteria": "Первый проходит и повторная загрузка воспроизводит [0,100]. Второй даёт rejected 99."
+      },
       {
         "task": "Опишите грамматику EV1.",
         "criteria": "Грамматика EV1 задаёт маркер, count 0…8, ровно count значений 0…100 и только whitespace после них; показаны допустимая и три недопустимые записи."

@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "A question before observation",
       "paragraphs": [
+        "A late answer belongs to the intent shown to the user. Check its version and whether it already took effect before acting.",
         "While a Yes/No question is open, the user can change minutes or start another request. A Yes alone is insufficient: it must match the current version and the same data snapshot."
       ]
     },
@@ -94,6 +95,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "“No” cancels its intent and an old “Yes” is rejected by version.",
+        "The valid answer gives 1.5, but the database stays at 30. Confirming a calculation does not save a record."
       ]
     },
     {
@@ -277,8 +282,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your new task: where did each value come from, which action was permitted, and what establishes preservation?",
-      "feedback": "This answer is not graded automatically. Compare it with your own observations.",
+      "prompt": "Which of “Yes 8”, “Yes 9” and “Yes 9” should start the calculation for current version 9? Where does the duration come from?",
+      "feedback": "For version 9 and 150 minutes, version 8 is rejected, current “Yes” calculates 2.5 once, and the repeated answer never recalculates. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -367,7 +372,13 @@
       "checks": "The stale reply is refused; the first current Yes gives 2.5; its duplicate keeps the counter at 1.\nA current No gives “Отменено” with no new calculations. Check the snapshot before allowing an old reply to cancel a new intention.\nDistinguish a direct callback invocation, dialog interaction, and a remote operation’s result; do not substitute one for another.",
       "errors": "Removing the version check lets an old reply authorise new state. Without duplicate protection, the same current callback can also repeat a calculation. The independent task checks both boundaries explicitly.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Trace “Yes 8, Yes 9, Yes 9” and record the cumulative number of applications.",
+        "criteria": "0,1,1. The answers acknowledge a calculation, so the saved request retains its prior value."
+      }
+    ]
   },
   "reading": [
     {

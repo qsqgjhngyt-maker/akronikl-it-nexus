@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "From a sequence to events",
       "paragraphs": [
+        "An event proposes an action and a handler decides whether the model changes. Draw the transition after validation.",
         "In an ordinary calculation, main chooses the next step. Here, incoming commands choose the order. Imagine an occupied-seat counter: +1 takes a seat, −1 releases one, and 0 resets the reading. The handler must preserve its bounds for every next command.",
         "A console exercise often receives all input and immediately computes an answer. An application must also respond when a user decides to add a task, edit a field or cancel an action. An event reports something that happened; its handler decides what that occurrence means for the model. Event order becomes part of the input, so rearranging the same actions can change the result.",
         "Consider a counter constrained to zero through ten. Event 1 increments it, -1 decrements it and 0 resets it. The trace 1, 0, 1 ends at one, whereas 1, 1, 0 ends at zero. This is event-driven logic even without a window. A graphical adapter can later translate button presses into these same commands without changing the counter rule."
@@ -121,7 +122,11 @@
           "stdin": "",
           "output": "0 9\n"
         }
-      }
+      },
+      "steps": [
+        "At 9, adding 2 would exceed the upper bound 10.",
+        "The function returns 0 and leaves the model at 9. Observe the decision and state separately."
+      ]
     },
     {
       "id": "concept-5",
@@ -277,7 +282,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Trace 1,0,−1 from 0. How does the last rejection differ from input token x?",
-      "feedback": "States 1,0,0; one rejection. −1 is a parsed command forbidden at 0. x breaks the whole trace format and produces invalid.",
+      "feedback": "1,0,−1 yields states 1,0,0 and one domain rejection. Token x is malformed input rather than an event. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -378,6 +383,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Trace 1,1,0,-1,1 from zero.",
+        "criteria": "States are 1,2,0,0,1. Only the decrement after reset is rejected."
+      },
       {
         "task": "Trace 1, 0, -1 by hand.",
         "criteria": "A table contains all three commands, the value before/after each and accumulated rejections; decrementing zero is identified as a rejection."

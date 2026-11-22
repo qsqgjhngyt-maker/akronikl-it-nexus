@@ -442,6 +442,7 @@
         "id": "concept-1",
         "title": "A resource is more than memory",
         "paragraphs": [
+          "A weak reference lets you check whether an object remains available. A successful lock result temporarily owns it and affects when it is destroyed.",
           "A resource can be an open file or an occupied training license. Here active counts resources that have yet to be released.",
           "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit.",
           "The teaching Resource increments an external counter and decrements it in its destructor. std::make_unique creates an owner whose destructor deletes Resource. When work returns early, the local unique_ptr is still destroyed. This demonstrates ordinary early exit; cleanup during exception propagation is checked separately in the exception lesson."
@@ -579,6 +580,8 @@
           "output": "1 1\n"
         },
         "steps": [
+          "A child's weak parent link does not keep the parent alive.",
+          "Successful lock yields a temporary shared_ptr. While that owner exists, resetting root alone cannot destroy the parent.",
           "weak_ptr does not keep root alive.",
           "Temporary observed lives in its own scope.",
           "After root.reset(), expired is true: output 1 1."
@@ -712,7 +715,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why must observed leave its scope before checking expired()?",
-        "feedback": "lock() created a shared_ptr that keeps the parent alive. Once it is destroyed, root is the last owner.",
+        "feedback": "Destroy observed before checking expired. After it leaves scope, root is the owner again. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -813,6 +816,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Compare weak_ptr.expired before and after resetting the last owner with no live lock result.",
+          "criteria": "First false, then true after reset. Ownership controls lifetime; observation alone does not."
+        },
         {
           "task": "Draw ownership and observation arrows.",
           "criteria": "Give every link a lifetime boundary."

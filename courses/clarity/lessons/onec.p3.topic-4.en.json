@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "Why this task matters",
       "paragraphs": [
+        "Distinguish reasons before reporting failure. Some text cannot be parsed, and some parses to a number the task does not allow.",
         "Invalid text must not silently become a free request. Preserve the original input, explain the reason, and let it be corrected. Distinguish the failing statement, skipped statements, and a separate handling path.",
         "Read the worked example and predict a changed input. The independent task uses a different contract. Save the previous training source before replacing a module; a personal Nexus mark is not an assessment of your explanation."
       ]
@@ -43,7 +44,11 @@
         "language": "bsl",
         "source": "Процедура ПриНачалеРаботыСистемы()\n    ИсходныйТекст = \"ошибка\";\n    Результат = Ложь;\n    Попытка\n        Минуты = Число(ИсходныйТекст);\n        Результат = Истина;\n    Исключение\n        Сообщить(\"Введите число минут, например 30\");\n    КонецПопытки;\n    Сообщить(Результат);\nКонецПроцедуры\n",
         "output": "Введите число минут, например 30\nНет"
-      }
+      },
+      "steps": [
+        "The word “ошибка” cannot be converted to a number. Control moves to the exception handler.",
+        "The hint and then “Нет” (No) show a parsing rejection, not a calculated duration."
+      ]
     },
     {
       "id": "concept-1",
@@ -314,8 +319,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain one changed case of your own: input, important transition, actual result, and limits of the conclusion.",
-      "feedback": "This answer is not graded automatically. Compare it with the trace and your own work.",
+      "prompt": "How do rejections of “ошибка” and “-1” differ? Name the check, value and reason for each outcome.",
+      "feedback": "Name the source text and reason. “-1” converts and gives out_of_range. “ошибка” fails earlier with invalid_format. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -416,7 +421,13 @@
       "checks": "Keep conversion in a narrow try block; check the 0…180 domain separately.\nAccept zero and reject invalid text and negative numbers with different reasons.\nPreserve the original string; rejection must not invent numeric 0 or a success flag.",
       "errors": "Setting Результат=true in the exception handler falsely accepts invalid input. An error message does not repair a false success flag. Assign success only after obtaining and validating a result, preserving the original text separately.\nKeep the faulty variant separately. Restore the working version and repeat the positive case. Do not change an expectation merely because the program printed something else.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Test known strings \"1\" and \"x1\" in separate calls.",
+        "criteria": "The first gives ok and 1, the second invalid_format. Keep the original strings to explain both results."
+      }
+    ]
   },
   "terms": [
     "bsl",

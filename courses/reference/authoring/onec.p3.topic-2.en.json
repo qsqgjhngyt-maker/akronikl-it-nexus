@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "Why this task matters",
       "paragraphs": [
+        "A call has a returned value and values left in the caller. Check them separately: the right cost can hide modified input minutes.",
         "You can calculate a total in one handler. Now you need a calculation that can be called twice and whose returned numbers can be added. A function supplies a value to its caller; a message merely displays something. Check the two roles separately.",
         "Read the worked example and predict a changed input. The independent task uses a different contract. Save the previous training source before replacing a module; a personal Nexus mark is not an assessment of your explanation."
       ]
@@ -43,7 +44,11 @@
         "language": "bsl",
         "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас)\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Минуты и тариф должны быть числами\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Минуты и тариф не могут быть отрицательными\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    Минуты = 30;\n    Результат = Стоимость(Минуты, 1200);\n    Сообщить(Результат);\n    Сообщить(Минуты);\nКонецПроцедуры\n",
         "output": "600\n30"
-      }
+      },
+      "steps": [
+        "Стоимость(30,1200) returns 600. The second message is still 30.",
+        "Знач separates assignment inside the function from the caller's numeric variable, while Возврат passes back the result."
+      ]
     },
     {
       "id": "concept-1",
@@ -322,8 +327,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain one changed case of your own: input, important transition, actual result, and limits of the conclusion.",
-      "feedback": "This answer is not graded automatically. Compare it with the trace and your own work.",
+      "prompt": "Which two values should the caller observe after computing a discounted price? How could the second message reveal modified minutes?",
+      "feedback": "For your case give two observations: cost and minutes after the call. A change in the second breaks the contract even when the cost is correct. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -419,7 +424,13 @@
       "checks": "The independent main run displays 540 and 45, not 540 and 0.75.\n60 minutes without a discount gives 800; zero minutes gives 0; discount 101 is rejected before calculation.\nExplain argument → parameter → return and separately identify the caller state.",
       "errors": "Remove Знач only from the first parameter in the hours-conversion variant. The cost remains 600, but the caller variable becomes 0.5. A matching first line hides the side effect. Compare both result and original state; Знач does not promise a deep copy of collections.\nKeep the faulty variant separately. Restore the working version and repeat the positive case. Do not change an expectation merely because the program printed something else.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "In a separate case, test 30 minutes at 600 per hour with a 25% discount.",
+        "criteria": "The cost is 225 and minutes stay 30. First 300 before discount, then subtract 75."
+      }
+    ]
   },
   "terms": [
     "bsl",

@@ -445,6 +445,7 @@
         "id": "concept-1",
         "title": "Generalizing from two cases",
         "paragraphs": [
+          "A template constraint determines which types may be passed. Permitted values come from a separate task contract.",
           "Find the smaller of two ints and two longs. One algorithm definition produces specializations for different types.",
           "If one operation is needed for int and long, duplication hides common structure and risks inconsistent fixes. A function template describes a family of functions parameterized by type. template<class T> introduces T for use in parameters and the body. This does not erase types: the compiler forms concrete specializations.",
           "Solve the task for one type first and list its required operations. smaller compares two values and returns one by value. It needs comparison and result copying, not inheritance from a common base. The integral concept intentionally narrows this example to integer types, giving the teaching contract a clear domain."
@@ -516,7 +517,11 @@
             "L suffixes select long in the second invocation.",
             "Both satisfy integral: output 3 4."
           ]
-        }
+        },
+        "steps": [
+          "The smaller of 3 and 7 is 3. The call with a different integer type returns 4.",
+          "Both instantiations run the same algorithm. integral makes no promise about the input magnitudes."
+        ]
       },
       {
         "id": "concept-3",
@@ -686,7 +691,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why does integral not prove the lab sum cannot overflow?",
-        "feedback": "The allowed input gives 20 × 100 = 2000. The concept describes the type, not the size of these data.",
+        "feedback": "The input contract bounds the sum by 20×100 in absolute value. That bound does not follow from satisfying integral. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -806,6 +811,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Enter 4 100 -100 0 -3 and compare both results to your calculation.",
+          "criteria": "Expect -3 -3. Agreement between types supplements the hand calculation, rather than proving correctness on its own."
+        },
         {
           "task": "Deduce T for both smaller calls.",
           "criteria": "Obtain int and long and explain the literal suffix."

@@ -447,6 +447,7 @@
         "id": "concept-1",
         "title": "Two independent lifetimes",
         "paragraphs": [
+          "The listener list can change during a call. Keep the current invocation alive and look up the next handler again.",
           "A window may close before its event source. A captured raw this would then be unsafe. In this model the callback observes its receiver through weak_ptr, while a separate Subscription removes the entry from the source.",
           "An event source and its receiver can disappear at different times. Capturing a raw this does not extend the object’s lifetime; a callback retained by the source can outlive its receiver. Capturing shared_ptr extends ownership but can sometimes create a cycle. Before choosing a pointer, draw who owns the source, receiver and subscription.",
           "main owns SignalState and an integer receiver through shared_ptr. The callback stores a weak_ptr to the receiver, while Subscription stores a weak_ptr to the source. Neither subscription nor callback is required to keep its target alive. Test destroying each owner independently; absence of a crash is insufficient without checking invocation counts."
@@ -601,7 +602,11 @@
           "source": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState {\n    int next = 1;\n    std::map<int, std::function<void()>> handlers;\n};\nclass Subscription {\n    std::weak_ptr<SignalState> state_;\n    int id_;\n\n  public:\n    Subscription(std::shared_ptr<SignalState> state, int id)\n        : state_(state), id_(id) {}\n    Subscription(const Subscription &) = delete;\n    Subscription &operator=(const Subscription &) = delete;\n    ~Subscription() {\n        if (auto s = state_.lock()) {\n            s->handlers.erase(id_);\n        }\n    }\n};\nvoid emit(const std::shared_ptr<SignalState> &s) {\n    std::vector<int> ids;\n    for (const auto &[id, handler] : s->handlers) {\n        ids.push_back(id);\n    }\n    for (int id : ids) {\n        auto it = s->handlers.find(id);\n        if (it != s->handlers.end()) {\n            auto handler = it->second;\n            if (handler) {\n                handler();\n            }\n        }\n    }\n}\nint main() {\n    auto s = std::make_shared<SignalState>();\n    int called = 0;\n    const int a = s->next++, b = s->next++;\n    s->handlers.emplace(a, [&] {\n        s->handlers.erase(a);\n        s->handlers.erase(b);\n        ++called;\n    });\n    s->handlers.emplace(b, [&] { called += 100; });\n    emit(s);\n    emit(s);\n    std::cout << \"calls \" << called << \" subscriptions \"\n              << s->handlers.size() << '\\n';\n    auto other = std::make_shared<SignalState>();\n    auto token = std::make_unique<Subscription>(other, 1);\n    other.reset();\n    token.reset();\n    std::cout << \"expired source cleanup safe\\n\";\n}\n",
           "stdin": "",
           "output": "calls 1 subscriptions 0\nexpired source cleanup safe\n"
-        }
+        },
+        "steps": [
+          "The first callback removes itself and the next callback.",
+          "A copy lets the first call finish. The next subscription is checked again and no longer runs."
+        ]
       },
       {
         "id": "independent-work",
@@ -704,7 +709,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Compare modes 0,1,2. Why copy handler before invoking it when self-unsubscribe is possible?",
-        "feedback": "mode 0:value 2; mode 1:value−1; mode 2:value 1; subscriptions 0 after scope exit. The std::function copy survives removal of its map entry.",
+        "feedback": "The handler copy lasts through the call. Modes 0, 1 and 2 give 2, −1 and 1, with no subscriptions after scope exit. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -805,6 +810,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "In a diagnostic copy, emit again after the first listener removes the next one.",
+          "criteria": "The cumulative count stays at 1, with zero subscriptions. Removed handlers do not reappear."
+        },
         {
           "task": "Draw the laboratory ownership graph.",
           "criteria": "The graph identifies strong main→source/receiver and weak callback→receiver, subscription→source edges; explain why ownership has no cycle."

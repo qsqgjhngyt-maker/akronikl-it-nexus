@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Position marks the boundary of completed work. Pass it explicitly and prevent the final batch from crossing the end.",
         "Work stops after the first batch. An accepted batch does not disappear. Distinguish its boundary from the next step and check that retrying the end never advances beyond the total.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -93,6 +94,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "For 12 items in fives the positions are 5,10,12,12.",
+        "Repeating at the end changes nothing, and size 0 is rejected before progress."
       ]
     },
     {
@@ -293,8 +298,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain positions 3, 3, 6, 7, 7 and separately identify what is missing for recovery after process termination.",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Explain positions 3, 3, 6, 7, 7. What durable fact would let a new process recover at the correct place?",
+      "feedback": "3,3,6,7,7 marks the first batch, pause, continuation and end. Process recovery needs a durable position and a retry contract. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -383,7 +388,13 @@
       "checks": "Labelled positions: 3, 3, 6, 7, 7. Stopping does not roll back the first accepted step.\nThis is a manual algorithm and in-memory position; no background queue, schedule or established process recovery is claimed.\nExplain which state and effects need atomic persistence for actual crash resumption.",
       "errors": "Allowing size 0 can prevent progress, or cancellation is described as rolling back an accepted batch. Cancellation between steps stops new actions but does not itself restore the pre-batch state.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Trace five items in batches of two, pausing after batch two and trying once more after the end.",
+        "criteria": "Positions are 2,4,4,5,5. The last batch handles one item; the pause and repeat add none."
+      }
+    ]
   },
   "reading": [
     {

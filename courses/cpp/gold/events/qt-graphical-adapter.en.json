@@ -530,6 +530,7 @@
         "id": "concept-1",
         "title": "From the model to a real window",
         "paragraphs": [
+          "A window signal reports an action. The model decides whether to accept it and refresh reads the actual state.",
           "So far commands came from stdin. Now text and Return come from a real QLineEdit. TaskModel still enforces the rules; Qt translates user actions into model calls and displays the result. This requires the Qt/WebAssembly target, separate from console Clang/WASI.",
           "Qt is an additional library rather than part of standard C++. In Nexus, create a new C++ application in Project Studio and open src/gui.cpp. The application builds for Qt/WebAssembly and runs in a separate Preview. Console Clang/WASI does not contain Qt: use the graphical project for this task.",
           "TaskFlow contains a model, CLI, GUI, tests, CMake and a target description. Create a separate personal copy. In this toolchain your C++ builds on the device after Qt-runtime preparation; initially downloading the compiler and libraries requires a connection. Environment availability and source correctness are checked separately."
@@ -623,7 +624,11 @@
             "target": "qt-wasm",
             "entryFile": "src/gui.cpp"
           }
-        }
+        },
+        "steps": [
+          "At startup, the log shows NEXUS_TASKS 0. Enter in the field goes through the add handler.",
+          "Compare the visible list after acceptance and rejection rather than counting presses."
+        ]
       },
       {
         "id": "concept-3",
@@ -813,7 +818,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why update total from model.tasks().size() instead of incrementing it for each press? How does connect’s context relate to the window lifetime?",
-        "feedback": "Rejection creates no task; repeated complete creates none either. The model is the source of truth. Context this ties the connection to a live window; child QObjects belong to the window through parent.",
+        "feedback": "Derive the count from the model. Repeated completion adds nothing. A connect context ends the connection when that context is destroyed. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -961,6 +966,10 @@
         }
       },
       "exercises": [
+        {
+          "task": "In your copy, add two distinct tasks, complete one and repeat the completion.",
+          "criteria": "The total remains 2. Open tasks stays at 1 after both completions. Inspect the window and the selected task's status."
+        },
         {
           "task": "Trace Return→add→model→refresh.",
           "criteria": "Identify returnPressed, add, model validation and refresh; trace accepted and empty input, including retention of rejected text."

@@ -547,6 +547,7 @@
         "id": "concept-1",
         "title": "Initialization precedes the body",
         "paragraphs": [
+          "Scope helps predict the lifetime log. Members are constructed in declaration order and destroyed in reverse order.",
           "A machine has parts A and B. Both must exist before ready is printed. The members are still alive during stop.",
           "A constructor establishes an object's initial state. Its name matches the class and it has no return type. In Level(int n):value_(n), the part after the colon is a member initializer list. The field is created with n directly. Assignment inside the body happens later, after the member has already had to be created.",
           "Prefer direct initialization, especially for const members, references and types without a default constructor. An uninitialized built-in int can hold an indeterminate value that must not be read. A =0 field initializer supplies a useful default, but does not replace validation of domain requirements on constructor arguments."
@@ -618,7 +619,11 @@
             "The constructor body prints ready.",
             "Scope exit prints stop, then -B and -A."
           ]
-        }
+        },
+        "steps": [
+          "Machine constructs A and B, then reports ready.",
+          "At scope exit, its destructor body prints stop before B and A are destroyed."
+        ]
       },
       {
         "id": "concept-3",
@@ -793,7 +798,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "For mode = 0, explain each value in 1 1 0. Where did a's lifetime end?",
-        "feedback": "After creating a, one Lease is active. No inner object is created, and leaving the outer scope destroys a.",
+        "feedback": "In mode 0, b is never constructed. One resource is active after a, one after the empty inner scope, and zero after the outer scope. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -894,6 +899,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "For mode 2, label each output point with the live objects.",
+          "criteria": "A; A and B; A; none. The active counts are 1 2 1 0."
+        },
         {
           "task": "List the Machine event order.",
           "criteria": "Obtain +A +B ready stop -B -A."

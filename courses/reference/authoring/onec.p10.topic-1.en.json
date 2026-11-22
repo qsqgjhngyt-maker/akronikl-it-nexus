@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "While a transaction is open, the edited object does not prove the final result. Check a fresh read by reference after commit and rollback.",
         "The write has executed inside the experiment, yet rereading after cancellation gives 30. This is a transaction boundary at work. Trace it on one own request without claiming to have tested two concurrent sessions.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -91,6 +92,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "The attempt wrote 99, but rollback restored 30 on the first request.",
+        "The reread second request stays at 45. It controls the scope of the change."
       ]
     },
     {
@@ -291,8 +296,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "When should 90 persist on the second request? How do you check after the transaction ends without confusing it with the first?",
+      "feedback": "After committing the new task, expect 20 and 90 with the second reference unchanged. Identify where you ended the transaction. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -381,7 +386,13 @@
       "checks": "Labelled results:20,90, Да. Check the actual references rather than an arbitrary record with matching minutes.\nLock the second reference; commit differs from the worked rollback.\nExplain why one session cannot establish absence of races, timeouts or deadlocks.",
       "errors": "Replace rollback with commit but keep expecting 30. The check must now expose 99. Repair the operation contract rather than its expected result. The two-participant 10-minus-7 schedule remains a separate test requiring another environment.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "In a separate training attempt, edit that second record to 95 and roll back.",
+        "criteria": "A fresh read still gives 20 and 90. The working value 95 was not committed."
+      }
+    ]
   },
   "terms": [
     "bsl",

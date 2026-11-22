@@ -31,6 +31,7 @@
       "id": "orientation",
       "title": "What the report must show",
       "paragraphs": [
+        "First decide which entity must remain even if no row matches it. In a report for all customers, that entity is the customer.",
         "The report must show request minutes for each of two selected customers, including a customer without requests. A correct grand total alone is insufficient: both distinct customer records must survive. We will inspect rows before adding them.",
         "A and B are short labels for two different references in the training infobase. They are not real addresses or literal values to enter in a reference field. Both customers have the same displayed name “Service”. A name helps a reader but does not make two records identical."
       ]
@@ -138,6 +139,10 @@
           "B | NULL | NULL",
           "The left join retains the unmatched customer."
         ]
+      ],
+      "steps": [
+        "A forms two rows for its requests. B gets one row with NULL on the right despite having no real requests.",
+        "Then group by customer reference. A totals 30+45=75; explicitly replace B's empty total with 0."
       ]
     },
     {
@@ -282,8 +287,8 @@
     {
       "id": "join-explain",
       "kind": "free",
-      "prompt": "Write the three left-join rows forX:10/20 andY: no requests. Explain whereY/0 comes from.",
-      "feedback": "Check the NULL row, grouping by reference and explicit replacement of the absent sum. Free text is not graded automatically.",
+      "prompt": "Draw the joined rows for X:10/20 and Y with no requests. At what step does Y/0 appear, and what changes if Y has one real zero-minute request?",
+      "feedback": "For X:10/20 and Y with no requests, draw X/10, X/20 and Y/NULL. Group and replace NULL to obtain X/30 and Y/0. This explanation is not graded automatically.",
       "anchor": "joined-rows",
       "recall": "joined-rows"
     }
@@ -418,7 +423,13 @@
       "checks": "Before aggregation, show three rows: two forX and a NULL row forY.\nEach experiment has two distinct references: X/30 and Y/0 in the first set; X/35 and Y/0 in the second separate set. The second result excludes requests from the first set.\nDistinguish an inner join and name-only grouping by the lost group, even when the grand total looks plausible.",
       "errors": "Join with З.Клиент=К.Ссылка and group by the reference. Use ЕСТЬNULL to state the 0 policy for an absent sum.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Predict what happens when Y gains one real request of zero minutes. Compare count and total before and after.",
+        "criteria": "Y's total stays zero while request count changes from 0 to 1. Count non-null request references, not all joined rows."
+      }
+    ]
   },
   "contentRevision": "r3-stage-a-8bccaf5",
   "lessonFormat": "guided-v2",

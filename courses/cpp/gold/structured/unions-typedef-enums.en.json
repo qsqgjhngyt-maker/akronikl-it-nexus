@@ -367,6 +367,7 @@
         "id": "concept-1",
         "title": "enum class scopes names",
         "paragraphs": [
+          "A command has a kind and data. Keep the active kind with its fields so a handler does not infer it from raw storage.",
           "Add and remove need a common interface but carry different meanings. An enum class names the choice, while a variant stores the chosen alternative and its data.",
           "enum class Mode { add, remove }; creates a distinct type. Values are written Mode::add and Mode::remove and do not implicitly become int. This prevents accidental mixing with another enumeration but does not validate an external numeric code.",
           "Parse input with if or switch and explicitly map accepted tokens to enumeration values. static_cast<Mode>(number) does not establish membership in the domain set. In switch, list valid alternatives and define how unexpected states are handled."
@@ -475,7 +476,11 @@
             "Trace state after each significant operation and identify the established preconditions.",
             "Run the source, compare stdout and exit code, then check the additional cases."
           ]
-        }
+        },
+        "steps": [
+          "In the example, determine the active alternative before reading its fields.",
+          "Recognising Add does not permit every amount. Validate the state change separately."
+        ]
       },
       {
         "id": "concept-5",
@@ -600,7 +605,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why is 3 remove 4 a correctly parsed command but a rejected operation? Which observation proves stock was preserved?",
-        "feedback": "Selecting the right type does not validate the amount. The old stock is part of the rejection result.",
+        "feedback": "3 remove 4 parses as Remove(4), but 4 <= 3 fails. The observed stock remains 3. This explanation is not graded automatically.",
         "recall": "concept-5"
       }
     ],
@@ -701,6 +706,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Compare 4 remove 4 and 4 remove 5.",
+          "criteria": "The results are ok 0 and rejected 4. Both commands have the same kind but different amounts."
+        },
         {
           "task": "Manually trace the first example and explain every expected output line.",
           "criteria": "An alternative’s type does not eliminate validation of its data."

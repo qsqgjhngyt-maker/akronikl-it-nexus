@@ -430,6 +430,7 @@
         "id": "concept-1",
         "title": "A value and its independent copy",
         "paragraphs": [
+          "Copy when both versions should evolve independently. Move when the former content is no longer needed in the original object.",
           "A draft note gets a separate copy for review. Editing the copy must not change the original.",
           "Value semantics means a copy represents an independent value. Note stores a string that manages its content. After Note b=a, changing b.text must not change a.text. Copying a pointer is different: two objects can then observe one memory region. A type's contract should explain which behaviour it provides.",
           "Batch uses vector<int> and follows the rule of zero: compiler-generated special operations compose the member operations. A vector copy has its own elements, so changing b.values leaves the original batch intact. Check independence through observable behaviour. Equality of addresses or internal buffer layouts is not a required part of a value contract."
@@ -543,7 +544,11 @@
             "c receives the original value by moving.",
             "Assign reused to a before reading: reused review draft."
           ]
-        }
+        },
+        "steps": [
+          "Editing the copy b gives review while the original was draft.",
+          "Moving passes draft to c. An explicit assignment gives a the new value reused."
+        ]
       },
       {
         "id": "concept-5",
@@ -700,7 +705,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why cannot a specific value of a.text.empty() be expected immediately after moving?",
-        "feedback": "A moved-from string is valid, but its precise contents are unspecified. Assignment establishes a new value.",
+        "feedback": "The exact content of a.text after moving is unspecified. Read a after an assignment establishes a known value. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -816,6 +821,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Enter 3 -2 0 2. Compute the sums of the copy and moved original separately.",
+          "criteria": "c sums to 0, b to 3, and the first reassigned value of a is 42."
+        },
         {
           "task": "Distinguish b=a at construction and later.",
           "criteria": "Identify copy construction and copy assignment."

@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Character arrays and C strings",
       "paragraphs": [
+        "Length depends on what you count. An array may include a terminator, while a string with an explicit length can store a zero byte as data.",
         "The three letters in cat occupy four array cells with the terminator. This storage size is not automatically the word’s length.",
         "char word[4]{'c','a','t','\\0'} is a C string with three letters and a null terminator. char letters[3]{'c','a','t'} is a three-char array, but not a C string. Passing it to a function that searches for \\0 violates that function’s precondition.",
         "The array size includes terminator storage; the text length before it does not. An embedded zero byte ends a C string before the buffer ends. Demonstrate the distinction with bounded valid examples, never by executing an unterminated read."
@@ -94,7 +95,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "The cat array has four bytes including its terminator.",
+        "The string containing a, a zero byte and b has length 3. Its second byte is 0 but does not terminate std::string."
+      ]
     },
     {
       "id": "concept-3",
@@ -255,7 +260,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why does é contribute two other bytes under this contract? What would change in the tests if Unicode letters had to be counted?",
-      "feedback": "A blank line is represented by a newline. Do not treat UTF-8 byte length as a letter count.",
+      "feedback": "UTF-8 é takes two bytes outside the ASCII classes. Counting Unicode letters would require decoding and a different contract. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -359,6 +364,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Enter “A é9” encoded as UTF-8.",
+        "criteria": "Expect 5 1 1 1 2. A is a letter, 9 is a digit, there is one space, and é supplies two other bytes."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Byte length and perceived-text length are different contracts."

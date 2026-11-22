@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "One filter chooses which rows enter the calculation; another checks an already computed group total. The same threshold does not make them interchangeable.",
         "Two jobs took 25 minutes each. Neither exceeds 40, but together they total 50. Does the report need long jobs or customers with a large combined duration? The order of operations changes the answer.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -92,6 +93,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "The detail filter >30 keeps 45 and drops 30.",
+        "The group without that prefilter sums 30+45=75 and then passes >30."
       ]
     },
     {
@@ -292,8 +297,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Two requests are 25 minutes each. Why do “details >40” yield no rows while “group total >40” keeps the customer?",
+      "feedback": "Two rows of 25 each fail >40 individually, while their group total 50 passes. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -382,7 +387,13 @@
       "checks": "Expect labelled values 0, 0, 1, 50, 0: different levels and two different thresholds.\nDCS calculates 50; the subsequent explicit predicate checks the customer key.\nExplain why >50 excludes the 50 group while >40 retains it, even though its details did not pass.",
       "errors": "Filtering the 25/25 details >40 and calling the result “customers totalling >40” removes both rows before summation and loses the valid 50 total. Renaming the report does not repair the selected level.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "For this pair, try strict thresholds 50 and 49.",
+        "criteria": "No detail passes either. The group is absent at >50 and present with total 50 at >49."
+      }
+    ]
   },
   "terms": [
     "bsl",

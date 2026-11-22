@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "Why this task matters",
       "paragraphs": [
+        "Write expected values by hand before running. Otherwise the test can repeat the same faulty formula and accept it.",
         "A “tests passed” message compares nothing by itself. You need an independently calculated expectation, an actual value, and an action on mismatch. Check both the function and whether the test can fail on a known faulty copy.",
         "Read the worked example and predict a changed input. The independent task uses a different contract. Save the previous training source before replacing a module; a personal Nexus mark is not an assessment of your explanation."
       ]
@@ -44,7 +45,11 @@
         "language": "bsl",
         "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас)\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n\nПроцедура ПроверитьРавно(Факт, Ожидание, Название)\n    Если Факт <> Ожидание Тогда\n        ВызватьИсключение \"Не пройдено: \" + Название;\n    КонецЕсли;\nКонецПроцедуры\n\nПроцедура ПриНачалеРаботыСистемы()\n    ПроверитьРавно(Стоимость(30, 1200), 600, \"полчаса\");\n    ПроверитьРавно(Стоимость(0, 1200), 0, \"ноль минут\");\n    ПроверитьРавно(Стоимость(60, 1200), 1200, \"час\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Стоимость(-1, 1200);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"отрицательная длительность отвергнута\");\n    Результат = 4;\n    Сообщить(\"Пройдены четыре учебные проверки\");\nКонецПроцедуры\n",
         "output": "Пройдены четыре учебные проверки"
-      }
+      },
+      "steps": [
+        "Four checks compare cost against independently calculated expectations.",
+        "The success message comes after all comparisons. A mutation must break at least one observable expectation."
+      ]
     },
     {
       "id": "concept-1",
@@ -304,8 +309,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain one changed case of your own: input, important transition, actual result, and limits of the conclusion.",
-      "feedback": "This answer is not graded automatically. Compare it with the trace and your own work.",
+      "prompt": "Which test detects a version of Остаток that always returns the limit? State the expected and observed values.",
+      "feedback": "At limit 90 and used 20, subtraction gives 70. Returning the limit unchanged might pass the zero-usage case but must fail this one. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -391,7 +396,13 @@
       "checks": "Run all six cases with numeric expectations independent of the implementation.\nThe addition fault fails at«занята часть»; the faulty copy does not reach the final success message.\nPreserve two distinct sources, the observed rejection, and the restored successful run; a message alone is not evidence.",
       "errors": "The faulty Остаток adds instead of subtracting. Emptying ПроверитьРавно makes it print the six-check success message anyway. This is an intentional false green, not a fix. The test must notice the faulty copy before the final message.\nKeep the faulty variant separately. Restore the working version and repeat the positive case. Do not change an expectation merely because the program printed something else.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Add separate cases limit 12 with used 11 and then 13.",
+        "criteria": "The first gives 1, the second must be rejected. No exception in the second case exposes a defect."
+      }
+    ]
   },
   "reading": [
     {

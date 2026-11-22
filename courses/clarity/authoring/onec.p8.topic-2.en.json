@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "A question before observation",
       "paragraphs": [
+        "An explicit argument is part of the client-server contract. Validate type and range inside the function, even if the form already checks fields.",
         "A field may look valid while a direct call bypasses its interface checks. The server therefore receives a number and independently validates it before dividing by 60."
       ]
     },
@@ -90,6 +91,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "Number 90 gives 1.5 hours.",
+        "An out-of-range number and a string fail at different checks."
       ]
     },
     {
@@ -283,8 +288,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your new task: where did each value come from, which action was permitted, and what establishes preservation?",
-      "feedback": "This answer is not graded automatically. Compare it with your own observations.",
+      "prompt": "Which checks must the two durations and their sum pass? Give a pair of individually valid durations whose total must be rejected.",
+      "feedback": "Valid individual durations do not guarantee a valid total. Check both values and their sum before dividing by 60. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -373,7 +378,13 @@
       "checks": "120 + 45 = 165 minutes; the numeric result is 2.75.\n1000 and 500 each fit individually, but their total of 1500 is rejected by the server.\nExplain why checking each addend does not replace checking the total.",
       "errors": "Putting the only check in the field handler lets a direct call with 1441 bypass it. Enforcing the constraint inside the server function covers its callers within this training contract.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "Compare 720+720 minutes with 720+721.",
+        "criteria": "The first gives 24 hours. The second exceeds the combined limit despite each individual value being valid."
+      }
+    ]
   },
   "reading": [
     {

@@ -20,6 +20,7 @@
       "id": "orientation",
       "title": "Where we begin",
       "paragraphs": [
+        "Check syntax and meaning independently. An unclosed quote prevents validation, while a wrong operator can survive a successful run.",
         "The editor stops underlining a line, yet the calculation remains wrong. This is possible: syntax asks whether an instruction can be parsed, while the task asks whether it performs the intended operation. Separate these checks and preserve an edit so its result can be explained and repeated."
       ]
     },
@@ -193,7 +194,11 @@
         "language": "bsl",
         "source": "Процедура ПриНачалеРаботыСистемы()\n    Осмотр = 30;\n    Ремонт = 45;\n    Длительность = Осмотр + Ремонт;\n    Сообщить(Длительность);\nКонецПроцедуры\n",
         "output": "75"
-      }
+      },
+      "steps": [
+        "The handler adds 30 and 45 to get 75. Сообщить displays the value of Длительность.",
+        "Replacing + with − gives −15 without a new syntax error. A predicted number reveals the mismatch."
+      ]
     },
     {
       "id": "native-debugger",
@@ -384,8 +389,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Record one change: what, why, validation and return path.",
-      "feedback": "Exact edit and observed result; no secrets or data-backup claim based only on .bsl.",
+      "prompt": "Which operator did you change and what did you see on the same input? Record where your original training copy is and how to return to it.",
+      "feedback": "Record the handler, old and new operator, expected value and actual message. Keep the original training copy as a recovery point. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -458,6 +463,10 @@
     ],
     "hint": "Deleting the entire line may remove both a diagnostic and the required action. Restore the minimal needed instruction and test its meaning; an empty handler does not solve the calculation.",
     "exercises": [
+      {
+        "task": "In your copy, compare subtraction and addition on 12 and 12.",
+        "criteria": "Expect 0 and 24. A successful run does not determine which operator matches the task."
+      },
       {
         "level": "Guided",
         "task": "Remove a closing quote in a separate source copy, read the diagnostic and restore the line.",

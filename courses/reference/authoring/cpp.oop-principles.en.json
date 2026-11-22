@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "From a record to a domain object",
       "paragraphs": [
+        "Let the object enforce its valid range. Callers request an addition and receive a decision without writing the value directly.",
         "A class has at most 100 places. Reading holds a measurement, while Counter will decide whether more participants can be admitted.",
         "In Module 3 a structure grouped related data, such as a sensor reading and its unit. In the language an object has storage, a type and a lifetime; an int variable is an object too. Design uses a more specific idea: a representation of a domain concept together with the operations allowed on it.",
         "Not every record needs a hierarchy. If every combination of fields is meaningful, a plain struct with public data and free functions can be clearer. When values must satisfy a relationship, such as a counter remaining between zero and one hundred, the type should control changes. Begin with that requirement rather than with class syntax."
@@ -115,7 +116,11 @@
           "stdin": "",
           "output": "7 0 0\n"
         }
-      }
+      },
+      "steps": [
+        "After a successful addition the value is 7. The next unacceptable request returns 0.",
+        "Check that rejection preserves the previous state as well as the flag."
+      ]
     },
     {
       "id": "concept-4",
@@ -263,7 +268,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "For 30, 80, 20, write the state after each call and explain the rejection count separately.",
-      "feedback": "The states are 30, 30, 50. The request for 80 exceeds the remaining 70, so there is one rejection.",
+      "feedback": "For 30,80,20, the states are 30,30,50. At 30 there is room for 70, so 80 is rejected. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -388,6 +393,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Test requests 100,1,0.",
+        "criteria": "The final value is 100 with one rejection. A zero change is valid even at the boundary."
+      },
       {
         "task": "Separate Counter fields from operations.",
         "criteria": "Identify the value, add, value() and initial zero."

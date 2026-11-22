@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "A deterministic sequence and state",
       "paragraphs": [
+        "Reproducibility assumes the same starting state and the same sequence of calls. It is separate from uniformity.",
         "Engine state makes the experiment repeatable. Here two new engines start from the same seed and receive the same number of calls.",
         "A pseudorandom engine computes an output from its state and updates that state. Equal initial states and equal call histories produce equal streams. The output may look random without being physical randomness. An extra call, even for debugging output, shifts all later values.",
         "A seed initializes state under the engine’s rules. Copying an engine copies state rather than magically creating an independent source. Recreating an engine from the same seed at every step restarts its sequence. Create one engine for a series and explicitly define where a new reproducible experiment begins."
@@ -135,7 +136,11 @@
           "Check length 512 separately: an empty sequence could otherwise satisfy all_of.",
           "libstdc++ and libc++ may produce different arrays while preserving these results. Save the actual input data for cross-environment replay."
         ]
-      }
+      },
+      "steps": [
+        "Two engines with the same seed each receive 512 requests within one implementation.",
+        "Matching sequences establish repeatability for this experiment, not randomness quality."
+      ]
     },
     {
       "id": "concept-6",
@@ -265,7 +270,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "At n = 1 and lo = hi = 7, what must both files contain for any valid seed?",
-      "feedback": "Each file has one line containing 7. The valid range has only one value.",
+      "feedback": "With lo=hi=7, the distribution has just one possible result. Each file contains 7 regardless of the seed. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -668,6 +673,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Run n=3, seed=17, lo=hi=-4.",
+        "criteria": "Both files contain exactly three lines of -4. Check contents and line count in addition to the write status."
+      },
       {
         "task": "Separate mt19937 and uniform_int_distribution roles.",
         "criteria": "Identify bit source and range mapping."

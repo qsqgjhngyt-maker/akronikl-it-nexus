@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Два независимых времени жизни",
       "paragraphs": [
+        "Список слушателей может измениться в момент вызова. Защитите текущий вызов и перепроверьте следующий обработчик.",
         "Окно может закрыться раньше источника событий. Захваченный сырой this тогда опасен. В учебной модели callback наблюдает получателя через weak_ptr, а отдельный объект Subscription отвечает за удаление записи из источника.",
         "Источник событий и получатель могут исчезнуть в разное время. Захват сырого this не продлевает жизнь объекта; callback, сохранённый источником, способен пережить получателя. shared_ptr в захвате продлевает владение, но иногда создаёт цикл. До выбора указателя нарисуйте граф: кто владеет источником, получателем и объектом подписки.",
         "В лабораторной main владеет SignalState и получателем int через shared_ptr. Callback хранит weak_ptr получателя, а Subscription — weak_ptr источника. Поэтому подписка не обязана удерживать источник, а callback не удерживает получателя. Уничтожение каждого владельца можно проверить отдельно; отсутствие аварии само по себе недостаточно без проверки числа вызовов."
@@ -176,7 +177,11 @@
         "source": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState {\n    int next = 1;\n    std::map<int, std::function<void()>> handlers;\n};\nclass Subscription {\n    std::weak_ptr<SignalState> state_;\n    int id_;\n\n  public:\n    Subscription(std::shared_ptr<SignalState> state, int id)\n        : state_(state), id_(id) {}\n    Subscription(const Subscription &) = delete;\n    Subscription &operator=(const Subscription &) = delete;\n    ~Subscription() {\n        if (auto s = state_.lock()) {\n            s->handlers.erase(id_);\n        }\n    }\n};\nvoid emit(const std::shared_ptr<SignalState> &s) {\n    std::vector<int> ids;\n    for (const auto &[id, handler] : s->handlers) {\n        ids.push_back(id);\n    }\n    for (int id : ids) {\n        auto it = s->handlers.find(id);\n        if (it != s->handlers.end()) {\n            auto handler = it->second;\n            if (handler) {\n                handler();\n            }\n        }\n    }\n}\nint main() {\n    auto s = std::make_shared<SignalState>();\n    int called = 0;\n    const int a = s->next++, b = s->next++;\n    s->handlers.emplace(a, [&] {\n        s->handlers.erase(a);\n        s->handlers.erase(b);\n        ++called;\n    });\n    s->handlers.emplace(b, [&] { called += 100; });\n    emit(s);\n    emit(s);\n    std::cout << \"calls \" << called << \" subscriptions \"\n              << s->handlers.size() << '\\n';\n    auto other = std::make_shared<SignalState>();\n    auto token = std::make_unique<Subscription>(other, 1);\n    other.reset();\n    token.reset();\n    std::cout << \"expired source cleanup safe\\n\";\n}\n",
         "stdin": "",
         "output": "calls 1 subscriptions 0\nexpired source cleanup safe\n"
-      }
+      },
+      "steps": [
+        "Первый callback удаляет себя и следующего.",
+        "Копия позволяет завершить текущий вызов. Следующая подписка проверяется заново и уже не вызывается."
+      ]
     },
     {
       "id": "independent-work",
@@ -279,7 +284,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Сравните mode 0,1,2. Почему копирование handler перед вызовом важно для self-unsubscribe?",
-      "feedback": "mode 0: value 2; mode 1: value−1; mode 2: value 1; после области subscriptions 0. Копия std::function живёт независимо от удаляемой записи map.",
+      "feedback": "Копия handler живёт до выхода из вызова. Режим 0 даёт 2, 1 — −1, 2 — 1, после области активных подписок нет. Объяснение не оценивается автоматически.",
       "recall": "independent-work"
     }
   ],
@@ -380,6 +385,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "В диагностической копии после удаления следующего слушателя вызовите emit ещё раз.",
+        "criteria": "Суммарное число вызовов остаётся 1, подписок 0. Удалённые обработчики не «воскресают»."
+      },
       {
         "task": "Нарисуйте граф владения лабораторной.",
         "criteria": "На графе отмечены сильные main→source/receiver и слабые callback→receiver, subscription→source; объяснено отсутствие цикла владения."

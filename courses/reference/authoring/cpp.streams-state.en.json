@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Flags describe a past operation",
       "paragraphs": [
+        "Separate the source line from the stream used to parse it. A bad number on one line is a different event from end of file.",
         "The final number 8 can be read successfully exactly at end of input. Record “extracted a value” and “reached the end” separately. Both can happen together.",
         "good() means no error-state flags are set. eof() reports an encountered end, fail() tests failbit or badbit, and bad() reports a serious stream error. bool(stream) checks for absence of failbit and badbit; eofbit alone need not make it false.",
         "Successfully extracting a final number without trailing whitespace can produce eof=true and fail=false. An oversized final numeric token may set both. eof alone therefore cannot distinguish success, empty exhaustion, and malformed input."
@@ -112,7 +113,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "Reading bad sets fail. Resetting the flag alone does not remove the characters bad.",
+        "After discarding that line, extraction reads 7. When parsing separate strings, getline has already marked the boundary."
+      ]
     },
     {
       "id": "concept-3",
@@ -255,7 +260,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why should the next getline see 3 after a bad line? Identify which stream holds failbit and which accumulators change.",
-      "feedback": "A good record must contain exactly one number. Reaching the end of the outer stream does not validate the final token.",
+      "feedback": "With a separate parser, failbit belongs to bad. The outer getline advances to line 3. Increase the rejected count without changing the sum. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -352,6 +357,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Supply the lines 7, “8 x”, -7 and an empty line.",
+        "criteria": "Two are accepted, two rejected, and the sum is 0. In 8 x the integer is read but extra text remains."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Resetting a flag and removing malformed input are different operations."

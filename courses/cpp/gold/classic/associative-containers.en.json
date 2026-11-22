@@ -593,6 +593,7 @@
         "id": "concept-1",
         "title": "Keys, mapped values and uniqueness",
         "paragraphs": [
+          "Separate lookup from insertion. Checking whether a word was seen must not itself change the frequencies.",
           "Two occurrences of pear occupy one entry with count 2. A set records membership, and a map also keeps the count.",
           "A set stores keys; a map associates each key with a mapped value. In a frequency index, the word is the key and its occurrence count is the value. Repetition updates the count rather than adding a distinct key. Record-ID uniqueness is a separate domain rule: equal amounts may be allowed while duplicate IDs are not.",
           "A map element resembles a pair: first is the key and second the mapped value. const auto& entry reads without copying; const auto& [word,count] names the parts through a structured binding. Do not mutate a map key in place because it would break lookup organization. Changing a key needs an explicit erase/insert design or another documented operation."
@@ -677,7 +678,11 @@
             "stdin": "pear apple pear",
             "output": "apple:1 pear:2 | 2 1\n"
           }
-        }
+        },
+        "steps": [
+          "pear apple pear produces apple:1 and pear:2.",
+          "The ordered report determines key order, while frequency includes every occurrence."
+        ]
       },
       {
         "id": "concept-5",
@@ -829,7 +834,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "What changes if you replace the absent lookup with a read of counts[\"absent\"]?",
-        "feedback": "The [] access inserts absent with value 0. Size becomes 3 and the size check makes the demonstration fail.",
+        "feedback": "Using [] for a missing key creates a zero entry. Use find or contains for lookup without insertion. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -955,6 +960,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Enter 5 lime apple lime kiwi apple.",
+          "criteria": "Expect lines apple 2, kiwi 1 and lime 2. The order of first occurrence differs from the report order."
+        },
         {
           "task": "Compare find and [] for a missing word.",
           "criteria": "Only insertion through [] changes size."

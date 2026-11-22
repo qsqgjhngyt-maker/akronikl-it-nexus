@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "A node and the head",
       "paragraphs": [
+        "Before moving or removing a node, identify the owners of the head and the tail. That helps preserve the link to the remaining nodes.",
         "Imagine a chain of cards where each next card has exactly one owner. head owns the first card and each node’s next owns the remainder. An empty head means an empty list.",
         "Node stores value and unique_ptr<Node> next. head owns the first node, and each next owns its successor. An empty head means an empty list. A valid model has neither ownership cycles nor a second owner of any node.",
         "The ownership lesson introduced explicit Node(int v):value(v){} and ->. A raw Node* is only a traversal observer. It does not delete a node and must not outlive an update that destroys that node."
@@ -49,6 +50,8 @@
         "output": "3 2 1 \n0\n"
       },
       "steps": [
+        "Insert 1, 2 and 3 at the head. The new head 3 leads to the former head 2, then to 1.",
+        "Printing 3 2 1 reads the chain without transferring ownership. After cleanup no nodes remain.",
         "Read the contract and independently derive the expected result for the given input.",
         "Trace state after each significant operation and identify the established preconditions.",
         "Run the source, compare stdout and exit code, then check the additional cases."
@@ -278,7 +281,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "For 3 2 2 −1 state the printed order and explain why both nodes with value 2 remain after the first clearing iteration.",
-      "feedback": "Use a non-owning pointer to a live node for traversal. When clearing, move next before destroying the head.",
+      "feedback": "With 3 2 2 −1, print −1 2 2. Removing −1 transfers ownership to the first 2, which still owns the second. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -370,6 +373,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Run 4 5 -1 5 0. Write the chain immediately after the first removal.",
+        "criteria": "The lines are 0 5 -1 5 and empty=1. After the first removal, 5 → -1 → 5 remains."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Transfer the owning link before destroying the node."

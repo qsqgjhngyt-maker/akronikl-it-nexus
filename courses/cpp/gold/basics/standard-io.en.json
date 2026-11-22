@@ -968,6 +968,7 @@
         "id": "concept-1",
         "title": "Did we actually read a number?",
         "paragraphs": [
+          "Write the complete input contract. Reading a number does not consume the entire line. Inspect what remains and check whether the task permits it.",
           "Until now, the numbers were written in the source. Now a count arrives from outside: today 8, tomorrow the word eight or an empty field. How can the program tell whether it actually received a number?",
           "Predict separate results for inputs 8 and eight. Parsing a number and validating its allowed range are different steps. The first example focuses on whether parsing succeeds."
         ],
@@ -1062,6 +1063,8 @@
           "output": "8| rest of line\n"
         },
         "steps": [
+          "Extraction with >> takes 8 from “8 rest of line”. getline receives the rest, including the space. The bar in the output separates the two parts.",
+          "Trailing whitespace is allowed in the box task. Letters or a dot after the second integer are data that you cannot discard silently.",
           "The number is extracted without the following space.",
           "getline receives the remaining line, including its leading space.",
           "For 8 immediately followed by newline the remainder is empty."
@@ -1260,7 +1263,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Begin the independent box calculation with input 4 6: expect items=24. Then separately test 4 6 extra, 4 6.5 and empty input: each must produce only invalid. Explain why parsing two numbers without inspecting the tail is insufficient.",
-        "feedback": "Run each displayed input separately against the same source version.",
+        "feedback": "Two extractions on 4 6.5 read 4 and 6 successfully. The remaining .5 violates the contract. Check the tail after reading and before printing items. This explanation is not graded automatically.",
         "recall": "concept-5"
       }
     ],
@@ -1402,6 +1405,10 @@
         }
       },
       "exercises": [
+        {
+          "task": "Compare “3 7” with a trailing space and “3 7x”. Identify which case tests the extra data after a successfully read integer.",
+          "criteria": "The first gives items=21, the second invalid. The second still reads 7 but leaves a forbidden x."
+        },
         {
           "task": "Read two ints and handle incomplete and nonnumeric input.",
           "criteria": "Use values only after successful extraction."

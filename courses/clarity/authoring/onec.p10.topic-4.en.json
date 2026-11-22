@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "Establish that the answer is unchanged, then measure time. Call count and elapsed time are different measures.",
         "A batched query looks cheaper, but first establish that it returns the same requests. Then distinguish explicit call count from measured time. Zero milliseconds on a tiny set does not mean free execution.",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -142,6 +143,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "The example checks equal keys and values and counts two calls versus one.",
+        "Ten rows record timing observations. A single call does not establish a gain on other data."
       ]
     },
     {
@@ -342,8 +347,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Why does comparing 2 and 1 calls not demonstrate a speedup? Which five observations do you need per method on unchanged data?",
+      "feedback": "Keep the same 20/60 references when alternating methods and verify 80 both ways. Record each timing series separately. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -432,7 +437,13 @@
       "checks": "Labelled summary: Да,10,2,1,80; raw data contains 10 rows, five per path.\nBoth paths use identical data and references; do not invent timings.\nSeparate call count, observed local time, timer precision and unmeasured field latency.",
       "errors": "One run shows 0ms and is called server p95. There is no field workload, sufficient sample or precision for that conclusion. Raw 0/1ms values are facts about this small local experiment, not a speed guarantee.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "For five measurement pairs, mark which version ran first each time.",
+        "criteria": "The report retains the order and each median. Report a small or unstable difference as such."
+      }
+    ]
   },
   "reading": [
     {

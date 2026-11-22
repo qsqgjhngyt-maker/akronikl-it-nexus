@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "A file as a resource",
       "paragraphs": [
+        "Distinguish the result of a calculation, the bytes written to a file and the file's availability after exit. Observe each separately.",
         "Within one run the program writes 73 to sample.txt, closes the stream and opens a reader. Predict stdout first, then check the file’s contents itself.",
         "ifstream from <fstream> reads a file; ofstream writes one. Construction associates the stream with a path, and destruction closes the resource. Check opening through bool(stream). RAII cleanup is useful, but successful opening does not guarantee every later operation succeeds.",
         "A regular ofstream may truncate an existing file. Do not open an input file for writing before validating its data. The lab writes a separate report.txt and preserves records.txt."
@@ -88,7 +89,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "The demonstration writes 73 and reads it back in the same run.",
+        "That shows the bytes can be read during this run. Reopening tests persistent project saving separately."
+      ]
     },
     {
       "id": "concept-2",
@@ -261,7 +266,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why does exported alone fail to prove report.txt is saved in the project? How can you check bytes and availability in a fresh run separately?",
-      "feedback": "For the empty-file test, keep records.txt in the bundle with zero bytes. For missing, remove it only from a separate test copy.",
+      "feedback": "exported shows that this run reached its success message. Inspect report.txt and reopen the saved file in a fresh run. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -389,6 +394,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "In a copy, supply records.txt with lines 4 and -4. Check its output bytes, then repeat with an empty line between the numbers.",
+        "criteria": "The valid file produces “2 0” and a newline in report.txt. An empty line produces invalid rather than a new successful report."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Creating a runtime file and saving it into a personal project are separate actions."

@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Declaration and definition",
       "paragraphs": [
+        "A build checks how a function is called and finds its implementation. The header addresses the first task and the translation unit with the definition addresses the second.",
         "The declaration int twice(int) lets main’s call be compiled. Producing 12 still requires a definition that multiplies 6 by 2.",
         "int twice(int); declares the name, parameter, and result without a body. int twice(int x){return 2*x;} defines the function. A caller needs a compatible declaration, and the final program needs the corresponding definition.",
         "domain.hpp holds the shared interface, domain.cpp includes it and supplies the body, and main.cpp includes it and calls the function. The compiler can then check implementation against interface rather than trusting manually repeated signatures."
@@ -157,7 +158,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "main.cpp learns the signature from domain.hpp. The calculation in domain.cpp is compiled separately.",
+        "Input 3 4 gives 12 in the working application where both units are built and linked."
+      ]
     },
     {
       "id": "concept-5",
@@ -308,7 +313,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Why does an app built from main.cpp alone know checkedArea’s signature but fail to link an executable? Which file must be compiled too?",
-      "feedback": "Including the header gives a declaration. Linking needs src/domain.cpp in the translation-unit list.",
+      "feedback": "The declaration is enough to check the call. Without src/domain.cpp, linking cannot find checkedArea. Include its definition exactly once. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -422,6 +427,10 @@
       }
     },
     "exercises": [
+      {
+        "task": "Build a separate driver with one main. Check (0,500) and (1001,1).",
+        "criteria": "The first yields area 0. The second is out of range. The application and driver use the same implementation."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "A header communicates the interface; selected TUs determine what is actually built."

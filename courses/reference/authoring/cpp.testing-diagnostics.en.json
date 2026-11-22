@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "An expectation before execution",
       "paragraphs": [
+        "A useful test distinguishes correct behaviour from a plausible defect. Choose an input on which the disputed operator makes a difference.",
         "If countPositive counts strictly positive values, −2, 0 and 4 give an expected 1 before execution. Record that expectation alongside the observation.",
         "A test has initial data, an action, and an independently derived expectation. Copying the current output as the expectation merely preserves a possible defect. For a small sum, derive and explain the result manually.",
         "First list input classes: empty range, one element, several elements, boundaries, and rejection. checkedArea needs valid-dimension tests and output-preservation tests on failure. These are different properties requiring distinct checks."
@@ -139,7 +140,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "At zero, value > 0 gives 0, whereas value >= 0 gives 1.",
+        "The boundary exposes the difference. A positive value alone would not distinguish them."
+      ]
     },
     {
       "id": "concept-6",
@@ -255,7 +260,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "Choose one of your five cases that catches changing > to >=. State the expected value, observation and exit code.",
-      "feedback": "Have the expectation ready before calling the function. One zero is the smallest test that catches this mutation.",
+      "feedback": "For a dataset with zeroes, write the expected positive count in advance. The mutant raises that count, so the driver must report FAIL and return a nonzero exit code. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -322,6 +327,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Compare {0,0,-1,2} with the correct and mutated functions in an extra check.",
+        "criteria": "The > 0 rule gives 1 and >= 0 gives 3. A test on 2 alone misses the defect."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "A useful test distinguishes the correct implementation from a plausible wrong one."

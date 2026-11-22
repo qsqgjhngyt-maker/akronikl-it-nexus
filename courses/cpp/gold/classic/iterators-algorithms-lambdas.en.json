@@ -448,6 +448,7 @@
         "id": "concept-1",
         "title": "A container and a traversal position",
         "paragraphs": [
+          "An iterator denotes a position in a specific range. Do not keep it across an operation that can relocate the elements.",
           "The container holds the values and the iterator identifies a position. Keep those roles separate before finding the first match.",
           "A container owns and organizes elements; an iterator identifies a position in a sequence. A vector iterator resembles a pointer, but reason through its permitted operations: dereference, advance and comparison. *it is the element, while it is the access mechanism. Copying an iterator does not copy the container.",
           "begin() identifies the first element when one exists; end() is the past-the-end position. An empty container has begin()==end(), a valid empty range. end is not the last element and must not be dereferenced. An algorithm stops before reading it, and a search result must be checked before accessing its element."
@@ -502,6 +503,8 @@
           "output": "2\n"
         },
         "steps": [
+          "find locates 2 while the original iterators are still valid.",
+          "Save the offset before a possible reallocation, then use the new begin to locate it again.",
           "Find 2 and establish from the input that the result is not end.",
           "Subtracting iterators produces integer position 1 before the container changes.",
           "reserve(capacity()+20) requests greater capacity; old iterators cannot be used after reallocation.",
@@ -698,7 +701,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "With threshold −2 and values −3, −2, −1, list the results after filtering, sorting and doubling.",
-        "feedback": "Keep −2, −1, then order them as −1, −2, then double to −2, −4. The sum is −6.",
+        "feedback": "Threshold −2 keeps −2 and −1. Descending order is −1,−2, then doubling gives −2,−4. The sum is −6. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -824,6 +827,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Use n=4, threshold=2, and values 3,1,2,3.",
+          "criteria": "The lines are 3 16 and 6 6 4. The threshold is inclusive and duplicates remain."
+        },
         {
           "task": "List positions in [begin,end) for an empty vector.",
           "criteria": "No end dereference."

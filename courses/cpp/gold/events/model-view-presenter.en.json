@@ -441,6 +441,7 @@
         "id": "concept-1",
         "title": "Responsibility boundaries",
         "paragraphs": [
+          "The view receives the state after the model decides. Record all calls in a test so the final frame cannot hide missed updates.",
           "A stock model can check quantity without a screen. A view displays a number; a Presenter connects an incoming command to the model and a view update. Later, real Qt widgets can replace the fake.",
           "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make.",
           "The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept."
@@ -529,6 +530,8 @@
           "output": "shown 8\n"
         },
         "steps": [
+          "The fake receives 8 through show.",
+          "A fake tests the value transfer without a window, but cannot test layout or font size.",
           "fake.last starts at minus one.",
           "present calls show(8).",
           "The last displayed value is checked without a GUI."
@@ -680,7 +683,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "For 5,−3,20, list every show call, including Presenter construction. Why is last insufficient?",
-        "feedback": "show receives 2,7,4,4; the final command is rejected. last stores only 4 and cannot detect missing intermediate updates.",
+        "feedback": "For 5,−3,20 the trace is 2,7,4,4. The last 4 should be shown again after rejection. last only holds the final number. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -781,6 +784,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "For -3,+1,0 record every show including the initial one.",
+          "criteria": "2,2,3,3. The first command is rejected and the zero command is accepted. A repeated value does not imply identical command outcomes."
+        },
         {
           "task": "Name each class’s responsibility.",
           "criteria": "Assign the invariant to Stock, display to View and command/update coordination to Presenter; give one responsibility and one forbidden dependency for each."

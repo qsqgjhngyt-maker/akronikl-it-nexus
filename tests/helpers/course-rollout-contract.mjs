@@ -33,7 +33,8 @@ export function assertRolloutEdition(id,locale){
  assert.deepEqual(bytes,source,'Единственный редактируемый источник: '+id);
  for(const key of ['id','courseId','moduleId','locale'])assert.equal(l[key],old[key],id+' '+key);
  assert.deepEqual(l.selfcheck.map(q=>[q.id,q.kind,q.options?.length]),old.selfcheck.map(q=>[q.id,q.kind,q.options?.length]),id+' сохранены ID и формы вопросов');
- assert.deepEqual(l.selfcheck.map(q=>[q.id,q.kind,q.prompt,q.options,q.correct]),old.selfcheck.map(q=>[q.id,q.kind,q.prompt,q.options,q.correct]),id+' прежние вопросы и ответы');
+ const gradedQuestions=lesson=>lesson.selfcheck.filter(q=>q.kind!=='free').map(q=>[q.id,q.kind,q.prompt,q.options,q.correct]);
+ assert.deepEqual(gradedQuestions(l),gradedQuestions(old),id+' прежние оцениваемые вопросы и ответы');
  const assessmentRevision=CLARITY_COURSES[id].contentRevision||(CLARITY_COURSES[id].pilot?'r3-stage-a-8bccaf5':'clarity-courses-v1');
  assert.equal(l.contentRevision,row.revision);assert.equal(l.contentRevision,assessmentRevision);assert.equal(l.editorialRevision,rollout.revision);
  assert.equal(l.contentRevision,row.priorRevision,id+' проверка прежнего задания не обнуляется');

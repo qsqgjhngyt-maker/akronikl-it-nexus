@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Lifetime and scope",
       "paragraphs": [
+        "Distinguish the right to destroy an object from the ability to observe it. Moving a unique_ptr changes ownership while keeping the object in place.",
         "A local variable is named inside its scope, while its resource exists until the object is destroyed. A log lets you observe destruction without reading a destroyed object.",
         "Scope determines where a name is usable; lifetime determines when its object exists. A local object is normally destroyed on leaving its block, including via return. Copying its address outside does not keep the object alive.",
         "An observer such as int*, a reference, span, or string_view neither releases an object nor extends its owner’s lifetime. Before use, establish that the object is alive and no owner operation has invalidated the address."
@@ -162,7 +163,11 @@
           "Trace state after each significant operation and identify the established preconditions.",
           "Run the source, compare stdout and exit code, then check the additional cases."
         ]
-      }
+      },
+      "steps": [
+        "After moving, the old owner is empty and the new one holds the original address of the live object.",
+        "The log has one create and one destroy. An observer does not extend lifetime after release."
+      ]
     },
     {
       "id": "concept-6",
@@ -278,7 +283,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "For N = 4 explain why the final line is destroy 5. What does the log prove, and why may observer not be used after reset?",
-      "feedback": "Compare observer with the new owner’s address before reset. After reset, check only the log.",
+      "feedback": "At N=4 the same object is incremented to 5, so destruction prints destroy 5. Do not dereference the old address after reset. This explanation is not graded automatically.",
       "recall": "concept-5"
     }
   ],
@@ -365,6 +370,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Test N=999 and mark creation, modification and destruction in the log.",
+        "criteria": "One lifetime: create 999, moved 1 1, value 1000, destroy 1000. Moving does not create a second object."
+      },
       {
         "task": "Manually trace the first example and explain every expected output line.",
         "criteria": "Transferring ownership does not extend lifetime beyond the final owner."

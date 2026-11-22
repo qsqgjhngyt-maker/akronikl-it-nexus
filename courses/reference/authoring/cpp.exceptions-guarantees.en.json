@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Two ways to report an error",
       "paragraphs": [
+        "Decide separately which resources are cleaned up on exception and what state the object retains. Automatic cleanup alone does not roll back data.",
         "Store prepares a replacement sequence and may fail before commitment. Observe the retained sequence and remaining resource count.",
         "A bool or explicit result type works for an expected rejection that a caller should examine immediately. An exception transfers control to a matching handler along the call stack. Choose according to the contract and the layer able to handle the problem. This is not a division into good and bad errors, or a reason to throw at every if statement.",
         "std::runtime_error and std::invalid_argument are standard exception types declared by stdexcept. A throw starts an exceptional path and ordinary execution after that point stops. A try block surrounds the operation and catch receives a matching error object. This lesson injects controlled failures instead of relying on accidental memory exhaustion, making results reproducible."
@@ -102,7 +103,11 @@
           "An actual throw transfers control and destroys Guard.",
           "The handler observes active zero: caught 0."
         ]
-      }
+      },
+      "steps": [
+        "When the exception is thrown, Guard is destroyed during unwinding.",
+        "The handler prints caught 0. The count shows cleanup, not preservation of model data."
+      ]
     },
     {
       "id": "concept-4",
@@ -292,7 +297,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "What breaks if the controlled throw moves after swap?",
-      "feedback": "Store already holds {1,2,9}, so its sum after rejection is 12 instead of 3. The original state is lost.",
+      "feedback": "Throwing after swap leaves sum 12 instead of 3. To preserve old data, complete validation and possible failures before the replacement. This explanation is not graded automatically.",
       "recall": "independent-work"
     }
   ],
@@ -393,6 +398,10 @@
       "metadata": {}
     },
     "exercises": [
+      {
+        "task": "Run mode=0 and mode=1 in independent attempts.",
+        "criteria": "The sums are 12 on success and 3 on rejection, with active=0 in both. Equal resource counts do not make the model states equal."
+      },
       {
         "task": "Trace Guard before entering catch.",
         "criteria": "active is already zero in the handler."

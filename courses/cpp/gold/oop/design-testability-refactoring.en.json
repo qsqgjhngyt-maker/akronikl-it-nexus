@@ -868,6 +868,7 @@
         "id": "concept-1",
         "title": "Maintainability as a checkable property",
         "paragraphs": [
+          "Choose observations before refactoring. Moving code between files should preserve those results.",
           "A task list has an input format, validity rules and a minute total. If input changes, valid and total should still work on in-memory values.",
           "Maintainability becomes visible when a requirement changes: can a rule be changed locally while the rest remains understandable? Do not judge it solely by class count. The project has Task values, a Board owner, Policy strategies, input parsing and report output. Each represents a decision that may change independently.",
           "Begin with concrete scenarios: a normal score equals minutes and an urgent score doubles them. Add import rejection, unique IDs and export. These requirements define test boundaries. An abstraction without a change example remains a hypothesis, so review includes a small new requirement and an assessment of the affected files."
@@ -895,6 +896,8 @@
           "output": "900 1000\n"
         },
         "steps": [
+          "One price function receives the rate as an argument. For 1000 cents, a 10% discount gives 900 and 0% gives 1000.",
+          "You can check the calculation without reading input or printing. The policy is separate from the interface.",
           "Discount is supplied explicitly without global state.",
           "Ten percent off one thousand cents yields nine hundred.",
           "Zero discount yields one thousand; compare the calls."
@@ -1109,7 +1112,7 @@
         "id": "explain",
         "kind": "free",
         "prompt": "Why is a successful build insufficient after extracting valid and total into cpp/header?",
-        "feedback": "Repeat valid and invalid inputs, comparing stdout and exit. Linkage alone does not confirm the previous calculations.",
+        "feedback": "Building confirms that definitions are available. After moving them, repeat valid and invalid cases and compare stdout and exit status. This explanation is not graded automatically.",
         "recall": "independent-work"
       }
     ],
@@ -1658,6 +1661,10 @@
         "metadata": {}
       },
       "exercises": [
+        {
+          "task": "Compare 2 7 10 8 3 with the same input replacing 8 by 7.",
+          "criteria": "The first prints tasks 2 minutes 13. The second gives invalid because of the duplicate ID. Preserve both results during refactoring."
+        },
         {
           "task": "Name main, Board and Policy responsibilities.",
           "criteria": "Separate parsing, invariant and scoring rule."

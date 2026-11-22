@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "The quantities behind a calculation",
       "paragraphs": [
+        "Check expression order against the meaning of the task as well as precedence rules. Add a per-order shipping fee once, after finding the price of all items.",
         "In count * unitPriceCents the names are operands and * multiplies them. When both are int and the result is representable, the expression also has type int. An expression need not mutate its operands: reading two values and producing a result differs from assignment.",
         "int total = count * unitPriceCents; initializes total from the expression. std::cout << total; observes the value. This separates domain calculation, storage, and formatting. Annotate units: items × cents per item = cents."
       ]
@@ -100,6 +101,8 @@
         "output": "total_cents=550\n"
       },
       "steps": [
+        "Four items at 125 cents give goodsCents = 500. One shipping fee of 50 makes totalCents 550.",
+        "Including 50 in each unit price gives 700. This changes the billing model, not merely the grouping.",
         "125 × 4 = 500 cents for goods.",
         "500 + 50 = 550 cents total.",
         "Names and labels use one unit."
@@ -234,7 +237,7 @@
       "id": "explain",
       "kind": "free",
       "prompt": "For a 120-cent item, quantity 3 and a single 40-cent delivery charge, explain goodsCents and totalCents separately. Why does (unitPriceCents + shippingCents) * count model a different charge? Check one item and zero delivery charge.",
-      "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+      "feedback": "With 120 × 3, goods cost 360 and one fee of 40 makes 400. A single item hides the faulty formula. With zero items it drops the fixed charge if the contract still requires one. This explanation is not graded automatically.",
       "recall": "concept-4"
     }
   ],
@@ -305,6 +308,10 @@
       }
     },
     "exercises": [
+      {
+        "task": "In your copy, use 2 items at 80 cents and one fee of 30. Write the intermediate goods cost and verify the total.",
+        "criteria": "goodsCents = 160, total_cents=190. Charging shipping per item would incorrectly give 220."
+      },
       {
         "task": "Calculate 3 + 2 * 5 and (3 + 2) * 5 before running.",
         "criteria": "Obtain 13 and 25 with explained grouping."

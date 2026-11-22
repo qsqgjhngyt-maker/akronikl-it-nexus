@@ -21,6 +21,7 @@
       "id": "orientation",
       "title": "The question we are checking",
       "paragraphs": [
+        "A temporary table belongs to its manager. Its name is only part of how the next query finds it.",
         "One query created a table, but another cannot find it. The name alone is insufficient: which manager owns the prepared set, and when is it closed?",
         "Use a new training copy and invented records only. Predict first, then compare the observation; preserve existing functions, files, and records."
       ]
@@ -96,6 +97,10 @@
             ]
           ]
         }
+      ],
+      "steps": [
+        "The original manager provides two rows totalling 75.",
+        "A new manager does not inherit the table and a closed context no longer works."
       ]
     },
     {
@@ -296,8 +301,8 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Explain your own changed case: what stayed the same, what changed, and which fresh read demonstrates it?",
-      "feedback": "The answer is not graded automatically. Compare the reasoning with concrete observations from your work.",
+      "prompt": "Why can't the second manager read МойОтбор from the first? Which check shows the first remains usable?",
+      "feedback": "Selecting >=30 from 20 and 40 keeps 40. After the other manager fails, reread in the original one. This explanation is not graded automatically.",
       "recall": "trace"
     }
   ],
@@ -386,7 +391,13 @@
       "checks": "Labelled results:1, 40, Да, Да, Да.\nAnother manager’s refusal does not close the original; the original is closed explicitly.\nExplain how a temporary table differs from a permanent object and a register’s virtual table.",
       "errors": "Copying the aggregate query text without sharing its manager leaves the table absent in that context. Creating a permanent catalog with a similar name does not repair the contract.\nKeep the faulty copy separate. To establish a fix, compare the relevant observation with your prior expectation; do not change an expectation merely to obtain a match.",
       "recovery": "Stop at an unexpected message, save your note and check the training infobase name and selected record. Return to the last confirmed step. Do not replace the original infobase or disable validation to obtain a success mark."
-    }
+    },
+    "exercises": [
+      {
+        "task": "In a new manager, make a separate МойОтбор with threshold 20. Keep the first context open for comparison.",
+        "criteria": "The second has two rows totalling 60. The first still has one row and 40. Identical names do not merge tables."
+      }
+    ]
   },
   "reading": [
     {
