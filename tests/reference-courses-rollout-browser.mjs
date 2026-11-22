@@ -6,6 +6,7 @@ const{staticMime}=await import(pathToFileURL(path.join(repo,'pwa/static-mime.js'
 const{CLARITY_COURSES:registry}=await import(pathToFileURL(path.join(repo,'core/clarity-course-registry.mjs')));
 const scope=JSON.parse(await fs.readFile(path.join(frontend,'CLARITY_BUILD_SCOPE.json')));
 const build=JSON.parse(await fs.readFile(path.join(frontend,'BUILD_MANIFEST.json'))),prefix='/releases/'+build.assetGeneration;
+assert.ok(!build.files.some(f=>f.file.includes('/courses/reference/authoring/')),'Редакторские копии не увеличивают обязательный offline-пакет');
 const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost');if(url.pathname==='/qa'){res.setHeader('Content-Type','text/html');return res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="${prefix}/styles/app.css"><main id="app"></main>`);}const relative=decodeURIComponent(url.pathname);if(relative.includes('..')||relative.includes('\\'))throw Error('PATH');const file=path.resolve(frontend,'.'+relative);if(!file.startsWith(frontend+path.sep))throw Error('PATH');res.setHeader('Content-Type',staticMime(relative));res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH}),context=await browser.newContext({serviceWorkers:'block'});
