@@ -2,6 +2,10 @@
 
 # Documentation Index
 
+[Current MASTER HANDOFF, approved on 23 November 2026](../docs/ru/00-project/AKRONIKL_IT_NEXUS_MASTER_HANDOFF_2026-11-23_RU.md) is available in Russian. The `CANONICAL PROMOTION PENDING` note in the file records the state before approval.
+
+## Documentation by topic
+
 - `docs/en/00-product/BRAND_IDENTITY.md`
 - `docs/en/00-product/BRAND_PHILOSOPHY.md`
 - `docs/en/00-product/COMPETITIVE_CONCEPT.md`

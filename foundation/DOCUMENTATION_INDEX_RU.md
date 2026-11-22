@@ -2,6 +2,14 @@
 
 # Индекс документации
 
+## Актуальный MASTER HANDOFF
+
+[Сводный MASTER HANDOFF от 23.11.2026](../docs/ru/00-project/AKRONIKL_IT_NEXUS_MASTER_HANDOFF_2026-11-23_RU.md) утверждён решением 00 от 23.11.2026. Пометка `CANONICAL PROMOTION PENDING` внутри файла отражает состояние пакета до утверждения. SHA256 утверждённого файла — `fad1e416c96f2de0d74e04415c946103032ed5723f89215d27adfbb7c7891979`.
+
+Релиз C11 имеет статус **IMPLEMENTED / AUTOMATED PASS / PUBLISHED FOR USER REVIEW**. Независимая педагогическая приёмка, новые упражнения в учебном клиенте 1С и дополнительные проверки на реальных устройствах остаются открытыми. [Релиз C11 и отчёт](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/releases/tag/nexus-pedagogy-v2026.11.22)
+
+## Тематические документы
+
 - `docs/ru/00-product/BRAND_IDENTITY.md`
 - `docs/ru/00-product/BRAND_PHILOSOPHY.md`
 - `docs/ru/00-product/COMPETITIVE_CONCEPT.md`
