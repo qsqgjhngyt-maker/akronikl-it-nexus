@@ -93,7 +93,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  const status=(kind,error)=>{
   if(!live())return;const node=root.querySelector('[data-r3-save]');if(!node)return;
   node.dataset.state=kind;
-  const messages={restored:say('Восстановлена сохранённая работа.','Saved work restored.'),saved:say('Сохранено на этом устройстве.','Saved on this device.'),dirty:say('Есть несохранённые изменения.','Unsaved changes.'),saving:say('Сохраняем…','Saving…'),partial:say('Файлы сохранены, ответы или место занятия — ещё нет. Повторите сохранение.','Files saved; answers or lesson position are still unsaved. Retry saving.'),error:say('Не удалось сохранить. Работа остаётся в этом окне. Повторите сохранение или скачайте её.','Could not save. Your work remains in this window. Retry or download it.'),branched:say('Создана отдельная локальная копия: другая вкладка изменила прежнюю.','A separate local copy was created because another tab changed the previous copy.')};
+  const messages={restored:say('Работа восстановлена с этого устройства.','Work restored from this device.'),saved:say('Сохранено на этом устройстве.','Saved on this device.'),dirty:say('Есть несохранённые изменения.','Unsaved changes.'),saving:say('Сохраняем…','Saving…'),partial:say('Файлы сохранены на этом устройстве. Повторите сохранение ответов или места занятия.','Files saved on this device. Retry saving your answers or lesson position.'),error:say('Не удалось сохранить. Работа остаётся в этом окне. Повторите сохранение или скачайте её.','Could not save. Your work remains in this window. Retry or download it.'),branched:say('Создана отдельная локальная копия: другая вкладка изменила прежнюю.','A separate local copy was created because another tab changed the previous copy.')};
   node.textContent=messages[kind]||messages.error;if(kind==='branched')node.textContent+=' '+say('Копия ','Copy ')+error.id.slice(0,8)+say(', версия ', ', revision ')+error.revision+'.';
   if(kind==='error'&&/CONFLICT/.test(error?.code||error?.message||''))node.textContent=say('Другая вкладка изменила сохранённую работу. Ваша версия остаётся здесь; скачайте её перед повторным открытием.','Another tab changed the saved work. Your version remains here; download it before reopening.');
   for(const b of root.querySelectorAll('[data-r3-retry],[data-r3-export]'))b.hidden=!['error','partial'].includes(kind);
@@ -104,7 +104,23 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  let d=draft();const requested=position(new URLSearchParams(location.hash.slice(1)),d.stage);route.stage=requested.stage;
  const idx=course.topics.findIndex(t=>t.id===topicId);
  const neighbor=(t,label)=>t?`<a href="${url(t.id,'explanation')}">${label}</a>`:'';
- function selfcheck(){return `<h1>${w.selfcheck}</h1><p>${esc(lesson.goal)}</p>${lesson.selfcheck.map(q=>{const a=d.answers[q.id];return `<form class="question" data-question="${q.id}"><fieldset><legend>${esc(q.prompt)}</legend>${questionCode(q.code)}${q.kind==='free'?`<textarea data-answer="${q.id}" aria-label="${esc(q.prompt)}" ${adapter?'':'disabled'}>${esc(a?.value||'')}</textarea>`:q.options.map((v,i)=>`<label class="option"><input type="radio" name="${q.id}" value="${i}" data-answer="${q.id}" ${a?.value===i?'checked':''} ${adapter?'':'disabled'}><span>${esc(v)}</span></label>`).join('')}<button class="btn" ${adapter?'':'disabled'}>${q.kind==='free'?w.free:w.check}</button></fieldset><div data-feedback="${q.id}" role="status"></div>${q.recall?`<button type="button" class="btn" data-recall="${esc(q.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}</form>`;}).join('')}<div data-course-checkpoint></div><a class="btn" href="${url(topicId,'practice')}">${w.practice} →</a>`;}
+ function selfcheck(){
+  const referenceChoice=say('Открыть эталон','Open the reference solution');
+  const referenceGuess=say('Довериться готовому решению без собственной проверки','Rely on the reference solution without checking your work');
+  const questions=lesson.selfcheck.map(q=>{
+   const answer=d.answers[q.id],free=q.kind==='free';
+   const canOpenReference=!free&&q.options.includes(referenceChoice)&&lesson.practice.referenceSolution;
+   const inputs=free
+    ?`<textarea data-answer="${q.id}" aria-label="${esc(q.prompt)}" ${adapter?'':'disabled'}>${esc(answer?.value||'')}</textarea>`
+    :q.options.map((choice,index)=>`<label class="option"><input type="radio" name="${q.id}" value="${index}" data-answer="${q.id}" ${answer?.value===index?'checked':''} ${adapter?'':'disabled'}><span>${esc(canOpenReference&&choice===referenceChoice?referenceGuess:choice)}</span></label>`).join('');
+   return `<form class="question" data-question="${q.id}"><fieldset><legend>${esc(q.prompt)}</legend>${questionCode(q.code)}
+    ${inputs}<button class="btn" type="submit" ${adapter?'':'disabled'}>${free?w.free:w.check}</button></fieldset>
+    <div data-feedback="${q.id}" role="status"></div>
+    ${q.recall?`<button type="button" class="btn" data-recall="${esc(q.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}
+    ${canOpenReference?`<button type="button" class="btn quiet" data-action="selfcheck-reference" aria-haspopup="dialog">${say('Открыть эталон практики','Open the practice reference')}</button>`:''}</form>`;
+  }).join('');
+  return `<h1>${w.selfcheck}</h1><p>${esc(lesson.goal)}</p>${questions}<div data-course-checkpoint></div><a class="btn" href="${url(topicId,'practice')}">${w.practice} →</a>`;
+ }
  function practiceCases(p){
   if(reported&&!qt&&!(external&&lesson.authored))return p.cases.map(c=>`<h3>${esc(c.label)}</h3><pre>${esc(c.input)}</pre>${c.output!==undefined?`<pre data-expected-output>${esc(c.output)}</pre>`:''}${c.table?table(c.table):''}`).join('');
   if(!p.cases.length)return '';
@@ -447,6 +463,16 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   const link=event.target.closest('a[href^="#"]');if(link){const p=new URLSearchParams(link.hash.slice(1));if(p.get('lesson')===topicId&&p.get('locale')===locale&&stages.includes(p.get('stage'))){event.preventDefault();root.querySelector('dialog')?.close();history.pushState(null,'',link.hash);await showStage(p.get('stage'),p.get('at'));return;}}
   const button=event.target.closest('button');if(!button)return;
   try{
+   if(button.dataset.action==='selfcheck-reference'){
+    const title=say('Эталон практики','Practice reference'),node=dialog(title,referenceDisclosure());
+    node.setAttribute('aria-label',title);
+    node.onclose=()=>{
+     node.remove();
+     if(live()&&button.isConnected)button.focus({preventScroll:true});
+    };
+    node.querySelector('[data-lab-reference]').open=true;
+    return;
+   }
    if(button.dataset.action==='lab-window'&&(!reported||external&&lesson.practice.referenceSolution&&currentWork)){
     await ensureEditor();
     const {ensureGoldStyles,openGoldWorkspace}=await import('./academy-gold-presentation.js');

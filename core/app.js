@@ -79,7 +79,7 @@ async function tr(){t=translator(await loadBundle(prefs.uiLocale));document.docu
 function langSelect(id,label,val){const values=registry.supported.filter(x=>x.enabled).map(x=>[x.code,x.nativeName]);return glassSelect(id,label,val,values)}
 function fxSelect(){const values=[['auto','Auto'],['ultra','Ultra'],['high','High'],['balanced','Balanced'],['lite','Lite'],['off','Off']];return glassSelect('effectsQuality','FX',prefs.effectsQuality,values,'fx-field')}
 function shell(body,active='home'){const r=route();return visualShell(r.course==='cpp'||r.view==='programming'?`<div class="nexus-learning" data-nexus-learning>${body}</div>`:body,active)}
-function progress(){return cppProgramProgress(loadState(),cpp?.curriculum)}
+function progress(){return cppProgramProgress(loadState(),cpp?.curriculum??cppLanding?.curriculum)}
 function migration(){const m=inspectLegacyCppV7();if(!m.found)return'';if(m.alreadyImported)return`<div class="migration done"><div><strong>✓ Прогресс C++ v7 импортирован</strong><span>Исходный localStorage старого курса сохранён.</span></div></div>`;return`<div class="migration"><div><strong>Найден прогресс старого C++ v7: ${m.done}/40</strong><span>Импорт безопасно перенесёт его на стабильные ID Nexus.</span></div><button class="btn" id="importLegacy">Импортировать</button></div>`}
 
 function visualShell(body,active){return nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon})}
