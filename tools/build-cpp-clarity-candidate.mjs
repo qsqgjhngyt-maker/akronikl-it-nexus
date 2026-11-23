@@ -24,13 +24,11 @@ await writeFile(rootEntry,auditGuestPresentation(await readFile(rootEntry,'utf8'
 const r=spawnSync(process.execPath,['tools/build-ui1a-release.mjs','--source',stage,'--out',out,'--generation',generation,'--version',config.version],{encoding:'utf8',timeout:180000,maxBuffer:4e6});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status||1);
 const built=JSON.parse(await readFile(path.join(out,'BUILD_MANIFEST.json')));
 if(built.files.some(f=>f.file.split('/').includes('node_modules')))throw Error('CANDIDATE_DEVELOPMENT_DEPENDENCIES_EXPOSED');
-// The gateway presentation artifact is public HTML. It is supplied separately from
-// its existing login endpoints and is intentionally excluded from the offline cache.
+// The gateway owns /account/entry/. Record this preview only in CLARITY_BUILD_SCOPE,
+// leaving BUILD_MANIFEST and the public offline cache under the static producer's policy.
 const guestPath='account/entry/index.html';
 const guest=Buffer.from(withEarlyIntro(auditGuestPresentation(await readFile('server-access/public/entry.html','utf8'),entryOptions),generation));
 await mkdir(path.join(out,'account/entry'),{recursive:true});
 await writeFile(path.join(out,guestPath),guest);
 const guestEntry={file:guestPath,bytes:guest.length,sha256:createHash('sha256').update(guest).digest('hex'),source:'server-access/public/entry.html: candidate guest presentation'};
-built.files.push(guestEntry);
-await writeFile(path.join(out,'BUILD_MANIFEST.json'),JSON.stringify(built,null,2)+'\n');
 await writeFile(path.join(out,'CLARITY_BUILD_SCOPE.json'),JSON.stringify({sourceCommit,localCandidateOnly:true,production:false,retainedHistoricalGenerationsExcluded:true,sourceReleaseMetadataChanged:false,buildOnlySourcesExcluded:['courses/reference/authoring'],guestEntry},null,2)+'\n');
