@@ -1,0 +1,481 @@
+{
+  "schemaVersion": 1,
+  "block": "ENTERPRISE-A2",
+  "id": "1c-enterprise.a2.topic-3",
+  "locale": "en",
+  "revision": "enterprise-a2-topic-3-author-v1",
+  "source": {
+    "path": "courses/1c-enterprise/lessons/en/a2-documents.json",
+    "sha256": "aeb4fd6c88cbf00fe87d2bfe6c58ce81f6056026877d05ddba927c94114753b5"
+  },
+  "title": "Your first request: fill, save and verify its state",
+  "goal": "Create a training request linked to your customer and service, then prove persistence by reopening it.",
+  "prerequisites": [
+    {
+      "text": "The prepared Training service desk and a saved customer from the preceding lesson.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "orientation",
+      "title": "From a familiar situation to a checkable question",
+      "paragraphs": [
+        "The customer exists, but the service request has not been registered. A catalog card says who; a request says what happened now. A 30-minute example shows why selecting a customer and typing a duration are insufficient: check the result after saving and reopening. Also distinguish “In progress” from posting."
+      ]
+    },
+    {
+      "id": "platform-contract",
+      "title": "Where to act",
+      "paragraphs": [
+        "Use installed 1C:Enterprise. Designer is needed only to prepare the new empty target; enter cards and requests in the application. Nexus provides explanation, example, reference and your note; it neither transfers records into 1C nor observes unsaved fields. These manual tasks need no BSL or Code Studio."
+      ]
+    },
+    {
+      "id": "concept-0",
+      "title": "A customer and a separate request",
+      "paragraphs": [
+        "A customer identifies a participant; a request records one service event. One customer can have many requests. Do not represent a new request by renaming the customer. The Заявка услуги document stores date, number, customer, service, duration, status and comment.",
+        "Customer and Service fields reference catalog records. Select the saved card rather than typing a similar arbitrary word. A document number helps find the event; a customer name helps people recognize the participant. Record the actual number, date and fields, then reopen the same document."
+      ]
+    },
+    {
+      "id": "main-function",
+      "title": "Reason before acting",
+      "paragraphs": [
+        "The new request references existing catalog cards.",
+        "Identify the infobase, list and particular record separately. A command, visible text and saved state are different things."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Customer: Учебный Север — ремонт\nService: Учебная диагностика\nMinutes: 30; Status: Новая"
+      }
+    },
+    {
+      "id": "example-1",
+      "title": "Example beside its observation",
+      "paragraphs": [
+        "The new request references existing catalog cards."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Customer: Учебный Север — ремонт\nService: Учебная диагностика\nMinutes: 30; Status: Новая",
+        "output": "The author reread 30 minutes and then In progress from the same document. Posted = False. A new record without Customer was refused; the two 30/45 requests remain."
+      },
+      "tables": [
+        {
+          "caption": "One event, one document",
+          "columns": [
+            "Step / condition",
+            "Observation",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Customer selected",
+              "Reference to the earlier card",
+              "No new customer is created."
+            ],
+            [
+              "New document saved",
+              "A separate event",
+              "Its number identifies this request."
+            ],
+            [
+              "Document reopened",
+              "30 and Новая read from storage",
+              "Persistence is checked."
+            ]
+          ]
+        },
+        {
+          "caption": "Changed status without posting",
+          "columns": [
+            "Step / condition",
+            "Observation",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Earlier row opened",
+              "Same number",
+              "Document identified."
+            ],
+            [
+              "Status ВРаботе",
+              "Field change",
+              "No register movement."
+            ],
+            [
+              "Reopened",
+              "Same number, new status",
+              "The particular edit is checked."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-1",
+      "title": "Prepare a service and fill the form",
+      "paragraphs": [
+        "A service describes what the desk does, such as Учебная диагностика (training diagnostics). Create and save one service card. Leave ТарифЗаЧас at zero for this first exercise: the task measures minutes, not real payments. Financial accounting is outside scope.",
+        "In the new document select your customer and service, enter 30 into ДлительностьМинут and choose Новая. The platform may assign number and date; read actual values rather than copying a test stand’s number. Comment Первое учебное обращение helps identify your record."
+      ]
+    },
+    {
+      "id": "predict",
+      "title": "Predict the result",
+      "paragraphs": [
+        "You change status to “In progress” and save. Must the document be posted?"
+      ],
+      "reveal": {
+        "title": "Check the reasoning",
+        "paragraphs": [
+          "No. This training configuration disables posting for a request. Status is a saved document field. Read it separately from the Posted flag after saving; this lesson promises no register movements."
+        ]
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Saving is not posting",
+      "paragraphs": [
+        "Unsaved edits exist only in the open form. Write or Write and close requests persistence and runs validity checks. Reopen the same document afterwards to test reading stored state rather than merely seeing typed text.",
+        "Posting is disabled in this beginner configuration because register movements are not modeled yet. Business status Новая or ВРаботе is a separate field. A status change proves neither posting, payment nor completion of all work. Do not enable posting merely to obtain a marker."
+      ]
+    },
+    {
+      "id": "trace",
+      "title": "Context and transitions",
+      "paragraphs": [
+        "Read the path and explain what changes at each step. The diagram does not operate the external application."
+      ],
+      "flow": {
+        "caption": "Explore the example: One event, one document",
+        "nodes": [
+          {
+            "title": "Customer selected",
+            "lines": [
+              "Reference to the earlier card → No new customer is created."
+            ]
+          },
+          {
+            "title": "New document saved",
+            "lines": [
+              "A separate event → Its number identifies this request."
+            ]
+          },
+          {
+            "title": "Document reopened",
+            "lines": [
+              "30 and Новая read from storage → Persistence is checked."
+            ]
+          }
+        ],
+        "alternative": [
+          "Customer selected: Reference to the earlier card → No new customer is created.",
+          "New document saved: A separate event → Its number identifies this request.",
+          "Document reopened: 30 and Новая read from storage → Persistence is checked."
+        ],
+        "textLabel": "Read the diagram as text"
+      }
+    },
+    {
+      "id": "counterexample",
+      "title": "Check the explanation’s boundary",
+      "paragraphs": [
+        "Use a separate new form for invalid input; do not clear the accepted request’s data.",
+        "It is a business-process field; posting is disabled here."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Rejected writes and safe correction",
+      "paragraphs": [
+        "The object rule rejects a missing customer, service or status and duration outside 0..1440. Read a rejection and correct the specific field. A message alone does not prove absence of an invalid document: check your list and record count afterwards.",
+        "Use a separate new form for the negative case: leave Customer empty and try writing. Then close that unsaved form without saving and verify that your valid first request remains alone. Do not erase accepted document data to test rejection. Zero minutes is valid in this model; missing customer and zero duration mean different things."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "A new independent task",
+      "paragraphs": [
+        "Create a new “Training setup” service with a zero training rate. Create a new request for “Training East — service”: 20 minutes, status New, your own comment. Record its actual number and reopen it. In another new form leave Customer empty and try saving; expect refusal, then close the unsaved form. Preserve the worked 30-minute request.",
+        "Record a prediction first. After your own attempt reveal the reference and compare the selected record as well as its number."
+      ]
+    },
+    {
+      "id": "native-place",
+      "title": "Actual training-service window",
+      "paragraphs": [
+        "The author checked actual CF loading into a new own infobase, saving and renaming customers, 30/45 requests, refusal without Customer and a separate new 20/55 experiment. All four records were compared after restarting; the worked pair is preserved. Three GUI captures show only their labelled states. Learner actions, installer, permissions, training build 1508 and complete manual entry of every form are not verified."
+      ],
+      "figures": [
+        {
+          "src": "media/tutorials/v2/a2-request-search-output.jpg",
+          "width": 1438,
+          "height": 753,
+          "sha256": "9561c9f91babc707cf5a27805b615f41bbfc43b1aa90cd60b71c1bcf582dfd8a",
+          "uiLocale": "ru",
+          "platformVersion": "8.3.27.2214",
+          "assetRoot": "clarity",
+          "alt": "Search for the actual first-request number in the own training service. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
+          "caption": "Search for the actual first-request number in the own training service. Author capture, platform 8.3.27.2214, RU interface; not a learner result.",
+          "callouts": []
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "What the result establishes",
+      "paragraphs": [
+        "The author checked actual CF loading into a new own infobase, saving and renaming customers, 30/45 requests, refusal without Customer and a separate new 20/55 experiment. All four records were compared after restarting; the worked pair is preserved. Three GUI captures show only their labelled states. Learner actions, installer, permissions, training build 1508 and complete manual entry of every form are not verified.",
+        "Technical checks do not assess understanding. Distinguish your observations from unperformed steps. Training names, numbers and comments are fictional; no work data is required."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "You change status to “In progress” and save. Must the document be posted?",
+      "options": [
+        "No: posting is disabled",
+        "Yes: every status posts",
+        "Yes: a Nexus mark posts"
+      ],
+      "correct": 0,
+      "feedback": "No. This training configuration disables posting for a request. Status is a saved document field. Read it separately from the Posted flag after saving; this lesson promises no register movements.",
+      "recall": "predict"
+    },
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does status ВРаботе mean here?",
+      "options": [
+        "Automatically posted",
+        "A separate process attribute changed",
+        "Service paid"
+      ],
+      "correct": 1,
+      "feedback": "Posting is disabled; status proves no payment or register movement.",
+      "recall": "concept-0"
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What should follow rejection of a new request without Customer?",
+      "options": [
+        "Inspect message color only",
+        "Check that the window closed only",
+        "Check rejection, no new record and the earlier request intact"
+      ],
+      "correct": 2,
+      "feedback": "Verify both behavior and stored state.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "How should another event for the same customer be entered?",
+      "options": [
+        "Create a separate document referencing the existing customer",
+        "Rename the customer",
+        "Overwrite the first request without preserving it"
+      ],
+      "correct": 0,
+      "feedback": "One customer can have separate numbered documents.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "transfer",
+      "kind": "choice",
+      "prompt": "After refusal of a form without Customer, your 20-minute request should…",
+      "options": [
+        "Remain separately saved",
+        "Turn into 30 minutes",
+        "Become posted"
+      ],
+      "correct": 0,
+      "feedback": "After reopening the new saved request I read my number, East, “Training setup”, 20 minutes, New and my comment. It is a separate request, not a change to the customer card or worked 30-minute request. The form without Customer must not add a document; check the absence of its number and preservation of existing records. Explain refusal through the required field, not a Nexus grade. Saving and status do not imply posting: it is disabled in this configuration.",
+      "recall": "independent-work"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How did you distinguish the selected record, unsaved input and saved result? Give your own observation and the check’s limit.",
+      "feedback": "This free response is not graded automatically. Compare it with actual fields in your own infobase.",
+      "recall": "trace"
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Your first request: fill, save and verify its state",
+    "task": "Create a new “Training setup” service with a zero training rate. Create a new request for “Training East — service”: 20 minutes, status New, your own comment. Record its actual number and reopen it. In another new form leave Customer empty and try saving; expect refusal, then close the unsaved form. Preserve the worked 30-minute request.",
+    "environment": "Your prepared infobase and training customer; no BSL or real payments.",
+    "externalRoute": "Enterprise mode → your training service desk",
+    "setupGuide": true,
+    "files": [],
+    "referenceSolution": {
+      "language": "text",
+      "source": "After reopening the new saved request I read my number, East, “Training setup”, 20 minutes, New and my comment. It is a separate request, not a change to the customer card or worked 30-minute request. The form without Customer must not add a document; check the absence of its number and preservation of existing records. Explain refusal through the required field, not a Nexus grade. Saving and status do not imply posting: it is disabled in this configuration.",
+      "files": {
+        "Observation.txt": "After reopening the new saved request I read my number, East, “Training setup”, 20 minutes, New and my comment. It is a separate request, not a change to the customer card or worked 30-minute request. The form without Customer must not add a document; check the absence of its number and preservation of existing records. Explain refusal through the required field, not a Nexus grade. Saving and status do not imply posting: it is disabled in this configuration."
+      },
+      "paragraphs": [
+        "This is a reasoning reference, not an automatic completion certificate. Opening it does not replace your note."
+      ]
+    },
+    "returnAnchor": "trace",
+    "cases": [
+      {
+        "label": "New independent work",
+        "input": "Create a new “Training setup” service with a zero training rate. Create a new request for “Training East — service”: 20 minutes, status New, your own comment. Record its actual number and reopen it. In another new form leave Customer empty and try saving; expect refusal, then close the unsaved form. Preserve the worked 30-minute request.",
+        "output": "After reopening the new saved request I read my number, East, “Training setup”, 20 minutes, New and my comment. It is a separate request, not a change to the customer card or worked 30-minute request. The form without Customer must not add a document; check the absence of its number and preservation of existing records. Explain refusal through the required field, not a Nexus grade. Saving and status do not imply posting: it is disabled in this configuration."
+      }
+    ],
+    "criteria": [
+      "Name the own infobase, exact records and observations after reopening.",
+      "The new task preserves the worked example; only intended fields change.",
+      "An expected refusal is not reported as a successful save; unperformed steps are explicit."
+    ],
+    "hint": "No. This training configuration disables posting for a request. Status is a saved document field. Read it separately from the Posted flag after saving; this lesson promises no register movements.",
+    "steps": [
+      {
+        "id": "own-1",
+        "title": "Own service",
+        "where": "Services in own practice",
+        "action": "Create and save “Training setup”, rate 0.",
+        "why": "Check a particular saved state.",
+        "expected": "Zero training rate is permitted."
+      },
+      {
+        "id": "own-2",
+        "title": "New request",
+        "where": "Requests → Create",
+        "action": "Select East and your service; enter 20 minutes, New and your own comment. Save and record the number.",
+        "why": "Check a particular saved state.",
+        "expected": "A separate request is created."
+      },
+      {
+        "id": "own-3",
+        "title": "Check by reading",
+        "where": "List → own number",
+        "action": "Close the card and reopen your row. Read all fields, especially 20 minutes and Customer.",
+        "why": "Check a particular saved state.",
+        "expected": "Values are read after saving."
+      },
+      {
+        "id": "own-4",
+        "title": "Expected refusal",
+        "where": "Another new form",
+        "action": "Leave Customer empty; set service, 20 minutes and New. Try saving. After refusal close the unsaved form and find your previous request.",
+        "why": "Check a particular saved state.",
+        "expected": "Invalid form added no request; the previous one remains."
+      }
+    ]
+  },
+  "reading": [
+    {
+      "id": "official-8327",
+      "title": "1C:Enterprise Developer Guide 8.3.27",
+      "author": "1C Company",
+      "edition": "8.3.27",
+      "section": "Catalogs, documents and forms",
+      "language": "English",
+      "purpose": "Optional clarification after your attempt; required steps are provided in the lesson.",
+      "url": "https://1c-dn.com/library/tutorials/1c_enterprise_developer_guide_8_3_27/"
+    }
+  ],
+  "coverage": {
+    "main": "example-1",
+    "state": "trace",
+    "prediction": "predict",
+    "counterexample": "counterexample",
+    "independent": "independent-work",
+    "native-location": "native-place",
+    "limits": "limits"
+  },
+  "sourceCoverage": [
+    {
+      "sourceTitle": "A customer and a separate request",
+      "anchor": "concept-0"
+    },
+    {
+      "sourceTitle": "Prepare a service and fill the form",
+      "anchor": "concept-1"
+    },
+    {
+      "sourceTitle": "Saving is not posting",
+      "anchor": "concept-2"
+    },
+    {
+      "sourceTitle": "Rejected writes and safe correction",
+      "anchor": "concept-3"
+    }
+  ],
+  "assessment": {
+    "contentRevision": "enterprise-a2-topic-3-author-v1",
+    "quiz": [
+      {
+        "question": "You change status to “In progress” and save. Must the document be posted?",
+        "options": [
+          "No: posting is disabled",
+          "Yes: every status posts",
+          "Yes: a Nexus mark posts"
+        ],
+        "correct": 0,
+        "explanation": "No. This training configuration disables posting for a request. Status is a saved document field. Read it separately from the Posted flag after saving; this lesson promises no register movements."
+      },
+      {
+        "question": "What does status ВРаботе mean here?",
+        "options": [
+          "Automatically posted",
+          "A separate process attribute changed",
+          "Service paid"
+        ],
+        "correct": 1,
+        "explanation": "Posting is disabled; status proves no payment or register movement."
+      },
+      {
+        "question": "What should follow rejection of a new request without Customer?",
+        "options": [
+          "Inspect message color only",
+          "Check that the window closed only",
+          "Check rejection, no new record and the earlier request intact"
+        ],
+        "correct": 2,
+        "explanation": "Verify both behavior and stored state."
+      },
+      {
+        "question": "How should another event for the same customer be entered?",
+        "options": [
+          "Create a separate document referencing the existing customer",
+          "Rename the customer",
+          "Overwrite the first request without preserving it"
+        ],
+        "correct": 0,
+        "explanation": "One customer can have separate numbered documents."
+      },
+      {
+        "question": "After refusal of a form without Customer, your 20-minute request should…",
+        "options": [
+          "Remain separately saved",
+          "Turn into 30 minutes",
+          "Become posted"
+        ],
+        "correct": 0,
+        "explanation": "After reopening the new saved request I read my number, East, “Training setup”, 20 minutes, New and my comment. It is a separate request, not a change to the customer card or worked 30-minute request. The form without Customer must not add a document; check the absence of its number and preservation of existing records. Explain refusal through the required field, not a Nexus grade. Saving and status do not imply posting: it is disabled in this configuration."
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "status": "NATIVE BASIC PASS / OWN TRAINING RECORDS",
+    "platformVersion": "8.3.27.2214",
+    "scope": "The author checked actual CF loading into a new own infobase, saving and renaming customers, 30/45 requests, refusal without Customer and a separate new 20/55 experiment. All four records were compared after restarting; the worked pair is preserved. Three GUI captures show only their labelled states. Learner actions, installer, permissions, training build 1508 and complete manual entry of every form are not verified.",
+    "cases": [
+      "request-search"
+    ],
+    "studentAuthorshipVerified": false
+  }
+}

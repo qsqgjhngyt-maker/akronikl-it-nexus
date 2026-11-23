@@ -1,5 +1,7 @@
 import{verifyBootstrap,SCOPE_FILE}from'./content-publication-route.mjs';
 import {execFileSync}from'node:child_process';import fs from'node:fs';import assert from'node:assert/strict';import{createHash}from'node:crypto';
+
+if(fs.existsSync('docs/ru/03-content/reference-courses-20261112/APPROVED_REFERENCE_BYTES.json')){await import('./check-reference-preservation.mjs');}else{
 const base=process.env.ONEC_BASE_SHA||'d8721e06a2b1ac953aa18694c07559c62d388700';
 const git=args=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const changed=[...new Set([...git(['diff','--name-only','-z',base]).split('\0'),...git(['ls-files','--others','--exclude-standard','-z']).split('\0')].filter(Boolean))];
@@ -22,3 +24,5 @@ const hashes=[];for(const file of protectedPaths){const bytes=fs.readFileSync(fi
  }else assert.ok(bytes.equals(old),'Защищённый contract изменён: '+file);hashes.push({file,sha256:createHash('sha256').update(bytes).digest('hex'),policy:additiveCatalogs.has(file)?'exact-additive-catalog':'byte-identical'});}
 const scope=JSON.parse(fs.readFileSync(SCOPE_FILE,'utf8'));const approved=verifyBootstrap(scope,p=>{assert.ok(fs.lstatSync(p).isFile(),'Not a regular file');return{bytes:fs.readFileSync(p),mode:'100644'}});for(const p of approvedShared)assert.ok(approved.includes(p),'Shared writer path not pinned: '+p);
 console.log(JSON.stringify({publicationRoutingOwnerApproved:true,releaseAdmissionByteIdentical:true,status:'AUTOMATED PASS',base,changedFiles:changed.length,sharedWriterChangesExactPinned:approvedShared,identityAndRuntimeProviderByteIdentical:true,protected:hashes},null,2));
+
+}

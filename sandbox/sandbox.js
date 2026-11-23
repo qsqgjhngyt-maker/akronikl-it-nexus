@@ -51,7 +51,7 @@ function routeReasonText(route,en=false){
   return en?`AUTO · ${label}`:`AUTO · ${label}`;
 }
 
-export function createSandboxController({editor,stdin,output,engine,status,routeInfo,requirements=[],locale='ru',languageId='cpp',codeStudio=null,onCodeChange=()=>{}}){
+export function createSandboxController({editor,stdin,output,engine,status,routeInfo,requirements=[],locale='ru',languageId='cpp',codeStudio=null,onCodeChange=()=>{},runObserver=null}){
   const en=locale==='en';
   const language=languageId||'cpp';
   let lastErrorLine=null;
@@ -131,12 +131,17 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     output.className='output';output.textContent=en?'Selecting runtime provider…':'Выбираем runtime provider…';
     const analysis=renderAnalysis();
     let route=null;let unsubscribeRuntime=null;const request=runtimeRequest();
+    const observerError=error=>{try{runObserver?.captureError?.(error);}catch{}};
+    let observed=null;try{observed=runObserver?.capture?.(request);}catch(error){observerError(error);}
+    const current=()=>{if(!runObserver)return true;try{return runObserver.isCurrent(observed,runtimeRequest());}catch(error){observerError(error);return false;}};
+    const observeResult=(result,error,provider)=>{try{Promise.resolve(runObserver?.complete?.(observed,{request,result,error,provider})).catch(observerError);}catch(e){observerError(e);}};
     const evidenceTicket=beginRuntimeEvidence(codeStudio,request);
     try{
-      route=await pickProvider(request);setRouteInfo(route);
-      if(typeof route.provider?.subscribe==='function')unsubscribeRuntime=route.provider.subscribe(snapshot=>{if(route?.provider?.id==='wasm-cpp')renderProviderProgress(snapshot)});
+      route=await pickProvider(request);if(!current())return null;setRouteInfo(route);
+      if(typeof route.provider?.subscribe==='function')unsubscribeRuntime=route.provider.subscribe(snapshot=>{if(current()&&route?.provider?.id==='wasm-cpp')renderProviderProgress(snapshot)});
       setRuntimeState('busy',en?'Runtime: running':'Runtime: выполняется');setEngine('busy',en?`${route.provider.label} · running`:`${route.provider.label} · выполняется`);
       const result=await route.provider.run(request);
+      observeResult(result,null,route.provider);if(!current()){unsubscribeRuntime?.();unsubscribeRuntime=null;return result;}
       finishRuntimeEvidence(evidenceTicket);
       unsubscribeRuntime?.();unsubscribeRuntime=null;
       setEngine('ok',en?`${route.provider.label} · ready`:`${route.provider.label} · готов`);
@@ -153,7 +158,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
       showRuntimeFileResults({output,result,request,studio:codeStudio,locale});
       return result;
     }catch(err){
-      unsubscribeRuntime?.();unsubscribeRuntime=null;
+      unsubscribeRuntime?.();unsubscribeRuntime=null;observeResult(null,err,route?.provider);if(!current())throw err;
       if(err?.anxRuntimeRoute?.candidates&&!route){
         finishRuntimeEvidence(evidenceTicket,{providerLimit:true});
         setRouteInfo(null);

@@ -7,7 +7,7 @@ import {need,yc,readAuthTestTarget} from './publication-auth-cloud.mjs';
 import {installCandidateRouting} from './publication-auth-routing.mjs';
 const providers={google:'accounts.google.com',yandex:'oauth.yandex.ru'};
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
-export async function collectPublicationLogins({plan,out,playwrightModule,chromeBin,methods=AUTH_METHODS}){
+export async function collectPublicationLogins({plan,out,playwrightModule,chromeBin,methods=AUTH_METHODS,verifySignedIn=async()=>{}}){
  const candidateId=validateAuthCandidate(plan.candidate);need(Array.isArray(methods)&&methods.length===3&&AUTH_METHODS.every(m=>methods.includes(m)),'ALL_THREE_METHODS_REQUIRED');
  need(authEvidenceHash(await readAuthTestTarget(plan))===authEvidenceHash(plan.candidate.testTarget),'CANDIDATE_READBACK_FAILED');
  await mkdir(out,{recursive:true});const save=(name,value)=>writeFile(join(out,name),JSON.stringify(value,null,2)+'\n',{flag:'wx'});
@@ -38,7 +38,9 @@ export async function collectPublicationLogins({plan,out,playwrightModule,chrome
      await delay(750);
     }
     need(signed,'OWNER_LOGIN_NOT_COMPLETED');
+    await verifySignedIn({page,method,phase:'returned'});
     await page.reload({waitUntil:'domcontentloaded',timeout:40000});const reloaded=await account();need(reloaded.status===200&&reloaded.id===signed.id,'RELOAD_SESSION_LOST');
+    await verifySignedIn({page,method,phase:'reloaded'});
     // Only the session created in this isolated context is revoked.
     const logout=await page.evaluate(async()=>{const r=await fetch('/api/v2/account/passkey/logout',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json','x-nexus-passkey-write':'1'},body:'{}'});return r.status;});
     need(logout===200,'QA_SESSION_LOGOUT_FAILED');const loggedOut=await account();need(loggedOut.status===401&&!routingFailed,'QA_SESSION_NOT_REVOKED');

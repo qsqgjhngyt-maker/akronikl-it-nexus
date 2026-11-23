@@ -1,0 +1,13 @@
+--- a/src/plugins/platforms/wasm/qwasmbackingstore.cpp
++++ b/src/plugins/platforms/wasm/qwasmbackingstore.cpp
+@@ -51,6 +51,10 @@ void QWasmBackingStore::updateTexture(QWasmWindow *window)
+     if (m_dirty.isNull())
+         return;
+ 
++    // A resize can empty the backing store while a repaint is pending.
++    if (m_image.size().isEmpty())
++        return;
++
+     if (m_webImageDataArray.isUndefined()) {
+         m_webImageDataArray = window->context2d().call<emscripten::val>(
+                 "createImageData", emscripten::val(m_image.width()),

@@ -12,6 +12,12 @@ const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 Object.assign(copy.ru,{network:'Не удалось связаться с сервером. Черновик сохранён; повторите отправку.',performed:'Кто выполнил',revised:'Текст изменён',triage:'Статус обращения изменён'});
 Object.assign(copy.en,{network:'Unable to reach the server. Your draft is retained; try submitting again.',performed:'Performed by',revised:'Text revised',triage:'Submission status changed'});
 const label=(locale,key)=>copy[locale==='en'?'en':'ru'][key]||key;
+const russianRatingPlural=new Intl.PluralRules('ru');
+const russianRatingForms={one:'оценка',few:'оценки'};
+const ratingWord=(locale,count)=>locale==='en'
+ ?(count===1?'rating':label(locale,'ratings'))
+ :(russianRatingForms[russianRatingPlural.select(count)]||label(locale,'ratings'));
+const minimumReviewsForShowcase=3;
 const head=(locale,title,intro)=>`<header class="feedback-head glass-panel"><span class="eyebrow">NEXUS · ${title==='moderation'?'ADMIN':'COMMUNITY'}</span><h1>${escape(label(locale,title))}</h1><p>${escape(label(locale,intro))}</p></header>`;
 export function feedbackPageMarkup(locale='ru'){return `<section class="feedback-page" data-feedback-page>${head(locale,'title','intro')}<div class="feedback-actions"><button class="btn primary" data-feedback-open="message">${label(locale,'message')}</button><button class="btn" data-feedback-open="review">${label(locale,'leave')}</button><a class="btn" href="#view=reviews">${label(locale,'reviews')}</a></div><section class="feedback-panel glass-panel"><h2>${label(locale,'my')}</h2><div data-feedback-mine role="status">${label(locale,'loading')}</div></section></section>`}
 export function reviewsPageMarkup(locale='ru'){return `<section class="feedback-page" data-reviews-page>${head(locale,'reviews','reviewIntro')}<div class="feedback-actions"><button class="btn primary" data-feedback-open="review">${label(locale,'leave')}</button><a class="btn" href="#view=feedback">${label(locale,'my')}</a></div><div data-feedback-public data-full-reviews></div></section>`}
@@ -36,12 +42,35 @@ export function bindFeedbackUi({locale='ru',catalog=[],route={},version='0.1.7-a
  const status=node=>{const box=document.createElement('p');box.className='feedback-state';box.setAttribute('role','status');box.textContent=node;return box};
  const retryBox=(container,error,run)=>{container.replaceChildren(status(errors(error)));const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.textContent=l('retry');retry.onclick=run;container.append(retry)};
  const cards=(items,published=false)=>items.map(item=>`<article class="feedback-card glass-panel" data-feedback-item="${escape(item.id)}"><div class="feedback-card-top"><strong>${escape(published?item.publicName:courseLabel(item.courseId))}</strong><span class="badge">${escape(published?(item.rating?'★ '+item.rating+'/5':''):l(item.status))}</span></div><p class="feedback-review-text">${escape(item.body.slice(0,420))}</p>${item.body.length>420?`<details><summary>${l('readMore')}</summary><p>${escape(item.body.slice(420))}</p></details>`:''}<small>${escape(published?courseLabel(item.courseId):l(item.kind==='review'?'review':'message'))} · ${escape(new Date(item.publishedAt||item.createdAt).toLocaleDateString(locale))}</small>${published?'':`<div class="feedback-actions"><button class="btn" data-feedback-edit="${escape(item.id)}">${l('edit')}</button>${item.kind==='review'&&item.status!=='withdrawn'?`<button class="btn" data-feedback-withdraw="${escape(item.id)}">${l('withdraw')}</button>`:''}<button class="btn" data-feedback-history="${escape(item.id)}">${l('history')}</button></div>`}</article>`).join('');
- const refreshSlots=async()=>{for(const slot of document.querySelectorAll('[data-feedback-public]')){
-  try{const offset=Number(slot.dataset.reviewOffset)||0,data=await api('reviews?limit='+ (slot.hasAttribute('data-full-reviews')?'20':'3')+'&offset='+offset+'&featured='+(slot.hasAttribute('data-home-reviews')?'1':'0')+'&course='+encodeURIComponent(slot.dataset.reviewCourse||''));if(!current())return;
-   if(!data.reviews.length&&!slot.hasAttribute('data-full-reviews')){slot.hidden=true;continue}slot.hidden=false;slot.innerHTML=`${slot.hasAttribute('data-full-reviews')?'':`<div class="section-head"><h2>${l('reviews')}</h2><a href="#view=reviews">${l('all')} →</a></div>`}<p class="feedback-statistics">${data.ratings?`★ ${Number(data.average).toFixed(1)} · ${data.ratings} ${l('ratings')}`:''}</p><div class="feedback-review-grid">${data.reviews.length?cards(data.reviews,true):`<p>${l('empty')}</p>`}</div>${slot.hasAttribute('data-full-reviews')&&data.total>20?`<div class="feedback-actions"><button class="btn" data-review-prev ${offset===0?'disabled':''}>${l('previous')}</button><span>${offset+1}–${offset+data.reviews.length} / ${data.total}</span><button class="btn" data-review-next ${offset+20>=data.total?'disabled':''}>${l('next')}</button></div>`:''}`;
-   slot.querySelector('[data-review-prev]')?.addEventListener('click',()=>{slot.dataset.reviewOffset=String(Math.max(0,offset-20));refreshSlots()},{signal});slot.querySelector('[data-review-next]')?.addEventListener('click',()=>{slot.dataset.reviewOffset=String(offset+20);refreshSlots()},{signal});
-  }catch(error){if(!current())return;if(slot.hasAttribute('data-full-reviews'))retryBox(slot,error,refreshSlots);else slot.hidden=true}
- }};
+ const refreshSlots=async()=>{
+  for(const slot of document.querySelectorAll('[data-feedback-public]')){
+   const full=slot.hasAttribute('data-full-reviews');
+   try{
+    const offset=Number(slot.dataset.reviewOffset)||0;
+    const query=new URLSearchParams({limit:full?'20':'3',offset:String(offset),
+     featured:slot.hasAttribute('data-home-reviews')?'1':'0',course:slot.dataset.reviewCourse||''});
+    const data=await api('reviews?'+query);
+    if(!current())return;
+    if(!full&&data.reviews.length<minimumReviewsForShowcase){
+     slot.hidden=true;
+     slot.replaceChildren();
+     continue;
+    }
+    const count=Number(data.ratings);
+    const statistics=count?`★ ${Number(data.average).toFixed(1)} · ${count} ${ratingWord(locale,count)}`:'';
+    const heading=full?'':`<div class="section-head"><h2>${l('reviews')}</h2><a href="#view=reviews">${l('all')} →</a></div>`;
+    const pagination=full&&data.total>20?`<div class="feedback-actions"><button class="btn" data-review-prev ${offset===0?'disabled':''}>${l('previous')}</button><span>${offset+1}–${offset+data.reviews.length} / ${data.total}</span><button class="btn" data-review-next ${offset+20>=data.total?'disabled':''}>${l('next')}</button></div>`:'';
+    slot.innerHTML=heading+`<p class="feedback-statistics">${statistics}</p><div class="feedback-review-grid">${data.reviews.length?cards(data.reviews,true):`<p>${l('empty')}</p>`}</div>`+pagination;
+    slot.hidden=false;
+    slot.querySelector('[data-review-prev]')?.addEventListener('click',()=>{slot.dataset.reviewOffset=String(Math.max(0,offset-20));refreshSlots()},{signal});
+    slot.querySelector('[data-review-next]')?.addEventListener('click',()=>{slot.dataset.reviewOffset=String(offset+20);refreshSlots()},{signal});
+   }catch(error){
+    if(!current())return;
+    if(full)retryBox(slot,error,refreshSlots);
+    else slot.hidden=true;
+   }
+  }
+ };
  let mineOffset=0;const loadMine=async()=>{
   const container=document.querySelector('[data-feedback-mine]');if(!container)return;try{const data=await api('me?offset='+mineOffset);if(!current())return;account=data.account;container.innerHTML=data.items.length?`<div class="feedback-review-grid">${cards(data.items)}</div>`:`<p>${l('emptyMine')}</p>`;
    if(data.total>20){const paging=document.createElement('div');paging.className='feedback-actions';paging.innerHTML=`<button class="btn" data-mine-prev ${mineOffset===0?'disabled':''}>${l('previous')}</button><span>${mineOffset+1}–${mineOffset+data.items.length} / ${data.total}</span><button class="btn" data-mine-next ${mineOffset+20>=data.total?'disabled':''}>${l('next')}</button>`;paging.querySelector('[data-mine-prev]').onclick=()=>{mineOffset=Math.max(0,mineOffset-20);loadMine()};paging.querySelector('[data-mine-next]').onclick=()=>{mineOffset+=20;loadMine()};container.append(paging)}

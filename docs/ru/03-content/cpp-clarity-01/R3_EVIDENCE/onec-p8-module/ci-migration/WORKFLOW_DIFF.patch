@@ -1,0 +1,104 @@
+diff --git a/.github/workflows/cpp-clarity-01.yml b/.github/workflows/cpp-clarity-01.yml
+index 320941a..314a7d2 100644
+--- a/.github/workflows/cpp-clarity-01.yml
++++ b/.github/workflows/cpp-clarity-01.yml
+@@ -34,0 +35,31 @@ jobs:
++  ci_profile:
++    name: Выбрать BASIC или FULL по фактическому diff
++    runs-on: ubuntu-latest
++    timeout-minutes: 5
++    outputs:
++      profile: ${{ steps.choose.outputs.profile }}
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++          persist-credentials: false
++      - uses: actions/setup-node@v4
++        with:
++          node-version: '24'
++      - name: Закрытый по умолчанию выбор профиля
++        id: choose
++        run: |
++          if ! node tools/classify-cpp-clarity-ci.mjs --output ci-profile.json; then
++            echo 'profile=FULL' >> "$GITHUB_OUTPUT"
++            echo 'migration=false' >> "$GITHUB_OUTPUT"
++            echo '{"profile":"FULL","reason":"CLASSIFIER_EXECUTION_ERROR"}' > ci-profile.json
++          fi
++      - name: Три адресные проверки однократной миграции
++        if: steps.choose.outputs.migration == 'true'
++        run: node --test tests/cpp-clarity-ci-profile.test.mjs
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: cpp-clarity-ci-profile-${{ github.sha }}
++          path: ci-profile.json
++          if-no-files-found: error
+@@ -35,0 +67,2 @@ jobs:
++    needs: ci_profile
++    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
+@@ -57 +90 @@ jobs:
+-          node --test tests/cpp-clarity-onec-p1-content.test.mjs tests/cpp-clarity-onec-p2-types-content.test.mjs tests/cpp-clarity-onec-p2-conditions-content.test.mjs tests/cpp-clarity-onec-p2-module-content.test.mjs tests/cpp-clarity-onec-p3-module-content.test.mjs tests/cpp-clarity-onec-p4-module-content.test.mjs tests/cpp-clarity-onec-p5-module-content.test.mjs tests/cpp-clarity-onec-p6-module-content.test.mjs tests/cpp-clarity-onec-p7-module-content.test.mjs
++          node --test tests/cpp-clarity-onec-p1-content.test.mjs tests/cpp-clarity-onec-p2-types-content.test.mjs tests/cpp-clarity-onec-p2-conditions-content.test.mjs tests/cpp-clarity-onec-p2-module-content.test.mjs tests/cpp-clarity-onec-p3-module-content.test.mjs tests/cpp-clarity-onec-p4-module-content.test.mjs tests/cpp-clarity-onec-p5-module-content.test.mjs tests/cpp-clarity-onec-p6-module-content.test.mjs tests/cpp-clarity-onec-p7-module-content.test.mjs tests/cpp-clarity-onec-p8-module-content.test.mjs
+@@ -76,0 +110,2 @@ jobs:
++      - name: Основные проверки полного модуля P8 RU и EN
++        run: node tests/cpp-clarity-onec-p8-module-browser.mjs
+@@ -84,0 +120,2 @@ jobs:
++    needs: ci_profile
++    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
+@@ -104,0 +142,2 @@ jobs:
++      - name: Зафиксировать FULL профиль и причину
++        run: node tools/classify-cpp-clarity-ci.mjs --record-full --output cpp-clarity-evidence/CI_PROFILE.json
+@@ -196,0 +236,2 @@ jobs:
++    needs: ci_profile
++    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
+@@ -238,0 +280,2 @@ jobs:
++    needs: ci_profile
++    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
+@@ -279,0 +323,2 @@ jobs:
++    needs: ci_profile
++    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
+@@ -320,0 +366,2 @@ jobs:
++    needs: ci_profile
++    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
+@@ -360,0 +408,2 @@ jobs:
++    needs: ci_profile
++    if: ${{ !cancelled() && (needs.ci_profile.result != 'success' || needs.ci_profile.outputs.profile != 'BASIC') }}
+@@ -400,0 +450,37 @@ jobs:
++
++  module_basic:
++    name: 1С — MODULE BASIC, без повторной компиляции C++
++    needs: ci_profile
++    if: needs.ci_profile.result == 'success' && needs.ci_profile.outputs.profile == 'BASIC'
++    runs-on: ubuntu-latest
++    timeout-minutes: 20
++    env:
++      NEXUS_CLARITY_EVIDENCE: ${{ github.workspace }}/cpp-clarity-basic-evidence
++      NEXUS_FRONTEND_DIR: ${{ github.workspace }}/cpp-clarity-basic-frontend
++      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++          persist-credentials: false
++      - uses: actions/setup-node@v4
++        with:
++          node-version: '24'
++      - name: Подготовить только зависимости основного просмотра
++        run: |
++          npm ci --prefix server-access --ignore-scripts
++          npm ci --prefix tools/qa-browser-driver
++          node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
++      - name: Новый модуль, сохранность своей работы и короткий offline
++        run: node tools/check-cpp-clarity-basic.mjs
++      - name: Точный source snapshot BASIC, без выпускного PASS
++        if: always()
++        run: python3 tools/package-cpp-clarity-basic-source.py
++      - name: BASIC evidence без merge, deployment и Release
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: cpp-clarity-01-${{ github.sha }}
++          path: cpp-clarity-basic-evidence/
++          retention-days: 30
++          if-no-files-found: error

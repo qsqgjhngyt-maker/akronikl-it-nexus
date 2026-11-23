@@ -1,0 +1,21 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {accountClientFixture} from './helpers/account-client-fixture.mjs';
+import {verifiedAccount,accountLocalStorage} from '../core/account-storage.js';
+import {withCourseStateWriter,patchLesson,loadState} from '../core/storage.js';
+import {createProject,listProjects} from '../project-studio/project-store.js';
+import {withProjectWriter} from '../project-studio/project-writer.js';
+import {makeLocalPayload} from '../pwa/offline-transfer.js';
+import {transferLocalPayload} from '../pwa/offline-center.js';
+const f=accountClientFixture('synthetic-r3-transfer');f.verify();const account=verifiedAccount(),keys=[],tails=new Map();
+Object.defineProperty(globalThis,'navigator',{value:{locks:{request(name,options,fn){if(typeof options==='function')fn=options;const p=(tails.get(name)||Promise.resolve()).then(async()=>{keys.push(name);return fn({name});});tails.set(name,p.catch(()=>{}));return p;}}}});
+test('partial course failure retains project receipts and retry does not duplicate copies or old progress',async()=>{
+ const original=await withProjectWriter(()=>createProject({title:'Synthetic transfer',languageId:'cpp',files:[{path:'main.cpp',content:'int main(){}'}]}));
+ const payload=makeLocalPayload({account,state:loadState(),projects:[original],isOwner:()=>true});payload.projects[original.id].workspace.files[0].content='int main(){return 7;}';payload.state.courses.cpp={courseId:'cpp',lessons:{'cpp.programming-process':{quiz:1}}};
+ await withCourseStateWriter(()=>patchLesson('cpp.first-cpp-program',{completed:true}));
+ const save=f.local.setItem.bind(f.local);let rejectState=true;f.local.setItem=(key,value)=>{if(rejectState&&key.includes('akronikl:it-nexus:state:v1'))throw Object.assign(Error('SYNTHETIC_QUOTA'),{name:'QuotaExceededError'});return save(key,value);};
+ const receipt={vaultId:'synthetic-vault',revision:3};await assert.rejects(transferLocalPayload(payload,account,receipt),{code:'OFFLINE_TRANSFER_PARTIAL'});rejectState=false;
+ const after=listProjects();assert.equal(after.find(p=>p.id===original.id).workspace.files[0].content,'int main(){return 7;}');assert.equal(loadState().courses.cpp.lessons['cpp.first-cpp-program'].completed,true);assert.equal(loadState().offlineImports?.[receipt.vaultId],undefined);
+ const result=await transferLocalPayload(payload,account,receipt);assert.equal(result.projects.length,0);assert.equal(listProjects().length,after.length);assert.equal(loadState().offlineImports[receipt.vaultId],3);assert.equal(loadState().courses.cpp.lessons['cpp.first-cpp-program'].completed,true);assert.ok(Object.keys(loadState().offlineConflicts).length);assert.equal((await transferLocalPayload(payload,account,receipt)).alreadyApplied,true);
+ const ordered=keys.filter(k=>/project-store|cpp-course-state/.test(k));assert.ok(ordered.some((k,i)=>k.includes('project-store')&&ordered[i+1]?.includes('cpp-course-state')));f.local.setItem=save;
+});
+test('corrupt learning state aborts transfer before any project write',async()=>{const storage=accountLocalStorage(),key='akronikl:it-nexus:state:v1',before=storage.getItem(key),projects=JSON.stringify(listProjects());storage.setItem(key,'{synthetic-corruption');await assert.rejects(transferLocalPayload({owner:account},account,{vaultId:'x',revision:1}));assert.equal(storage.getItem(key),'{synthetic-corruption');assert.equal(JSON.stringify(listProjects()),projects);storage.setItem(key,before);});

@@ -27,6 +27,22 @@ export function createCandidateStore(storage,courseId,curriculum=null){
   if(!topics.get(id))throw Error('TOPIC_NOT_IMPLEMENTED');
  }
  return{read,
+  async saveClarityDraft(id,draft,{expectedStateRevision,isCurrent=()=>true}={}){
+   const {CLARITY_COURSES}=await import('../../core/clarity-course-registry.mjs');if(CLARITY_COURSES[id]?.courseId!==courseId)throw Error('R3_TOPIC_REJECTED');
+   lessonId(id);if(!isCurrent())throw Error('ONEC_VIEW_CHANGED');storage.getItem(key);
+   const [{prepareClarityDraft,validateWorkReferences},{ownedOnec}]=await Promise.all([import('../../core/cpp-clarity-r3-state.mjs'),import('./studio-store.mjs')]);
+   if(!globalThis.navigator?.locks?.request)throw Error('COURSE_WRITER_UNAVAILABLE');
+   return navigator.locks.request('nexus:onec-candidate:all-courses',()=>{
+    if(!isCurrent())throw Error('ONEC_VIEW_CHANGED');const raw=storage.getItem(key);if(raw==='')throw Error('SAVED_DATA_UNREADABLE');
+    const state=read(),entry=state.lessons[id];if(entry!==undefined&&(!entry||typeof entry!=='object'||Array.isArray(entry)))throw Error('SAVED_DATA_INVALID');
+    const prepared=prepareClarityDraft(id,draft,{previous:entry?.clarityDraft??null,expectedStateRevision});
+    let accessible=null;if(prepared.value.workBinding){const b=prepared.value.workBinding;if(b.kind!=='project')throw Error('R3_BINDING_REJECTED');const p=ownedOnec(b.id,'edit');accessible={binding:{kind:'project',id:p.id,expectedLocalRevision:p.sync.localRevision},files:p.workspace.files};}
+    validateWorkReferences(id,prepared.value,accessible);state.lessons[id]={...entry,clarityDraft:prepared.value};
+    if(!isCurrent())throw Error('ONEC_VIEW_CHANGED');if(storage.getItem(key)!==raw)throw Error('R3_STATE_CONFLICT');
+    const serialized=JSON.stringify(state);storage.setItem(key,serialized);if(!isCurrent())throw Error('ONEC_VIEW_CHANGED');if(storage.getItem(key)!==serialized)throw Error('R3_ACK_MISSING');
+    return{stateRevision:prepared.value.stateRevision,draft:prepared.value};
+   });
+  },
   attempt(id,grade,answers,metadata={}){
    lessonId(id);if(grade?.kind!=='local-self-check')throw Error('INVALID_GRADE');
    if(metadata.contentRevision!==undefined&&(typeof metadata.contentRevision!=='string'||!metadata.contentRevision.trim()))throw Error('REVISION_REQUIRED');

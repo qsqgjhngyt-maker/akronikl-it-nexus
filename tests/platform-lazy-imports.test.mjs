@@ -5,7 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const app=await fs.readFile(path.join(root,'core/app.js'),'utf8');
-const heavy=['../sandbox/sandbox.js','../effects/nexus-graphics-workshop.js','./administration.js'];
+const heavy=['../pwa/offline-center.js','../sandbox/sandbox.js','../effects/nexus-graphics-workshop.js','./administration.js'];
 async function graph(){
  const seen=new Set();
  async function walk(rel){
@@ -36,8 +36,8 @@ test('Large tools no longer belong to the critical Home static import graph',asy
  }
 });
 test('Heavy routes load dependencies before render/bind',()=>{
- assert.match(app,/const runtimeReady=r\.lesson\|\|r\.practicum\?loadSandboxRuntime\(\):null/);
- assert.match(app,/await Promise\.all\(\[courseReady,runtimeReady,r\.lesson\?prepareCppGoldLesson/);
+ assert.match(app,/const runtimeReady=!pilot&&\(r\.lesson\|\|r\.practicum\)\?loadSandboxRuntime\(\):null/);
+ assert.match(app,/await Promise\.all\(\[courseReady,runtimeReady,r\.lesson&&!pilot\?prepareCppGoldLesson/);
  assert.match(app,/\(await loadGraphicsWorkshop\(\)\)\.graphicsWorkshopMarkup\(t\)/);
  assert.match(app,/\(await loadAdministration\(\)\)\.administrationMarkup\(r\.tab\)/);
 });

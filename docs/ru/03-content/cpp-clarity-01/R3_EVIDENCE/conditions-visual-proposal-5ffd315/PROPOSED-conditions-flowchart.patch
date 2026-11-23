@@ -1,0 +1,42 @@
+--- a/core/cpp-clarity-authored.mjs
++++ b/core/cpp-clarity-authored.mjs
+@@ -2,8 +2,39 @@
+ import {learningFlowMarkup,learningVisualStyles} from './clarity-visuals.mjs';
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ 
++
++// PROPOSAL: opt-in geometry; all existing flowcharts retain their original markup.
++function roomyDecisionFlowchart(chart,say){
++ const x=90,resultX=262,exitX=334,firstY=225,step=212,half=82,ioH=28,ioW=65;
++ const lastY=firstY+(chart.decisions.length-1)*step,fallbackY=lastY+130,endY=fallbackY+80;
++ const label=(text,x,y,cls='')=>`<text class="${cls}" x="${x}" y="${y}">${esc(text)}</text>`;
++ const node=(id,kind,shape,text,cx,cy)=>`<g data-flowchart-node="${id}" data-node-kind="${kind}">${shape}${label(text,cx,cy)}</g>`;
++ const terminal=(id,text,y)=>node(id,'terminal',`<ellipse cx="${x}" cy="${y}" rx="68" ry="24"/>`,text,x,y);
++ const io=(id,text,cx,y)=>node(id,'output',`<path d="M${cx-ioW+12} ${y-ioH}H${cx+ioW}l-12 ${ioH*2}H${cx-ioW}Z"/>`,text,cx,y);
++ const arrow=(line,tip)=>`<path class="flowchart-arrow" d="${line} ${tip}"/>`;
++ const down=(from,to)=>arrow(`M${x} ${from}V${to}`,`m-4-7 4 7 4-7`);
++ const branch=b=>b==='yes'?say('да','yes'):say('нет','no');
++ const decisions=chart.decisions.map((d,i)=>{
++  const y=firstY+i*step,next=i===chart.decisions.length-1?fallbackY-ioH:y+step-half;
++  return node('decision-'+i,'decision',`<path class="flowchart-decision" d="M${x} ${y-half}l82 ${half}-82 ${half}-82-${half}Z"/>`,d.condition,x,y)
++   +arrow(`M${x+82} ${y}H${resultX-ioW+6}`,`m-7-4 7 4-7 4`)
++   +label(branch(d.branch),187,y-22,'flowchart-branch')
++   +io('output-'+i,d.output,resultX,y)
++   +`<path class="flowchart-arrow" d="M${resultX+ioW-6} ${y}H${exitX}"/>`
++   +down(y+half,next)
++   +label(branch(d.branch==='yes'?'no':'yes'),x+24,(y+half+next)/2,'flowchart-branch');
++ }).join('');
++ return `<figure class="lesson-flowchart"><figcaption>${esc(chart.caption)}</figcaption>
++ <svg viewBox="0 0 336 ${endY+28}" role="img" aria-label="${esc(chart.caption)}"><desc>${esc(chart.paths.join(' '))}</desc>
++ ${terminal('start',say('Начало','Start'),27)}${down(51,91-ioH)}${io('input',chart.input,x,91)}${down(91+ioH,firstY-half)}
++ ${decisions}${io('fallback',chart.fallback,x,fallbackY)}${down(fallbackY+ioH,endY-24)}
++ ${arrow(`M${exitX} ${firstY}V${endY}H${x+68}`,`m7-4-7 4 7 4`)}${terminal('end',say('Конец','End'),endY)}
++ </svg><details><summary>${say('Маршруты схемы текстом','Flowchart paths in text')}</summary><ul>${chart.paths.map(line=>`<li>${esc(line)}</li>`).join('')}</ul></details></figure>`;
++}
++
+ // A decision ladder follows the next check down and exits to the right.
+ function decisionFlowchart(chart,say){
++ if(chart.layout==='roomy')return roomyDecisionFlowchart(chart,say);
+  const x=90,exitX=325,resultX=266,firstY=164,step=88;
+  const lastY=firstY+(chart.decisions.length-1)*step;
+  const fallbackY=lastY+78,endY=fallbackY+70;

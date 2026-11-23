@@ -4,7 +4,7 @@ import {accountLocalStorage} from '../../core/account-storage.js';
 
 export function onecIntegrationMarkup(){return '<section data-onec-platform-mount aria-label="1С / 1C"><p role="status">Загрузка курса / Loading course…</p></section>';}
 
-export function mountOnecIntegration(mount,{locale='ru',isCurrent=()=>true,openAssistant}={}){
+export function mountOnecIntegration(mount,{locale='ru',isCurrent=()=>true,openAssistant,onViewChange}={}){
  if(!mount)throw Error('ONEC_MOUNT_REQUIRED');
  let disposed=false;
  const active=()=>!disposed&&isCurrent();
@@ -18,6 +18,6 @@ export function mountOnecIntegration(mount,{locale='ru',isCurrent=()=>true,openA
  // Preserve the standalone renderer's responsive root styles inside its own
  // ShadowRoot. This id cannot collide with the outer platform #app.
  const root=document.createElement('div');root.id='app';root.className='content';frame.append(root);shadow.append(frame);
- const controller=mountOnecCourse({root,localeSelect:frame.querySelector('select'),storage,resumeStorage,resumeScope:storage.authenticated?'account-device':'unavailable',isCurrent:active,defaultLocale:locale,listenHash:false,preserveDocumentLanguage:true,normalizeLinks:true,studioBase:'',openAssistant});
- return {ready:Promise.all([cssReady,controller.ready]),dispose(){disposed=true;controller.dispose();}};
+ const controller=mountOnecCourse({root,localeSelect:frame.querySelector('select'),storage,resumeStorage,resumeScope:storage.authenticated?'account-device':'unavailable',isCurrent:active,defaultLocale:locale,listenHash:false,enableClarityPilot:true,preserveDocumentLanguage:true,normalizeLinks:true,studioBase:'',openAssistant,onViewChange});
+ return {ready:Promise.all([cssReady,controller.ready]),prepareNavigation:()=>controller.prepareNavigation(),handleRoute:(hash,locale)=>controller.handleRoute(hash,locale),dispose(){disposed=true;controller.dispose();}};
 }
