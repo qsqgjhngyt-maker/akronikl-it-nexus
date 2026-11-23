@@ -452,7 +452,18 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    const option=event.target.closest('[data-question]')?.querySelector('[data-audit-assessment-option]');
    if(option&&event.target.type==='radio')option.hidden=false;
  });
- function dialog(title,body){const opener=root.getRootNode().activeElement||document.activeElement,node=document.createElement('dialog');node.className='r3-dialog';node.innerHTML=`<h2>${esc(title)}</h2><button class="btn" data-close>${w.close}</button>${body}`;root.querySelector('.r3-lesson').append(node);node.querySelector('[data-close]').onclick=()=>node.close();node.onclose=()=>{node.remove();opener?.focus();};node.showModal();return node;}
+ function dialog(title,body){
+  const opener=root.getRootNode().activeElement||document.activeElement;
+  const node=document.createElement('dialog');
+  node.className='r3-dialog';
+  node.setAttribute('aria-label',title);
+  node.innerHTML=`<h2>${esc(title)}</h2><button class="btn" data-close>${w.close}</button>${body}`;
+  root.querySelector('.r3-lesson').append(node);
+  node.querySelector('[data-close]').onclick=()=>node.close();
+  node.onclose=()=>{node.remove();opener?.focus();};
+  node.showModal();
+  return node;
+ }
  root.addEventListener('toggle',async event=>{
   const details=event.target;
   if(!details.matches?.('details[data-lab-reference]')||!details.open||details.dataset.loaded)return;

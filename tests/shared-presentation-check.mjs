@@ -8,6 +8,7 @@ import {oopLabMarkup} from '../core/oop-lab.js';
 import {academyCatalogMarkup} from '../core/academy-catalog.js';
 import {availableCourseCards} from '../core/academy-course-cards.js';
 import {auditGuestPresentation} from '../tools/nexus-audit-guest.mjs';
+import {studyReviewMarkup,studyBridgeMarkup} from '../core/nexus-audit-study.mjs';
 import {programmingHubMarkup} from '../core/code-hub-presentation.js';
 import {learnerAcademyEntries} from '../core/academy-presentation.js';
 import {textFor,translator} from '../core/i18n.js';
@@ -65,6 +66,18 @@ assert.ok(loginMarkup(guest));
 assert.equal(loginMarkup(decorated),loginMarkup(guest));
 assert.match(decorated,/151 тема · RU \/ EN/);
 assert.match(decorated,/assets\/audit-ux\/cpp-practice\.jpg/);
+for(const locale of ['ru','en']){
+ for(const [markup,course,lesson] of [
+  [studyReviewMarkup('cpp.variables-scope',locale),'cpp','cpp.data-types'],
+  [studyReviewMarkup('onec.p2.topic-2',locale),'onec','onec.p2.topic-1'],
+  [studyBridgeMarkup('cpp.variables-scope',locale),'onec','onec.p2.topic-1'],
+  [studyBridgeMarkup('onec.p2.topic-1',locale),'cpp','cpp.variables-scope']
+ ]){
+  const link=markup.match(/href="#([^"]+)"/);
+  assert.ok(link);
+  assert.deepEqual(Object.fromEntries(new URLSearchParams(link[1].replaceAll('&amp;','&'))),{course,lesson,stage:'explanation',locale});
+ }
+}
 for(const locale of ['ru','en']){
  const prefs={uiLocale:locale,courseLocale:locale},t=translator(await json('locales/'+locale+'/ui.json'));
  const ctx={prefs,t,cpp,catalog,academyViewFilter:{category:'all',availability:'all',query:''},visualIcon:v=>v,e,textFor,learnerAcademyEntries,visualShell:body=>body};

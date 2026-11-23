@@ -26,7 +26,12 @@ const review={
   }
 };
 export const auditStudyPilot=id=>Object.hasOwn(review,id);
-const href=id=>'#course='+encodeURIComponent(id.slice(0,id.indexOf('.')))+'&lesson='+encodeURIComponent(id)+'&stage=explanation';
+const href=(id,locale)=>'#'+new URLSearchParams({
+  course:id.slice(0,id.indexOf('.')),
+  lesson:id,
+  stage:'explanation',
+  locale:locale==='en'?'en':'ru'
+});
 
 export function studyReviewMarkup(id,locale){
   const en=locale==='en',item=review[id];
@@ -34,7 +39,7 @@ export function studyReviewMarkup(id,locale){
   return `<details class="practice-card audit-recall" data-reference-static><summary>${en?'Recall the previous lesson':'Вспомнить прошлую тему'}</summary>
     <p>${en?'Answer first, then compare.':'Сначала ответьте своими словами, затем сравните.'}</p>
     <ol>${item[en?'en':'ru'].map(([q,a])=>`<li><p>${e(q)}</p><details><summary>${en?'Compare':'Сравнить ответ'}</summary><p>${e(a)}</p></details></li>`).join('')}</ol>
-    <a href="${href(item.source)}">${en?'Open the previous lesson':'Открыть прошлую тему'} →</a></details>`;
+    <a href="${e(href(item.source,locale))}">${en?'Open the previous lesson':'Открыть прошлую тему'} →</a></details>`;
 }
 
 const diagnostics={
@@ -59,7 +64,7 @@ export function studyBridgeMarkup(id,locale){
   const en=locale==='en',item=bridges.get(id);
   if(!item)return '';
   return `<aside class="practice-card audit-language-bridge"><h2>${en?'Compare C++ and BSL':'Сравните C++ и BSL'}</h2>
-    <p>${e(item[en?'en':'ru'])}</p><a href="${href(item.peer)}">${item.peer.startsWith('cpp.')?'C++':'BSL'} · ${en?'Related lesson':'Связанная тема'} →</a></aside>`;
+    <p>${e(item[en?'en':'ru'])}</p><a href="${e(href(item.peer,locale))}">${item.peer.startsWith('cpp.')?'C++':'BSL'} · ${en?'Related lesson':'Связанная тема'} →</a></aside>`;
 }
 
 export function selfAssessmentMarkup(locale){
