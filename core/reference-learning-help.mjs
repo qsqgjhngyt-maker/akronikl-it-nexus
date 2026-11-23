@@ -10,7 +10,7 @@ export function annotateReferenceTerms(scope,entries,{limit=18}={}){
  scope.dataset.referenceAnnotated='true';
  const english=scope.closest('[lang]')?.lang==='en';
  const doc=scope.ownerDocument,walker=doc.createTreeWalker(scope,4),texts=[],used=new Set([...scope.querySelectorAll('[data-reference-term]')].map(b=>b.dataset.referenceTerm));
- while(walker.nextNode())if(!walker.currentNode.parentElement.closest('a,button,h1,h2,h3,h4,pre,code,textarea,input,select,label,summary,dialog,script,style,[data-nexus-code-studio],[contenteditable]'))texts.push(walker.currentNode);
+ while(walker.nextNode())if(!walker.currentNode.parentElement.closest('a,button,h1,h2,h3,h4,pre,code,textarea,input,select,label,summary,dialog,script,style,[data-reference-static],[data-nexus-code-studio],[contenteditable]'))texts.push(walker.currentNode);
  for(const text of texts){if(used.size>=limit)break;let best;
   for(const entry of entries){if(used.has(entry.id))continue;for(const alias of [entry.term,...entry.aliases].flatMap(a=>english&&/^(for|while)$/i.test(a)?[a+' loop',a+' loops']:[a]).filter(s=>s.length>2)){
    const re=new RegExp('(^|[^\\p{L}\\p{N}_])('+alias.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?=$|[^\\p{L}\\p{N}_])','iu'),m=re.exec(text.data);

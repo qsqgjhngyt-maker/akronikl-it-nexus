@@ -31,7 +31,7 @@ const href=id=>'#course='+encodeURIComponent(id.slice(0,id.indexOf('.')))+'&less
 export function studyReviewMarkup(id,locale){
   const en=locale==='en',item=review[id];
   if(!item)return '';
-  return `<details class="practice-card audit-recall"><summary>${en?'Recall the previous lesson':'Вспомнить прошлую тему'}</summary>
+  return `<details class="practice-card audit-recall" data-reference-static><summary>${en?'Recall the previous lesson':'Вспомнить прошлую тему'}</summary>
     <p>${en?'Answer first, then compare.':'Сначала ответьте своими словами, затем сравните.'}</p>
     <ol>${item[en?'en':'ru'].map(([q,a])=>`<li><p>${e(q)}</p><details><summary>${en?'Compare':'Сравнить ответ'}</summary><p>${e(a)}</p></details></li>`).join('')}</ol>
     <a href="${href(item.source)}">${en?'Open the previous lesson':'Открыть прошлую тему'} →</a></details>`;
@@ -51,7 +51,7 @@ export function diagnosticMarkup(id,locale){
   const item=diagnostics[id],en=locale==='en';
   if(!item)return '';
   const [title,task,answer]=item[en?'en':'ru'];
-  return `<details class="practice-card audit-diagnostic"><summary>${e(title)}</summary><p>${e(task)}</p>
+  return `<details class="practice-card audit-diagnostic" data-reference-static><summary>${e(title)}</summary><p>${e(task)}</p>
     <details><summary>${en?'Compare your diagnosis':'Сверить диагноз'}</summary><p>${e(answer)}</p></details></details>`;
 }
 
