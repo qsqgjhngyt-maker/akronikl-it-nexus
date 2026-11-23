@@ -112,11 +112,43 @@ assertRolloutBytes();
 for(const pin of referencePins){assert.equal(sha(await readFile(pin.path)),rolloutDigest(pin.path,pin.newSha256),'Reference exact bytes: '+pin.path);sourceAllow.add(pin.path);}
 for(const pin of rolloutPins)sourceAllow.add(pin.path);
 const referenceQa=new Set(['tests/helpers/reference-course-contract.mjs','tests/reference-courses-content.test.mjs','tests/reference-courses-browser.mjs','tests/reference-courses-before-browser.mjs','tools/build-reference-courses.mjs','tools/check-reference-courses-native.ps1','tools/check-reference-applied-native.ps1']);
+const qtPack='runtime-packs/qt-6.8.3-paint1/';
+const qtManifest=await readFile(qtPack+'PACK_MANIFEST.json');
+assert.equal(sha(qtManifest),'0daed7e38f0c6b4a8fa88f0f3b6a474cf37057b09bf58f4cd39fb2ed065d1d05','Pinned Qt repaint package');
+const qtFiles=JSON.parse(qtManifest).files;
+const releasePins=new Map([
+ [qtPack+'PACK_MANIFEST.json',sha(qtManifest)],
+ ...qtFiles.map(({name,sha256})=>[qtPack+name,sha256]),
+ ['sandbox/qt/profile.js','aac45df2fb99f254ecc4cbd988aabcead4e64df021e8213359967036d6ef8cb6'],
+ ['studio-build/browser-qt/qt-empty-backing-store.patch','8fd55323a8b419d7b846efe7ade747a0cfc7b2da3d7d5e578de9ea2eee483c88'],
+ ['studio-build/browser-qt/rebuild-qt-backing-store.sh','ff6eeca580c0e28708200e69bf98858458ab7fcb24b6f5f4df7315c659441da3'],
+ ['studio-build/browser-qt/SOURCE_AND_LICENSE_RU.md','a4e53b7ef96b196210cfc96bddf20a70dbd35b54194dbe800005a8bb9228ca55'],
+ ['tools/prepare-qt-gpl-source.py','9d45f7237ade524d43e2243da3c3af68bc8d216b50b4b438609cb1431f3962c7'],
+ ['tools/check-publication-logins.mjs','315087039aae2e6e212f8c043a6ef0aa93103cc42d2816531c1a78c0e3524836']
+]);
+for(const [file,digest] of releasePins){
+ assert.equal(sha(await readFile(file)),digest,'Pinned release repair: '+file);
+ sourceAllow.add(file);
+}
 for(const name of names)assert.ok(referenceQa.has(name)||name.startsWith('docs/ru/03-content/reference-courses-20261112/')||sourceAllow.has(name)||qaDiagnosticApproved.has(name)||p1Edition.test(name)||p2TypesEdition.test(name)||p2ConditionsEdition.test(name)||p1Media.has(name)||p2TypesMedia.has(name)||p2ConditionsMedia.has(name)||/^courses\/clarity\/(?:lessons\/|courses\.json$|editorial-map\.json$)/.test(name)||/^courses\/cpp-clarity-r3\/(?:lessons\/|code\/|courses\.json$|setup\.(ru|en)\.json$)/.test(name)||/^review\/cpp-clarity-r3\//.test(name)||/^courses\/cpp\/gold\/(algorithms|basics)\//.test(name)||extendedGoldPaths.has(name)||/^(tests\/(helpers\/)?cpp-clarity-|tools\/(check|build)-cpp-clarity|docs\/ru\/03-content\/cpp-clarity-01\/)/.test(name),'Out of scope: '+name);
 const protectedAreas=['courses/1c-enterprise','courses/onec','courses/onec-education','server-access','cloudflare','sync','sandbox','project-studio','core/migrations','releases','entry-assets','runtime-packs'];
-for(const area of protectedAreas){const changed=git('diff','--name-only',base,'--',area).toString().trim().split('\n').filter(Boolean);for(const file of changed)assert.ok(contractApproved.has(file)||presentationOnly.has(file)||referencePins.some(p=>p.path===file),'Protected area: '+file);}
+for(const area of protectedAreas){const changed=git('diff','--name-only',base,'--',area).toString().trim().split('\n').filter(Boolean);for(const file of changed)assert.ok(contractApproved.has(file)||presentationOnly.has(file)||referencePins.some(p=>p.path===file)||releasePins.has(file),'Protected area: '+file);}
 // Принятые материалы не редактируются при переносе в доступные offline-builder ресурсы.
-for await(const file of (await import('node:fs/promises')).glob('courses/cpp-clarity-r3/**/*')){if((await (await import('node:fs/promises')).stat(file)).isFile())assertPreservedOrReference(file,await readFile(file),await readFile(file.replace(/courses[\\/]cpp-clarity-r3/, 'review/cpp-clarity-r3')),'Accepted R3 resource: '+file);}
+const bslDownloads=new Map([
+ ['code/training-joins-server.bsl','code/УчебныеСоединенияR3.bsl'],
+ ['code/training-joins-application.bsl','code/МодульПриложенияСоединения.bsl']
+]);
+for await(const file of (await import('node:fs/promises')).glob('courses/cpp-clarity-r3/**/*')){
+ if(!(await (await import('node:fs/promises')).stat(file)).isFile())continue;
+ const relative=file.split(path.sep).join('/').slice('courses/cpp-clarity-r3/'.length);
+ const currentBytes=await readFile(file);
+ const referenceBytes=await readFile('review/cpp-clarity-r3/'+(bslDownloads.get(relative)??relative));
+ if(relative==='setup.ru.json'||relative==='setup.en.json'){
+  let expected=referenceBytes.toString('utf8');
+  for(const [published,original] of bslDownloads)expected=expected.replace('./'+original,'./'+published);
+  assert.deepEqual(currentBytes,Buffer.from(expected),'Only BSL download addresses changed: '+file);
+ }else assertPreservedOrReference(file,currentBytes,referenceBytes,'Accepted R3 resource: '+file);
+}
 const current=JSON.parse(await readFile('courses/cpp/curriculum.json')),old=JSON.parse(git('show',base+':courses/cpp/curriculum.json'));
 assert.deepEqual(current,old);assert.equal(current.lessons.length,67);assert.equal(current.lessons.filter(x=>Number.isInteger(x.legacyIndex)).length,40);
 const catalog=JSON.parse(await readFile('courses/cpp/data/gold-laboratories.json')),oldCatalog=JSON.parse(git('show',base+':courses/cpp/data/gold-laboratories.json')),revised=new Set([...GOLD_ALGORITHM_LESSONS,...GOLD_BASICS_LESSONS]);
