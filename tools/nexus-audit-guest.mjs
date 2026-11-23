@@ -16,14 +16,12 @@ const css=`<style data-guest-presentation>
 .guest-course-name{margin-top:.25rem}
 .entry-shell .possibility .guest-course-facts{font-size:.9rem;color:#b4efdd}
 .guest-roadmap{margin:1.8rem 0}
-.guest-footer-links{display:flex;flex-wrap:wrap;align-items:center;gap:.9rem;margin:.8rem 0;color:#d6e5f0;font-size:.875rem}
-.guest-footer-links a{color:#b4efdd;text-decoration:underline;text-underline-offset:.2rem}
+.guest-footer-version{margin:.8rem 0;color:#d6e5f0;font-size:.875rem}
 .entry-shell :is(a,button):focus-visible{outline:2px solid #a6f2d9;outline-offset:4px}
 .guest-sample,.guest-roadmap{scroll-margin-top:1rem}
-@media(max-width:710px){.guest-sample-grid{grid-template-columns:1fr}.guest-facts{gap:.4rem}.guest-footer-links a{display:inline-flex;align-items:center;min-height:44px}}
+@media(max-width:710px){.guest-sample-grid{grid-template-columns:1fr}.guest-facts{gap:.4rem}}
 @media(prefers-reduced-motion:reduce){.entry-shell :is(a,button){transition:none}html{scroll-behavior:auto}}
 </style>`;
-const repo='https://github.com/qsqgjhngyt-maker/akronikl-it-nexus';
 
 export function auditGuestPresentation(html,{generation,version}){
   assert.match(generation,/^ui1a-[a-z0-9-]+$/);
@@ -50,10 +48,7 @@ export function auditGuestPresentation(html,{generation,version}){
     <p>Уроки можно загрузить на устройство и читать без сети. Для работы с учебной базой 1С нужен установленный клиент 1С:Предприятие.</p>
     <p>Следующие шаги — развитие навигации по курсам, Карта навыков и проверка удобства на мобильных устройствах.</p>
   </section>`;
-  const footer=`<nav class="guest-footer-links" aria-label="О проекте">
-    <span>Версия ${version}</span><a href="${repo}">Исходники на GitHub</a><a href="${repo}/issues">Обратная связь</a>
-    <a href="${repo}#права-и-лицензирование">Условия использования</a>
-  </nav>`;
+  const footer=`<p class="guest-footer-version">Версия ${version}</p>`;
   return html.replace('</head>',css+'</head>')
     .replace(/<p class="hero-description">[\s\S]*?<\/p>/,overview)
     .replace(/<a class="explore-link" href="#possibilities">[\s\S]*?<\/a>/,
