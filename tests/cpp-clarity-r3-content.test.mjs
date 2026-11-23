@@ -30,6 +30,22 @@ test('R3 external practice provides self-contained questions and an exact query-
  const cpp=await read(root+`lessons/cpp.programming-process.${locale}.json`);for(const section of cpp.sections)for(const c of section.clarifications||[])for(const link of c.links||[])assert.ok((link.text||link.label||link.title)?.trim());
  }
 });
+test('The published 1C joins setup uses gateway-compatible BSL download paths in both languages', async () => {
+ const published = 'courses/cpp-clarity-r3/';
+ const expected = new Map([
+  ['./code/training-joins-server.bsl', 'УчебныеСоединенияR3.bsl'],
+  ['./code/training-joins-application.bsl', 'МодульПриложенияСоединения.bsl']
+ ]);
+ for (const locale of ['ru', 'en']) {
+  const setup = await read(published + 'setup.' + locale + '.json');
+  const files = setup['onec.p7.topic-2'].flatMap(step => step.links ?? [])
+   .map(link => link.href).filter(href => href.endsWith('.bsl'));
+  assert.deepEqual(files, [...expected.keys()]);
+ }
+ for (const [href, original] of expected) {
+  assert.deepEqual(await fs.readFile(published + href.slice(2)), await fs.readFile(root + 'code/' + original));
+ }
+});
 test('R3 uses three canonical IDs in both languages, matching program cases and real prerequisites/neighbours',async()=>{const c=await read(root+'courses.json'),ids=c.flatMap(c=>c.topics.map(t=>t.id));assert.equal(c.find(c=>c.id==='cpp').topics.length,67);for(const id of ['cpp.programming-process','onec.p2.topic-1','onec.p7.topic-2']){const ru=await read(root+'lessons/'+id+'.ru.json'),en=await read(root+'lessons/'+id+'.en.json');assert.equal(ru.id,id);assert.equal(en.id,id);assert.deepEqual(ru.sections.map(s=>s.id),en.sections.map(s=>s.id));assert.deepEqual(ru.selfcheck.map(q=>({id:q.id,correct:q.correct})),en.selfcheck.map(q=>({id:q.id,correct:q.correct})));for(const d of [ru,en])for(const p of d.prerequisites)if(p.target)assert.ok(ids.includes(p.target));if(ru.programChecks)assert.deepEqual(ru.programChecks,en.programChecks);if(ru.nativePrograms)assert.deepEqual(ru.nativePrograms,en.nativePrograms);}const cpp=c.find(c=>c.id==='cpp');assert.equal(cpp.topics[0].id,'cpp.programming-process');assert.equal(cpp.topics[1].id,'cpp.algorithm-definition-properties');});
 test('R3 runtime evidence binds to the presented C++ programs and current BSL files, not historical PASS',async()=>{const cpp=await read(root+'lessons/cpp.programming-process.ru.json'),result=await read(doc+'R3_EVIDENCE/R3_CPP_RESULT.json');assert.equal(result.rows.length,cpp.programChecks.length);for(const p of cpp.programChecks){const r=result.rows.find(r=>r.name===p.name);assert.equal(r.sourceSha256,sha(p.source));assert.equal(r.stdout,p.stdout);assert.equal(r.provider,'wasm-cpp');}const native=await read(doc+'R3_EVIDENCE/R3_NATIVE_RESULT.json');assert.equal(native.training1508Tested,false);assert.equal(native.queryTransferFromDisplayedFunctions,true);assert.equal(native.runnerSha256,sha(await fs.readFile('tools/check-cpp-clarity-r3-native.ps1')));for(const s of native.sources)assert.equal(sha(await fs.readFile(root+'code/'+s.file)),s.sha256);const bsl=await read(root+'lessons/onec.p2.topic-1.ru.json');for(const p of bsl.nativePrograms){const r=native.cases.find(c=>c.name===p.name);assert.equal(Number(r.observed),p.value);}});
 

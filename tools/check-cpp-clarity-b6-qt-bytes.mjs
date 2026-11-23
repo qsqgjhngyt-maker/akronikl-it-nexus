@@ -1,65 +1,35 @@
-// Подготовка только проверенных публичных Qt bytes для изолированного QA. Ничего не публикует.
+// Проверяет точные публичные Qt bytes и готовит отдельную копию для изолированного QA.
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {QT_BROWSER_PROFILE} from '../sandbox/qt/profile.js';
-const records=[
-  {
-    "name": "index.html",
-    "bytes": 978,
-    "sha256": "ee048d401305037178b4e759a53e7366fde243e5971a450e1567c061627e63cc"
-  },
-  {
-    "name": "preview.js",
-    "bytes": 5063,
-    "sha256": "3a601ec2c430e6c05789d94dbbdc96e2d06c40132509660d7557483a3d4cfeb1"
-  },
-  {
-    "name": "a11y.js",
-    "bytes": 2511,
-    "sha256": "35b2454664a67cdea029f48af8fe4d65302c53d5b2c9dffd87e4875948913138"
-  },
-  {
-    "name": "profile.js",
-    "bytes": 1725,
-    "sha256": "16e85cb6da294255cd862961192b6f41f922919967c63ecbf925250520737d7d"
-  },
-  {
-    "name": "verified-pack.js",
-    "bytes": 1704,
-    "sha256": "f3aa8e7e103ab6e12a698cae9fc231c4418bbb4eb2f3d14a72f21ebce094e7f4"
-  },
-  {
-    "name": "qtloader.js",
-    "bytes": 12354,
-    "sha256": "cea6b197476a2e44be30716dd733aa78d58db994a84a55cc554295a558ef4bd7"
-  },
-  {
-    "name": "program.js",
-    "bytes": 2192319,
-    "sha256": "b9a4615694942810579a616a0245f4455f3d282f109f525c2b6915ff707b91b7"
-  },
-  {
-    "name": "program.wasm.bin",
-    "bytes": 8424751,
-    "sha256": "6dd30a0769d4dd5d9fbaf3a75f1c741b3ed290903f5910041ec33b199959cc30"
-  },
-  {
-    "name": "headers.bin",
-    "bytes": 4533628,
-    "sha256": "cbc4572da77276994246015d54610f888a0802ca481eef6ba01a6b4b583a4749"
-  }
-];
-const out=path.resolve(process.env.NEXUS_QT_BROWSER_PACK);await mkdir(out,{recursive:true});
+
 const base=new URL('.',QT_BROWSER_PROFILE.previewUrl);
+const pack=base.pathname.split('/').at(-2);
+assert.match(pack,/^qt-[a-z0-9.\-]+$/);
+const source=new URL('../runtime-packs/'+pack+'/',import.meta.url);
+const {files:records}=JSON.parse(await readFile(new URL('PACK_MANIFEST.json',source),'utf8'));
+const {QT_BROWSER_PROFILE:packProfile}=await import(new URL('profile.js',source));
+assert.deepEqual(packProfile,QT_BROWSER_PROFILE);
+const expected=['index.html','preview.js','a11y.js','profile.js','verified-pack.js','qtloader.js','program.js','program.wasm.bin','headers.bin'];
+assert.deepEqual(records.map(r=>r.name).sort(),expected.sort());
+const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+const live=process.argv.includes('--public');
+const out=path.resolve(process.env.NEXUS_QT_BROWSER_PACK);
+await mkdir(out,{recursive:true});
 for(const r of records){
- const file=path.join(out,r.name);let bytes;
- try{bytes=await readFile(file);}catch(e){if(e.code!=='ENOENT')throw e;}
- if(!bytes){const response=await fetch(new URL(r.name,base),{signal:AbortSignal.timeout(120000)});assert.equal(response.status,200);bytes=Buffer.from(await response.arrayBuffer());}
- assert.equal(bytes.length,r.bytes,r.name);assert.equal(createHash('sha256').update(bytes).digest('hex'),r.sha256,r.name);
- await writeFile(file,bytes);
+ const bytes=await readFile(new URL(r.name,source));
+ assert.equal(bytes.length,r.bytes,r.name);
+ assert.equal(sha(bytes),r.sha256,r.name);
+ if(live){
+  const response=await fetch(new URL(r.name,base),{signal:AbortSignal.timeout(120000),redirect:'error'});
+  assert.equal(response.status,200,r.name);
+  assert.equal(sha(Buffer.from(await response.arrayBuffer())),r.sha256,r.name);
+ }
+ await writeFile(path.join(out,r.name),bytes);
 }
-const evidence=path.resolve(process.env.NEXUS_M6_EVIDENCE);await mkdir(evidence,{recursive:true});
-await writeFile(path.join(evidence,'QT_BYTES.json'),JSON.stringify({status:'PASS',records,productionWrites:0},null,2)+'\n');
-console.log('PASS:9 закреплённых Qt runtime ресурсов');
+const evidence=path.resolve(process.env.NEXUS_M6_EVIDENCE);
+await mkdir(evidence,{recursive:true});
+await writeFile(path.join(evidence,'QT_BYTES.json'),JSON.stringify({status:'PASS',pack,records,publicBytesChecked:live,productionWrites:0},null,2)+'\n');
+console.log('PASS: '+records.length+' закреплённых ресурсов '+pack);

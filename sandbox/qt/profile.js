@@ -5,9 +5,9 @@ export const QT_BROWSER_PROFILE=Object.freeze({
   "parentOrigins": [
     "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net"
   ],
-  "previewUrl": "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/runtime-packs/qt-6.8.3-v1/index.html",
+  "previewUrl": "https://akronikl-nexus-qt-paint1-20261123.storage.yandexcloud.net/runtime-packs/qt-6.8.3-paint1/index.html",
   "headers": {
-    "url": "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/runtime-packs/qt-6.8.3-v1/headers.bin",
+    "url": "https://akronikl-nexus-qt-paint1-20261123.storage.yandexcloud.net/runtime-packs/qt-6.8.3-paint1/headers.bin",
     "bytes": 4533628,
     "sha256": "cbc4572da77276994246015d54610f888a0802ca481eef6ba01a6b4b583a4749",
     "encoding": "gzip",
@@ -16,15 +16,15 @@ export const QT_BROWSER_PROFILE=Object.freeze({
   },
   "headerFiles": 4293,
   "wasm": {
-    "url": "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/runtime-packs/qt-6.8.3-v1/program.wasm.bin",
-    "bytes": 8424751,
-    "sha256": "6dd30a0769d4dd5d9fbaf3a75f1c741b3ed290903f5910041ec33b199959cc30",
+    "url": "https://akronikl-nexus-qt-paint1-20261123.storage.yandexcloud.net/runtime-packs/qt-6.8.3-paint1/program.wasm.bin",
+    "bytes": 8424802,
+    "sha256": "2423f06261c64c36640d7f79c6c374c3dc37b9506418a1d8e2d4c7b1b47a99d3",
     "encoding": "gzip",
-    "rawBytes": 31291608,
-    "rawSha256": "1a788712f97767db013e63ab39d6cfe9c2cc24293651acd192714c8e15a83a97"
+    "rawBytes": 31291637,
+    "rawSha256": "83e7671a063ce790f4361a9d8d2b05cfd6cbc3694803a59e90e265be15bbb311"
   },
   "program": {
-    "url": "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/runtime-packs/qt-6.8.3-v1/program.js",
+    "url": "https://akronikl-nexus-qt-paint1-20261123.storage.yandexcloud.net/runtime-packs/qt-6.8.3-paint1/program.js",
     "bytes": 2192319,
     "sha256": "b9a4615694942810579a616a0245f4455f3d282f109f525c2b6915ff707b91b7",
     "integrity": "sha256-uaRhVpSUKBBXmmFqAkX0RV89KC8Qn1JcK2kV/3B7kbc="

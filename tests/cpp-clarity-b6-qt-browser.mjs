@@ -92,6 +92,21 @@ try{
   let saved=await p.evaluate(async({prefix,id})=>(await import(prefix+'/project-studio/project-store.js')).getProject(id),{prefix,id});const text=saved.workspace.files.find(x=>x.path==='taskflow.txt')?.content;assert.match(text||'',/alpha/);assert.match(text||'',/beta/);if(b.source.includes('Open tasks: %1')||completedOnly){assert.match(text,/1 1 "alpha"/);assert.match(text,/2 1 "beta"/);}assert.equal(saved.workspace.files.find(x=>x.path==='src/gui.cpp').content,b.source);
   diagnostic.setPhase('Stop application before restart');
   await p.locator('[data-app="stop"]').click();await p.waitForFunction(()=>!document.querySelector('.nexus-application-panel iframe'));frame=await build();await waitLog('NEXUS_TASKS 2');
+  if(index===2){
+   diagnostic.setPhase('Suspend painting with a zero-width Qt surface');
+   const preview=p.locator('.nexus-application-panel [data-app="preview"]');
+   await p.setViewportSize({width:390,height:844});
+   await preview.evaluate(node=>node.style.width='0px');
+   try{
+    await frame.waitForFunction(()=>document.querySelector('#screen').getBoundingClientRect().width===0);
+    await p.screenshot({path:path.join(out,'qt-zero-width.png'),fullPage:true});
+   }finally{await preview.evaluate(node=>node.style.removeProperty('width'));}
+   diagnostic.setPhase('Restore the Qt surface and use the running application');
+   await p.setViewportSize({width:1366,height:900});
+   await frame.waitForFunction(()=>document.querySelector('#screen').getBoundingClientRect().width>0);
+   await frame.getByRole('textbox',{name:'Task title',exact:true}).fill('temporary resize check');
+   await afterEvent(()=>frame.getByRole('button',{name:'Add task',exact:true}).press('Enter'),'NEXUS_TASKS 3');
+  }
   diagnostic.setPhase('Resize viewport to 1366 and capture application');
   const aria=await frame.locator('body').ariaSnapshot();await p.setViewportSize({width:1366,height:900});await p.screenshot({path:path.join(out,'gui-'+index+'-1366.png'),fullPage:true});
   diagnostic.setPhase('Run application model tests');
