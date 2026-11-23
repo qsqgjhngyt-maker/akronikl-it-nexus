@@ -25,9 +25,26 @@ export function learningLaboratory(course,id,content,locale='ru'){
 export function createLearningResume({storage=accountLocalStorage(),principal=activePrincipalId,now=()=>new Date().toISOString()}={}){
  const key=()=> 'akronikl:it-nexus:learning-resume:v1:'+encodeURIComponent(principal());
  const read=()=>{try{const value=JSON.parse(storage?.getItem(key())||'null');return value?.schemaVersion===1&&value.courses&&typeof value.courses==='object'?value.courses:{}}catch{return{}}};
+ const record=(courseId,point)=>{
+  try{if(!storage)return false;const courses=read();courses[courseId]=point;storage.setItem(key(),JSON.stringify({schemaVersion:1,courses}));return true}catch{return false}
+ };
  const remember=(course,lessonId,focus='')=>{
   if(course?.manifest?.id!=='cpp'||!course.curriculum?.lessons?.some(item=>item.id===lessonId))return false;
-  try{const courses=read();courses.cpp={lessonId,focus:focusValue(focus),visitedAt:now()};storage?.setItem(key(),JSON.stringify({schemaVersion:1,courses}));return true}catch{return false}
+  return record('cpp',{lessonId,focus:focusValue(focus),visitedAt:now()});
+ };
+ const onecIds=['onec','1c-enterprise'];
+ const rememberOnec=({courseId,lessonId,sectionId})=>{
+  if(!onecIds.includes(courseId)||typeof lessonId!=='string'||!lessonId.startsWith(courseId+'.')||
+    !['explanation','selfcheck','practice'].includes(sectionId))return false;
+  return record(courseId,{lessonId,sectionId,visitedAt:now()});
+ };
+ const lastOnec=()=>{
+  const courses=read();
+  return onecIds.flatMap(courseId=>{
+   const point=courses[courseId];
+   return point?.lessonId?.startsWith?.(courseId+'.')&&Number.isFinite(Date.parse(point.visitedAt))?
+    [{courseId,topicId:point.lessonId,sectionId:point.sectionId,updatedAt:point.visitedAt}]:[];
+  }).sort((a,b)=>Date.parse(b.updatedAt)-Date.parse(a.updatedAt))[0]??null;
  };
  const continuation=(course,state={})=>{
   const lessons=orderedCppLessons(course),saved=read().cpp;
@@ -36,22 +53,26 @@ export function createLearningResume({storage=accountLocalStorage(),principal=ac
   const lesson=last||next||lessons[0];
   if(!lesson)return null;
   const mode=last?'resume':next?(Object.values(state).some(x=>x?.completed)?'next':'start'):'review';
-  return{lesson,mode,focus:last?focusValue(saved.focus):'',href:lessonLink(lesson.id,last?saved.focus:''),visitedAt:last?saved.visitedAt:null};
+  const focus=last?focusValue(saved.focus):'',storedStage=last&&state[lesson.id]?.clarityDraft?.stage;
+  const stage=['explanation','selfcheck','practice'].includes(storedStage)?storedStage:'';
+  return{lesson,mode,focus,stage,href:lessonLink(lesson.id,focus)+(stage&&!focus?'&stage='+stage:''),visitedAt:last?saved.visitedAt:null};
  };
- return{remember,continuation,key};
+ return{remember,rememberOnec,lastOnec,continuation,key};
 }
 
 export function continuationNote(resume,t,locale){
  if(!resume)return'';
- return `<p class="learning-resume-note" data-learning-resume-note><span>${escape(t('discovery.resume.'+resume.mode))}</span><strong>${escape(title(resume.lesson.title,locale))}</strong>${resume.focus?`<small>${escape(t('discovery.kind.'+resume.focus))}</small>`:''}</p>`;
+ const stageName=locale==='en'?{explanation:'Explanation',selfcheck:'Self-check',practice:'Practice'}:{explanation:'Объяснение',selfcheck:'Самопроверка',practice:'Практика'};
+ const detail=resume.focus?t('discovery.kind.'+resume.focus):stageName[resume.stage];
+ return `<p class="learning-resume-note" data-learning-resume-note><span>${escape(t('discovery.resume.'+resume.mode))}</span><strong>${escape(title(resume.lesson.title,locale))}</strong>${detail?`<small>${escape(detail)}</small>`:''}</p>`;
 }
 export function continuationCard(resume,t,locale){
  if(!resume)return'';
  return `<section class="discovery-resume glass-panel" aria-label="${escape(t('codeHub.continue'))}"><div><span class="eyebrow">C++ · ${escape(t('codeHub.reference'))}</span>${continuationNote(resume,t,locale)}</div><a class="btn primary" data-learning-continue href="${escape(resume.href)}">${escape(t('discovery.action.'+resume.mode))}<span aria-hidden="true">→</span></a></section>`;
 }
 
-export function recentProjectsMarkup(t){
- return `<section class="section discovery-recent" data-recent-projects aria-labelledby="recentProjectsTitle"><div class="section-head"><div><span class="eyebrow">PROJECT STUDIO</span><h2 id="recentProjectsTitle">${escape(t('discovery.recent.title'))}</h2><p>${escape(t('discovery.recent.intro'))}</p></div><a class="learning-open-link" href="#view=projects">${escape(t('discovery.recent.all'))} →</a></div><div data-recent-list role="status">${escape(t('discovery.recent.loading'))}</div></section>`;
+export function recentProjectsMarkup(t,{hideEmpty=false}={}){
+ return `<section class="section discovery-recent" data-recent-projects${hideEmpty?' data-current-projects hidden':''} aria-labelledby="recentProjectsTitle"><div class="section-head"><div><span class="eyebrow">PROJECT STUDIO</span><h2 id="recentProjectsTitle">${escape(t('discovery.recent.title'))}</h2><p>${escape(t('discovery.recent.intro'))}</p></div><a class="learning-open-link" href="#view=projects">${escape(t('discovery.recent.all'))} →</a></div><div data-recent-list role="status">${escape(t('discovery.recent.loading'))}</div></section>`;
 }
 export function recentProjectListMarkup(visible,t,locale='ru'){return visible.length?`<div class="discovery-project-grid">${visible.map(project=>{let date='';try{date=new Intl.DateTimeFormat(locale,{day:'numeric',month:'short',year:'numeric'}).format(new Date(project.updatedAt))}catch{}return `<article class="discovery-project-card glass-panel" data-recent-project="${escape(project.id)}"><div class="learning-card-kicker"><span>${escape(languageLabel(project.languageId,locale))}</span><span>${escape(t(project.origin?.kind==='graphics-lab'?'discovery.recent.graphics':project.origin?.courseId?'discovery.recent.course':'discovery.recent.own'))}</span></div><h3>${escape(project.title)}</h3><p>${escape(project.description||t('discovery.recent.noDescription'))}</p>${date?`<small>${escape(t('discovery.recent.updated',{date}))}</small>`:''}<a class="btn" href="#view=project-studio&project=${encodeURIComponent(project.id)}">${escape(t('discovery.recent.open'))}<span aria-hidden="true">↗</span></a></article>`}).join('')}</div>`:`<div class="discovery-empty glass-panel"><h3>${escape(t('discovery.recent.empty'))}</h3><p>${escape(t('discovery.recent.emptyText'))}</p><a class="btn" href="#course=cpp&tab=projects">${escape(t('codeHub.courseProjects'))} →</a><a class="btn" href="#view=projects">${escape(t('nav.myProjects'))} ↗</a></div>`}
 let disposeRecent=()=>{};
@@ -62,7 +83,9 @@ export function bindRecentProjects({loadProjects,t,locale='ru'}={}){
  const load=async()=>{
   try{
    const projects=await loadProjects();if(!current())return;
-   const visible=projects.filter(project=>evaluateProjectAccess(project.access,{subjectId:principal,action:'view'}).allowed&&(project.origin?.kind!=='graphics-lab'||isCurrentProjectOwner(project.access))).slice(0,3);
+   const ownersOnly=container.hasAttribute('data-current-projects');
+   const visible=projects.filter(project=>evaluateProjectAccess(project.access,{subjectId:principal,action:'view'}).allowed&&(!ownersOnly&&project.origin?.kind!=='graphics-lab'||isCurrentProjectOwner(project.access))).slice(0,3);
+   if(ownersOnly)container.hidden=!visible.length;
    target.removeAttribute('role');
    target.innerHTML=recentProjectListMarkup(visible,t,locale);
   }catch{if(!current())return;target.textContent=t('discovery.recent.failed');const retry=document.createElement('button');retry.className='btn';retry.type='button';retry.textContent=t('shell.error.retry');retry.onclick=()=>{target.textContent=t('discovery.recent.loading');load()};target.append(retry)}

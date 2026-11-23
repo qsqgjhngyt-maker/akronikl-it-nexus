@@ -6,6 +6,8 @@ import {nexusShellMarkup} from '../core/shell-presentation.js';
 import {memoryLabMarkup} from '../core/memory-lab.js';
 import {oopLabMarkup} from '../core/oop-lab.js';
 import {academyCatalogMarkup} from '../core/academy-catalog.js';
+import {availableCourseCards} from '../core/academy-course-cards.js';
+import {auditGuestPresentation} from '../tools/nexus-audit-guest.mjs';
 import {programmingHubMarkup} from '../core/code-hub-presentation.js';
 import {learnerAcademyEntries} from '../core/academy-presentation.js';
 import {textFor,translator} from '../core/i18n.js';
@@ -34,10 +36,14 @@ for(const collapsed of [false,true])for(const active of ['home','academy','proje
  const current=nexusShellMarkup('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active,ctx);
  const tools=current.match(/<span class="side-nav-label">[\s\S]*?<\/button>(?=<\/nav>)/)?.[0];
  assert.ok(tools?.includes('href="#view=code-studio"')&&tools.includes('data-interface-update-check'));
+ const offline=tools.match(/<a href="#view=offline"[^>]*>[\s\S]*?<\/a>/)?.[0];
+ assert.ok(offline?.includes('nav.offline'));
+ assert.equal(offline.includes('aria-current="page"'),active==='offline');
  // The owner-approved P4-Q logo replaces only the old ANX brand contents.
  const brand='<img class="nexus-brand-image" src="'+new URL('../assets/brand-mark.svg',import.meta.url).href+'" alt="" aria-hidden="true" decoding="async">';
  assert.ok(current.includes('<span class="brand-mark">'+brand+'</span>'));
- assert.equal(current.replace(tools,''),baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active).replaceAll('0.1.7-alpha.2.4.6-ui1a.10.1',version).replace('<span class="brand-mark">ANX</span>','<span class="brand-mark">'+brand+'</span>'));
+ const previous=baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active).replaceAll('0.1.7-alpha.2.4.6-ui1a.10.1',version).replace('<span class="brand-mark">ANX</span>','<span class="brand-mark">'+brand+'</span>');
+ assert.equal(current.replace(tools,''),previous.replace(/<a href="#view=offline"[^>]*>[\s\S]*?<\/a>/,''));
 }
 const app=await readFile(new URL('../core/app.js',import.meta.url),'utf8');
 assert.ok(app.includes('nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon})'));
@@ -45,15 +51,35 @@ assert.ok((await readFile(new URL('../core/learning-views.js',import.meta.url),'
 console.log('PASS: shared online/offline shell byte-equivalent for 12 states; '+lessons+' lesson renderers byte-equivalent; online account callback retained');
 const json=async file=>JSON.parse(await readFile(new URL('../'+file,import.meta.url),'utf8'));
 const cpp={manifest:await json('courses/cpp/manifest.json'),curriculum:await json('courses/cpp/curriculum.json'),practicumsRu:await json('courses/cpp/data/practicums.ru.json'),projectsRu:await json('courses/cpp/data/projects.ru.json')},catalog=await json('courses/catalog.json'),programming=await json('courses/programming/languages.json');
+assert.equal(availableCourseCards.cpp.topics,cpp.curriculum.lessons.length);
+assert.equal(availableCourseCards.cpp.modules,cpp.curriculum.sections.length);
+for(const id of ['onec','1c-enterprise']){
+ const curriculum=await json('courses/'+id+'/curriculum.json');
+ assert.equal(availableCourseCards[id].modules,curriculum.modules.length);
+ assert.equal(availableCourseCards[id].topics,curriculum.modules.reduce((sum,module)=>sum+module.topics.length,0));
+}
+const guest=await readFile(new URL('../server-access/public/entry.html',import.meta.url),'utf8');
+const decorated=auditGuestPresentation(guest,{generation:'ui1a-candidate-review',version:'0.1.7-alpha'});
+const loginMarkup=source=>source.match(/<aside class="access-card"[\s\S]*?<\/aside>/)?.[0];
+assert.ok(loginMarkup(guest));
+assert.equal(loginMarkup(decorated),loginMarkup(guest));
+assert.match(decorated,/151 тема · RU \/ EN/);
+assert.match(decorated,/assets\/audit-ux\/cpp-practice\.jpg/);
 for(const locale of ['ru','en']){
  const prefs={uiLocale:locale,courseLocale:locale},t=translator(await json('locales/'+locale+'/ui.json'));
- const ctx={prefs,t,cpp,catalog,academyViewFilter:{category:'all',availability:'all',query:'SYNTHETIC <query>'},visualIcon:v=>v,e,textFor,learnerAcademyEntries,visualShell:body=>body};
+ const ctx={prefs,t,cpp,catalog,academyViewFilter:{category:'all',availability:'all',query:''},visualIcon:v=>v,e,textFor,learnerAcademyEntries,visualShell:body=>body};
  const keys=Object.keys(ctx),baseline=new Function(...keys,before.slice(before.indexOf('function academy(){'),before.indexOf('function bindAcademyView(){'))+';return academy')(...keys.map(k=>ctx[k]));
  const catalogMarkup=academyCatalogMarkup(ctx),previousCatalog=baseline();
  const decorativeNumber=/<span class="visual-step-number">[0-9]+<\/span>/g;
  assert.match(previousCatalog,decorativeNumber);
  assert.doesNotMatch(catalogMarkup,/\bvisual-step-number\b/);
- assert.equal(catalogMarkup,previousCatalog.replace(decorativeNumber,''));
+ const cardIds=html=>[...html.matchAll(/data-academy-course="([^"]+)"/g)].map(match=>match[1]);
+ assert.deepEqual(cardIds(catalogMarkup),cardIds(previousCatalog).map(id=>id==='programming'?'cpp':id));
+ for(const id of ['cpp','onec','1c-enterprise'])assert.match(catalogMarkup,new RegExp('data-academy-course="'+id+'"[^>]*data-academy-status="available"[^>]*href="#course='+id+'"'));
+ assert.match(catalogMarkup,/data-academy-availability="available" aria-pressed="true"/);
+ assert.equal((catalogMarkup.match(/data-academy-status="planned"[^>]* hidden/g)||[]).length,45);
+ assert.match(catalogMarkup,/id="academySearchAll"/);
+ assert.match(catalogMarkup,/href="#view=programming"/);
  // Snapshot предшествует разрешённому открытию 1С. В прежнем planned-состоянии
  // сохраняется полное byte-equivalence; новый вход проверяется отдельно.
  const legacyProgramming=structuredClone(programming);legacyProgramming.tracks.find(x=>x.id==='onec').status='planned';
@@ -66,4 +92,4 @@ for(const locale of ['ru','en']){
  for(const track of programming.tracks.filter(x=>x.id!=='onec'))assert.equal(card(active,track.id),card(legacy,track.id),'Unchanged language '+track.id);
  assert.equal((active.match(/class="programming-language-card available"/g)||[]).length,2,'Only C++ and approved onec are available');
 }
-console.log('PASS: RU/EN Academy matches the accepted catalog after removing decorative numbers; Code Hub byte-equivalent');
+console.log('PASS: Academy routes, verified course counts, guest login markup and Code Hub preserved');

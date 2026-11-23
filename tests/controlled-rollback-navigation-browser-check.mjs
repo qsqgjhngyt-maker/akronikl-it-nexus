@@ -106,12 +106,12 @@ try{
  });
  await check('Home -> Academy -> Home via real menu reuses the outline and renders C++ card',async()=>{
   await navigation(primary.page,'#view=academy','[data-visual-academy]');
-  assert.equal(await primary.page.locator('.academy-hub-reference').count(),1);assertOutline(primary.record);
+  assert.equal(await primary.page.locator(':is(.academy-hub-reference,[data-academy-course=cpp])').count(),1);assertOutline(primary.record);
   await navigation(primary.page,'#view=home','.visual-home');assertOutline(primary.record);
  });
  await check('Academy -> complete C++ -> lesson loads each course payload once and binds the editor',async()=>{
   await navigation(primary.page,'#view=academy','[data-visual-academy]');
-  await primary.page.locator('.academy-hub-reference').click();await ready(primary.page,'[data-cpp-learning-path]');
+  await primary.page.locator(':is(.academy-hub-reference,[data-academy-course=cpp])').click();await ready(primary.page,'[data-cpp-learning-path]');
   assert.equal(await primary.page.locator('.topic').count(),40);assertFull(primary.record);
   await primary.page.locator('.topic a').first().click();await ready(primary.page,'.lesson');
   await primary.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));

@@ -31,8 +31,8 @@ for(const locale of ['ru','en']){
   const render=cpp=>academyCatalogMarkup({...deps,cpp,academyViewFilter});
   const markup=render(outline);
   assert.match(markup,/data-visual-academy/);
-  assert.match(markup,/class="academy-hub-reference" href="#course=cpp"/);
-  assert.ok(markup.includes(textFor(outline.manifest.title,locale)));
+  assert.match(markup,/data-academy-course="cpp"[^>]*href="#course=cpp"/);
+  assert.match(markup,/<h3>C\+\+<\/h3>/);
   assert.equal(markup,render(full));
  });
  test('Opening C++ retains the complete overview, lessons, practicums and projects ('+locale+')',()=>{
@@ -41,5 +41,14 @@ for(const locale of ['ru','en']){
   assert.match(views.lessonView(outline.curriculum.lessons[0].id),/id="editor"/);
   assert.equal((views.practicums().match(/data-practicum-progress/g)||[]).length,outline.manifest.practicumCount);
   assert.equal((views.projectsView().match(/class="project-card-rich/g)||[]).length,outline.manifest.projectCount);
+ });
+ test('A saved lesson comes before the scene and preserves its stage ('+locale+')',()=>{
+  const bookmark=createLearningResume({storage:{getItem:()=>JSON.stringify({schemaVersion:1,courses:{cpp:{
+    lessonId:'cpp.data-types',focus:'',visitedAt:'2026-11-23T00:00:00Z'
+  }}})},principal:()=>'synthetic'});
+  const resume=()=>bookmark.continuation(outline,{'cpp.data-types':{clarityDraft:{stage:'practice'}}});
+  const markup=createLearningViews({...deps,cpp:outline,cppContinuation:resume}).home();
+  assert.match(markup,/data-learning-continue href="#course=cpp&amp;lesson=cpp.data-types&amp;stage=practice"/);
+  assert.ok(markup.indexOf('visual-home-continuation')<markup.indexOf('visual-home-hero'));
  });
 }

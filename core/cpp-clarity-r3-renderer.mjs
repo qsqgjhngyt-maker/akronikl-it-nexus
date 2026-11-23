@@ -5,6 +5,7 @@ import {createLearningSession,createClarityRunObserver} from './cpp-clarity-r3-s
 import {emptyClarityDraft,validateClarityDraft,answerIsChecked,CLARITY_CONTENT_REVISION,snapshotDigests,canonicalJson} from './cpp-clarity-r3-state.mjs';
 import {referenceCourseStyles,mountReferenceNavigation} from './reference-course-ui.mjs';
 import {evaluateReferenceRun} from './reference-practice-assessment.mjs';
+import {auditStudyPilot,studyReviewMarkup,studyBridgeMarkup,selfAssessmentMarkup,diagnosticMarkup,addSectionGroups,addStudyFeedback,studyFeedbackBody} from './nexus-audit-study.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const R3_TOPICS=Object.freeze(Object.keys(CLARITY_COURSES));
 const stages=['explanation','selfcheck','practice'],cache=new Map();
@@ -107,9 +108,11 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  function selfcheck(){
   const referenceChoice=say('Открыть эталон','Open the reference solution');
   const referenceGuess=say('Довериться готовому решению без собственной проверки','Rely on the reference solution without checking your work');
+  const calibrationQuestion=auditStudyPilot(topicId)&&lesson.practice.referenceSolution?lesson.selfcheck.find(q=>q.kind!=='free')?.id:null;
   const questions=lesson.selfcheck.map(q=>{
    const answer=d.answers[q.id],free=q.kind==='free';
-   const canOpenReference=!free&&q.options.includes(referenceChoice)&&lesson.practice.referenceSolution;
+   const calibrates=q.id===calibrationQuestion;
+   const canOpenReference=!free&&(calibrates||q.options.includes(referenceChoice))&&lesson.practice.referenceSolution;
    const inputs=free
     ?`<textarea data-answer="${q.id}" aria-label="${esc(q.prompt)}" ${adapter?'':'disabled'}>${esc(answer?.value||'')}</textarea>`
     :q.options.map((choice,index)=>`<label class="option"><input type="radio" name="${q.id}" value="${index}" data-answer="${q.id}" ${answer?.value===index?'checked':''} ${adapter?'':'disabled'}><span>${esc(canOpenReference&&choice===referenceChoice?referenceGuess:choice)}</span></label>`).join('');
@@ -117,6 +120,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
     ${inputs}<button class="btn" type="submit" ${adapter?'':'disabled'}>${free?w.free:w.check}</button></fieldset>
     <div data-feedback="${q.id}" role="status"></div>
     ${q.recall?`<button type="button" class="btn" data-recall="${esc(q.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}
+    ${calibrates?`<div data-audit-assessment-option ${answer?'':'hidden'}>${selfAssessmentMarkup(locale)}</div>`:''}
     ${canOpenReference?`<button type="button" class="btn quiet" data-action="selfcheck-reference" aria-haspopup="dialog">${say('Открыть эталон практики','Open the practice reference')}</button>`:''}</form>`;
   }).join('');
   return `<h1>${w.selfcheck}</h1><p>${esc(lesson.goal)}</p>${questions}<div data-course-checkpoint></div><a class="btn" href="${url(topicId,'practice')}">${w.practice} →</a>`;
@@ -329,6 +333,11 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  if(author){const readingButton=document.createElement('button');readingButton.type='button';readingButton.className='btn';readingButton.dataset.action='reading';readingButton.textContent=say('Что почитать по теме','Topic reading');root.querySelector('.course-controls').append(readingButton);}
  const panel=s=>root.querySelector('[data-r3-panel="'+s+'"]');
+ const explanationPanel=panel('explanation');
+ explanationPanel.insertAdjacentHTML('afterbegin',studyReviewMarkup(topicId,locale));
+ explanationPanel.insertAdjacentHTML('beforeend',diagnosticMarkup(topicId,locale)+studyBridgeMarkup(topicId,locale));
+ addSectionGroups(explanationPanel,locale,anchor=>url(topicId,'explanation',locale,anchor));
+ if(auditStudyPilot(topicId))addStudyFeedback(explanationPanel,locale);
  function feedback(q){
   const a=draft().answers[q.id],node=root.querySelector('[data-feedback="'+q.id+'"]');if(!node)return;node.className='feedback';
   if(q.kind==='free'){node.textContent=a?.value?say('Текст сохранится вместе с вашим черновиком. ','The text will be saved with your draft. ')+q.feedback:w.answerDraft;return;}
@@ -438,6 +447,11 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  });
  listen(root,'input',event=>{if(!session||!live())return;const el=event.target;if(el.dataset.answer){const id=el.dataset.answer;session.change(d=>{d.answers[id]={value:el.type==='radio'?Number(el.value):el.value,checked:false,contentRevision};});feedback(lesson.selfcheck.find(q=>q.id===id));}if(el.hasAttribute('data-r3-report'))session.change(d=>{d.reportDraft=el.value;});});
  listen(root,'submit',event=>{const q=lesson.selfcheck.find(q=>q.id===event.target.dataset.question);if(!q)return;event.preventDefault();if(!session||!live()||!draft().answers[q.id])return;session.change(d=>{d.answers[q.id].checked=q.kind!=='free';d.answers[q.id].contentRevision=contentRevision;});feedback(q);void session.flush().catch(()=>{});});
+ listen(root,'input',event=>{
+   if(!event.target.hasAttribute('data-answer'))return;
+   const option=event.target.closest('[data-question]')?.querySelector('[data-audit-assessment-option]');
+   if(option&&event.target.type==='radio')option.hidden=false;
+ });
  function dialog(title,body){const opener=root.getRootNode().activeElement||document.activeElement,node=document.createElement('dialog');node.className='r3-dialog';node.innerHTML=`<h2>${esc(title)}</h2><button class="btn" data-close>${w.close}</button>${body}`;root.querySelector('.r3-lesson').append(node);node.querySelector('[data-close]').onclick=()=>node.close();node.onclose=()=>{node.remove();opener?.focus();};node.showModal();return node;}
  root.addEventListener('toggle',async event=>{
   const details=event.target;
@@ -463,8 +477,18 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   const link=event.target.closest('a[href^="#"]');if(link){const p=new URLSearchParams(link.hash.slice(1));if(p.get('lesson')===topicId&&p.get('locale')===locale&&stages.includes(p.get('stage'))){event.preventDefault();root.querySelector('dialog')?.close();history.pushState(null,'',link.hash);await showStage(p.get('stage'),p.get('at'));return;}}
   const button=event.target.closest('button');if(!button)return;
   try{
+   if(button.hasAttribute('data-audit-step')){
+    const step=button.dataset.auditStep;
+    const node=dialog(say('Сообщить о трудности','Report a difficulty'),studyFeedbackBody(topicId,step,locale));
+    const difficulty=node.querySelector('[data-audit-difficulty]'),preview=node.querySelector('[data-audit-feedback-text]');
+    const render=()=>{preview.value=say('Учебный шаг','Learning step')+' · '+topicId+' / '+step+' · '+difficulty.selectedOptions[0].textContent;};
+    difficulty.addEventListener('change',render);render();
+    return;
+   }
    if(button.dataset.action==='selfcheck-reference'){
-    const title=say('Эталон практики','Practice reference'),node=dialog(title,referenceDisclosure());
+    const rating=button.closest('[data-question]')?.querySelector('[data-audit-rating]');
+    const selected=rating?.value?`<p>${say('Ваша самооценка','Your self-rating')} · ${esc(rating.selectedOptions[0].textContent)}</p>`:'';
+    const title=say('Эталон практики','Practice reference'),node=dialog(title,selected+referenceDisclosure());
     node.setAttribute('aria-label',title);
     node.onclose=()=>{
      node.remove();
