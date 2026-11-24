@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.string-library",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "C programming",
+  "module": "Strings and text",
+  "title": "Length, comparison and buffer limits",
+  "goal": "Validate the input as a C string within the buffer, then compare the whole key.",
+  "prerequisites": [
+    {
+      "text": "Be able to distinguish a complete record from truncation and find the terminating null within a char array."
+    }
+  ],
+  "terms": [
+    {
+      "id": "operator-key",
+      "term": "Key",
+      "title": "Key",
+      "definition": "A predefined text value that identifies a command."
+    },
+    {
+      "id": "prefix",
+      "term": "Prefix",
+      "title": "Prefix",
+      "definition": "The opening bytes of a string. The first two bytes of OK! form prefix OK."
+    },
+    {
+      "id": "strcmp",
+      "term": "strcmp",
+      "title": "strcmp",
+      "definition": "Compares two C strings and returns a negative value, zero or a positive value."
+    },
+    {
+      "id": "strlen",
+      "term": "strlen",
+      "title": "strlen",
+      "definition": "Counts bytes before the first '\\0' and returns a size_t."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The device has a command dictionary",
+      "paragraphs": [
+        "A controller expects keys OK and ADJ. An operator types OK! out of habit. Its first two letters match, but the third byte changes the command. The device needs the whole key.",
+        "Separate a complete, valid input record from a rejected one first. After establishing that the array contains its '\\0', the text is ready for strcmp and strlen.",
+        "A declaration char text[9] reserves nine cells. Eight can hold text bytes, with a cell left for '\\0' after the input. In that buffer OK still has length two."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Read the result of strcmp",
+      "paragraphs": [
+        "Two arrays hold REF, and a third holds REF!. Equal strings compare as zero. Then compare the shorter string with a longer string that shares its first three bytes."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <string.h>\n\nint main(void)\n{\n    const char key[] = \"REF\";\n    const char reading[] = \"REF\";\n    const char longer[] = \"REF!\";\n    if (strcmp(key, reading) == 0) {\n        puts(\"equal\");\n    }\n    if (strcmp(key, longer) < 0) {\n        puts(\"before\");\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "equal\nbefore\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "key and reading match across three letters and each has '\\0' at the next cell. strcmp returns zero, so the output is equal.",
+        "The first three bytes of key and longer match. At position 3, the comparison sees zero and the nonzero byte !.",
+        "Only the sign of the second result matters. The expression < 0 holds, so the output is before."
+      ],
+      "trace": [
+        [
+          "key against reading",
+          "R, E, F, '\\0' match",
+          "== 0",
+          "equal"
+        ],
+        [
+          "key against longer",
+          "R, E, F match",
+          "'\\0' comes before !",
+          "before"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Prefix matching gives another result",
+      "paragraphs": [
+        "strncmp with a count of 2 examines at most two bytes. This test accepts OK!, since both opening bytes match. strcmp checks the full key, including that OK already has '\\0' in cell 2.",
+        "strcmp takes two arguments. Clang rejects a call that also supplies a byte count. The separate function strncmp takes that count."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Plan command tests",
+      "paragraphs": [
+        "A new controller accepts RUN and STOP. List the exact strings and add an input with an extra character for which prefix matching would produce the wrong answer."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.1.1, 7.24.1, 7.24.4.2, 7.24.4.4, 7.24.6.3",
+      "language": "English",
+      "purpose": "Check strcmp, strncmp and strlen contracts and the definition of a string."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "When strcmp compares two strings REF and you test its return value for equality with zero, what happens?",
+      "options": [
+        "The equality test succeeds",
+        "The comparison returns the length 3",
+        "The test checks only the first letter"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Both strings match until their common end.",
+        "strlen measures length.",
+        "Comparison proceeds to a difference or end of string."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Why validate input before calling strcmp?",
+      "options": [
+        "To establish a '\\0' within the available array",
+        "To make strcmp always return exactly -1, 0 or 1",
+        "To substitute strlen for the buffer check"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The function requires C strings. Establish their boundaries first.",
+        "The contract specifies the sign or zero.",
+        "strlen also requires termination."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Why does OK! pass a two-byte prefix test and fail an exact match against OK?",
+      "feedback": "The opening bytes O and K match. The whole-string comparison finds a difference at position 2, where the bytes are ! and '\\0'.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <string.h>\n\nint main(void)\n{\n    const char key[] = \"OK\";\n    return strcmp(key, \"OK\", 2);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too many arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Recognize the controller keys",
+    "task": "Read only the first record. If it has up to eight bytes and matches OK or ADJ exactly, print known, a space and the length. Other valid text, including an empty line, gives unknown. Print invalid for an empty stream, a record longer than eight bytes or a record containing NUL. LF and CRLF separators are excluded from the length. EOF can end the final record. Keep the supplied read_line validation and correct the key comparison.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char text[9];\n    if (read_line(text, sizeof text) != LINE_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    /* TODO: compare whole keys. */\n    if (strncmp(text, \"OK\", 2) == 0 || strncmp(text, \"ADJ\", 3) == 0) {\n        printf(\"known %zu\\n\", strlen(text));\n    } else {\n        puts(\"unknown\");\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "OK!\n",
+    "returnAnchor": "example",
+    "hint": "The reader already checks the buffer boundary. Which comparison includes information about the byte after a matching prefix?",
+    "criteria": [
+      "OK gives known 2, ADJ gives known 3, and OK! and ADJx give unknown.",
+      "A record of eight bytes is valid input. Nine bytes give invalid.",
+      "An embedded null or missing record gives invalid. Library functions receive only accepted text.",
+      "Cases marked “automatic WASI check” use exact bytes. Read their labels and expected output. You can enter the other cases in the lesson editor."
+    ],
+    "cases": [
+      {
+        "label": "Exact key OK",
+        "input": "OK\n",
+        "output": "known 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Exact key ADJ",
+        "input": "ADJ\n",
+        "output": "known 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "OK with an extra character",
+        "input": "OK!\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "ADJ followed by extra text",
+        "input": "ADJx\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Key in lowercase",
+        "input": "ok\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Blank input line",
+        "input": "\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty stream",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Exactly eight data bytes before LF",
+        "input": "12345678\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Nine data bytes before LF",
+        "input": "123456789\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Null byte immediately after OK · NUL (00) · automatic WASI check",
+        "input": "OK\u0000!\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Key with CRLF · CRLF (0D 0A) · automatic WASI check",
+        "input": "ADJ\r\n",
+        "output": "known 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Key without a trailing LF · EOF without a final newline",
+        "input": "OK",
+        "output": "known 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Four instances of é in UTF-8, exactly eight bytes",
+        "input": "éééé\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Five instances of é in UTF-8, ten bytes",
+        "input": "ééééé\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with OK!.",
+        "why": "An extra character distinguishes a key from its prefix.",
+        "expected": "The starter prints known 3."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Correct the key test and rerun the same input.",
+        "why": "An exact key shares the position of the string end.",
+        "expected": "The output is unknown."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run separate tests for OK, ADJ, eight digits and nine digits.",
+        "why": "These inputs separate key recognition from the length limit.",
+        "expected": "The results are known 2, known 3, unknown and invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Try it on your own",
+        "task": "In the lesson editor, after saving a copy of main.c in a separate text file, change the dictionary to RUN and STOP and keep the limit. Check the labelled WASI cases against their expected output. Restore your saved main.c after the experiment.",
+        "criteria": [
+          "RUN and STOP give known 3 and known 4.",
+          "RUN! gives unknown. Invalid length produces invalid before comparison."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char text[9];\n    if (read_line(text, sizeof text) != LINE_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (strcmp(text, \"OK\") == 0 || strcmp(text, \"ADJ\") == 0) {\n        printf(\"known %zu\\n\", strlen(text));\n    } else {\n        puts(\"unknown\");\n    }\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.compare-bounded-strings",
+    "prerequisites": [
+      "c.complete-line-input"
+    ]
+  }
+}

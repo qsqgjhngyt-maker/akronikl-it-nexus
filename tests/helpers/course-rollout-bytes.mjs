@@ -27,7 +27,7 @@ if(existsSync(candidateFile)){
   activePins.set(pin.path,pin);
  }
 }
-for(const module of ['M2','M3','M4']){
+for(const module of ['M2','M3','M4','M5']){
  const pinFile='docs/ru/03-content/cp-next-01/'+module+'_PRESENTATION_BYTES.json';
  if(!existsSync(pinFile))continue;
  for(const pin of JSON.parse(readFileSync(pinFile)).files){

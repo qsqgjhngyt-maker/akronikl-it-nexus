@@ -8,12 +8,12 @@ const curriculum = read('courses/c/curriculum.json');
 const locales = ['ru', 'en'];
 const text = value => typeof value === 'string' && value.trim().length > 0;
 
-test('Четыре модуля C доступны, остальные помечены как запланированные', () => {
+test('Пять модулей C доступны, остальные помечены как запланированные', () => {
   assert.equal(manifest.id, 'c');
   assert.equal(manifest.languageId, 'c');
   assert.equal(manifest.standard, 'C17');
   assert.deepEqual(manifest.availableLocales, locales);
-  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4']);
+  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4', 'c.m5']);
   const modules = curriculum.modules;
   assert.ok(modules.length > 1);
   assert.equal(new Set(modules.map(module => module.id)).size, modules.length);
@@ -32,18 +32,22 @@ test('Четыре модуля C доступны, остальные поме�
       assert.ok(text(module.completion[locale]), module.id);
     }
   }
-  assert.equal(manifest.availableTopicIds.length, 23);
-  assert.equal(curriculum.availableModuleCount, 4);
-  assert.equal(curriculum.availableTopicCount, 23);
+  assert.equal(manifest.availableTopicIds.length, 27);
+  assert.equal(curriculum.availableModuleCount, 5);
+  assert.equal(curriculum.availableTopicCount, 27);
   assert.deepEqual(manifest.availableTopicIds.slice(9, 14), [
     'c.read-input', 'c.conditions', 'c.counted-loops', 'c.sentinel-loops', 'c.guard-boundaries',
   ]);
   assert.deepEqual(manifest.availableTopicIds.slice(14, 19), [
     'c.functions', 'c.parameters', 'c.scope', 'c.function-test-cases', 'c.function-project',
   ]);
-  assert.deepEqual(manifest.availableTopicIds.slice(19), [
+  assert.deepEqual(manifest.availableTopicIds.slice(19, 23), [
     'c.array-bounds', 'c.array-parameters', 'c.array-statistics', 'c.array-sort',
   ]);
+  assert.deepEqual(manifest.availableTopicIds.slice(23), [
+    'c.null-terminated-strings', 'c.line-input', 'c.string-library', 'c.text-project',
+  ]);
+  assert.equal(modules.find(module => module.id === 'c.m5').project.status, 'implemented');
   assert.equal(modules.find(module => module.id === 'c.m3').project.status, 'implemented');
   assert.deepEqual(topics.filter(topic => topic.status === 'implemented').map(topic => topic.id), manifest.availableTopicIds);
   const filenames = manifest.availableTopicIds.flatMap(id => locales.map(locale => id + '.' + locale + '.json'));

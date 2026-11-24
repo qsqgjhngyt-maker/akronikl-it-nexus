@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.string-library",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "Программирование на C",
+  "module": "Строки и текст",
+  "title": "Длина, сравнение и границы буфера",
+  "goal": "Проверить, что входная запись образует строку C в пределах буфера, затем сравнить ключ целиком.",
+  "prerequisites": [
+    {
+      "text": "Уметь отличать полную запись от усечённой и находить завершающий ноль в массиве char."
+    }
+  ],
+  "terms": [
+    {
+      "id": "operator-key",
+      "term": "Ключ",
+      "title": "Ключ",
+      "definition": "Заранее определённый текст, которому соответствует отдельная команда."
+    },
+    {
+      "id": "prefix",
+      "term": "Префикс",
+      "title": "Префикс",
+      "definition": "Байты в начале строки. Например, первые два байта OK! образуют префикс OK."
+    },
+    {
+      "id": "strcmp",
+      "term": "strcmp",
+      "title": "strcmp",
+      "definition": "Сравнивает две строки C. Возвращает отрицательное значение, ноль или положительное значение."
+    },
+    {
+      "id": "strlen",
+      "term": "strlen",
+      "title": "strlen",
+      "definition": "Считает байты перед первым '\\0'. Результат имеет тип size_t."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "У прибора есть словарь команд",
+      "paragraphs": [
+        "Пульт передаёт ключи OK и ADJ. Пользователь может набрать OK! по привычке. Первые две буквы совпадают, но третий байт меняет команду, а для прибора важен весь ключ.",
+        "Сначала отличите корректную и полную входную запись от отклонённой. Только строка с подтверждённым '\\0' внутри массива готова для strcmp и strlen.",
+        "У char text[9] девять ячеек. Для текста доступны восемь, после прочитанных данных остаётся ячейка под '\\0'. Даже при таком буфере длина OK равна двум."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Что говорит результат strcmp",
+      "paragraphs": [
+        "Два массива содержат REF, третий содержит REF!. Для одинакового текста получим ноль. Затем сравним короткую строку с более длинной, у которой те же первые три байта."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <string.h>\n\nint main(void)\n{\n    const char key[] = \"REF\";\n    const char reading[] = \"REF\";\n    const char longer[] = \"REF!\";\n    if (strcmp(key, reading) == 0) {\n        puts(\"equal\");\n    }\n    if (strcmp(key, longer) < 0) {\n        puts(\"before\");\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "equal\nbefore\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Три буквы в key и reading совпали, в следующей позиции у обеих строк '\\0'. strcmp вернула 0, вывод equal.",
+        "При сравнении key и longer первые три байта снова совпадают. В позиции 3 сравниваются ноль и ненулевой байт !.",
+        "Из второго вызова нужен только знак. Условие < 0 выполняется, вывод before."
+      ],
+      "trace": [
+        [
+          "key с reading",
+          "R, E, F, '\\0' совпадают",
+          "== 0",
+          "equal"
+        ],
+        [
+          "key с longer",
+          "R, E, F совпадают",
+          "'\\0' перед !",
+          "before"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Сравнение префикса даёт другой ответ",
+      "paragraphs": [
+        "strncmp с числом 2 смотрит максимум два байта. Такая проверка примет OK!, поскольку оба первых байта совпадают. Проверка целого ключа через strcmp учитывает, что у OK в позиции 2 уже находится '\\0'.",
+        "У strcmp два аргумента. Если передать ей ещё и число байтов, Clang отклонит вызов. Число байтов принимает отдельная функция strncmp."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Спланируйте проверку команд",
+      "paragraphs": [
+        "В другой версии пульт знает RUN и STOP. Перечислите точные строки, затем добавьте такой вход с лишним символом, на котором проверка префикса дала бы неверный ответ."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.1.1, 7.24.1, 7.24.4.2, 7.24.4.4, 7.24.6.3",
+      "language": "English",
+      "purpose": "Сверить договоры strcmp, strncmp и strlen, а также определение строки."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Что выведет strcmp для двух строк REF, если проверить результат на равенство нулю?",
+      "options": [
+        "Равенство подтверждено",
+        "Вернётся длина 3",
+        "Сработает проверка только первой буквы"
+      ],
+      "correct": 0,
+      "feedback": [
+        "У обеих строк совпадают байты до одного и того же конца.",
+        "Длину вычисляет strlen.",
+        "Сравнение идёт до различия или конца строки."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Зачем проверить вход до вызова strcmp?",
+      "options": [
+        "Чтобы доказать нахождение '\\0' внутри доступного массива",
+        "Чтобы strcmp вернула всегда ровно -1, 0 или 1",
+        "Чтобы заменить проверку буфера на strlen"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Функция получает строки C. Их границы должны быть установлены до вызова.",
+        "Договор функции гарантирует только знак результата или ноль.",
+        "strlen сама требует завершающего нуля."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Почему ключ OK! проходит проверку первых двух байтов и не проходит проверку точного ключа OK?",
+      "feedback": "Первые два байта O и K совпадают. Сравнение всей строки замечает различие в позиции 2, где находятся ! и '\\0'.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <string.h>\n\nint main(void)\n{\n    const char key[] = \"OK\";\n    return strcmp(key, \"OK\", 2);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too many arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Распознайте ключи панели",
+    "task": "Прочитайте только первую запись. Если она содержит до восьми байтов и точно совпадает с OK или ADJ, выведите known, пробел и длину. Прочий корректный текст, включая пустую строку, даёт unknown. Для пустого потока, записи длиннее восьми байтов или записи с NUL выведите invalid. Переводы строк LF и CRLF не учитываются в длине, последняя запись может закончиться при EOF. Используйте готовую проверку read_line и исправьте сравнение ключей.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char text[9];\n    if (read_line(text, sizeof text) != LINE_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    /* TODO: compare whole keys. */\n    if (strncmp(text, \"OK\", 2) == 0 || strncmp(text, \"ADJ\", 3) == 0) {\n        printf(\"known %zu\\n\", strlen(text));\n    } else {\n        puts(\"unknown\");\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "OK!\n",
+    "returnAnchor": "example",
+    "hint": "Граница буфера уже проверена. Проверьте, какая из функций сравнения учитывает и байт, идущий после совпавшего префикса.",
+    "criteria": [
+      "OK даёт known 2, ADJ даёт known 3, OK! и ADJx дают unknown.",
+      "Строка из восьми байтов допустима как вход. Девять байтов дают invalid.",
+      "Внутренний нулевой байт и отсутствие записи дают invalid. Библиотечные функции получают только принятый текст.",
+      "Случаи с пометкой «автоматическая проверка WASI» используют точные байты. Сверьте их по подписи и ожидаемому выводу. Остальные входы можно проверить вручную в редакторе урока."
+    ],
+    "cases": [
+      {
+        "label": "Точный ключ OK",
+        "input": "OK\n",
+        "output": "known 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Точный ключ ADJ",
+        "input": "ADJ\n",
+        "output": "known 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "OK с лишним знаком",
+        "input": "OK!\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "ADJ с хвостом",
+        "input": "ADJx\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ключ в нижнем регистре",
+        "input": "ok\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая строка",
+        "input": "\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой поток",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ровно 8 данных перед LF",
+        "input": "12345678\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "9 данных перед LF",
+        "input": "123456789\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевой байт сразу после OK · NUL (00) · автоматическая проверка WASI",
+        "input": "OK\u0000!\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ключ с CRLF · CRLF (0D 0A) · автоматическая проверка WASI",
+        "input": "ADJ\r\n",
+        "output": "known 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ключ без завершающего LF · EOF без перевода строки",
+        "input": "OK",
+        "output": "known 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Четыре é в UTF-8, ровно 8 байтов",
+        "input": "éééé\n",
+        "output": "unknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пять é в UTF-8, 10 байтов",
+        "input": "ééééé\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с OK!.",
+        "why": "Лишний знак помогает отличить ключ от его префикса.",
+        "expected": "Заготовка печатает known 3."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте проверку ключа и повторите тот же запуск.",
+        "why": "Для точного ключа должен совпасть конец строки.",
+        "expected": "Получится unknown."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте OK, ADJ, восемь цифр и девять цифр в отдельных запусках.",
+        "why": "Эти входы отделяют распознавание ключа от ограничения длины.",
+        "expected": "Получатся known 2, known 3, unknown и invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. В редакторе урока замените словарь на RUN и STOP, сохранив прежний лимит. Разберите отмеченные случаи WASI по подписи и ожидаемому выводу. В конце восстановите сохранённый main.c.",
+        "criteria": [
+          "RUN и STOP дают known 3 и known 4.",
+          "RUN! даёт unknown. Ошибка длины даёт invalid до сравнения."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char text[9];\n    if (read_line(text, sizeof text) != LINE_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (strcmp(text, \"OK\") == 0 || strcmp(text, \"ADJ\") == 0) {\n        printf(\"known %zu\\n\", strlen(text));\n    } else {\n        puts(\"unknown\");\n    }\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.compare-bounded-strings",
+    "prerequisites": [
+      "c.complete-line-input"
+    ]
+  }
+}

@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.line-input",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "Программирование на C",
+  "module": "Строки и текст",
+  "title": "Буфер строки и обрезанный ввод",
+  "goal": "Отличить строку ровно по вместимости от обрезанной и дочитать отклонённую строку до её границы.",
+  "prerequisites": [
+    {
+      "text": "Понимать разницу между данными и завершающим нулём в массиве char."
+    }
+  ],
+  "terms": [
+    {
+      "id": "record",
+      "term": "Запись",
+      "title": "Запись",
+      "definition": "Одна строка входного потока до LF, CRLF или EOF после последнего байта данных."
+    },
+    {
+      "id": "truncation",
+      "term": "Усечение",
+      "title": "Усечение",
+      "definition": "Часть прочитанной записи не помещается в буфер после учёта места под '\\0'."
+    },
+    {
+      "id": "drain",
+      "term": "Дочитать запись",
+      "title": "Дочитать запись",
+      "definition": "Пропустить оставшиеся байты текущей записи до её границы, чтобы следующая началась со своего первого байта."
+    },
+    {
+      "id": "eof",
+      "term": "EOF",
+      "title": "EOF",
+      "definition": "Сигнал от функции ввода об окончании потока или ошибке. Для различения используют ferror."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Буфер заполнился. Что дальше?",
+      "paragraphs": [
+        "Сканер отправляет по одному номеру на строку. Пять ячеек дают место для четырёх байтов номера и '\\0'. Как только четвёртая ячейка занята, нужно узнать, что идёт дальше: граница записи или ещё один байт.",
+        "Принимаем LF и пару CRLF как конец строки. Последняя непустая запись может закончиться сразу перед EOF. Пустая строка имеет перевод строки, а в пустом потоке нет ни записи, ни перевода строки.",
+        "getchar возвращает int, чтобы представить каждый байт и отдельное значение EOF. Проверять статус полезно до преобразования прочитанного байта в char."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Четыре байта, пять байтов и следующий номер",
+      "paragraphs": [
+        "Пример читает три записи буфером на пять байтов. Готовая read_line записывает максимум четыре байта, проверяет границу и затем проставляет '\\0' внутри буфера. В строке с CRLF она рассматривает CR вместе с LF."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[5];\n    for (int record = 0; record < 3; ++record) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            puts(\"invalid\");\n            break;\n        }\n        if (status == LINE_BAD) {\n            puts(\"invalid\");\n        } else if (status == LINE_LONG) {\n            puts(\"long\");\n        } else if (line[0] == '\\0') {\n            puts(\"blank\");\n        } else {\n            printf(\"ok %s\\n\", line);\n        }\n    }\n    return 0;\n}\n",
+        "stdin": "ABCD\nABCDE\nOK\n",
+        "output": "ok ABCD\nlong\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "В ABCD после D идёт LF. Дополнительного байта нет, статус LINE_OK.",
+        "В ABCDE после D идёт E. Статус LINE_LONG сохраняется до LF, тогда буфер больше не пополняется.",
+        "Следующая запись начинается с O. Она помещается, и программа печатает ok OK."
+      ],
+      "trace": [
+        [
+          "ABCD",
+          "4 байта",
+          "Следующий байт LF",
+          "ok ABCD"
+        ],
+        [
+          "ABCDE",
+          "Байт E сверх лимита",
+          "Дочитать до LF",
+          "long"
+        ],
+        [
+          "OK",
+          "2 байта",
+          "Граница достигнута",
+          "ok OK"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Отдельные проверки на похожие случаи",
+      "paragraphs": [
+        "Ровно заполненная область данных бывает у двух входов. Сравните вывод на строке длиной 6 и строке длиной 7. Затем добавьте короткую строку после длинной и проверьте, с какого символа она начинается.",
+        "Нулевой байт внутри входной записи делает её недопустимой. Читатель всё равно доходит до границы. Для такой записи используется статус invalid даже при превышении длины.",
+        "Если передать массив функции getchar, Clang отклонит вызов. getchar не принимает аргументов и сообщает один байт или EOF."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Проверьте новый лимит",
+      "paragraphs": [
+        "Если для данных нужно место на два байта, выделите три ячейки. Спланируйте запуск с двумя байтами, тремя байтами и короткой записью после длинной. Какая последовательность результатов подтвердит обе границы?"
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.21.2, 7.21.7.1, 7.21.7.6, 7.21.10.3",
+      "language": "English",
+      "purpose": "Сверить работу текстовых потоков, getchar и проверку ошибки ввода."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Что означает четыре заполненные ячейки данных в буфере с местом под '\\0'?",
+      "options": [
+        "Запись всегда усечена",
+        "Нужна проверка следующего байта или конца потока",
+        "Известна вместимость потока"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Номер из четырёх байтов может закончиться точно здесь.",
+        "Граница даёт полную запись, дополнительный байт даёт усечение.",
+        "Буфер ограничивает хранение одной записи, а поток может продолжаться."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Как проверить, что обработчик длинной строки дочитал её до конца?",
+      "options": [
+        "Подать одну длинную строку",
+        "Подать после длинной строку OK",
+        "Убрать терминатор из массива"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Этого хватит для статуса long. Для положения следующей записи нужно продолжение.",
+        "Следующий вывод должен быть ok OK.",
+        "Терминатор нужен для безопасной работы со строкой C."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Чем различается пустая строка и пустой поток?",
+      "feedback": "Пустая строка содержит границу LF или CRLF, поэтому даёт blank. Если EOF наступил до любого байта новой записи, цикл завершается без нового вывода.",
+      "recall": "idea"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    char line[7];\n    return getchar(line);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too many arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Разберите принятую строку и остаток",
+    "task": "Прочитайте до шести записей. В каждой может быть до шести текстовых байтов. Для обычной строки печатайте ok, пробел и её текст. Пустая строка даёт blank, строка длиннее лимита даёт long, запись с нулевым байтом даёт invalid. Статус invalid для нулевого байта важнее long. Границы LF и CRLF не входят в длину. При EOF после данных обработайте последнюю запись, а при EOF перед новой завершите работу. Исправьте условие статуса в готовой read_line. Размер входа измеряется в байтах.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    /* TODO: distinguish a full buffer from a line with extra bytes. */\n    return (overflow || used == capacity - 1) ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[7];\n    for (int record = 0; record < 6; ++record) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            puts(\"invalid\");\n            break;\n        }\n        if (status == LINE_BAD) {\n            puts(\"invalid\");\n        } else if (status == LINE_LONG) {\n            puts(\"long\");\n        } else if (line[0] == '\\0') {\n            puts(\"blank\");\n        } else {\n            printf(\"ok %s\\n\", line);\n        }\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "ABCDEF\nABCDEFG\nOK\n",
+    "returnAnchor": "example",
+    "hint": "Переменная used показывает число сохранённых байтов. Найдите признак, который устанавливается только при появлении лишнего байта.",
+    "criteria": [
+      "При входе ABCDEF, ABCDEFG и OK на отдельных строках появляются ok ABCDEF, long и ok OK.",
+      "После отклонённой записи сохраняется начало следующей.",
+      "Запись с NUL даёт invalid. Пустая строка даёт blank, а пустой поток оставляет вывод пустым.",
+      "Ровно шесть байтов перед LF, CRLF или EOF допускаются.",
+      "Случаи с пометкой «автоматическая проверка WASI» используют точные байты. Сверьте их по подписи и ожидаемому выводу. Остальные входы можно проверить вручную в редакторе урока."
+    ],
+    "cases": [
+      {
+        "label": "Точная длина, затем лишний байт и новая запись",
+        "input": "ABCDEF\nABCDEFG\nOK\n",
+        "output": "ok ABCDEF\nlong\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая строка перед обычной",
+        "input": "\nOK\n",
+        "output": "blank\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой поток",
+        "input": "",
+        "output": "",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последняя строка ровно 6 байтов без LF · EOF без перевода строки",
+        "input": "ABCDEF",
+        "output": "ok ABCDEF\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последняя длинная строка без LF · EOF без перевода строки",
+        "input": "ABCDEFG",
+        "output": "long\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Строка из 6 байтов с CRLF · CRLF (0D 0A) · автоматическая проверка WASI",
+        "input": "ABCDEF\r\nOK\r\n",
+        "output": "ok ABCDEF\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая строка с CRLF · CRLF (0D 0A) · автоматическая проверка WASI",
+        "input": "\r\n",
+        "output": "blank\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевой байт между A и B, затем OK · NUL (00) · автоматическая проверка WASI",
+        "input": "A\u0000B\nOK\n",
+        "output": "invalid\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Одновременно лишний байт и NUL · NUL (00) · автоматическая проверка WASI",
+        "input": "ABCDEFG\u0000\nX\n",
+        "output": "invalid\nok X\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ограничение в шесть записей из семи",
+        "input": "A\nB\nC\nD\nE\nF\nG\n",
+        "output": "ok A\nok B\nok C\nok D\nok E\nok F\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Три и четыре é в UTF-8",
+        "input": "ééé\néééé\n",
+        "output": "ok ééé\nlong\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "CR без LF в конце добавляет седьмой байт · CR (0D), EOF · автоматическая проверка WASI",
+        "input": "ABCDEF\r",
+        "output": "long\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с предложенными тремя строками.",
+        "why": "Первые две строки разделяют точное заполнение и превышение лимита.",
+        "expected": "Заготовка печатает long, long, ok OK."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Поправьте итоговый выбор LINE_LONG и повторите запуск.",
+        "why": "Лишний байт обнаруживается при попытке сохранить данные сверх лимита.",
+        "expected": "Получатся ok ABCDEF, long, ok OK."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Введите короткую строку после длинной и отдельно проверьте пустую запись.",
+        "why": "Нужно проверить сохранение новой границы, включая две соседние границы.",
+        "expected": "После long короткая строка даёт свой полный текст, пустая запись даёт blank."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. В редакторе урока уменьшите массив line до трёх ячеек. Проверьте строки AB, ABC и Z в таком порядке. Разберите отмеченные случаи WASI по подписи и ожидаемому выводу. В конце восстановите сохранённый main.c.",
+        "criteria": [
+          "Получается ok AB, long, ok Z.",
+          "В UTF-8 допустимая длина зависит от числа байтов, поэтому три é занимают ровно шесть байтов."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <stdio.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[7];\n    for (int record = 0; record < 6; ++record) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            puts(\"invalid\");\n            break;\n        }\n        if (status == LINE_BAD) {\n            puts(\"invalid\");\n        } else if (status == LINE_LONG) {\n            puts(\"long\");\n        } else if (line[0] == '\\0') {\n            puts(\"blank\");\n        } else {\n            printf(\"ok %s\\n\", line);\n        }\n    }\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.complete-line-input",
+    "prerequisites": [
+      "c.string-termination"
+    ]
+  }
+}

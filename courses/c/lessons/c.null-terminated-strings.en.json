@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.null-terminated-strings",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "C programming",
+  "module": "Strings and text",
+  "title": "Characters and the terminating null",
+  "goal": "Distinguish string length, array capacity and the position of the terminating null.",
+  "prerequisites": [
+    {
+      "text": "Be able to index an array and separate input validation from the calculation."
+    }
+  ],
+  "terms": [
+    {
+      "id": "terminator",
+      "term": "Null terminator",
+      "title": "Null terminator",
+      "definition": "A byte with value zero. It marks the end of a C string and is written as '\\0'."
+    },
+    {
+      "id": "length",
+      "term": "String length",
+      "title": "String length",
+      "definition": "The number of bytes before the first null terminator."
+    },
+    {
+      "id": "capacity",
+      "term": "Array capacity",
+      "title": "Array capacity",
+      "definition": "The number of bytes the whole char array can hold."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "How much space a label needs",
+      "paragraphs": [
+        "A stockroom label reads OK and has five cells available. Reading stops at the first cell that holds zero. The remaining cells still belong to the buffer, and the label length is two.",
+        "A C string is a sequence of bytes ending at the first '\\0'. The character '0' is visible in text such as T09. The terminating '\\0' marks the boundary.",
+        "A label with n single-byte text characters needs at least n + 1 cells. For these labels, strlen gives the number of visible characters."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Where reading stops",
+      "paragraphs": [
+        "Mark the indices of O, K and the terminating '\\0' before running the program. The actual output appears below the listing."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <string.h>\n\nint main(void)\n{\n    const char cells[] = {'O', 'K', '\\0', 'X', 'Y'};\n    printf(\"%s %zu\\n\", cells, strlen(cells));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "OK 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "The cells array contains five bytes.",
+        "Printing with %s and measuring with strlen both stop at cells[2].",
+        "Both operations use the first two bytes, producing OK 2."
+      ],
+      "trace": [
+        [
+          "Index 0",
+          "O",
+          "Print and count",
+          "Length 1"
+        ],
+        [
+          "Index 1",
+          "K",
+          "Print and count",
+          "Length 2"
+        ],
+        [
+          "Index 2",
+          "'\\0'",
+          "Stop",
+          "OK 2"
+        ],
+        [
+          "Indices 3 and 4",
+          "X, Y",
+          "Beyond the end of the string",
+          "Length 2"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Who establishes the boundary",
+      "paragraphs": [
+        "First establish that a '\\0' lies inside the array. C supplies it automatically for a string literal. When filling separate cells, the program sets its position.",
+        "Measuring a sequence without this guarantee can read beyond the array. Trace this case by index on paper.",
+        "The separate diagnostic passes two arguments to strlen. Clang rejects the call. Use sizeof separately to measure the array capacity."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Lay out a new label",
+      "paragraphs": [
+        "Draw the cells of label S007. Identify the first null index, string length and minimum capacity before writing code."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.4.4.4, 6.4.5, 7.1.1, 7.24.6.3",
+      "language": "English",
+      "purpose": "Check string literal rules and the strlen contract."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does strlen return for the array in the example?",
+      "options": [
+        "5",
+        "2",
+        "3"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The array capacity is 5. The first null determines the string length.",
+        "O and K are before the first '\\0'.",
+        "The third byte marks the end and contributes zero to the length."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What fills label[3] for the label T09?",
+      "options": [
+        "'0'",
+        "'9'",
+        "'\\0'"
+      ],
+      "correct": 2,
+      "feedback": [
+        "'0' adds a visible digit to the text.",
+        "The digit 9 belongs at label[2].",
+        "This byte terminates the string after three characters."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "What must you establish before using strlen on an array you filled by hand?",
+      "feedback": "Name an index or condition that guarantees a '\\0' inside the array. For T09 that is cell 3 of an array with capacity 4.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <string.h>\n\nint main(void)\n{\n    const char text[] = \"OK\";\n    return (int)strlen(text, sizeof text);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too many arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Make a numbered label",
+    "task": "Read the tens digit and the ones digit from separate lines. Accept values from 0 to 9. Print the letter T, then the digits in that order and the length after a space. Print invalid for an invalid number, a value out of range or a missing line. The supplied read_integer checks the numbers. The task considers the first two lines.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int tens;\n    int ones;\n    if (read_integer(0, 9, &tens) != READ_OK ||\n        read_integer(0, 9, &ones) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    char label[4] = {'T', '0', '0', '\\0'};\n    label[1] = (char)('0' + ones); /* TODO: put the tens digit here. */\n    label[2] = (char)('0' + tens);\n    printf(\"%s %zu\\n\", label, strlen(label));\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "0\n9\n",
+    "returnAnchor": "example",
+    "hint": "Compare the assignments to label[1] and label[2]. Use distinct digits and keep label[3] for '\\0'.",
+    "criteria": [
+      "Inputs 0 and 9 give T09 3. Inputs 9 and 9 give T99 3.",
+      "The array holds three text bytes and the terminating '\\0' at position 3.",
+      "An incorrect digit or missing line gives invalid.",
+      "Cases marked “automatic WASI check” use exact bytes. Read their labels and expected output. You can enter the other cases in the lesson editor."
+    ],
+    "cases": [
+      {
+        "label": "Distinct digits with a leading zero",
+        "input": "0\n9\n",
+        "output": "T09 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Both digits at the upper bound",
+        "input": "9\n9\n",
+        "output": "T99 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero label, EOF right after the second digit · EOF without a final newline",
+        "input": "0\n0",
+        "output": "T00 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "CRLF line endings · CRLF (0D 0A) · automatic WASI check",
+        "input": "2\r\n4\r\n",
+        "output": "T24 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "First digit exceeds 9",
+        "input": "10\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Digit below 0",
+        "input": "-1\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Second input line missing",
+        "input": "2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra character after a digit",
+        "input": "2x\n7\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Null byte after the digit 0 · NUL (00) · automatic WASI check",
+        "input": "0\u0000\n9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 0 and 9 on separate lines.",
+        "why": "Different digits reveal the order of the filled cells.",
+        "expected": "The starter prints T90 3. The length is right and the digits are reversed."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Put each digit in its assigned cell and rerun 0 and 9.",
+        "why": "The tens digit belongs immediately after T.",
+        "expected": "The output is T09 3."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Test 9 and 9, then 10 and 0.",
+        "why": "Compare the upper bound with a value past it.",
+        "expected": "The two outputs are T99 3 and invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Try it on your own",
+        "task": "In the lesson editor, after saving a copy of main.c in a separate text file, build label S007 from S and three digits. Write down the capacity before running.",
+        "criteria": [
+          "S007 has length 4 and needs at least 5 bytes of storage.",
+          "The terminating '\\0' has index 4."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int tens;\n    int ones;\n    if (read_integer(0, 9, &tens) != READ_OK ||\n        read_integer(0, 9, &ones) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    char label[4] = {'T', '0', '0', '\\0'};\n    label[1] = (char)('0' + tens);\n    label[2] = (char)('0' + ones);\n    printf(\"%s %zu\\n\", label, strlen(label));\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.string-termination",
+    "prerequisites": [
+      "c.array-index-range"
+    ]
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.null-terminated-strings",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "Программирование на C",
+  "module": "Строки и текст",
+  "title": "Символы и завершающий ноль",
+  "goal": "Различить длину строки, вместимость массива и позицию завершающего нуля.",
+  "prerequisites": [
+    {
+      "text": "Уметь читать массив по индексу и отделять проверку входных данных от расчёта."
+    }
+  ],
+  "terms": [
+    {
+      "id": "terminator",
+      "term": "Завершающий ноль",
+      "title": "Завершающий ноль",
+      "definition": "Байт со значением ноль. Обозначает конец строки C и записывается как '\\0'."
+    },
+    {
+      "id": "length",
+      "term": "Длина строки",
+      "title": "Длина строки",
+      "definition": "Количество байтов до первого завершающего нуля."
+    },
+    {
+      "id": "capacity",
+      "term": "Вместимость массива",
+      "title": "Вместимость массива",
+      "definition": "Количество байтов, которые можно хранить во всём массиве char."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Сколько байтов занимает табличка",
+      "paragraphs": [
+        "На табличке склада написано OK. Для неё выделено пять ячеек. Чтение надписи заканчивается в первой ячейке со значением 0, поэтому оставшиеся позиции принадлежат буферу, а длина надписи равна двум.",
+        "В C строку образует последовательность байтов до первого '\\0' включительно. Символ '0' виден в тексте, например в T09. Завершающий '\\0' обозначает границу.",
+        "Строке из n отображаемых однобайтовых символов нужно не менее n + 1 ячеек. В строке из однобайтовых символов длина по strlen совпадает с их числом."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Где остановится чтение",
+      "paragraphs": [
+        "Перед запуском отметьте индексы букв O, K и завершающего '\\0'. Под листингом показан фактический вывод."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <string.h>\n\nint main(void)\n{\n    const char cells[] = {'O', 'K', '\\0', 'X', 'Y'};\n    printf(\"%s %zu\\n\", cells, strlen(cells));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "OK 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Массив cells содержит пять байтов.",
+        "Печать через %s останавливается у ячейки cells[2], как и подсчёт длины функцией strlen.",
+        "Обе операции используют первые два байта, поэтому получается OK 2."
+      ],
+      "trace": [
+        [
+          "Индекс 0",
+          "O",
+          "Печатать и считать",
+          "Длина 1"
+        ],
+        [
+          "Индекс 1",
+          "K",
+          "Печатать и считать",
+          "Длина 2"
+        ],
+        [
+          "Индекс 2",
+          "'\\0'",
+          "Остановиться",
+          "OK 2"
+        ],
+        [
+          "Индексы 3 и 4",
+          "X, Y",
+          "Остаются за концом строки",
+          "Длина 2"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Кто устанавливает границу",
+      "paragraphs": [
+        "Сначала докажите, что внутри массива есть '\\0'. Для литерала C помещает его в массив автоматически, а при заполнении по ячейкам позицию терминатора задаёт программа.",
+        "Подсчёт длины без такой гарантии может выйти за границы памяти. Разберите этот мысленный случай по индексам.",
+        "В отдельной диагностике показан вызов strlen с двумя аргументами. Clang отклоняет его. Чтобы определить вместимость массива, используйте sizeof отдельно от strlen."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенесите раскладку на новую метку",
+      "paragraphs": [
+        "Нарисуйте метку S007 по ячейкам. Укажите индекс завершающего байта '\\0', длину и минимальную вместимость до написания кода."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.4.4.4, 6.4.5, 7.1.1, 7.24.6.3",
+      "language": "English",
+      "purpose": "Сверить правила строковых литералов и договор функции strlen."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Что покажет strlen для массива из примера?",
+      "options": [
+        "5",
+        "2",
+        "3"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Вместимость массива равна 5, а длина определяется первым нулём.",
+        "Верно. Перед первым '\\0' лежат O и K.",
+        "Третий байт отмечает конец и в длину не входит."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Чем заполнить ячейку label[3] в метке T09?",
+      "options": [
+        "'0'",
+        "'9'",
+        "'\\0'"
+      ],
+      "correct": 2,
+      "feedback": [
+        "'0' добавит к тексту видимую цифру.",
+        "Девятка находится в label[2].",
+        "Этот байт завершает строку после трёх символов."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Что нужно установить перед strlen у заполненного вручную массива?",
+      "feedback": "Назовите индекс или условие, которое гарантирует наличие '\\0' внутри массива. Для T09 это ячейка 3 массива вместимостью 4.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <string.h>\n\nint main(void)\n{\n    const char text[] = \"OK\";\n    return (int)strlen(text, sizeof text);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too many arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Номерная метка",
+    "task": "Прочитайте цифру десятков и цифру единиц с отдельных строк. Допустимы числа от 0 до 9. Выведите букву T, затем две цифры в заданном порядке и длину после пробела. При неверном вводе, выходе за диапазон или пропущенной строке выведите invalid. Проверка чисел дана в read_integer. Материалы задания проверяют первые две строки.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int tens;\n    int ones;\n    if (read_integer(0, 9, &tens) != READ_OK ||\n        read_integer(0, 9, &ones) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    char label[4] = {'T', '0', '0', '\\0'};\n    label[1] = (char)('0' + ones); /* TODO: put the tens digit here. */\n    label[2] = (char)('0' + tens);\n    printf(\"%s %zu\\n\", label, strlen(label));\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "0\n9\n",
+    "returnAnchor": "example",
+    "hint": "Сравните назначения label[1] и label[2]. Возьмите разные цифры, а позицию label[3] оставьте под '\\0'.",
+    "criteria": [
+      "Ввод 0 и 9 даёт T09 3, а ввод 9 и 9 даёт T99 3.",
+      "Массив содержит три байта текста и завершающий '\\0' в позиции 3.",
+      "Ошибочная цифра или отсутствие одной строки дают invalid.",
+      "Случаи с пометкой «автоматическая проверка WASI» используют точные байты. Сверьте их по подписи и ожидаемому выводу. Остальные входы можно проверить вручную в редакторе урока."
+    ],
+    "cases": [
+      {
+        "label": "Разные цифры и ведущий ноль",
+        "input": "0\n9\n",
+        "output": "T09 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Обе цифры на верхней границе",
+        "input": "9\n9\n",
+        "output": "T99 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевая метка, EOF сразу после второй цифры · EOF без перевода строки",
+        "input": "0\n0",
+        "output": "T00 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Строки с окончанием CRLF · CRLF (0D 0A) · автоматическая проверка WASI",
+        "input": "2\r\n4\r\n",
+        "output": "T24 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Первая цифра выше 9",
+        "input": "10\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Цифра ниже 0",
+        "input": "-1\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пропущена вторая строка",
+        "input": "2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "В цифре лишний символ",
+        "input": "2x\n7\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевой байт после цифры 0 · NUL (00) · автоматическая проверка WASI",
+        "input": "0\u0000\n9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 0 и 9 на двух строках.",
+        "why": "Разные цифры показывают порядок заполнения ячеек.",
+        "expected": "Получится T90 3. Длина верна, цифры поменялись местами."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Назначьте каждой цифре свою позицию и снова запустите с 0 и 9.",
+        "why": "Цифра десятков относится к первой позиции после T.",
+        "expected": "Получится T09 3."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте 9 и 9, затем 10 и 0.",
+        "why": "Сравните верхнюю границу диапазона и значение за ней.",
+        "expected": "Получатся T99 3 и invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Постройте в локальной копии кода метку S007 из буквы S и трёх цифр. Запишите вместимость до запуска.",
+        "criteria": [
+          "Длина S007 равна 4, массив должен вмещать минимум 5 байтов.",
+          "Завершающий '\\0' расположен по индексу 4."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int tens;\n    int ones;\n    if (read_integer(0, 9, &tens) != READ_OK ||\n        read_integer(0, 9, &ones) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    char label[4] = {'T', '0', '0', '\\0'};\n    label[1] = (char)('0' + tens);\n    label[2] = (char)('0' + ones);\n    printf(\"%s %zu\\n\", label, strlen(label));\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.string-termination",
+    "prerequisites": [
+      "c.array-index-range"
+    ]
+  }
+}

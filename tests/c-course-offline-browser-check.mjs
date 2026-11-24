@@ -59,7 +59,7 @@ try {
     await page.goto(fixture.origin + '/offline.html#view=academy');
     await page.locator('a[data-academy-course="c"]').click();
     await root.getByRole('heading', { level:1, name:courseManifest.title.ru }).waitFor();
-    assert.equal(await root.locator('.c-outline a').count(), 23);
+    assert.equal(await root.locator('.c-outline a').count(), 27);
     await capture('cold-academy-c-390');
     await root.locator('.c-outline a').first().click();
     await root.locator('.c-stages [aria-current="page"]').filter({ hasText:'Объяснение' }).waitFor();
@@ -115,6 +115,17 @@ try {
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m4-sort-en-390');
   });
+  await check('Последний урок M4 ведёт в M5 без сети, фильтр строк читается на английском', async () => {
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.array-sort&stage=practice&locale=ru');
+    await root.locator('footer').getByRole('link', {name:/Следующий урок: Символы и завершающий ноль/}).click();
+    await root.getByRole('heading', {level:1, name:"Символы и завершающий ноль", exact:true}).waitFor();
+    await capture('cold-m5-ru-390');
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.text-project&stage=practice&locale=en');
+    await root.getByRole('heading', {level:1, name:"Project: line filter", exact:true}).waitFor();
+    await root.getByText('Reference solution', {exact:true}).click();
+    assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
+    await capture('cold-m5-filter-en-390');
+  });
   await check('Ресурсы C пришли из Service Worker с SHA из сборки', async () => {
     const expected = [
       'offline.html', ...[
@@ -123,6 +134,7 @@ try {
         'courses/c/lessons/c.m1-project.ru.json', 'courses/c/lessons/c.read-input.ru.json', 'courses/c/lessons/c.read-input.en.json',
         'courses/c/lessons/c.guard-boundaries.ru.json', 'courses/c/lessons/c.functions.ru.json', 'courses/c/lessons/c.function-project.en.json',
         'courses/c/lessons/c.function-project.ru.json', 'courses/c/lessons/c.array-bounds.ru.json', 'courses/c/lessons/c.array-sort.en.json',
+        'courses/c/lessons/c.array-sort.ru.json', 'courses/c/lessons/c.null-terminated-strings.ru.json', 'courses/c/lessons/c.text-project.en.json',
       ].map(file => build.prefix + file),
     ];
     const manifest = new Map(build.files.map(record => [record.file, record.sha256]));
