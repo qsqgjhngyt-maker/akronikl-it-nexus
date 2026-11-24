@@ -97,7 +97,7 @@ async function unlockView(){
 }
 function views(){
  const state=()=>data?.state||{courses:{},skills:{}},lessons=()=>state().courses?.cpp?.lessons||{},resume=createLearningResume({storage:{getItem:()=>JSON.stringify(data?.state.localResume||null)},principal:()=>data?.owner.accountId||'public-offline'});
- return createLearningViews({academyGoldMarkup:goldPresentation?.academyGoldMarkup,prefs,t,cpp:course,catalog,programming,cppLearningFilter,loadState:state,lessonState:id=>lessons()[id]||{},visualIcon,
+ return createLearningViews({programmingHubMarkup,academyGoldMarkup:goldPresentation?.academyGoldMarkup,prefs,t,cpp:course,catalog,programming,cppLearningFilter,loadState:state,lessonState:id=>lessons()[id]||{},visualIcon,
   progress:()=>cppProgramProgress(state(),course?.curriculum),
   cppContinuation:()=>resume.continuation(course,lessons()),accountHomeCardMarkup:()=>accountHomePresentation({displayName:data?.owner.displayName,avatar:data?.owner.displayName?.slice(0,1).toLocaleUpperCase(),status:data?'Копия открыта · облачный вход не подтверждён':'Личная копия закрыта'},prefs.uiLocale,{localCopy:true,locked:!data}),shell:body=>'<div class="nexus-learning" data-nexus-learning>'+body+'</div>'});
 }

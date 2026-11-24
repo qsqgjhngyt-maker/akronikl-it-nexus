@@ -22,7 +22,7 @@ const courseManifest=JSON.parse(await readFile(path.join(frontend,official?prefi
 assert.ok(Number.isSafeInteger(courseManifest.lessonCount)&&courseManifest.lessonCount>0,'The build must declare its C++ lesson count');
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const account={account:{accountId:'synthetic-startup',displayName:'Synthetic startup',status:'active'},loginMethods:[{id:'synthetic-passkey',kind:'passkey',status:'active',createdAt:'2026-10-23T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
-const post={slug:'dobro-pozhalovat-v-nexus',title:'Synthetic published article',summary:'Startup navigation fixture',body:'## Synthetic section\n\nA public article for real app navigation.',publishedAt:'2026-10-23T00:00:00Z'};
+const post={slug:'perf-fixture-public-article',title:'Synthetic published article',summary:'Startup navigation fixture',body:'## Synthetic section\n\nA public article for real app navigation.',publishedAt:'2026-10-23T00:00:00Z'};
 const checks=[],errors=[],consoleErrors=[],missingAssets=[],externalRequests=[],sessions=[],moduleSha256={};
 let browser,page;
  const mime=staticMime;
@@ -47,7 +47,7 @@ async function navigation(target,href,selector){
  if(await link.count())await link.click();else await target.evaluate(hash=>{location.hash=hash},href);
  await ready(target,selector);
 }
-async function session({width=1366}={}){
+async function session({width=1366,waitAsset}={}){
  const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
  // Playwright's serviceWorkers:'block' probes navigator.serviceWorker inside
  // opaque graphics iframes and itself throws SecurityError. Block registration
@@ -67,7 +67,10 @@ async function session({width=1366}={}){
    else if(url.pathname==='/api/v2/account/profile')body={...account.account,username:null,avatar:null,avatarVersion:0};
    else if(url.pathname==='/api/v2/account/oauth/providers')body={providers:[]};
    else if(url.pathname==='/api/v2/account/control/capabilities')body={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
-   else if(url.pathname==='/api/v2/content/feed')body={posts:url.searchParams.has('slug')?[post]:[{...post,body:undefined}],home:{}};
+   else if(url.pathname==='/api/v2/content/feed'){
+    const slug=url.searchParams.get('slug');
+    body={posts:slug===null?[{...post,body:undefined}]:slug===post.slug?[post]:[],home:{}};
+   }
    else if(url.pathname==='/api/v2/feedback/reviews')body={reviews:[],ratings:0,average:0,total:0};
    else{status=403;body={error:{code:'SYNTHETIC_DENIED'}}}
    return route.fulfill({status,headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'},body:JSON.stringify(body)});
@@ -76,7 +79,11 @@ async function session({width=1366}={}){
   // Only the known current generation is mapped in source mode. Official mode
   // never rewrites HTML/JS or silently falls back to source or retained assets.
   if(!official&&url.pathname.startsWith(prefix))file=url.pathname.slice(prefix.length);
-  if(url.pathname.startsWith(prefix))record.assets.push(url.pathname.slice(prefix.length));
+  if(url.pathname.startsWith(prefix)){
+   const asset=url.pathname.slice(prefix.length);
+   record.assets.push(asset);
+   if(waitAsset)await waitAsset(asset);
+  }
   if(request.isNavigationRequest())record.documents.push(url.pathname);
   try{
    const target=path.resolve(frontend,file);assert.ok(target.startsWith(frontend+path.sep));
@@ -104,6 +111,9 @@ try{
  const primary=await session();
  await check('Fresh entry Continue -> verified bootstrap -> Home renders without full C++ bodies',async()=>{
   await enter(primary.page,'#view=home','.visual-home');assertOutline(primary.record);
+  for(const file of ['core/academy-catalog.js','core/academy-course-cards.js','core/code-hub-presentation.js','project-studio/code-studio-home.js','project-studio/project-transfer.js']){
+   assert.ok(!primary.record.assets.includes(file),'Home fetched a route-only module: '+file);
+  }
   assert.equal(await primary.page.locator('.visual-facts strong').nth(2).textContent(),String(courseManifest.lessonCount));
   assert.equal(await primary.page.locator('.visual-facts strong').nth(3).textContent(),String(courseManifest.projectCount));
   assert.deepEqual(primary.record.documents.slice(0,2),['/index.html','/']);
@@ -113,34 +123,60 @@ try{
  await check('Home -> Academy -> Home via real menu reuses the outline and renders C++ card',async()=>{
   await navigation(primary.page,'#view=academy','[data-visual-academy]');
   assert.equal(await primary.page.locator(':is(.academy-hub-reference,[data-academy-course=cpp])').count(),1);assertOutline(primary.record);
+  assert.equal(primary.record.assets.filter(file=>file==='core/academy-catalog.js').length,1);
   await navigation(primary.page,'#view=home','.visual-home');assertOutline(primary.record);
  });
  await check('Academy -> complete C++ -> lesson loads each course payload once and binds the editor',async()=>{
   await navigation(primary.page,'#view=academy','[data-visual-academy]');
   await primary.page.locator(':is(.academy-hub-reference,[data-academy-course=cpp])').click();await ready(primary.page,'[data-cpp-learning-path]');
   assert.equal(await primary.page.locator('.topic').count(),courseManifest.lessonCount);assertFull(primary.record);
-  await primary.page.locator('.topic a').first().click();await ready(primary.page,'.lesson');
-  await primary.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));
-  assert.equal(primary.record.assets.filter(file=>file==='sandbox/sandbox.js').length,1);assertFull(primary.record);
-  assert.deepEqual(primary.record.assets.filter(file=>file.startsWith('courses/cpp/gold/')),['courses/cpp/gold/algorithms/programming-process.ru.json']);
-  assert.equal(await primary.page.locator('[data-gold-lesson="cpp.programming-process"]').count(),1);
+  const reference='[data-r3-topic="cpp.programming-process"]';
+  await primary.page.locator('.topic a').first().click();await ready(primary.page,'.lesson,'+reference);
+  if(await primary.page.locator(reference).count()){
+   assert.equal(primary.record.assets.filter(file=>file==='courses/cpp-clarity-r3/lessons/cpp.programming-process.ru.json').length,1);
+   await primary.page.locator(reference+' [data-stage="practice"]').click();
+   await primary.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));
+   assert.equal(primary.record.assets.filter(file=>file==='sandbox/sandbox.js').length,0,'Opening the editor must not preload the runtime');
+  }else{
+   await primary.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));
+   assert.equal(primary.record.assets.filter(file=>file==='sandbox/sandbox.js').length,1);
+   assert.deepEqual(primary.record.assets.filter(file=>file.startsWith('courses/cpp/gold/')),['courses/cpp/gold/algorithms/programming-process.ru.json']);
+   assert.equal(await primary.page.locator('[data-gold-lesson="cpp.programming-process"]').count(),1);
+  }
+  assertFull(primary.record);
   await navigation(primary.page,'#view=home','.visual-home');assertFull(primary.record);
  });
  await check('Code Studio, projects, Academy graphics, labs and practices remain navigable',async()=>{
   await navigation(primary.page,'#view=code-studio','[data-code-studio-home]');assert.equal(await primary.page.locator('[data-cs-action]').count(),4);
   await navigation(primary.page,'#view=projects','#psNewProject');
   await navigation(primary.page,'#view=academy','[data-visual-academy]');
-  await primary.page.locator('.graphics-catalog-link').click();await ready(primary.page,'[data-graphics-workshop]');
+  const graphicsLink=primary.page.locator('.graphics-catalog-link');
+  if(!await graphicsLink.isVisible())await primary.page.locator('[data-academy-availability="planned"]').click();
+  await graphicsLink.click();await ready(primary.page,'[data-graphics-workshop]');
   await primary.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));
   await navigation(primary.page,'#view=labs','[data-learning-discovery="labs"]');
   await navigation(primary.page,'#view=practices','[data-learning-discovery="practices"]');
  });
+ await check('Code Hub and Code Studio load their views on demand and reuse them',async()=>{
+  for(const [view,selector,file] of [['programming','.code-hub','core/code-hub-presentation.js'],['code-studio','[data-code-studio-home]','project-studio/code-studio-home.js']]){
+   await navigation(primary.page,'#view='+view,selector);
+   await navigation(primary.page,'#view=home','.visual-home');
+   await navigation(primary.page,'#view='+view,selector);
+   assert.equal(primary.record.assets.filter(asset=>asset===file).length,1);
+  }
+ });
  await check('Real Blog route loads published feed, cover and article; Home remains available afterward',async()=>{
   await navigation(primary.page,'#view=blog','.nexus-blog');await primary.page.locator('.blog-card-featured').waitFor();
   await primary.page.waitForFunction(()=>document.querySelector('.blog-card-featured img')?.naturalWidth>0);
-  await primary.page.locator('.blog-card-featured .blog-read').click();await ready(primary.page,'.blog-article');
-  assert.equal(await primary.page.locator('.blog-article h1').textContent(),post.title);
+  const featured=primary.page.locator('.blog-card-featured');
+  const featuredTitle=await featured.locator('h2').textContent();
+  await featured.locator('.blog-read').click();await ready(primary.page,'.blog-article');
+  assert.equal(await primary.page.locator('.blog-article h1').textContent(),featuredTitle);
   await primary.page.waitForFunction(()=>document.querySelector('.blog-cover img')?.naturalWidth>0);
+  await navigation(primary.page,'#view=blog','.nexus-blog');
+  await primary.page.getByRole('link',{name:post.title,exact:true}).click();
+  await primary.page.getByRole('heading',{level:1,name:post.title,exact:true}).waitFor();
+  await primary.page.getByText('A public article for real app navigation.',{exact:true}).waitFor();
   await navigation(primary.page,'#view=home','.visual-home');assertFull(primary.record);
  });
  await primary.context.close();
@@ -158,6 +194,29 @@ try{
    if(view==='computer-graphics')await direct.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));
    assert.deepEqual(cppPaths(direct.record),[],view+' must not require a preloaded C++ course');
    await navigation(direct.page,'#view=home','.visual-home');assertOutline(direct.record);
+   await direct.context.close();
+  }
+ });
+ await check('A late Academy import cannot replace the current Studio route',async()=>{
+  const asset='core/academy-catalog.js';
+  let release;
+  const deferred=new Promise(resolve=>{release=resolve});
+  const direct=await session({waitAsset:file=>file===asset?deferred:undefined});
+  try{
+   await enter(direct.page,'#view=home','.visual-home');
+   const requested=direct.page.waitForRequest(GATEWAY_ORIGIN+prefix+asset);
+   await direct.page.evaluate(()=>{location.hash='#view=academy'});
+   await requested;
+   await navigation(direct.page,'#view=code-studio','[data-code-studio-home]');
+   release();
+   await direct.page.evaluate(async uri=>{await import(uri)},prefix+asset);
+   assert.equal(new URL(direct.page.url()).hash,'#view=code-studio');
+   assert.equal(await direct.page.locator('[data-code-studio-home]').count(),1);
+   assert.equal(await direct.page.locator('[data-visual-academy]').count(),0);
+   await navigation(direct.page,'#view=academy','[data-visual-academy]');
+   assert.equal(direct.record.assets.filter(file=>file===asset).length,1);
+  }finally{
+   release();
    await direct.context.close();
   }
  });
