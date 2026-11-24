@@ -129,6 +129,7 @@ async function checkLayout(page, label) {
     }).map(link => link.textContent);
     return {
       width:innerWidth,
+      courseStylesReady:Boolean(document.querySelector('link[data-c-course-style]')?.sheet),
       viewportOverflow:document.documentElement.scrollWidth > innerWidth + 1,
       outsideLink:links.some(link => {
         const box = link.getBoundingClientRect();
@@ -139,6 +140,7 @@ async function checkLayout(page, label) {
       wrappedStages,
     };
   });
+  assert.equal(metrics.courseStylesReady, true, label + ' course rendered before its scoped styles');
   assert.equal(metrics.viewportOverflow, false, label + ' page has horizontal overflow');
   assert.equal(metrics.outsideLink, false, label + ' route controls exceed the viewport');
   assert.ok(metrics.smallestTarget >= 43, label + ' route target is below 44 CSS px');

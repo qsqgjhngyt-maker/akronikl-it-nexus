@@ -14,6 +14,23 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, character =>
 const localized = (entry, locale) => entry?.[locale] ?? entry?.ru ?? '';
 const dataRoot = new URL('../courses/c/', import.meta.url);
 
+let styleReady;
+function ensureCCourseStyle() {
+  return styleReady ??= new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.dataset.cCourseStyle = '';
+    link.href = new URL('./c-course.css', import.meta.url).href;
+    link.addEventListener('load', resolve, {once:true});
+    link.addEventListener('error', () => {
+      link.remove();
+      styleReady = undefined;
+      reject(new Error('C course styles could not be loaded'));
+    }, {once:true});
+    document.head.append(link);
+  });
+}
+
 async function loadJson(path) {
   const response = await fetch(new URL(path, dataRoot));
   if (!response.ok) throw new Error('C course data could not be loaded: ' + response.status);
@@ -303,9 +320,12 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   locale = locale === 'en' ? 'en' : 'ru';
   stage = stages.some(([id]) => id === stage) ? stage : 'explanation';
   const t = (ru, en) => locale === 'en' ? en : ru;
-  const data = await loadCourse();
-  const topic = data.topics.find(item => item.id === lessonId);
-  const lesson = topic ? await loadJson('lessons/' + topic.id + '.' + locale + '.json') : null;
+  const lessonData = loadCourse().then(async data => {
+    const topic = data.topics.find(item => item.id === lessonId);
+    const lesson = topic ? await loadJson('lessons/' + topic.id + '.' + locale + '.json') : null;
+    return {data, lesson};
+  });
+  const [{data, lesson}] = await Promise.all([lessonData, ensureCCourseStyle()]);
   if (!isCurrent()) return null;
   const hash = location.hash;
   const storage = readonly ? null : createCCourseStorage();
@@ -319,15 +339,11 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   const options = {signal:events.signal};
   host.lang = locale;
   host.toggleAttribute('data-c-lesson', Boolean(lesson));
-  const style = document.createElement('link');
-  style.rel = 'stylesheet';
-  style.href = new URL('./c-course.css', import.meta.url).href;
   host.innerHTML = '<p class="c-route-status" role="status" data-c-status></p>' +
     (lesson ? lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave:Boolean(storage), readonly,
       assistantEnabled:Boolean(openAssistant)}) :
       (lessonId ? '<p role="status">' + t('Эта тема пока недоступна.', 'This lesson is not available yet.') + '</p>' : '') +
       overview({data, locale, t, resume, progress, selectedModule:new URLSearchParams(hash.slice(1)).get('module')}));
-  host.prepend(style);
 
   const status = host.querySelector('[data-c-status]');
   const disposeReference = lesson ? bindLessonReference(host, t) : null;
