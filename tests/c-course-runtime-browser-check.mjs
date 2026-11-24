@@ -208,6 +208,28 @@ try {
   await runPractice('duplicate\nmissing\n101:1 203:2\n', 0);
   console.log('C17_M7_RECORD_PASS duplicate checked before capacity; rejection preserves records');
 
+  await openPractice('c.dynamic-record-project', 'Project: resizable record list');
+  const growEditor = page.locator('#editor');
+  const growStarter = await growEditor.inputValue();
+  const missedCount = '/* TODO: advance the counter before comparing to the requested failure. */';
+  assert.ok(growStarter.includes(missedCount));
+  await runPractice('ok 3 4 60\n', 0);
+  const fixedGrowth = growStarter.replace(missedCount, '++policy->attempts;');
+  await growEditor.fill(fixedGrowth);
+  await runPractice('allocation-failed 2 2 30\n', 0);
+  assert.ok(fixedGrowth.includes('    destroy(&queue);'));
+  await growEditor.fill(fixedGrowth.replace('    destroy(&queue);',
+    '    for (size_t i = 0; i < queue.used; ++i) {\n' +
+    '        printf("%zu:%d\\n", queue.items[i].id, queue.items[i].value);\n' +
+    '    }\n    destroy(&queue);'));
+  await runPractice('allocation-failed 2 2 30\n1:10\n2:20\n', 0);
+  await page.screenshot({path:path.join(out, 'm8-record-prefix.png')});
+  await page.locator('[data-c-stdin]').fill('20 30 0\n');
+  await runPractice('ok 3 4 60\n1:10\n2:20\n3:30\n', 0);
+  await page.locator('[data-c-stdin]').fill('20 30 2\n');
+  await runPractice('allocation-failed 2 2 30\n1:10\n2:20\n', 0);
+  console.log('C17_M8_GROWTH_PASS deterministic failure retains the exact accepted record prefix');
+
   assert.deepEqual(fixture.errors, []);
   console.log('C17_DRAFT_RESTORE_PASS editor/stdin preserved after reload and locale switch; starter confirmation rejected; synthetic verified account storage');
   await writeFile(path.join(out, 'c17-workspace.json'), JSON.stringify({
@@ -219,6 +241,7 @@ try {
     module5: {starter:'ERR\nrejected 1\n', prefix:'ERR fan\nERR\nrejected 1\n'},
     module6: {starter:'17', copied:'27', rejected:'invalid'},
     module7: {starter:'full', fixed:'duplicate', snapshot:'101:1 203:2 321:1', unchangedOnRejection:true},
+    module8: {rejected:'1:10\n2:20\n', successful:'1:10\n2:20\n3:30\n', repeatVerified:true},
   }, null, 2) + '\n');
 } finally {
   await fixture.close();

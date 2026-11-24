@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m8-v1",
+  "id": "c.allocate-bounds",
+  "courseId": "c",
+  "moduleId": "c.m8",
+  "course": "C programming",
+  "module": "Dynamic memory and ownership",
+  "locale": "en",
+  "title": "Size overflow and boundaries",
+  "goal": "Check a byte-size product by division before performing the multiplication.",
+  "prerequisites": [
+    {
+      "text": "Know size_t and why to bound element counts."
+    },
+    {
+      "text": "Know the distinction between zero and positive divisors."
+    }
+  ],
+  "terms": [
+    {
+      "id": "size-max",
+      "term": "Maximum size",
+      "title": "Maximum size",
+      "definition": "SIZE_MAX is the largest size_t value in the current environment."
+    },
+    {
+      "id": "product",
+      "term": "Size product",
+      "title": "Size product",
+      "definition": "The number of bytes obtained by multiplying the element count by the width of one element."
+    },
+    {
+      "id": "output-parameter",
+      "term": "Output parameter",
+      "title": "Output parameter",
+      "definition": "A pointer to a result variable. The function updates bytes only on success."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Check before multiplying",
+      "paragraphs": [
+        "When count and width are positive, the maximum valid count is SIZE_MAX / width. Compare with that bound before multiplying.",
+        "With width = 0, that bound calculation cannot divide by width. The first check therefore ensures a positive divisor. A zero count is outside this task's contract as well.",
+        "An out-of-range product computed in an unsigned type wraps and can become small. Check the size before multiplying. This lesson does not allocate memory. The caller passes the address of a live bytes variable, and the function writes the result only on success."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Check a large count without allocating",
+      "paragraphs": [
+        "For all three calls, predict the status and whether the output variable bytes changes."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <stdio.h>\n\nenum SizeStatus { INVALID_SIZE, BYTES_OK, SIZE_OVERFLOW };\n\nstatic enum SizeStatus bytes_for(size_t count, size_t width, size_t *bytes)\n{\n    if (count == 0 || width == 0) {\n        return INVALID_SIZE;\n    }\n    if (count > SIZE_MAX / width) {\n        return SIZE_OVERFLOW;\n    }\n    *bytes = count * width;\n    return BYTES_OK;\n}\n\nstatic void print_size(size_t count, size_t width)\n{\n    size_t bytes = 0;\n    switch (bytes_for(count, width, &bytes)) {\n    case BYTES_OK: printf(\"%zu\\n\", bytes); break;\n    case SIZE_OVERFLOW: puts(\"overflow\"); break;\n    case INVALID_SIZE: puts(\"invalid\"); break;\n    }\n}\n\nint main(void)\n{\n    print_size(4, 3);\n    print_size(SIZE_MAX, 2);\n    print_size(3, 0);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "12\noverflow\ninvalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "4 and 3 are positive and are within the bound. The function stores 12.",
+        "SIZE_MAX exceeds SIZE_MAX / 2. The function returns overflow before multiplying.",
+        "With width = 0 the function exits before division."
+      ],
+      "trace": [
+        [
+          "4, 3",
+          "valid product 12"
+        ],
+        [
+          "SIZE_MAX, 2",
+          "bound exceeded, overflow"
+        ],
+        [
+          "3, 0",
+          "divisor check, invalid"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "The diagnostic called object type is not a function shows that bytes was incorrectly written as bytes(). Pass the bytes value to %zu. Use &bytes when passing the output argument to bytes_for.",
+        "If the overflowing case is classified as invalid, the program has lost the distinction between failure categories. The overflow status tests the representational bound without any allocation."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Compare widths 1 and 2 with count = SIZE_MAX. The product is representable at width 1. The check rejects width 2. Explain the difference without calculating SIZE_MAX.",
+        "For width 2 compare count = SIZE_MAX / 2 and count = SIZE_MAX / 2 + 1. The second count is representable, but its product with the width is out of range. Do not compute the rejected product."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.2.5, §7.20.3, §7.21.6.1",
+      "language": "English",
+      "purpose": "Review the language and library contracts used in this example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "When may bytes be read as the resulting size?",
+      "options": [
+        "After BYTES_OK",
+        "After any status",
+        "Only after overflow"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Success guarantees that a result was written.",
+        "On failure the value remains untouched.",
+        "Overflow prevents both computation and assignment."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "How should width 0 be handled?",
+      "options": [
+        "Reject it before division",
+        "First compute SIZE_MAX / 0",
+        "Accept it as a safe size"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The check protects the division operation.",
+        "A zero divisor is invalid.",
+        "The contract requires positive sizes."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why does overflow on input -1 2 establish a computation guard rather than a malloc failure?",
+      "feedback": "Mode -1 2 passes SIZE_MAX and 2 into a pure size check. It never calls malloc.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    size_t bytes = 4;\n    printf(\"%zu\\n\", bytes());\n    return 0;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "called object type",
+        "is not a function"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Calculate capacity in bytes",
+    "environment": "C17 · Clang/WASI",
+    "task": "The first line, at most 63 bytes, contains count 0–16 and width 0–8. The special teaching input -1 2 passes SIZE_MAX and 2 to the size check without asking for a large integer. Every other pair with -1 is invalid. Print bytes N for a positive representable product, overflow for an out-of-range product, and invalid for zero or malformed input. This exercise allocates no memory.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum SizeStatus { INVALID_SIZE, BYTES_OK, SIZE_OVERFLOW };\n\nstatic enum SizeStatus bytes_for(size_t count, size_t width, size_t *bytes)\n{\n    if (count == 0 || width == 0) {\n        return INVALID_SIZE;\n    }\n    if (count > SIZE_MAX / width) {\n        /* TODO: return the distinct status for an overflowing size. */\n        return INVALID_SIZE;\n    }\n    /* TODO: store the checked product. */\n    *bytes = count;\n    return BYTES_OK;\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {-1, 0};\n    const int maximum[] = {16, 8};\n    if (!read_values(input, minimum, maximum, 2) || (input[0] == -1 && input[1] != 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    size_t count = input[0] == -1 ? SIZE_MAX : (size_t)input[0];\n    size_t bytes = 0;\n    enum SizeStatus status = bytes_for(count, (size_t)input[1], &bytes);\n    if (status == BYTES_OK) {\n        printf(\"bytes %zu\\n\", bytes);\n    } else if (status == SIZE_OVERFLOW) {\n        puts(\"overflow\");\n    } else {\n        puts(\"invalid\");\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "3 4\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Ordinary size",
+        "input": "3 4\n",
+        "output": "bytes 12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero width",
+        "input": "3 0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero count",
+        "input": "0 4\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Native size overflow",
+        "input": "-1 2\n",
+        "output": "overflow\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid sentinel mode",
+        "input": "-1 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Boundary teaching values",
+        "input": "16 8\n",
+        "output": "bytes 128\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Outside teaching bounds",
+        "input": "17 8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "3 4 gives bytes 12, 16 8 gives bytes 128, and 0 4 gives invalid.",
+      "-1 2 yields overflow before multiplication and without allocation."
+    ],
+    "hint": "After checking width, compare count with SIZE_MAX / width. Store a result only on the validated path.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum SizeStatus { INVALID_SIZE, BYTES_OK, SIZE_OVERFLOW };\n\nstatic enum SizeStatus bytes_for(size_t count, size_t width, size_t *bytes)\n{\n    if (count == 0 || width == 0) {\n        return INVALID_SIZE;\n    }\n    if (count > SIZE_MAX / width) {\n        return SIZE_OVERFLOW;\n    }\n    *bytes = count * width;\n    return BYTES_OK;\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {-1, 0};\n    const int maximum[] = {16, 8};\n    if (!read_values(input, minimum, maximum, 2) || (input[0] == -1 && input[1] != 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    size_t count = input[0] == -1 ? SIZE_MAX : (size_t)input[0];\n    size_t bytes = 0;\n    enum SizeStatus status = bytes_for(count, (size_t)input[1], &bytes);\n    if (status == BYTES_OK) {\n        printf(\"bytes %zu\\n\", bytes);\n    } else if (status == SIZE_OVERFLOW) {\n        puts(\"overflow\");\n    } else {\n        puts(\"invalid\");\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 3 4 and separately with -1 2. Find both TODOs in bytes_for.",
+        "why": "The starter stores count instead of the product and does not distinguish the two failure types.",
+        "expected": "The results are bytes 3 and invalid respectively."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the status and product assignment. Run 3 4, 3 0, and -1 2 separately.",
+        "why": "The mode -1 2 selects SIZE_MAX without an allocation request.",
+        "expected": "The results are bytes 12, invalid, and overflow respectively."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "In a separate check set bytes = 99 and call bytes_for with width 2 and count = SIZE_MAX / 2. Reset bytes to 99 and call again with count = SIZE_MAX / 2 + 1. Do not allocate memory.",
+        "criteria": [
+          "The first status is BYTES_OK and the product is stored. The second status is SIZE_OVERFLOW and bytes remains 99."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.checked-size-product",
+    "prerequisites": [
+      "c.checked-allocation"
+    ]
+  }
+}

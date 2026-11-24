@@ -20,7 +20,7 @@ const json = async file => JSON.parse(await readFile(resolveFixtureFile(frontend
 const manifest = await json('courses/c/manifest.json');
 const topicIds = manifest.availableTopicIds;
 const lessonCount = topicIds.length;
-assert.equal(lessonCount, 36);
+assert.equal(lessonCount, 41);
 const lessons = {};
 for (const locale of ['ru', 'en']) {
   lessons[locale] = await Promise.all(manifest.availableTopicIds.map(id => json('courses/c/lessons/' + id + '.' + locale + '.json')));
@@ -155,7 +155,7 @@ async function openCourse(page, locale, width) {
   await page.goto(GATEWAY_ORIGIN + '/#view=academy');
   const card = page.locator('a[data-academy-course="c"]');
   await card.waitFor();
-  assert.match(await card.innerText(), /Модули 1–7|Modules 1–7/);
+  assert.match(await card.innerText(), /Модули 1–8|Modules 1–8/);
   assert.equal(requests.filter(request => request.width === width).length, 0, 'Academy should not preload C modules or lessons');
   await card.click();
   await course(page).getByRole('heading', { level:1, name:manifest.title.ru }).waitFor();
@@ -320,7 +320,7 @@ try {
           await lessonReady(page, lessons.en[0], words[2]);
           await checkDraft(page, lessons.en[0], lessons.en[1], words);
           await checkSelfcheckWriteFailure(page, lessons.en[0], words);
-          for (const id of ['c.m1-project', 'c.read-input', 'c.guard-boundaries', 'c.functions', 'c.function-project', 'c.array-bounds', 'c.array-sort', 'c.null-terminated-strings', 'c.text-project', 'c.addresses-and-pointers', 'c.pointer-lifetime-errors', 'c.structures']) {
+          for (const id of ['c.m1-project', 'c.read-input', 'c.guard-boundaries', 'c.functions', 'c.function-project', 'c.array-bounds', 'c.array-sort', 'c.null-terminated-strings', 'c.text-project', 'c.addresses-and-pointers', 'c.pointer-lifetime-errors', 'c.structures', 'c.structure-contracts', 'c.allocation']) {
             const index = lessons.en.findIndex(lesson => lesson.id === id);
             await course(page).locator('.c-lesson-header .back-link').click();
             await course(page).locator('.c-outline').getByRole('link', {name:lessons.en[index].title, exact:true}).click();
@@ -336,7 +336,7 @@ try {
         const lessonFiles = observed.filter(file => file.startsWith('courses/c/lessons/'));
         const expectedFiles = topicIds.map(id => 'courses/c/lessons/' + id + '.' + locale + '.json');
         if (width === 1366 && locale === 'en') {
-          expectedFiles.push(...['c.what-is-c', 'c.m1-project', 'c.read-input', 'c.guard-boundaries', 'c.functions', 'c.function-project', 'c.array-bounds', 'c.array-sort', 'c.null-terminated-strings', 'c.text-project', 'c.addresses-and-pointers', 'c.pointer-lifetime-errors', 'c.structures'].map(id => 'courses/c/lessons/' + id + '.ru.json'));
+          expectedFiles.push(...['c.what-is-c', 'c.m1-project', 'c.read-input', 'c.guard-boundaries', 'c.functions', 'c.function-project', 'c.array-bounds', 'c.array-sort', 'c.null-terminated-strings', 'c.text-project', 'c.addresses-and-pointers', 'c.pointer-lifetime-errors', 'c.structures', 'c.structure-contracts', 'c.allocation'].map(id => 'courses/c/lessons/' + id + '.ru.json'));
         }
         assert.deepEqual(lessonFiles.sort(), expectedFiles.sort());
         const result = { width, locale, lessons:lessonCount, stageViews:lessonCount * 3, durationMs:Math.round(performance.now() - started), status:'PASS' };

@@ -84,11 +84,11 @@ for (const id of course.availableTopicIds) {
     }
   }
 }
-assert.equal(editions.length, 72);
-assert.equal(records.filter(record => record.kind === 'example').length, 72);
-assert.equal(records.filter(record => record.kind === 'reference').length, 512);
-assert.equal(records.filter(record => record.kind === 'diagnostic').length, 66);
-assert.equal(requests.size, 325);
+assert.equal(editions.length, 82);
+assert.equal(records.filter(record => record.kind === 'example').length, 82);
+assert.equal(records.filter(record => record.kind === 'reference').length, 584);
+assert.equal(records.filter(record => record.kind === 'diagnostic').length, 76);
+assert.equal(requests.size, 371);
 const shardIndex = process.env.NEXUS_C_RUNTIME_SHARD;
 assert.ok(shardIndex === undefined || ['0', '1', '2'].includes(shardIndex), 'Invalid C17 runtime shard');
 const shardCount = shardIndex === undefined ? 1 : 3;

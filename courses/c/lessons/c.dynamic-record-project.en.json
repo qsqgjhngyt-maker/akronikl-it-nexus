@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m8-v1",
+  "id": "c.dynamic-record-project",
+  "courseId": "c",
+  "moduleId": "c.m8",
+  "course": "C programming",
+  "module": "Dynamic memory and ownership",
+  "locale": "en",
+  "title": "Project: resizable record list",
+  "goal": "Build a small growing list that preserves already accepted records when growth fails and releases its allocation.",
+  "prerequisites": [
+    {
+      "text": "Resize safely and validate size products."
+    },
+    {
+      "text": "Be able to describe the used ≤ capacity invariant and work with a record."
+    }
+  ],
+  "terms": [
+    {
+      "id": "growth",
+      "term": "Growth",
+      "title": "Growth",
+      "definition": "Obtaining larger capacity before storing a new record. Here the fixed limit is eight slots."
+    },
+    {
+      "id": "committed-prefix",
+      "term": "Committed prefix",
+      "title": "Committed prefix",
+      "definition": "Records already added before a refusal. A rejected append claims no new slot."
+    },
+    {
+      "id": "failure-policy",
+      "term": "Controlled refusal",
+      "title": "Controlled refusal",
+      "definition": "A teaching control specifying which growth attempt will stop reserve before requesting memory."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Where an append becomes successful",
+      "paragraphs": [
+        "A Record pairs a sequential id with a value. The Queue keeps a pointer to the array, occupied count, and capacity. If no slot is free, append requests growth. On success it writes both fields of the new record and only then increments used.",
+        "reserve checks capacity and byte count. After these checks the counter records the growth attempt. A controlled refusal happens before realloc. If realloc itself fails, the old block remains live as well. After success, the list uses the returned pointer.",
+        "The && operator skips the second insertion if the first fails. The sum includes only the value fields of occupied records. Different records can yield the same sum, so check preservation with id:value. destroy frees the current block and resets the list fields."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Testing a controlled second growth failure",
+      "paragraphs": [
+        "The list starts with record 1:5. First append the value 8 and then try 13. The teaching policy refuses the second growth. Predict the summary and each id:value line."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_CAPACITY = 8 };\n\nstruct Record {\n    size_t id;\n    int value;\n};\n\nstruct Queue {\n    struct Record *items;\n    size_t used;\n    size_t capacity;\n};\n\nstruct GrowthPolicy {\n    unsigned attempts;\n    unsigned fail_at;\n};\n\nstatic int reserve(struct Queue *queue, struct GrowthPolicy *policy)\n{\n    if (queue->capacity == 0 || queue->capacity > MAX_CAPACITY / 2) {\n        return 0;\n    }\n    size_t next_capacity = queue->capacity * 2;\n    if (next_capacity > SIZE_MAX / sizeof *queue->items) {\n        return 0;\n    }\n    ++policy->attempts;\n    if (policy->attempts == policy->fail_at) {\n        return 0;\n    }\n    struct Record *next = realloc(queue->items, next_capacity * sizeof *queue->items);\n    if (next == NULL) {\n        return 0;\n    }\n    queue->items = next;\n    queue->capacity = next_capacity;\n    return 1;\n}\n\nstatic int append(struct Queue *queue, struct GrowthPolicy *policy, int value)\n{\n    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;\n    return 1;\n}\n\nstatic long total(const struct Queue *queue)\n{\n    long sum = 0;\n    for (size_t i = 0; i < queue->used; ++i) {\n        sum += queue->items[i].value;\n    }\n    return sum;\n}\n\nstatic void destroy(struct Queue *queue)\n{\n    free(queue->items);\n    *queue = (struct Queue){0};\n}\n\nint main(void)\n{\n    struct Queue queue = {malloc(sizeof(struct Record)), 1, 1};\n    if (queue.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    queue.items[0] = (struct Record){.id = 1, .value = 5};\n    struct GrowthPolicy policy = {.attempts = 0, .fail_at = 2};\n    int ok = append(&queue, &policy, 8) && append(&queue, &policy, 13);\n    printf(\"%s %zu %zu %ld\\n\", ok ? \"ok\" : \"allocation-failed\",\n           queue.used, queue.capacity, total(&queue));\n    for (size_t i = 0; i < queue.used; ++i) {\n        printf(\"%zu:%d\\n\", queue.items[i].id, queue.items[i].value);\n    }\n    destroy(&queue);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "allocation-failed 2 2 13\n1:5\n2:8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Appending 8 grows the capacity from one slot to two. After both fields are written, the second record is 2:8 and used is 2.",
+        "Appending 13 requires another growth. The counter reaches 2, so the policy returns failure before realloc.",
+        "The summary is allocation-failed 2 2 13. The lines 1:5 and 2:8 show which records were preserved."
+      ],
+      "trace": [
+        [
+          "Before the commands",
+          "used 1, capacity 1, [1:5]"
+        ],
+        [
+          "Appended 2:8",
+          "used 2, capacity 2, [1:5, 2:8]"
+        ],
+        [
+          "Value 13 refused",
+          "used 2, capacity 2, [1:5, 2:8]"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "Clang reports no member named used when the declaration lacks that member. Check the record definition and the purpose of the count before editing.",
+        "If the second-refusal test yields ok, trace when attempts is incremented. With the counter fixed, the second insertion is refused while the fields of records 1:10 and 2:20 stay the same."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Compare refusal at the first and second attempt. When does && skip append for the second value, and when is that call made and refused?",
+        "Repeat in a separate experiment that prints id:value. Compare each id and value even when two sums are equal."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.13, §6.5.2.3, §7.20.3, §7.22.3",
+      "language": "English",
+      "purpose": "Review the language and library contracts used in this example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What remains after the second refusal in the example?",
+      "options": [
+        "[1:5]",
+        "[1:5, 2:8]",
+        "[1:5, 2:8, 3:13]"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The first append already completed.",
+        "The second append stopped before writing.",
+        "The final value did not get more capacity."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "When is it safe to increment used?",
+      "options": [
+        "As soon as a value is read",
+        "Before requesting capacity",
+        "After successfully storing into a valid slot"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Valid input does not guarantee a spare slot.",
+        "The request may still fail.",
+        "The count includes existing elements only."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "For 20 30 1, what final state remains and which command is skipped?",
+      "feedback": "The growth before appending 20 is refused. Because of &&, appending 30 is skipped. The list retains used 1, capacity 1, and record 1:10.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Queue {\n    int *items;\n};\n\nint main(void)\n{\n    struct Queue queue = {0};\n    return queue.used;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "no member named 'used'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "A resizable queue of numeric records",
+    "environment": "C17 · Clang/WASI",
+    "task": "The first line of up to 63 bytes contains two integer values from 0 to 9999 and a growth attempt number from 0 to 2. Each run starts with list [1:10], capacity 1, and counter 0. Mode 0 disables the controlled refusal. Modes 1 and 2 refuse the corresponding attempt before realloc. The append function assigns the next sequential id. When needed, the list doubles its capacity up to eight slots. Appending stops at the first failure. Complete the attempt counter in reserve. The main output is one line: ok or allocation-failed, followed by used, capacity, and the sum of value fields. Invalid input prints invalid. If the initial malloc returns NULL, the program prints allocation-failed alone.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum { MAX_CAPACITY = 8 };\n\nstruct Record {\n    size_t id;\n    int value;\n};\n\nstruct Queue {\n    struct Record *items;\n    size_t used;\n    size_t capacity;\n};\n\nstruct GrowthPolicy {\n    unsigned attempts;\n    unsigned fail_at;\n};\n\nstatic int reserve(struct Queue *queue, struct GrowthPolicy *policy)\n{\n    if (queue->capacity == 0 || queue->capacity > MAX_CAPACITY / 2) {\n        return 0;\n    }\n    size_t next_capacity = queue->capacity * 2;\n    if (next_capacity > SIZE_MAX / sizeof *queue->items) {\n        return 0;\n    }\n    /* TODO: advance the counter before comparing to the requested failure. */\n    if (policy->attempts == policy->fail_at) {\n        return 0;\n    }\n    struct Record *next = realloc(queue->items, next_capacity * sizeof *queue->items);\n    if (next == NULL) {\n        return 0;\n    }\n    queue->items = next;\n    queue->capacity = next_capacity;\n    return 1;\n}\n\nstatic int append(struct Queue *queue, struct GrowthPolicy *policy, int value)\n{\n    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;\n    return 1;\n}\n\nstatic long total(const struct Queue *queue)\n{\n    long sum = 0;\n    for (size_t i = 0; i < queue->used; ++i) {\n        sum += queue->items[i].value;\n    }\n    return sum;\n}\n\nstatic void destroy(struct Queue *queue)\n{\n    free(queue->items);\n    *queue = (struct Queue){0};\n}\n\nint main(void)\n{\n    int input[3];\n    const int minimum[] = {0, 0, 0};\n    const int maximum[] = {9999, 9999, 2};\n    if (!read_values(input, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Queue queue = {malloc(sizeof(struct Record)), 1, 1};\n    if (queue.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    queue.items[0] = (struct Record){.id = 1, .value = 10};\n    struct GrowthPolicy policy = {.attempts = 0, .fail_at = (unsigned)input[2]};\n    int ok = append(&queue, &policy, input[0]) && append(&queue, &policy, input[1]);\n    printf(\"%s %zu %zu %ld\\n\", ok ? \"ok\" : \"allocation-failed\",\n           queue.used, queue.capacity, total(&queue));\n    destroy(&queue);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "20 30 2\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Two successful growth operations",
+        "input": "20 30 0\n",
+        "output": "ok 3 4 60\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "First growth failure",
+        "input": "20 30 1\n",
+        "output": "allocation-failed 1 1 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Second growth failure",
+        "input": "20 30 2\n",
+        "output": "allocation-failed 2 2 30\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero record values",
+        "input": "0 0 0\n",
+        "output": "ok 3 4 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper record values",
+        "input": "9999 9999 0\n",
+        "output": "ok 3 4 20008\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid growth attempt",
+        "input": "20 30 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Negative record",
+        "input": "-1 30 0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "20 30 0 yields ok 3 4 60. 20 30 1 yields allocation-failed 1 1 10. 20 30 2 yields allocation-failed 2 2 30.",
+      "Failure preserves used, capacity, and both fields of every committed record. Keep the main output to one line. Check individual fields in the transfer exercise."
+    ],
+    "hint": "Increment attempts before comparing it with fail_at. Count only a reserve attempt that passed the size check.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum { MAX_CAPACITY = 8 };\n\nstruct Record {\n    size_t id;\n    int value;\n};\n\nstruct Queue {\n    struct Record *items;\n    size_t used;\n    size_t capacity;\n};\n\nstruct GrowthPolicy {\n    unsigned attempts;\n    unsigned fail_at;\n};\n\nstatic int reserve(struct Queue *queue, struct GrowthPolicy *policy)\n{\n    if (queue->capacity == 0 || queue->capacity > MAX_CAPACITY / 2) {\n        return 0;\n    }\n    size_t next_capacity = queue->capacity * 2;\n    if (next_capacity > SIZE_MAX / sizeof *queue->items) {\n        return 0;\n    }\n    ++policy->attempts;\n    if (policy->attempts == policy->fail_at) {\n        return 0;\n    }\n    struct Record *next = realloc(queue->items, next_capacity * sizeof *queue->items);\n    if (next == NULL) {\n        return 0;\n    }\n    queue->items = next;\n    queue->capacity = next_capacity;\n    return 1;\n}\n\nstatic int append(struct Queue *queue, struct GrowthPolicy *policy, int value)\n{\n    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;\n    return 1;\n}\n\nstatic long total(const struct Queue *queue)\n{\n    long sum = 0;\n    for (size_t i = 0; i < queue->used; ++i) {\n        sum += queue->items[i].value;\n    }\n    return sum;\n}\n\nstatic void destroy(struct Queue *queue)\n{\n    free(queue->items);\n    *queue = (struct Queue){0};\n}\n\nint main(void)\n{\n    int input[3];\n    const int minimum[] = {0, 0, 0};\n    const int maximum[] = {9999, 9999, 2};\n    if (!read_values(input, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Queue queue = {malloc(sizeof(struct Record)), 1, 1};\n    if (queue.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    queue.items[0] = (struct Record){.id = 1, .value = 10};\n    struct GrowthPolicy policy = {.attempts = 0, .fail_at = (unsigned)input[2]};\n    int ok = append(&queue, &policy, input[0]) && append(&queue, &policy, input[1]);\n    printf(\"%s %zu %zu %ld\\n\", ok ? \"ok\" : \"allocation-failed\",\n           queue.used, queue.capacity, total(&queue));\n    destroy(&queue);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 20 30 2 and find the TODO in reserve.",
+        "why": "The counter stays at zero, so mode 2 never triggers the intended refusal.",
+        "expected": "The starter prints ok 3 4 60."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Increment attempts after the size checks and before comparing it with fail_at. Run 20 30 2 again.",
+        "why": "The second refusal leaves the record appended before that refusal.",
+        "expected": "The corrected output is allocation-failed 2 2 30."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run 20 30 1 and 20 30 0 separately. Then check the fields in the transfer exercise.",
+        "why": "Each run creates a fresh list. These modes distinguish early refusal from full success.",
+        "expected": "The outputs are allocation-failed 1 1 10 and ok 3 4 60 respectively."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "In a separate copy of the corrected program, insert this loop after the summary printf and before destroy(&queue): for (size_t i = 0; i < queue.used; ++i) { printf(\"%zu:%d\\n\", queue.items[i].id, queue.items[i].value); } Run 20 30 2 and then 20 30 0 separately. Compare the record ids and values.",
+        "criteria": [
+          "For 20 30 2, allocation-failed 2 2 30 is followed by exactly two separate lines: 1:10 and 2:20.",
+          "For 20 30 0, ok 3 4 60 is followed by lines 1:10, 2:20, and 3:30. Both fields of the first two records match. The refusal run omits 3:30."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.resizable-record-invariant",
+    "prerequisites": [
+      "c.safe-resize",
+      "c.checked-size-product",
+      "c.record-operation-invariants"
+    ]
+  }
+}

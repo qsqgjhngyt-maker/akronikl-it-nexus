@@ -8,12 +8,12 @@ const curriculum = read('courses/c/curriculum.json');
 const locales = ['ru', 'en'];
 const text = value => typeof value === 'string' && value.trim().length > 0;
 
-test('Семь модулей C доступны, остальные помечены как запланированные', () => {
+test('Восемь модулей C доступны, остальные помечены как запланированные', () => {
   assert.equal(manifest.id, 'c');
   assert.equal(manifest.languageId, 'c');
   assert.equal(manifest.standard, 'C17');
   assert.deepEqual(manifest.availableLocales, locales);
-  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4', 'c.m5', 'c.m6', 'c.m7']);
+  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4', 'c.m5', 'c.m6', 'c.m7', 'c.m8']);
   const modules = curriculum.modules;
   assert.ok(modules.length > 1);
   assert.equal(new Set(modules.map(module => module.id)).size, modules.length);
@@ -32,9 +32,9 @@ test('Семь модулей C доступны, остальные помеч�
       assert.ok(text(module.completion[locale]), module.id);
     }
   }
-  assert.equal(manifest.availableTopicIds.length, 36);
-  assert.equal(curriculum.availableModuleCount, 7);
-  assert.equal(curriculum.availableTopicCount, 36);
+  assert.equal(manifest.availableTopicIds.length, 41);
+  assert.equal(curriculum.availableModuleCount, 8);
+  assert.equal(curriculum.availableTopicCount, 41);
   assert.deepEqual(manifest.availableTopicIds.slice(9, 14), [
     'c.read-input', 'c.conditions', 'c.counted-loops', 'c.sentinel-loops', 'c.guard-boundaries',
   ]);
@@ -50,9 +50,13 @@ test('Семь модулей C доступны, остальные помеч�
   assert.deepEqual(manifest.availableTopicIds.slice(27, 32), [
     'c.addresses-and-pointers', 'c.pointer-arrays', 'c.pointer-parameters', 'c.const-and-null', 'c.pointer-lifetime-errors',
   ]);
-  assert.deepEqual(manifest.availableTopicIds.slice(32), [
+  assert.deepEqual(manifest.availableTopicIds.slice(32, 36), [
     'c.structures', 'c.enumerations', 'c.structure-arrays', 'c.structure-contracts',
   ]);
+  assert.deepEqual(manifest.availableTopicIds.slice(36), [
+    'c.allocation', 'c.ownership-and-release', 'c.resize-safely', 'c.allocate-bounds', 'c.dynamic-record-project',
+  ]);
+  assert.equal(modules.find(module => module.id === 'c.m8').project.status, 'implemented');
   assert.equal(modules.find(module => module.id === 'c.m5').project.status, 'implemented');
   assert.equal(modules.find(module => module.id === 'c.m3').project.status, 'implemented');
   assert.deepEqual(topics.filter(topic => topic.status === 'implemented').map(topic => topic.id), manifest.availableTopicIds);

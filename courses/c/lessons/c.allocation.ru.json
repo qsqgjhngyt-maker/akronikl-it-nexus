@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m8-v1",
+  "id": "c.allocation",
+  "courseId": "c",
+  "moduleId": "c.m8",
+  "course": "Программирование на C",
+  "module": "Динамическая память и владение",
+  "locale": "ru",
+  "title": "Выделение памяти и проверка результата",
+  "goal": "Выделить малый массив из проверенного количества элементов, обработать NULL до доступа и освободить память после вычисления.",
+  "prerequisites": [
+    {
+      "text": "Знать массивы, указатель и ограниченное время жизни объекта."
+    },
+    {
+      "text": "Уметь проверить целое до преобразования в size_t."
+    }
+  ],
+  "terms": [
+    {
+      "id": "allocation",
+      "term": "Выделение",
+      "title": "Выделение",
+      "definition": "Получение блока заданного размера. malloc принимает число байтов и возвращает указатель или NULL."
+    },
+    {
+      "id": "size",
+      "term": "Размер",
+      "title": "Размер",
+      "definition": "Количество байтов для count элементов. sizeof *values выражает размер одного элемента по его типу."
+    },
+    {
+      "id": "initialization",
+      "term": "Инициализация",
+      "title": "Инициализация",
+      "definition": "Запись первого определённого значения в каждый используемый элемент. malloc не заполняет массив значениями."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Зачем узнавать размер во время выполнения",
+      "paragraphs": [
+        "Учебная программа получает число результатов от датчика. Выделение во время выполнения позволяет выбрать ровно столько целых, сколько соответствует проверенному числу результатов. Сам указатель не хранит длину, поэтому count надо сохранить отдельно.",
+        "Предварительно проверяют положительное количество и вместимость произведения count × размер элемента. Разделите шаги: запросить байты, проверить ответ, инициализировать элементы, вычислить сумму, освободить блок.",
+        "Код sizeof *values здесь использует тип элемента. Он не читает память через values. В отличие от sizeof, выражение values[0] обращается к объекту и допустимо только после получения блока."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Массив из трёх элементов",
+      "paragraphs": [
+        "Предскажите сумму после записи 1, 2 и 3. Найдите единственный путь, на котором можно обратиться к массиву."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nint main(void)\n{\n    const size_t count = 3;\n    if (count > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        return 0;\n    }\n    int *values = malloc(count * sizeof *values);\n    if (values == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    values[0] = 1;\n    values[1] = 2;\n    values[2] = 3;\n    printf(\"sum %d\\n\", values[0] + values[1] + values[2]);\n    free(values);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "sum 6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Проверьте выражение размера до запроса malloc.",
+        "Убедитесь, что результат не равен NULL, и запишите три значения.",
+        "Распечатайте сумму 6 и завершите владение вызовом free."
+      ],
+      "trace": [
+        [
+          "count = 3",
+          "запрос 3 × размер int"
+        ],
+        [
+          "values != NULL",
+          "записать [1, 2, 3]"
+        ],
+        [
+          "sum 6",
+          "free один раз"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Локализуйте и проверьте ошибку",
+      "paragraphs": [
+        "Clang отклоняет вызов необъявленного malloc. Проверьте наличие stdlib.h. Заголовок даёт объявление с правильным типом результата.",
+        "Если заготовка всегда печатает allocation-failed, проверьте, что при разрешающем флаге действительно выполняется запрос. При запрете адаптер должен вернуть NULL до malloc. Этот отказ воспроизводим и не требует расходовать память до предела."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Измените, предскажите и проверьте",
+      "paragraphs": [
+        "Измените в примере значения на 3, 1, 4 и предскажите новый результат. Порядок проверок и освобождение не меняются.",
+        "В самостоятельной задаче повторите опыт с флагом 0. Запишите, до какого шага доходит программа и почему ни один элемент не читается."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.3.4, §7.20.3, §7.22.3.3–4",
+      "language": "English",
+      "purpose": "Сверьте договоры языка и библиотеки, использованные в примере."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что выводит разобранный пример при успешном выделении?",
+      "options": [
+        "sum 0",
+        "sum 3",
+        "sum 6"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Элементы инициализируются перед суммированием.",
+        "Количество элементов не является их суммой.",
+        "1 + 2 + 3 = 6."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Чем обработка флага 0 отличается от ошибки формата?",
+      "options": [
+        "Обе ветви выделяют память.",
+        "Флаг 0 корректен по формату и прекращает запрос. Неверный ввод отклоняется раньше.",
+        "Флаг 0 разрешает чтение массива."
+      ],
+      "correct": 1,
+      "feedback": [
+        "На обеих ветвях запрос фактически не выполняется.",
+        "Разные точки проверки дают разные результаты.",
+        "NULL проверяется до любого чтения."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему нельзя вычислить сумму элементов в ветке values == NULL и почему в ней не нужен поиск числа свободных байтов памяти?",
+      "feedback": "Блока для чтения нет. Функция уже сообщила об отказе, поэтому достаточно выдать определённый результат и закончить.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    void *p = malloc(4);\n    return p == 0;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared",
+        "malloc"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Ограниченный массив",
+    "environment": "C17 · Clang/WASI",
+    "task": "Введите два целых через пробельные символы в первой строке до 63 байт: count от 1 до 16 и флаг 0 или 1. Следующие строки игнорируются. Доработайте allocate_values: запрет и неверный размер дают NULL, разрешённый размер — запрос памяти для count элементов int. Готовый main обрабатывает NULL, а при успехе записывает числа от 1 до count, печатает sum N и освобождает блок. Ошибка входа даёт invalid. Флаг 0 возвращает NULL до вызова malloc.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstatic int *allocate_values(size_t count, int allowed)\n{\n    if (!allowed || count == 0 || count > SIZE_MAX / sizeof(int)) {\n        return NULL;\n    }\n    /* TODO: make a positive, checked allocation. */\n    return NULL;\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {1, 0};\n    const int maximum[] = {16, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    const size_t count = (size_t)input[0];\n    int *values = allocate_values(count, input[1]);\n    if (values == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    int sum = 0;\n    for (size_t i = 0; i < count; ++i) {\n        values[i] = (int)i + 1;\n        sum += values[i];\n    }\n    printf(\"sum %d\\n\", sum);\n    free(values);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "4 1\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Обычное выделение",
+        "input": "4 1\n",
+        "output": "sum 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Управляемый отказ",
+        "input": "4 0\n",
+        "output": "allocation-failed\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Один элемент",
+        "input": "1 1\n",
+        "output": "sum 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевое количество",
+        "input": "0 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Верхний размер",
+        "input": "16 1\n",
+        "output": "sum 136\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "За пределом",
+        "input": "17 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нераспознанный флаг",
+        "input": "4 2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "4 1 даёт sum 10, 4 0 даёт allocation-failed, 0 1 даёт invalid.",
+      "Флаг 0 завершает allocate_values до malloc. Проверка NULL предшествует обращению к элементам. Успешно выделенный блок освобождается один раз."
+    ],
+    "hint": "Используйте уже проверенный count, а sizeof(int) задаёт байты для одного элемента.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstatic int *allocate_values(size_t count, int allowed)\n{\n    if (!allowed || count == 0 || count > SIZE_MAX / sizeof(int)) {\n        return NULL;\n    }\n    return malloc(count * sizeof(int));\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {1, 0};\n    const int maximum[] = {16, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    const size_t count = (size_t)input[0];\n    int *values = allocate_values(count, input[1]);\n    if (values == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    int sum = 0;\n    for (size_t i = 0; i < count; ++i) {\n        values[i] = (int)i + 1;\n        sum += values[i];\n    }\n    printf(\"sum %d\\n\", sum);\n    free(values);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 4 1. Найдите TODO в allocate_values.",
+        "why": "Запрос проходит проверки, но заготовка сразу возвращает NULL.",
+        "expected": "Заготовка печатает allocation-failed."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Вызовите malloc после проверки размера. Отдельно запустите 4 1 и 4 0.",
+        "why": "Одинаковое количество отделяет реальный запрос от управляемого отказа.",
+        "expected": "Исправленный код печатает sum 10 и allocation-failed соответственно."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте 16 1 и 0 1.",
+        "why": "Ноль отклоняется до вызова allocate_values.",
+        "expected": "Соответственно sum 136 и invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенос идеи",
+        "task": "Измените значения на натуральные чётные 2..2×count, оставив прежнюю проверку выделения.",
+        "criteria": [
+          "3 1 даёт sum 12, 3 0 по-прежнему allocation-failed. Объясните, почему отказ не зависит от формулы суммы."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.checked-allocation",
+    "prerequisites": [
+      "c.record-array-lookup"
+    ]
+  }
+}
