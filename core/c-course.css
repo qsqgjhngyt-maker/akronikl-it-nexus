@@ -2,11 +2,13 @@
   --c-panel: #142436;
   --c-line: #3d5368;
   --c-focus: #a3efdc;
+  --c-anchor-offset: calc(var(--c-shell-top, 0px) + var(--c-context-height, 0px) + 1rem);
   color: #eef5ff;
   max-width: 86rem;
   margin-inline: auto;
   min-width: 0;
 }
+[data-c-course][data-c-lesson] { background: #0b1929; border-radius: 1rem; }
 [data-c-course] :where(p, li, a, h1, h2, h3, h4, summary) { overflow-wrap: anywhere; }
 [data-c-course] h1 { margin: .35rem 0 .85rem; }
 [data-c-course] h2 { margin-top: 0; }
@@ -21,40 +23,103 @@
 }
 [data-c-course] .c-route-status:empty { display: none; }
 [data-c-course] .c-route-status { color: #ffd3c4; }
-[data-c-course] .c-unit-body, [data-c-course] .c-reading {
+[data-c-course] .course-hero.c-panel { padding: clamp(1rem, 3vw, 2.1rem); }
+[data-c-course] .course-hero .progress { margin-bottom: .85rem; }
+[data-c-course] .c-module-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(13rem, 18rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+[data-c-course] .c-module { margin-block: 0; }
+[data-c-course] .c-reading {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
   gap: .85rem;
   align-items: start;
 }
-[data-c-course] .c-reading { grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr); }
 [data-c-course] .c-main, [data-c-course] .c-reading > div { min-width: 0; }
-[data-c-course] .c-neighbors, [data-c-course] .c-stages, [data-c-course] .c-actions {
+[data-c-course] .c-lesson-header {
+  position: sticky;
+  top: var(--c-shell-top, 0px);
+  z-index: 5;
+  margin-block: .75rem .5rem;
+  padding: .35rem .5rem;
+  border: 1px solid var(--c-line);
+  border-radius: .65rem;
+  background: #101e2e;
+}
+[data-c-course] .c-context-row { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; }
+[data-c-course] .c-context-row h1 { flex: 1 1 7rem; min-width: 0; margin: 0; font-size: .9rem; line-height: 1.3; }
+[data-c-course] .c-topic-marker {
+  padding: .1rem .3rem;
+  border: 1px solid var(--c-line);
+  border-radius: .3rem;
+  white-space: nowrap;
+  font-size: .72rem;
+  font-weight: 700;
+}
+[data-c-course] .c-lesson-header .back-link {
+  margin: 0;
+  padding: .15rem .5rem;
+  font-size: .73rem;
+  line-height: 1.25;
+}
+[data-c-course] .c-neighbors, [data-c-course] .c-actions {
   display: flex;
   flex-wrap: wrap;
   gap: .5rem;
 }
-[data-c-course] .c-stages { margin-top: .65rem; }
+[data-c-course] .c-stages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .35rem;
+  margin-top: .35rem;
+}
 [data-c-course] .c-neighbors .btn { flex: 1 1 14rem; }
-[data-c-course] .c-stages .btn { flex: 1 1 8rem; text-align: center; justify-content: center; }
 [data-c-course] .btn { min-height: 44px; white-space: normal; max-width: 100%; }
-[data-c-course] .btn[aria-current="page"] {
+[data-c-course] .c-stages .btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: .25rem .4rem .4rem;
+  border-radius: .4rem;
+  text-align: center;
+  font-size: clamp(.72rem, 2.7vw, .85rem);
+  line-height: 1.15;
+}
+[data-c-course] .c-stages [aria-current="step"] {
   color: #defdf5;
   background: #245447;
   border-color: #7bdfc1;
   font-weight: 700;
 }
+[data-c-course] .c-current-marker {
+  position: absolute;
+  bottom: 3px;
+  width: .75rem;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
 [data-c-course] :where(a, button, input, textarea, summary):focus-visible {
   outline: 2px solid var(--c-focus);
   outline-offset: 2px;
 }
-[data-c-course] summary, [data-c-course] .c-outline a {
+[data-c-course] summary { display: list-item; min-height: 44px; cursor: pointer; padding-block: .45rem; font-weight: 650; color: var(--c-focus); }
+[data-c-course] .c-outline { margin: 1rem 0 0; padding: 0; list-style: none; }
+[data-c-course] .c-outline li { margin-block-start: 0; border-top: 1px solid var(--c-line); }
+[data-c-course] .c-outline a {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
   min-height: 44px;
+  padding-block: .55rem;
+  color: var(--c-focus);
 }
-[data-c-course] summary { display: list-item; cursor: pointer; padding-block: .45rem; font-weight: 650; color: var(--c-focus); }
-[data-c-course] .c-outline a { display: inline-flex; color: var(--c-focus); text-decoration: underline; }
+[data-c-course] .c-outline a:hover { text-decoration: underline; }
+[data-c-course] .c-outline small { color: #c3d6ed; }
 [data-c-course] .c-section-link {
   min-height: 44px;
   text-align: start;
@@ -68,8 +133,6 @@
 }
 [data-c-course] :where(.c-panel, .c-outline) :is(ul, ol) { padding-inline-start: 1.45rem; }
 [data-c-course] li + li { margin-block-start: .35rem; }
-[data-c-course] dt { font-weight: 650; }
-[data-c-course] dd { margin: .25rem 0 1rem; }
 [data-c-course] pre {
   max-width: 100%;
   white-space: pre-wrap;
@@ -89,9 +152,34 @@
 [data-c-course] fieldset { border: 1px solid var(--c-line); padding: .5rem; margin: .5rem 0; min-width: 0; }
 [data-c-course] textarea[data-c-explanation] { display: block; width: 100%; margin-block: .45rem; }
 [data-c-course] .c-trace span { display: block; }
-[data-c-course] [data-c-section] { scroll-margin-top: 5rem; }
+[data-c-course] .c-main :is([data-c-section], a, button, input, textarea, summary), [data-c-course] [data-c-workspace] {
+  scroll-margin-top: var(--c-anchor-offset);
+}
+[data-c-course] .c-main { padding-bottom: calc(12rem + env(safe-area-inset-bottom, 0px)); }
 [data-c-course] .c-actions { align-items: center; justify-content: flex-end; }
 [data-c-course] .c-actions p { flex-basis: 100%; margin: 0; }
+[data-c-course] .c-lesson-reference.lesson-floating {
+  top: auto;
+  right: max(20px, env(safe-area-inset-right, 0px));
+  bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+}
+[data-c-course] .c-lesson-reference .quick-action {
+  width: auto;
+  height: auto;
+  min-height: 44px;
+  padding-inline: .8rem;
+  background: #122235;
+  backdrop-filter: none;
+  font: inherit;
+  font-size: .83rem;
+  font-weight: 650;
+}
+[data-c-course] .c-lesson-reference .quick-action:hover { background: #1b3450; }
+[data-c-course] .term-drawer { grid-template-rows: auto auto minmax(0, 1fr); }
+[data-c-course] .term-drawer[data-c-syntax] { grid-template-rows: auto minmax(0, 1fr); }
+[data-c-course] .term-drawer [hidden] { display: none; }
+[data-c-course] .term-drawer .icon-btn { min-width: 44px; min-height: 44px; }
+[data-c-course] .term-drawer .drawer-scroll { min-height: 0; }
 @media (min-width: 74rem) {
   [data-c-course] .c-example:has(.c-example-io) {
     grid-template-columns: minmax(0, 1fr) minmax(9rem, 30%);
@@ -101,19 +189,32 @@
 @media (max-width: 68rem) {
   [data-c-course] .c-reading { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 51rem) {
-  [data-c-course] .c-unit-body { grid-template-columns: minmax(0, 1fr); }
-  [data-c-course] .c-glossary { grid-row: 1; }
+@media (max-width: 760px) {
+  [data-c-course] .c-module-grid { grid-template-columns: minmax(0, 1fr); }
+  [data-c-course] .c-main { padding-bottom: calc(16rem + env(safe-area-inset-bottom, 0px)); }
+  [data-c-course] .c-lesson-reference.lesson-floating {
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (max-height: 500px) {
+  [data-c-course] { --c-anchor-offset: calc(var(--c-shell-top, 0px) + 1rem); }
+  [data-c-course] .c-lesson-header { position: static; }
 }
 @media (max-width: 35rem) {
   body:has([data-c-course]) > [data-akronikl-presence] { display: none; }
+  [data-c-course] .c-main { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
   [data-c-course] .c-neighbors .btn, [data-c-course] .c-actions .btn { width: 100%; }
-  [data-c-course] .c-stages .btn {
-    flex: 1 1 auto;
-    padding-inline: .32rem;
-    font-size: .81rem;
-    white-space: nowrap;
-    overflow-wrap: normal;
+  [data-c-course] .c-stages .btn { padding-inline: .15rem; }
+  [data-c-course] .c-lesson-reference.lesson-floating {
+    display: flex;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
   [data-c-course] .c-case-pair { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
+}
+@media (max-width: 350px) {
+  [data-c-course] .c-stages {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, .85fr);
+    gap: .25rem;
+  }
 }
