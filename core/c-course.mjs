@@ -1,4 +1,5 @@
 import {bindCCourseWorkspace, createCCourseStorage} from './c-course-workspace.mjs';
+import {bindGlossaryDrawer, termReferenceMarkup} from './nexus-learning-ui.js';
 import {registerUpdateParticipant} from '../pwa/interface-update.js';
 
 const stages = [
@@ -59,29 +60,44 @@ function overview({data, locale, t, resume, progress}) {
   const {manifest, curriculum, topics} = data;
   const last = topics.find(topic => topic.id === resume?.lessonId);
   const start = last ?? topics[0];
-  const modules = curriculum.modules.map(module => {
+  const topicIds = new Set(topics.map(topic => topic.id));
+  const modules = curriculum.modules.map((module, index) => {
     const active = manifest.availableModuleIds.includes(module.id);
     const links = module.topics.map(topic => {
       const title = escape(localized(topic.title, locale));
-      if (!active || !topics.some(item => item.id === topic.id)) return '<li>' + title + '</li>';
+      if (!active || !topicIds.has(topic.id)) return '<li>' + title + '</li>';
       const completed = progress.has(topic.id);
-      return '<li><a href="' + escape(routeLink(locale, topic.id)) + '">' + title + '</a>' +
-        (completed ? ' <small>' + escape(t('Изучен', 'Studied')) + '</small>' : '') + '</li>';
+      return '<li><a href="' + escape(routeLink(locale, topic.id)) + '" aria-label="' + title + '"' +
+        (completed ? ' aria-describedby="c-studied-' + escape(topic.id) + '"' : '') + '><span>' + title +
+        (completed ? ' <small id="c-studied-' + escape(topic.id) + '">' + t('Изучен', 'Studied') + '</small>' : '') +
+        '</span><span aria-hidden="true">→</span></a></li>';
     }).join('');
-    const heading = '<h2>' + escape(localized(module.title, locale)) + '</h2>';
+    const title = escape(localized(module.title, locale));
+    const count = t('Темы: ', 'Lessons: ') + module.topics.length;
     const goals = list(localized(module.goals, locale) || []);
     return active
-      ? '<section class="c-panel">' + heading + goals + '<ol class="c-outline">' + links + '</ol></section>'
-      : '<details class="c-panel"><summary>' + escape(localized(module.title, locale)) + ' · ' +
+      ? '<article class="c-panel c-module" data-c-module="' + escape(module.id) + '"><p class="eyebrow">' +
+        t('Модуль ', 'Module ') + (index + 1) + ' · ' + count + '</p><h2>' + title + '</h2>' +
+        goals + '<ol class="c-outline">' + links + '</ol></article>'
+      : '<details class="c-panel c-module"><summary>' + title + ' · ' +
         escape(t('В плане', 'Planned')) + '</summary>' + goals + '<ol>' + links + '</ol></details>';
   }).join('');
-  return '<a class="back-link" href="#view=academy">← ' + escape(t('Академия', 'Academy')) + '</a>' +
-    '<header class="c-panel"><p>C17 · ' + escape(t('Модули ', 'Modules ') + manifest.availableModuleIds.length + ' / ' + curriculum.moduleCount) + '</p><h1>' +
-    escape(localized(manifest.title, locale)) + '</h1><p>' + escape(localized(manifest.description, locale)) +
-    '</p><p>' + escape(t('Изучено ', 'Studied ') + progress.size + ' / ' + topics.length) + '</p>' +
+  const percent = topics.length ? Math.round(100 * progress.size / topics.length) : 0;
+  const moduleCount = manifest.availableModuleIds.length + (manifest.availableModuleIds.length === curriculum.moduleCount ? '' : ' / ' + curriculum.moduleCount);
+  const studied = t('Изучено', 'Studied');
+  return '<div class="nexus-learning"><a class="back-link" href="#view=academy">← ' + t('Академия', 'Academy') + '</a>' +
+    '<header class="c-panel course-hero"><div class="course-code large" aria-hidden="true">C<span>17</span></div><div>' +
+    '<p class="eyebrow">' + t('Учебный курс C17', 'C17 course') + '</p><h1>' +
+    escape(localized(manifest.title, locale)) + '</h1><p>' + escape(localized(manifest.description, locale)) + '</p>' +
+    '<div class="learning-course-facts"><span>' + t('Модули: ', 'Modules: ') + '<b>' + moduleCount + '</b></span><span>' +
+    t('Темы: ', 'Lessons: ') + '<b>' + topics.length + '</b></span></div>' +
+    '<div class="progress-row"><span>' + studied + ' <b>' + progress.size + ' / ' + topics.length + '</b></span><span>' + percent +
+    '%</span></div><div class="progress" role="progressbar" aria-label="' + studied + '" aria-valuemin="0" aria-valuemax="' +
+    topics.length + '" aria-valuenow="' + progress.size + '"><i style="width:' + percent + '%"></i></div>' +
     button(routeLink(locale, start?.id, last ? resume.stage : undefined),
       last ? t('Продолжить: ', 'Resume: ') + localized(last.title, locale) : t('Начать первый урок', 'Start the first lesson'), true) +
-    '</header>' + modules;
+    '</div></header><section aria-labelledby="c-curriculum"><h2 id="c-curriculum">' +
+    t('Программа курса', 'Course outline') + '</h2><div class="c-module-grid">' + modules + '</div></section></div>';
 }
 
 function renderFiles(files, t, heading) {
@@ -107,6 +123,40 @@ function renderCode(code, t, {showResult = true} = {}) {
       (code.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(code.stderr) + '</div>' : '') +
       (code.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(code.exitCode) + '</p>' : '') : '') +
     diagnostic + '</div>';
+}
+
+function lessonReference(lesson, locale, t) {
+  const terms = lesson.terms.map(term => ({...term, term:term.term ?? term.title}));
+  const examples = lesson.sections.filter(section => section.code);
+  return '<div class="lesson-floating c-lesson-reference" role="group" aria-label="' + t('Справка', 'Help') + '">' +
+    '<button class="quick-action" type="button" data-open-terms data-c-reference="terms"><span aria-hidden="true">⌕</span> ' +
+    t('Справочник', 'Reference') + '</button>' +
+    '<button class="quick-action" type="button" data-open-terms data-c-reference="syntax"><span aria-hidden="true">{ }</span> ' +
+    t('Синтаксис', 'Syntax') + '</button></div>' +
+    termReferenceMarkup(terms, {uiLocale:locale, contentLocale:locale}).replace('</dialog>',
+      '<div class="drawer-scroll c-syntax-list" data-c-syntax-list tabindex="0" role="region" aria-labelledby="termDrawerTitle" hidden>' +
+      examples.map(section => '<section><h3>' + escape(section.title) + '</h3>' + renderCode(section.code, t) + '</section>').join('') +
+      '</div></dialog>');
+}
+
+function bindLessonReference(host, t) {
+  const drawer = host.querySelector('#termDrawer');
+  const title = drawer.querySelector('#termDrawerTitle');
+  const search = drawer.querySelector('.drawer-search');
+  const termList = drawer.querySelector('#termList');
+  const syntaxList = drawer.querySelector('[data-c-syntax-list]');
+  return bindGlossaryDrawer(host, {
+    prepareOpen(trigger) {
+      const syntax = trigger.dataset.cReference === 'syntax';
+      drawer.toggleAttribute('data-c-syntax', syntax);
+      title.textContent = syntax ? t('Синтаксис C17 по теме', 'C17 syntax for this lesson') :
+        t('Справочник терминов', 'Terminology reference');
+      search.hidden = syntax;
+      termList.hidden = syntax;
+      syntaxList.hidden = !syntax;
+      return syntax ? syntaxList : search.querySelector('input');
+    },
+  });
 }
 
 function explanation(lesson, t) {
@@ -195,7 +245,8 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
     stage === 'selfcheck' ? selfcheck(lesson, t, responses) : practice(lesson, t, readonly);
   const tabs = stages.map(([id, ru, en]) =>
     '<a class="btn" href="' + escape(routeLink(locale, lesson.id, id)) + '"' +
-    (id === stage ? ' aria-current="page"' : '') + '>' + t(ru, en) + '</a>').join('');
+    (id === stage ? ' aria-current="step"' : '') + '>' + t(ru, en) +
+    (id === stage ? '<span class="c-current-marker" aria-hidden="true"></span>' : '') + '</a>').join('');
   const action = stage === 'explanation'
     ? button(routeLink(locale, lesson.id, 'selfcheck'), t('Дальше: самопроверка →', 'Next: self-check →'), true)
     : stage === 'selfcheck'
@@ -203,20 +254,18 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
       : next ? button(routeLink(locale, next.id), nextLabel, true)
         : '<p>' + t('Вы дошли до конца доступных уроков курса C17.', 'You have reached the end of the available C17 lessons.') + '</p>' +
           button(routeLink(locale), t('Вернуться к программе →', 'Back to the course outline →'), true);
-  const terms = '<details class="c-panel c-glossary"><summary>' + t('Справка по теме', 'Lesson reference') + '</summary><dl>' +
-    lesson.terms.map(term => '<dt>' + escape(term.term ?? term.title) + '</dt><dd>' + escape(term.definition) + '</dd>').join('') +
-    '</dl></details>';
-  return '<header class="c-panel c-lesson-header"><a class="back-link" href="' + escape(routeLink(locale)) + '">' +
-    t('← Программа C', '← C course outline') + '</a><p>C17 · ' + t('Тема ', 'Lesson ') + (index + 1) +
-    ' / ' + data.topics.length + '</p><h1 tabindex="-1" data-c-heading>' + escape(lesson.title) + '</h1>' +
+  return '<header class="c-lesson-header"><div class="c-context-row"><span class="c-topic-marker">' +
+    t('Тема ', 'Lesson ') + (index + 1) + '/' + data.topics.length + '</span><h1 tabindex="-1" data-c-heading>' +
+    escape(lesson.title) + '</h1><a class="btn back-link" href="' + escape(routeLink(locale)) + '">' +
+    t('Программа курса', 'Course outline') + '</a></div>' +
+    '<nav class="c-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
     '<nav class="c-neighbors" aria-label="' + t('Уроки', 'Lessons') + '">' +
     (previous ? button(routeLink(locale, previous.id), t('← Предыдущий урок: ', '← Previous lesson: ') + titleOf(previous)) : '') +
     (next ? button(routeLink(locale, next.id), nextLabel) : '') + '</nav>' +
-    '<nav class="c-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
-    '<div class="c-unit-body"><div class="c-main">' + contents + '<footer class="c-panel c-actions">' +
+    '<div class="c-main">' + contents + '<footer class="c-panel c-actions">' +
     (stage === 'practice' && canSave ? '<button class="btn" type="button" data-c-complete aria-pressed="' + progress.has(lesson.id) +
       '">' + (progress.has(lesson.id) ? t('Отмечен изученным', 'Marked as studied') : t('Отметить изученным', 'Mark as studied')) +
-      '</button>' : '') + action + '</footer></div>' + terms + '</div>';
+    '</button>' : '') + action + '</footer></div>' + lessonReference(lesson, locale, t);
 }
 
 export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readonly = false, isCurrent = () => true} = {}) {
@@ -239,6 +288,7 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   const events = new AbortController();
   const options = {signal:events.signal};
   host.lang = locale;
+  host.toggleAttribute('data-c-lesson', Boolean(lesson));
   const style = document.createElement('link');
   style.rel = 'stylesheet';
   style.href = new URL('./c-course.css', import.meta.url).href;
@@ -249,6 +299,22 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   host.prepend(style);
 
   const status = host.querySelector('[data-c-status]');
+  const disposeReference = lesson ? bindLessonReference(host, t) : null;
+  const context = host.querySelector('.c-lesson-header');
+  const topbar = document.querySelector('.topbar');
+  const measureContext = () => {
+    host.style.setProperty('--c-shell-top', (topbar?.getBoundingClientRect().height ?? 0) + 'px');
+    host.style.setProperty('--c-context-height', context.getBoundingClientRect().height + 'px');
+  };
+  let contextObserver;
+  if (context) {
+    measureContext();
+    if (typeof ResizeObserver !== 'undefined') {
+      contextObserver = new ResizeObserver(measureContext);
+      contextObserver.observe(context);
+      if (topbar) contextObserver.observe(topbar);
+    }
+  }
   function store(key, value) {
     if (!storage) return false;
     try { storage.setItem(key, JSON.stringify(value)); return true; }
@@ -327,6 +393,8 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
     },
     dispose() {
       events.abort();
+      contextObserver?.disconnect();
+      disposeReference?.();
       unregisterUpdate();
       workspace?.dispose();
     },

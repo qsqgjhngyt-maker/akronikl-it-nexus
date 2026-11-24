@@ -15,6 +15,35 @@ try{
  const route=async(hash,selector)=>{await page.goto(origin+'/__onec_platform'+hash);const params=new URLSearchParams(hash.slice(1));if(params.has('course'))await page.waitForFunction(expected=>{const root=document.querySelector('[data-onec-platform-mount]')?.shadowRoot;if(!root)return false;const current=root.querySelector('[data-course-id]');if(current?.dataset.courseId!==expected.course)return false;const lesson=root.querySelector('[data-lesson]'),final=root.querySelector('[data-final-assessment]');return expected.lesson?lesson?.dataset.lesson===expected.lesson:expected.final?final?.dataset.finalAssessment===expected.course&&!!final.querySelector('[data-final-form]'):!lesson&&!final;},{course:params.get('course'),lesson:params.get('lesson'),final:params.get('assessment')==='final'});await page.locator(selector).waitFor();};
  await record('Общая Академия открывает оба канонических курса',async()=>{await route('#view=academy','[href="#course=onec"]');assert.ok(await page.locator('[href="#course=1c-enterprise"]').count());await page.locator('[href="#course=onec"]').first().click();await page.locator('[data-onec-platform-mount] [data-progress]').waitFor();assert.equal(await page.locator('[data-progress]').innerText(),'0/52');assert.equal(await page.locator('[data-onec-platform-mount]').count(),1);});
 
+ await record('Справочник и синтаксис в обоих курсах 1С доступны рядом с помощником',async()=>{
+  for(const [course,lesson] of [['onec','onec.p2.topic-1'],['1c-enterprise','1c-enterprise.a2.topic-1']]){
+   for(const width of [1366,390,320]){
+    await page.setViewportSize({width,height:900});
+    await route('#'+new URLSearchParams({course,lesson,stage:'explanation',locale:'ru'}),'[data-reference-open]');
+    const help=page.locator('[data-reference-open]'),syntax=page.locator('[data-reference-editor-help]'),drawer=page.locator('.reference-dialog');
+    const originalURL=page.url();
+    for(const trigger of [help,syntax]){
+     assert.ok(await trigger.evaluate(button=>{
+      const bounds=button.getBoundingClientRect(),x=bounds.x+bounds.width/2,y=bounds.y+bounds.height/2;
+      const scope=button.getRootNode(),presence=document.querySelector('[data-akronikl-presence]')?.getBoundingClientRect();
+      return getComputedStyle(button.parentElement).position==='fixed'&&bounds.height>=44&&bounds.left>=0&&
+       bounds.right<=innerWidth&&bounds.bottom<=innerHeight&&button.contains(scope.elementFromPoint(x,y))&&
+       (!presence?.height||bounds.bottom<=presence.top||bounds.right<=presence.left);
+     }),course+' '+width+' плавающие кнопки не перекрыты');
+    }
+    await help.click();await drawer.locator('[data-reference-card]').first().waitFor();
+    await page.keyboard.press('Escape');
+    assert.equal(await help.evaluate(button=>button.getRootNode().activeElement===button),true);
+    await syntax.click();await drawer.locator('[data-reference-details][open] pre code').first().waitFor();
+    await page.screenshot({path:path.join(out,'REFERENCE_'+course+'_'+width+'.png')});
+    await page.keyboard.press('Escape');
+    assert.equal(await syntax.evaluate(button=>button.getRootNode().activeElement===button),true);
+    assert.equal(page.url(),originalURL);
+   }
+  }
+  await page.setViewportSize({width:1366,height:900});
+ });
+
  await record('Главная сообщает о новом контенте и ведёт в два отдельных курса RU/EN',async()=>{
   for(const locale of ['ru','en']){await page.evaluate(async locale=>{const {loadPrefs,savePrefs}=await import('/core/storage.js');savePrefs({...loadPrefs(),uiLocale:locale});},locale);await page.reload();await route('#view=home','[data-new-courses]');assert.equal(await page.locator('[data-new-content-notice]').count(),1);assert.match(await page.locator('[data-new-content-notice]').innerText(),locale==='en'?/New: two independent/:/Новое: два самостоятельных/);assert.equal(await page.locator('[data-new-course]').count(),2);for(const id of ['onec','1c-enterprise']){const card=page.locator('[data-new-course="'+id+'"]');assert.equal(await card.getAttribute('href'),'#course='+id);assert.ok((await card.locator('h3').innerText()).length>10);}await page.screenshot({path:path.join(out,'S10_HOME_'+locale+'.png')});}await page.evaluate(async()=>{const{loadPrefs,savePrefs}=await import('/core/storage.js');savePrefs({...loadPrefs(),uiLocale:'ru'});});await page.reload();
  });

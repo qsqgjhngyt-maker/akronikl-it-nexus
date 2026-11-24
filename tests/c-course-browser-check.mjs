@@ -43,8 +43,8 @@ const publicResponses = new Map([
   ['/api/akronikl/cloud/preferences', { revision:0, value:null }],
 ]);
 const stageText = {
-  ru:['Объяснение','Самопроверка','Практика','Дальше: самопроверка →','Перейти к практике →','Следующий урок: ','Вернуться к программе →','Эталонное решение','Справка по теме','Отметить изученным','Продолжить: '],
-  en:['Explanation','Self-check','Practice','Next: self-check →','Go to practice →','Next lesson: ','Back to the course outline →','Reference solution','Lesson reference','Mark as studied','Resume: '],
+  ru:['Объяснение','Самопроверка','Практика','Дальше: самопроверка →','Перейти к практике →','Следующий урок: ','Вернуться к программе →','Эталонное решение','Справочник','Отметить изученным','Продолжить: '],
+  en:['Explanation','Self-check','Practice','Next: self-check →','Go to practice →','Next lesson: ','Back to the course outline →','Reference solution','Reference','Mark as studied','Resume: '],
 };
 const results = [];
 const pageErrors = [];
@@ -110,7 +110,7 @@ function bottom(page, name) {
 async function lessonReady(page, lesson, stage) {
   const root = course(page);
   await root.getByRole('heading', { level:1, name:lesson.title, exact:true }).waitFor();
-  await root.locator('.c-stages [aria-current="page"]').filter({ hasText:stage }).waitFor();
+  await root.locator('.c-stages [aria-current="step"]').filter({ hasText:stage }).waitFor();
   await page.waitForFunction(() => Boolean(document.querySelector('[data-c-course] link')?.sheet));
   assert.equal(await root.getAttribute('lang'), lesson.locale);
 }
@@ -124,7 +124,7 @@ async function checkLayout(page, label) {
     ).length;
     const wrappedStages = [...host.querySelectorAll('.c-stages .btn')].filter(link => {
       const label = document.createRange();
-      label.selectNodeContents(link);
+      label.selectNodeContents(link.firstChild);
       return label.getClientRects().length > 1;
     }).map(link => link.textContent);
     return {
@@ -165,6 +165,10 @@ async function openCourse(page, locale, width) {
     await course(page).getByRole('heading', { level:1, name:manifest.title.en }).waitFor();
   }
   assert.equal(await course(page).locator('.c-outline a').count(), manifest.availableTopicIds.length);
+  const tiles = course(page).locator('.c-module-grid [data-c-module]');
+  assert.deepEqual(await tiles.evaluateAll(cards => cards.map(card => card.dataset.cModule)), manifest.availableModuleIds);
+  const columns = await course(page).locator('.c-module-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
+  assert.equal(columns, width > 760 ? 2 : 1);
   assert.equal(await course(page).locator('details.c-panel').count(), curriculum.modules.filter(module=>module.status==='planned').length);
   assert.equal(await course(page).locator('details.c-panel a').count(), 0, 'Planned topics must not link to unavailable lessons');
 }
@@ -192,6 +196,14 @@ async function checkDraft(page, first, next, words, {studied = 0, complete = tru
   await checkLayout(page, 'Visible reference');
   assert.equal(await editor.inputValue(), source);
   assert.equal(await stdin.inputValue(), input);
+  if (first.id === lessons.en[0].id) {
+    await editor.evaluate(node => node.setSelectionRange(4, 8));
+    await course(page).locator('[data-c-reference="syntax"]').click();
+    await course(page).locator('dialog[open] [data-c-syntax-list]').waitFor();
+    await page.keyboard.press('Escape');
+    assert.deepEqual(await editor.evaluate(node => [node.value, node.selectionStart, node.selectionEnd]), [source, 4, 8]);
+    assert.equal(await stdin.inputValue(), input);
+  }
   const originalHash = new URL(page.url()).hash;
   await rejectWrites(page, 'c-course:v1:draft:');
   const changed = source + '// unsaved\n';
@@ -275,9 +287,30 @@ try {
             await presence.waitFor({ state:'attached' });
             assert.equal(await presence.isVisible(), width > 390, 'Mobile C controls need a clear tap area');
             await page.locator('.nexus-footer-actions [data-akronikl-open]').waitFor();
-            await course(page).getByText(words[8], { exact:true }).click();
+            const reference = course(page).getByRole('button', {name:words[8], exact:true});
+            const syntax = course(page).locator('[data-c-reference="syntax"]');
+            const drawer = course(page).locator('#termDrawer');
+            const hash = new URL(page.url()).hash;
+            for (const trigger of [reference, syntax]) {
+              assert.equal(await trigger.evaluate(button => {
+                const rect = button.getBoundingClientRect();
+                return rect.height >= 44 && button.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+              }), true, label + '/help target');
+            }
+            await reference.focus();
+            await page.keyboard.press('Enter');
+            await drawer.locator('#termList [data-term-card]').first().waitFor();
             await checkLayout(page, label + '/reference');
-            await course(page).getByText(words[8], { exact:true }).click();
+            await page.keyboard.press('Escape');
+            assert.equal(await reference.evaluate(button => document.activeElement === button), true);
+            await syntax.click();
+            const example = drawer.locator('[data-c-syntax-list] pre code').first();
+            await example.waitFor();
+            assert.equal(await example.textContent(), lesson.sections.find(section => section.code).code.source);
+            await checkLayout(page, label + '/syntax');
+            await page.keyboard.press('Escape');
+            assert.equal(await syntax.evaluate(button => document.activeElement === button), true);
+            assert.equal(new URL(page.url()).hash, hash);
             await page.evaluate(() => window.scrollTo(0, 0));
             await screenshot(page, 'lesson-top-' + locale + '-' + width);
           }

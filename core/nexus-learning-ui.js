@@ -46,7 +46,7 @@ export function bindNexusLearningUi(translate){
 
 // Нативный modal владеет фокусом и блокирует фон одинаково online/offline.
 // Сохранение курса и пользовательские данные здесь не затрагиваются.
-export function bindGlossaryDrawer(root=document){
+export function bindGlossaryDrawer(root=document,{prepareOpen}={}){
   const drawer=root.querySelector('#termDrawer');if(!drawer)return;
   const controller=new AbortController(),options={signal:controller.signal};
   const search=drawer.querySelector('#termSearch'),cards=[...drawer.querySelectorAll('[data-term-card]')];
@@ -74,8 +74,11 @@ export function bindGlossaryDrawer(root=document){
     trigger.addEventListener('click',()=>{
       if(disposed||drawer.open)return;
       returnFocus=trigger;drawer.hidden=false;drawer.inert=false;drawer.setAttribute('aria-hidden','false');
-      search.value=trigger.dataset.term||'';filter();drawer.showModal();
-      triggers.forEach(button=>button.setAttribute('aria-expanded','true'));search.focus({preventScroll:true});
+      search.value=trigger.dataset.term||'';filter();
+      const initialFocus=prepareOpen?.(trigger)||search;
+      drawer.showModal();
+      triggers.forEach(button=>button.setAttribute('aria-expanded',String(!prepareOpen||button===trigger)));
+      initialFocus.focus({preventScroll:true});
       if(trigger.dataset.term)cards.find(card=>card.dataset.termCard===trigger.dataset.term.toLowerCase())?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
     },options);
   }

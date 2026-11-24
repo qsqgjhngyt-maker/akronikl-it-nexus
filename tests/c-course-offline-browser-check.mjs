@@ -62,15 +62,19 @@ try {
     assert.equal(await root.locator('.c-outline a').count(), 59);
     await capture('cold-academy-c-390');
     await root.locator('.c-outline a').first().click();
-    await root.locator('.c-stages [aria-current="page"]').filter({ hasText:'Объяснение' }).waitFor();
+    await root.locator('.c-stages [aria-current="step"]').filter({ hasText:'Объяснение' }).waitFor();
     assert.ok(await root.locator('pre code').count());
     await capture('cold-first-lesson-ru-390');
   });
   await check('RU/EN открываются, справка и эталон читаются, запуска и личной записи нет', async () => {
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=' + firstId + '&locale=en');
     await root.getByRole('heading', { level:1, name:firstEnglish.title, exact:true }).waitFor();
-    await root.getByText('Lesson reference', { exact:true }).click();
-    assert.ok(await root.locator('.c-glossary[open] dd').count());
+    await root.getByRole('button', {name:'Reference', exact:true}).click();
+    await root.locator('#termDrawer[open] [data-term-card]').first().waitFor();
+    await page.keyboard.press('Escape');
+    await root.getByRole('button', {name:'Syntax', exact:true}).click();
+    await root.locator('#termDrawer[open] [data-c-syntax-list] pre code').first().waitFor();
+    await page.keyboard.press('Escape');
     await root.locator('footer').getByRole('link', { name:'Next: self-check →' }).click();
     await root.locator('footer').getByRole('link', { name:'Go to practice →' }).click();
     await root.getByText('Reference solution', { exact:true }).click();
