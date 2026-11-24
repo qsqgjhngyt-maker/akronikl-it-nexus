@@ -111,7 +111,7 @@ async function lessonReady(page, lesson, stage) {
   const root = course(page);
   await root.getByRole('heading', { level:1, name:lesson.title, exact:true }).waitFor();
   await root.locator('.c-stages [aria-current="step"]').filter({ hasText:stage }).waitFor();
-  await page.waitForFunction(() => Boolean(document.querySelector('[data-c-course] link')?.sheet));
+  await page.waitForFunction(() => Boolean(document.querySelector('link[data-c-course-style]')?.sheet));
   assert.equal(await root.getAttribute('lang'), lesson.locale);
 }
 
