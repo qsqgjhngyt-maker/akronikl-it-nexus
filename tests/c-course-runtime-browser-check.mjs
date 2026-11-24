@@ -322,8 +322,17 @@ try {
   await fileTab('summary.tsv').click();
   assert.equal(await page.locator('#editor').inputValue(),initialReport);
   await fileTab('inventory.c').click();
-  await page.locator('#editor').fill(capstone.practice.referenceSolution.files['inventory.c']);
+  const inventoryEdit = capstone.practice.referenceSolution.files['inventory.c'] + '\n/* Checked report order. */\n';
+  await page.locator('#editor').fill(inventoryEdit);
+  await fileTab('main.c').click();
+  const beforeReport = await page.locator('#editor').inputValue();
+  assert.notEqual(beforeReport,capstone.practice.referenceSolution.source);
   await runPractice('reported\n',0);
+  const resultSize = bytes => new TextEncoder().encode(bytes).length;
+  assert.ok((await resultPanel.textContent()).includes('('+resultSize(initialReport+finalReport)+' B)'));
+  await page.locator('#editor').fill(capstone.practice.referenceSolution.source);
+  await runPractice('reported\n',0);
+  assert.ok((await resultPanel.textContent()).includes('('+resultSize(finalReport)+' B)'));
   await fileTab('summary.tsv').click();
   assert.equal(await page.locator('#editor').inputValue(),initialReport);
   await resultPanel.locator('[data-save-runtime-files]').click();
@@ -333,7 +342,9 @@ try {
   await fileTab('summary.tsv').click();
   assert.equal(await page.locator('#editor').inputValue(),finalReport);
   await fileTab('inventory.c').click();
-  assert.equal(await page.locator('#editor').inputValue(),capstone.practice.referenceSolution.files['inventory.c']);
+  assert.equal(await page.locator('#editor').inputValue(),inventoryEdit);
+  await fileTab('main.c').click();
+  assert.equal(await page.locator('#editor').inputValue(),capstone.practice.referenceSolution.source);
   await page.screenshot({path:path.join(out,'m12-capstone-restored.png')});
   console.log('C17_M12_CAPSTONE_PASS multi-file compile, exact report, explicit save, source and artifact restored');
 

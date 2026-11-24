@@ -18,6 +18,7 @@ const build = JSON.parse(buildBytes);
 const prefix = '/' + build.prefix;
 const json = async file => JSON.parse(await readFile(resolveFixtureFile(frontend, build.prefix + file)));
 const manifest = await json('courses/c/manifest.json');
+const curriculum = await json('courses/c/curriculum.json');
 const topicIds = manifest.availableTopicIds;
 const lessonCount = topicIds.length;
 assert.equal(lessonCount, 59);
@@ -164,7 +165,7 @@ async function openCourse(page, locale, width) {
     await course(page).getByRole('heading', { level:1, name:manifest.title.en }).waitFor();
   }
   assert.equal(await course(page).locator('.c-outline a').count(), manifest.availableTopicIds.length);
-  assert.ok(await course(page).locator('details.c-panel').count() > 0);
+  assert.equal(await course(page).locator('details.c-panel').count(), curriculum.modules.filter(module=>module.status==='planned').length);
   assert.equal(await course(page).locator('details.c-panel a').count(), 0, 'Planned topics must not link to unavailable lessons');
 }
 

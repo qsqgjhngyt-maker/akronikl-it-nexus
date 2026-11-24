@@ -71,8 +71,7 @@ for (const record of records) {
 for(const rows of byRequest.values()){
   const coverage = new Map();
   for(const record of rows){
-    assert.deepEqual(record.expected,rows[0].expected);
-    const key=record.lessonId+'/'+record.kind;
+    const key=JSON.stringify([record.lessonId,record.kind,record.expected]);
     const counts=coverage.get(key)??{ru:0,en:0};
     counts[record.locale]++;
     coverage.set(key,counts);
