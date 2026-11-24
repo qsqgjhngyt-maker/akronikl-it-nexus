@@ -6,6 +6,7 @@ const repairFile='docs/ru/03-content/reference-courses-20261112/C12_REPAIR_BYTES
 const referenceFile='docs/ru/03-content/reference-courses-20261112/APPROVED_REFERENCE_BYTES.json';
 const candidateFile='docs/ru/03-content/cp-next-01/CANDIDATE_PRESENTATION_BYTES.json';
 const editorialFile='docs/ru/03-content/cp-next-01/C17_EDITORIAL_PRESENTATION_BYTES.json';
+const conditionsCIFile='docs/ru/03-content/cp-next-01/C17_CONDITIONS_CI_BYTES.json';
 const helperPath='tests/helpers/course-rollout-bytes.mjs';
 const sha=file=>createHash('sha256').update(readFileSync(file)).digest('hex');
 export function verifyC17EditorialPins(receipt,previous,helperSha256){
@@ -51,6 +52,24 @@ export function verifyC17EditorialPins(receipt,previous,helperSha256){
  assert.equal(previous.get(helperPath)?.newSha256,receipt.verifier.beforeSha256,'Previous verifier pin: '+helperPath);
  return [...receipt.files,...protectedPins,receipt.verifier];
 }
+export function verifyC17ConditionsCIPins(receipt,previous,helperSha256){
+ const testPath='tests/cpp-clarity-onec-p2-conditions-content.test.mjs';
+ assert.equal(receipt.baselineCI,'ec1dcb71731ef3c2fdef912ee641a4079c4ef3c9','C17 conditions CI baseline');
+ assert.equal(receipt.sourceCommit,'d087900ff9ead3ec8438da33df2ccfff8cf3b057','C17 conditions CI product');
+ assert.deepEqual(receipt.test,{
+  path:testPath,
+  beforeSha256:'603b4d33a7159dc3a02cedb827902a8253499a8a2889159a462bbb7ae68f528d',
+  newSha256:'83ec4735091d32ba194b7e5086b206242c0c0691eb31c13de636a18e1bbd8c36',
+ },'Exact C17 conditions test bytes');
+ assert.deepEqual(receipt.verifier,{
+  path:helperPath,
+  beforeSha256:'83c2c336c579b6e5a601c1f5dcfde865efb79f89623348d94ffec3e340a11446',
+  newSha256:helperSha256,
+ },'Exact C17 conditions verifier bytes');
+ const pins=[receipt.test,receipt.verifier];
+ for(const pin of pins)assert.equal(previous.get(pin.path)?.newSha256,pin.beforeSha256,'Previous C17 CI pin: '+pin.path);
+ return pins;
+}
 const historicalPins=existsSync(file)?JSON.parse(readFileSync(file)).files:[];
 export const releaseRepairPins=existsSync(repairFile)?JSON.parse(readFileSync(repairFile)).files:[];
 const activePins=new Map(historicalPins.map(pin=>[pin.path,pin]));
@@ -83,11 +102,16 @@ for(const module of ['M2','M3','M4','M5','M6','M7','M8','CP_FULL']){
   activePins.set(pin.path,pin);
  }
 }
+const conditionsCI=existsSync(conditionsCIFile)?JSON.parse(readFileSync(conditionsCIFile)):null;
 if(existsSync(editorialFile)){
  const reference=JSON.parse(readFileSync(referenceFile)).files;
  const previous=new Map([...reference,...activePins.values()].map(pin=>[pin.path,pin]));
  const receipt=JSON.parse(readFileSync(editorialFile));
- for(const pin of verifyC17EditorialPins(receipt,previous,sha(helperPath)))activePins.set(pin.path,pin);
+ const editorialHelperSha256=conditionsCI?.verifier.beforeSha256??sha(helperPath);
+ for(const pin of verifyC17EditorialPins(receipt,previous,editorialHelperSha256))activePins.set(pin.path,pin);
+}
+if(conditionsCI){
+ for(const pin of verifyC17ConditionsCIPins(conditionsCI,activePins,sha(helperPath)))activePins.set(pin.path,pin);
 }
 export const rolloutPins=[...activePins.values()];
 const digests=new Map(rolloutPins.map(p=>[p.path,p.newSha256]));

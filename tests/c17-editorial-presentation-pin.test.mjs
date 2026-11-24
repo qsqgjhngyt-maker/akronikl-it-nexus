@@ -3,17 +3,18 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
-import {assertRolloutBytes,rolloutDigest,verifyC17EditorialPins} from './helpers/course-rollout-bytes.mjs';
+import {assertRolloutBytes,rolloutDigest,verifyC17ConditionsCIPins,verifyC17EditorialPins} from './helpers/course-rollout-bytes.mjs';
 
 const readJSON=file=>JSON.parse(readFileSync(new URL(file,import.meta.url)));
 const receipt=readJSON('../docs/ru/03-content/cp-next-01/C17_EDITORIAL_PRESENTATION_BYTES.json');
+const conditionsCI=readJSON('../docs/ru/03-content/cp-next-01/C17_CONDITIONS_CI_BYTES.json');
 const reference=readJSON('../docs/ru/03-content/reference-courses-20261112/APPROVED_REFERENCE_BYTES.json');
 const [pin]=receipt.files;
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const historicalBytes=(revision,file)=>execFileSync('git',['show',revision+':'+file]);
 const previous=new Map(reference.files.map(record=>[record.path,record]));
 previous.set(receipt.verifier.path,{newSha256:sha(historicalBytes(receipt.baseline,receipt.verifier.path))});
-const helperSha256=sha(readFileSync(receipt.verifier.path));
+const helperSha256=sha(historicalBytes(conditionsCI.baselineCI,receipt.verifier.path));
 const verify=(candidate,prior=previous)=>verifyC17EditorialPins(candidate,prior,helperSha256);
 
 test('Редакторский пин связывает ранее принятые байты и точный продукт C17',()=>{
@@ -49,4 +50,25 @@ test('Неверная база, неизвестный SHA и разрыв пр
  assert.throws(()=>verify(receipt,new Map(previous).set(pin.path,{newSha256:unknownBytes})),/Previous presentation pin/);
  assert.throws(()=>verify({...receipt,verifier:{...receipt.verifier,newSha256:unknownBytes}}),/Exact C17 test verifier/);
  assert.throws(()=>verify(receipt,new Map(previous).set(receipt.verifier.path,{newSha256:unknownBytes})),/Previous verifier pin/);
+});
+
+test('Принятые байты теста условий и точный verifier продолжают прежнюю цепочку',()=>{
+ const prior=new Map([
+  [conditionsCI.test.path,{newSha256:sha(historicalBytes(conditionsCI.sourceCommit,conditionsCI.test.path))}],
+  [conditionsCI.verifier.path,receipt.verifier],
+ ]);
+ const latestHelper=sha(readFileSync(conditionsCI.verifier.path));
+ const inspect=(value,expected=prior)=>verifyC17ConditionsCIPins(value,expected,latestHelper);
+ assert.equal(sha(historicalBytes(conditionsCI.baselineCI,conditionsCI.test.path)),conditionsCI.test.newSha256);
+ assert.equal(rolloutDigest(conditionsCI.test.path,conditionsCI.test.beforeSha256),conditionsCI.test.newSha256);
+ assert.deepEqual(inspect(conditionsCI),[conditionsCI.test,conditionsCI.verifier]);
+ assert.equal(rolloutDigest('courses/onec-education/candidate.css','historical-css'),'historical-css');
+ const unknown='1'.repeat(40),unknownBytes='1'.repeat(64);
+ assert.throws(()=>inspect({...conditionsCI,baselineCI:unknown}),/C17 conditions CI baseline/);
+ assert.throws(()=>inspect({...conditionsCI,sourceCommit:unknown}),/C17 conditions CI product/);
+ assert.throws(()=>inspect({...conditionsCI,test:{...conditionsCI.test,path:'courses/onec-education/candidate.css'}}),/Exact C17 conditions test/);
+ assert.throws(()=>inspect({...conditionsCI,test:{...conditionsCI.test,newSha256:unknownBytes}}),/Exact C17 conditions test/);
+ assert.throws(()=>inspect({...conditionsCI,verifier:{...conditionsCI.verifier,newSha256:unknownBytes}}),/Exact C17 conditions verifier/);
+ assert.throws(()=>inspect(conditionsCI,new Map(prior).set(conditionsCI.test.path,{newSha256:unknownBytes})),/Previous C17 CI pin/);
+ assert.throws(()=>inspect(conditionsCI,new Map(prior).set(conditionsCI.verifier.path,{newSha256:unknownBytes})),/Previous C17 CI pin/);
 });
