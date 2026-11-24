@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.debugging-first-difference",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "C programming",
+  "module": "Debugging, testing and memory safety",
+  "title": "Tracing the first difference",
+  "goal": "Find the first comparison that disagrees with the contract, then check the fix with neighbouring inputs.",
+  "prerequisites": [
+    {
+      "text": "Two-sided conditions, logical OR and separate stdout and stderr."
+    }
+  ],
+  "terms": [
+    {
+      "id": "trace",
+      "term": "Trace",
+      "title": "Trace",
+      "definition": "Intermediate values or condition results recorded in execution order."
+    },
+    {
+      "id": "first-difference",
+      "term": "First difference",
+      "title": "First difference",
+      "definition": "The earliest observed fact that differs from the contract-based prediction."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Predict before you run",
+      "paragraphs": [
+        "A sensor accepts measurements from 20 through 70. At 70, both rejection conditions should be false. Write down the two expected flags, below 0 and above 0, before running the code.",
+        "The accepted or invalid message goes to stdout. The trace goes to stderr so it does not change the contract for programs that read stdout."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Where 70 and 71 take different paths",
+      "paragraphs": [
+        "The read_value helper reads a complete line and supplies a long after validating the number text. The main branch answers a separate question: is that number allowed?"
+      ],
+      "steps": [
+        "Supply 70. The comparison 70 < 20 gives 0, then 70 > 70 also gives 0.",
+        "Stderr shows value 70 below 0 above 0. The program prints accepted to stdout.",
+        "Check the prediction at 69 and 71. At 71, above is the first flag to change, and the result becomes invalid."
+      ],
+      "trace": [
+        [
+          "69",
+          "below 0",
+          "above 0",
+          "accepted"
+        ],
+        [
+          "70",
+          "below 0",
+          "above 0",
+          "accepted"
+        ],
+        [
+          "71",
+          "below 0",
+          "above 1",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int below = value < 20;\n    int above = value > 70;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;\n}\n",
+        "stdin": "70\n",
+        "output": "accepted\n",
+        "stderr": "value 70 below 0 above 0\n",
+        "exitCode": 0,
+        "cases": [
+          {
+            "input": "69\n",
+            "output": "accepted\n",
+            "stderr": "value 69 below 0 above 0\n",
+            "exitCode": 0
+          },
+          {
+            "input": "71\n",
+            "output": "invalid\n",
+            "stderr": "value 71 below 0 above 1\n",
+            "exitCode": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Find the earliest changed value",
+      "paragraphs": [
+        "If the code uses >=, the output at 70 incorrectly becomes invalid. The value 70 and below 0 still match the prediction. Look for the first unexpected 1: above 1.",
+        "Our fprintf provides the trace. It reports just the facts we chose to record. A separate compile exercise omits a right-hand operand. Execution does not start for that build."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Transfer the method to a different scale",
+      "paragraphs": [
+        "Practice uses the range 30–90. Predict the flags for 90, then locate the incorrect comparison. After the change, check 89, 90 and 91 to cover all three neighbouring cases."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.8, 6.5.14, 7.21.6.1",
+      "language": "English",
+      "purpose": "Find the first comparison that disagrees with the contract, then check the fix with neighbouring inputs."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "The observed trace for 70 shows below 0 and above 1. What differs first?",
+      "options": [
+        "The above check",
+        "The parsed value 70",
+        "The below check"
+      ],
+      "correct": 0,
+      "feedback": [
+        "70 is in range, so above should be 0.",
+        "The value matches the input.",
+        "70 is not below 20. The below 0 flag is expected."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Which one input reveals changing > 70 to >= 70?",
+      "options": [
+        "69",
+        "70",
+        "71"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Both comparisons are false.",
+        "The checks disagree exactly at 70.",
+        "Both comparisons are true."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "What two predictions would you record for 90 in practice, and which line would reveal the fault?",
+      "feedback": "Expect below 0 and above 0. With the fault, the trace reports value 90 below 0 above 1, although the result should be accepted.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int reading = 70;\n    if (reading > ) {\n        return 1;\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected expression"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "A measurement at 90",
+    "environment": "Clang / WASI · C17",
+    "task": "The range 30–90 is inclusive. Read the first line as a decimal integer with an optional sign and surrounding whitespace. For numeric input, write two flags to stderr and accepted or invalid to stdout. For malformed input, write only invalid to stdout. Compare your prediction with the trace at 90 and repair one condition.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int below = value < 30;\n    int above = value >= 90;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "90\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Below the lower boundary",
+        "input": "29\n",
+        "output": "invalid\n",
+        "stderr": "value 29 below 1 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "At the lower boundary",
+        "input": "30\n",
+        "output": "accepted\n",
+        "stderr": "value 30 below 0 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "Below the upper boundary",
+        "input": "89\n",
+        "output": "accepted\n",
+        "stderr": "value 89 below 0 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "At the upper boundary",
+        "input": "90\n",
+        "output": "accepted\n",
+        "stderr": "value 90 below 0 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "Above the upper boundary",
+        "input": "91\n",
+        "output": "invalid\n",
+        "stderr": "value 91 below 0 above 1\n",
+        "exitCode": 0
+      },
+      {
+        "label": "Unexpected suffix",
+        "input": "90x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "At 90, stdout is accepted and stderr contains value 90 below 0 above 0.",
+      "89 gives accepted; 91 and 29 give invalid. Confirm 30 as the valid lower boundary.",
+      "Explain the first difference using the above flag. Keep the trace and result formats unchanged."
+    ],
+    "hint": "Compare the expected and observed above flag at exactly 90. Reject only values higher than 90.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int below = value < 30;\n    int above = value > 90;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Write the expected below and above flags for 90, then run the starter.",
+        "why": "Compare each intermediate fact separately.",
+        "expected": "stdout: invalid. stderr: value 90 below 0 above 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the upper-bound comparison, then rerun 90.",
+        "why": "Retest the branch where the prediction and trace disagreed.",
+        "expected": "stdout: accepted. stderr: value 90 below 0 above 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run 89 and 91, then the lower-bound pair 29 and 30.",
+        "why": "Confirm behaviour on both sides of each boundary.",
+        "expected": "89 and 30 are accepted. 91 and 29 are rejected."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "In a separate copy, use 40–60 and design a test for a faulty lower boundary.",
+        "criteria": [
+          "40 gives accepted; 39 gives invalid. The prediction identifies which comparison changes the below flag."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.locate-first-observed-difference",
+    "prerequisites": [
+      "c.function-boundary-driver"
+    ]
+  }
+}

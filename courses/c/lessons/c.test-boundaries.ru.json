@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.test-boundaries",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "Программирование на C",
+  "module": "Отладка, тестирование и безопасность памяти",
+  "title": "Контракты, отрицательные тесты и границы",
+  "goal": "Составить тесты по классам входов и отличить ошибку разбора числа от ошибки сравнения.",
+  "prerequisites": [
+    {
+      "text": "Включённые границы, разбор одной строки, чтение результата до и после изменения."
+    }
+  ],
+  "terms": [
+    {
+      "id": "partition",
+      "term": "Класс входов",
+      "title": "Класс входов",
+      "definition": "Группа входов, для которых по одной причине действует одинаковое правило."
+    },
+    {
+      "id": "boundary-neighbor",
+      "term": "Сосед границы",
+      "title": "Сосед границы",
+      "definition": "Ближайшее значение по одну сторону границы. Сравните его с самой границей и ближайшим значением по другую сторону."
+    },
+    {
+      "id": "negative-case",
+      "term": "Отрицательный тест",
+      "title": "Отрицательный тест",
+      "definition": "Проверка предусмотренного отказа для конкретной причины, например лишних символов или выхода за диапазон."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Одинаковый вывод может скрывать разные причины",
+      "paragraphs": [
+        "Терминал принимает дневной лимит от 1 до 24 включительно. Строка 25 содержит целое, которое вышло за пределы. В строке 12x первые символы похожи на допустимое число, но вся строка не является числом. Для обеих причин ответ invalid, поэтому нужны разные тесты.",
+        "Сначала составьте таблицу из двух границ, их ближайших соседей, одной обычной записи и ошибок формы. Подпишите причину ожидаемого ответа, чтобы проверять ветку договора."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Проверка дневного лимита",
+      "paragraphs": [
+        "strtol записывает адрес первого непрочитанного символа в end. read_value допускает пробельные символы по краям и отвергает всё остальное после числа. Сравнения 1 и 24 выполняются только после разбора."
+      ],
+      "steps": [
+        "Введите 24. Разбор даёт число 24, условие value > 24 ложно, программа печатает valid.",
+        "Введите 25. Разбор всё ещё успешен, но верхняя проверка теперь истинна. Вывод invalid.",
+        "Введите 12x. После strtol указатель end указывает на x. Отказ происходит внутри read_value."
+      ],
+      "trace": [
+        [
+          "0",
+          "число",
+          "меньше 1",
+          "invalid"
+        ],
+        [
+          "1",
+          "число",
+          "в диапазоне",
+          "valid"
+        ],
+        [
+          "24",
+          "число",
+          "в диапазоне",
+          "valid"
+        ],
+        [
+          "25",
+          "число",
+          "больше 24",
+          "invalid"
+        ],
+        [
+          "abc",
+          "число не прочитано",
+          "—",
+          "invalid"
+        ],
+        [
+          "12x",
+          "лишний x",
+          "—",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 1 || value > 24) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n",
+        "stdin": "24\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0,
+        "cases": [
+          {
+            "input": "0\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "1\n",
+            "output": "valid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "25\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "12x\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "abc\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Отличите место дефекта по входу",
+      "paragraphs": [
+        "Если 24 даёт invalid, сравните оператор верхней границы. Если 12x даёт valid, проверьте остаток строки после strtol. У двух дефектов разные входы-свидетели.",
+        "Пропущенный аргумент в отдельном диагностическом фрагменте отвергается компилятором. В этом случае программа ещё не проверяла ни одного входа."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перейдите к собственным порогам",
+      "paragraphs": [
+        "В практике допустимы значения 10–18. Отметьте входы 9, 10, 17, 18, 19 и одно корректно выглядящее начало с хвостом. Сначала запишите ожидаемые ответы, затем сравните их с наблюдениями."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.8, 6.5.14, 7.22.1.4",
+      "language": "English",
+      "purpose": "Составить тесты по классам входов и отличить ошибку разбора числа от ошибки сравнения."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какой тест обнаружит проверку value >= 24 вместо value > 24?",
+      "options": [
+        "17",
+        "24",
+        "25"
+      ],
+      "correct": 1,
+      "feedback": [
+        "17 находится внутри диапазона в обоих случаях.",
+        "Только 24 отличает включающую проверку от исключающей.",
+        "25 отвергают обе проверки."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 1 || value > 24) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n",
+        "stdin": "24\n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Что проверяет ввод 12x?",
+      "options": [
+        "Верхний порог",
+        "Переполнение long",
+        "Символы после числа"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Числовой префикс 12 не вышел за пределы.",
+        "12 представимо в long.",
+        "end указывает на x, всю строку надо отклонить."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Зачем хранить рядом ожидаемую причину, если 25 и 12x печатают одно и то же?",
+      "feedback": "Первый тест проверяет диапазон после успешного разбора. Второй проверяет грамматику строки. Успех одного теста не проверяет другое условие.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int is_valid(long value)\n{\n    return value >= 1 && value <= 24;\n}\n\nint main(void)\n{\n    return is_valid();\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Окно бронирования 10–18",
+    "environment": "Clang / WASI · C17",
+    "task": "Допустимы номера 10–18 включительно. Прочитайте первую строку как десятичное целое с необязательным знаком и пробельными символами по краям. Выведите valid для допустимой записи, иначе invalid. Сначала заполните таблицу по классам, затем исправьте разбор хвоста и верхнюю границу. Строки длиннее 63 байт до перевода строки отклоняются.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        /* TODO: reject the suffix before publishing the value. */\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 10 || value >= 18) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "18\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Перед нижней границей",
+        "input": "9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нижняя граница",
+        "input": "10\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Внутри диапазона",
+        "input": "17\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Верхняя граница",
+        "input": "18\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "За верхней границей",
+        "input": "19\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пробелы и знак",
+        "input": "  +15 \n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний символ",
+        "input": "12x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Без числа",
+        "input": "abc\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Переполнение",
+        "input": "99999999999999999999999999999999999\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нет перевода строки",
+        "input": "18",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Принимаются 10, 18 и число с пробелами по краям. 9 и 19 дают invalid.",
+      "12x, abc и число с переполнением дают invalid. Отметьте отдельную причину для каждого."
+    ],
+    "hint": "18 и 12x обнаруживают разные дефекты. В parser найдите проверку *end, в main — сравнение с 18.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 10 || value > 18) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запишите класс и ожидаемый результат для 18 и 12x, затем выполните оба запуска заготовки.",
+        "why": "Два входа отделяют ошибки разбора и сравнения.",
+        "expected": "18 ошибочно даёт invalid, 12x ошибочно даёт valid."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте проверку остатка строки и порог, затем повторите граничные и отрицательные тесты.",
+        "why": "Один успешный тест не охватывает обе причины отказа.",
+        "expected": "18 даёт valid, 12x даёт invalid. 9 и 19 дают invalid, 10 — valid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "В отдельной копии сделайте диапазон 5–9 и до запуска выберите шесть входов: две границы, два наружных соседа, один обычный вход и один с лишним символом.",
+        "criteria": [
+          "4 и 10 дают invalid, 5 и 9 — valid. 7 и 7x проверяют разные классы."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.choose-boundary-test-partitions",
+    "prerequisites": [
+      "c.locate-first-observed-difference"
+    ]
+  }
+}

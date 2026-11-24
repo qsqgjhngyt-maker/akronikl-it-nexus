@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.reproducible-regression",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "Программирование на C",
+  "module": "Отладка, тестирование и безопасность памяти",
+  "title": "Минимальный пример и регрессия",
+  "goal": "Свести сбой к одному различающему входу и сохранить проверку, которая воспроизводится после исправления.",
+  "prerequisites": [
+    {
+      "text": "Проверка строки после strtol, граничные случаи и раздельная фиксация запуска и ошибок сборки."
+    }
+  ],
+  "terms": [
+    {
+      "id": "reproduction",
+      "term": "Минимальный пример",
+      "title": "Минимальный пример",
+      "definition": "Короткий исходник и вход, которые воспроизводят тот же дефект без лишних условий."
+    },
+    {
+      "id": "regression-case",
+      "term": "Регрессионный случай",
+      "title": "Регрессионный случай",
+      "definition": "Сохранённая проверка, которая отличает неисправную версию от исправленной тем же входом."
+    },
+    {
+      "id": "run-record",
+      "term": "Запись запуска",
+      "title": "Запись запуска",
+      "definition": "Исходник или его версия, среда, точные вход, вывод, stderr и код завершения."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Сохраните вход, на котором версии расходятся",
+      "paragraphs": [
+        "По договору по краям числа допустимы пробельные символы, а после них не должно остаться других символов. Если старая версия напечатала 7 для строки 7x, уменьшите большой пример до этой строки. Сама строка 7 запускается успешно в обеих версиях.",
+        "Перед исправлением запишите ожидаемое invalid и фактическое 7. После изменения используйте тот же файл входа. Позже такое сравнение поймает возврат дефекта."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Пара 7x и число с пробелами",
+      "paragraphs": [
+        "strtol для 7x возвращает 7 и оставляет end на x. Для строки с пробелами end доходит до конца после пропуска пробелов. Условие *end != '\\0' закрепляет различие."
+      ],
+      "steps": [
+        "Подайте 7x. Во время разбора найден префикс 7. Проверка хвоста отвергает x и программа выводит invalid.",
+        "Запустите со строкой « 7 ». Разрешённые пробелы не мешают. stdout равен 7 и переводу строки.",
+        "Оба случая завершаются с кодом 0 и пустым stderr. Ответ invalid предусмотрен договором для входа."
+      ],
+      "trace": [
+        [
+          "7x",
+          "разбор: 7, остаток x",
+          "отказ",
+          "invalid"
+        ],
+        [
+          " 7 ",
+          "разбор: 7, остаток из пробелов",
+          "допуск",
+          "7"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 0 || value > 99) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%ld\\n\", value);\n    return 0;\n}\n",
+        "stdin": "7x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0,
+        "cases": [
+          {
+            "input": " 7 \n",
+            "output": "7\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "7\n",
+            "output": "7\n",
+            "stderr": "",
+            "exitCode": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Запишите, где закончился прогон",
+      "paragraphs": [
+        "Отказ компиляции для отдельного _Static_assert — ожидаемая запись этапа сборки. Получить stdout программы здесь невозможно. Отказ среды запуска также отличается от результата invalid, напечатанного исполняемой программой.",
+        "Журнал должен содержать исходник, версию компилятора, C17, точный вход, ожидаемый и фактический stdout, stderr и код завершения. Используйте строки без случайных чисел, локализованного текста компилятора или времени."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Подготовьте проверку для бронирования",
+      "paragraphs": [
+        "Практический пример принимает число свободных мест 0–30 и печатает slots с числом. Зафиксируйте вход 12x, который в заготовке ошибочно даёт slots 12. После исправления повторите его и обычную запись с пробелами. Запишите точные строки, чтобы сравнение никто не додумывал."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "5.1.1.3, 6.7.10, 7.21.6.1, 7.22.1.4",
+      "language": "English",
+      "purpose": "Свести сбой к одному различающему входу и сохранить проверку, которая воспроизводится после исправления."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какой вход отличает исправленную версию от версии, принимающей префикс?",
+      "options": [
+        "7",
+        " 7 ",
+        "7x"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Обе версии принимают простое число.",
+        "Пробелы по краям допустимы.",
+        "Только проверка хвоста отвергает x."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 0 || value > 99) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%ld\\n\", value);\n    return 0;\n}\n",
+        "stdin": "7x\n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Сборка отклонила _Static_assert. Что записать?",
+      "options": [
+        "Программа вывела invalid",
+        "Отказ сборки, запуска программы не было",
+        "Программа завершилась с кодом 0"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Программа не была запущена.",
+        "Отмечен правильный этап.",
+        "У незапущенной программы нет наблюдаемого кода завершения."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Какой минимум сведений нужен другому человеку, чтобы повторить расхождение на 12x?",
+      "feedback": "Точный исходник или его версию, версию компилятора и режим C17, один вход 12x с переводом строки, ожидаемые stdout, stderr и код завершения, а также отдельно наблюдение старой и исправленной версии.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    _Static_assert(0, \"intentional build stop\");\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "intentional build stop"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Регрессионная проверка свободных мест",
+    "environment": "Clang / WASI · C17",
+    "task": "Прочитайте первую строку как целое в диапазоне 0–30. Допустимы необязательный знак и пробельные символы по краям, а лишний хвост запрещён. Выводите slots и число через пробел или invalid. Сначала запишите наблюдение для 12x на заготовке, затем исправьте проверку и приложите таблицу с тем же входом и соседними случаями.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        /* TODO: reject the suffix before publishing the value. */\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 0 || value > 30) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"slots %ld\\n\", value);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "12x\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Минимальный регрессионный вход",
+        "input": "12x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пробелы по краям",
+        "input": " 12 \n",
+        "output": "slots 12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нижняя граница",
+        "input": "0\n",
+        "output": "slots 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Верхняя граница",
+        "input": "30\n",
+        "output": "slots 30\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Вне диапазона",
+        "input": "31\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Число без перевода строки",
+        "input": "12",
+        "output": "slots 12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Один знак",
+        "input": "+\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Второе число в строке",
+        "input": "12 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "12x выдаёт invalid, строка с пробелами вокруг 12 выдаёт slots 12.",
+      "0 и 30 допустимы, 31 даёт invalid. При штатном результате stderr пустой и код равен 0.",
+      "Есть исходник или версия, вход с точным окончанием строки и отдельные наблюдения до и после исправления."
+    ],
+    "hint": "Удерживайте 12x неизменным в двух прогонах. После пропуска пробелов *end должен находиться на нулевом байте строки.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 0 || value > 30) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"slots %ld\\n\", value);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запишите ожидаемое invalid и запустите заготовку с 12x.",
+        "why": "Это короткий тест, который различает версии.",
+        "expected": "Заготовка печатает slots 12, stderr пустой, код 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте ветку, где *end указывает на непробельный символ. Повторите 12x и затем строку с пробелами вокруг 12.",
+        "why": "Подтвердите запрет хвоста и сохранение допустимой записи.",
+        "expected": "Отдельные ответы invalid и slots 12."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте 30 и 31 в журнал с точными ожиданиями и повторите тесты.",
+        "why": "Изменение парсера не должно менять правило верхней границы.",
+        "expected": "30 даёт slots 30, 31 — invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "В отдельной копии смените диапазон на 0–9 и сохраните один минимальный вход с хвостом, обычный граничный вход и его наружного соседа.",
+        "criteria": [
+          "Например, 9x даёт invalid, 9 — slots 9, 10 — invalid. В журнале указаны конкретные байты stdin, точный stdout и код каждого запуска."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.pin-reproducible-regression",
+    "prerequisites": [
+      "c.locate-first-observed-difference",
+      "c.choose-boundary-test-partitions",
+      "c.distinguish-c17-diagnostics",
+      "c.review-bounds-lifetime-conversion"
+    ]
+  }
+}

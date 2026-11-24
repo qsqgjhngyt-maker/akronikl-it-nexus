@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.warnings-and-sanitizers",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "Программирование на C",
+  "module": "Отладка, тестирование и безопасность памяти",
+  "title": "Предупреждения, статические проверки и санитайзеры",
+  "goal": "По отдельности проверить сборку, запуск с инструментированием и соответствие результата договору.",
+  "prerequisites": [
+    {
+      "text": "Как собирается одна единица трансляции, зачем проверять границы и где смотреть stderr."
+    }
+  ],
+  "terms": [
+    {
+      "id": "compiler-warning",
+      "term": "Предупреждение компилятора",
+      "title": "Предупреждение компилятора",
+      "definition": "Сообщение при анализе исходника. Настройка -Werror превращает выбранные предупреждения в ошибки сборки."
+    },
+    {
+      "id": "instrumented-build",
+      "term": "Инструментированная сборка",
+      "title": "Инструментированная сборка",
+      "definition": "Исполняемый файл с добавленными проверками, которые срабатывают на выполненных путях."
+    },
+    {
+      "id": "contract-test",
+      "term": "Проверка договора",
+      "title": "Проверка договора",
+      "definition": "Сравнение наблюдаемого вывода и статуса с заранее заданным результатом для конкретного входа."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Три вопроса к одной программе",
+      "paragraphs": [
+        "Компилятор может заметить неиспользуемую переменную до запуска. При -Wall -Wextra Clang сообщает unused variable. С -Werror такой исходник отклоняется. Это статическая проверка исходного текста.",
+        "В нативной сборке AddressSanitizer добавляет проверки обращений к памяти, а UndefinedBehaviorSanitizer — проверки поддерживаемых операций с неопределённым поведением. Они проверяют выполненные пути. Тесты границ отдельно отвечают, совпал ли вывод с договором."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Счётчик использует объявленное число",
+      "paragraphs": [
+        "В безопасном примере count инициализировано числом 4, а printf использует его через %d. В контрольном исходнике skipped объявлено, но puts печатает литерал. Оба имеют определённое поведение, если сборка разрешена. Предупреждение помогает заметить лишнее объявление."
+      ],
+      "steps": [
+        "Разберите пример, затем запустите его без ввода. Вывод count 4.",
+        "Для опыта с флагами скопируйте контрольный исходник со skipped без строки #pragma. При -Wall -Wextra Clang выдаёт предупреждение. Добавьте -Werror к тем же флагам и получите отказ сборки.",
+        "Для нативной проверки попробуйте команду для чистого исходника из следующего шага. Запуск считается наблюдением только при наличии рабочего инструментария и успешной сборке."
+      ],
+      "trace": [
+        [
+          "Сборка",
+          "-Wall -Wextra",
+          "unused variable у контрольного skipped"
+        ],
+        [
+          "Строгая сборка",
+          "-Werror",
+          "контроль отклонён до запуска"
+        ],
+        [
+          "Запуск чистого C17",
+          "stdout",
+          "count 4"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int count = 4;\n    printf(\"count %d\\n\", count);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "count 4\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Куда относится результат",
+      "paragraphs": [
+        "В терминале с нативным Clang сохраните чистый пример в main.c и соберите: clang -std=c17 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=undefined main.c -o count-check. Запустите полученный файл (./count-check в POSIX, .\\count-check.exe в Windows, если сборка создала это имя). Проверьте, что получены count 4, пустой stderr и код 0.",
+        "Если установленный компилятор или его библиотеки не поддерживают эти флаги, зафиксируйте «нет поддержки среды» и сохраните фактическую ошибку сборки. Code Studio использует Clang/WASI. Проверка компиляции там и отдельный нативный запуск имеют разные результаты, которые нельзя заменять друг другом.",
+        "Программа с range-проверкой count > 7 вместо count > 8 может работать без ошибок памяти. На входе 8 тест договора всё равно покажет неверный ответ.",
+        "В учебном контроле строка #pragma clang diagnostic error включает проверку unused variable как ошибку для этого исходника. Поэтому отказ можно проверить в Code Studio без изменения флагов всей среды."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Разделите три строки журнала",
+      "paragraphs": [
+        "В практике число limit должно одновременно задавать верхнюю границу и использоваться в условии. Для входа 8 предскажите вывод, а при наличии нативной среды отдельно повторите тесты 0, 8 и 9 с санитайзерами. Умышленно нарушать время жизни или границы чтобы показать диагностику не нужно."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "5.1.1.3, 6.2.4, 6.5, 7.21.6.1",
+      "language": "English",
+      "purpose": "По отдельности проверить сборку, запуск с инструментированием и соответствие результата договору."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "На каком этапе -Werror останавливает исходник со skipped?",
+      "options": [
+        "На сборке",
+        "При первом чтении stdin",
+        "После проверки границы"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Сборка отклоняется по предупреждению unused variable.",
+        "Исполняемый файл ещё не запущен.",
+        "Значения не проверяются, пока сборка не завершена."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Число 8 отвергается без предупреждений и ошибок памяти. Какой тест показывает проблему?",
+      "options": [
+        "Договор: вход 8 должен вывести count 8",
+        "Повторить тест только для 7",
+        "Прочитать только stderr компилятора"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Точная верхняя граница обнаруживает неверное правило.",
+        "Обе версии принимают 7.",
+        "Диагностика может молчать при логической ошибке."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Какие результаты отдельно запишете, если запуск с санитайзером в вашей среде недоступен?",
+      "feedback": "Запишите итог сборки с предупреждениями, точные входы и результаты проверок договора, а запуск с инструментированием отметьте как недоступный с фактической причиной.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\n#pragma clang diagnostic error \"-Wunused-variable\"\n\nint main(void)\n{\n    int skipped = 4;\n    puts(\"count 4\");\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "unused variable",
+        "skipped"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Лимит мест и отдельные проверки",
+    "environment": "Clang / WASI · C17",
+    "task": "Допустимы целые от 0 до 8 включительно. Для первой правильно записанной строки в диапазоне выведите count и число через пробел; при отказе выведите invalid. Сделайте limit единственным верхним порогом, проверьте строгую сборку при наличии нативного Clang и сравните stdout на 0, 8 и 9.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    const long limit = 8;\n    long count;\n    if (!read_value(&count) || count < 0 || count > 7) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"count %ld\\n\", count);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "8\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Ноль",
+        "input": "0\n",
+        "output": "count 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последнее допустимое",
+        "input": "8\n",
+        "output": "count 8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Следующее число",
+        "input": "9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательное число",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Неверный хвост",
+        "input": "8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Ввод 0 даёт count 0, ввод 8 — count 8, ввод 9 — invalid.",
+      "Условие использует limit и не дублирует значение верхнего порога.",
+      "Запишите отдельно компиляцию, результаты на входах и факт запуска инструментов либо отсутствие поддержки."
+    ],
+    "hint": "Используйте limit там, где сейчас стоит 7. Верхнее допустимое число — 8, поэтому оно должно пройти.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    const long limit = 8;\n    long count;\n    if (!read_value(&count) || count < 0 || count > limit) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"count %ld\\n\", count);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 8 при обычной сборке. Если строгая сборка остановилась раньше, прочитайте её сообщение отдельно.",
+        "why": "Найдите две независимые проблемы: лишнее объявление и неверный порог.",
+        "expected": "При обычном запуске stdout равен invalid. Строгий Clang обнаруживает unused variable для limit."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Замените 7 ссылкой на limit и выполните 0, 8 и 9.",
+        "why": "Проверьте включённую границу и соседние значения.",
+        "expected": "Выводы count 0, count 8, invalid, в отдельных запусках."
+      },
+      {
+        "where": "Code Studio",
+        "action": "При наличии нативного Clang соберите безопасный исправленный вариант с санитайзерами и повторите те же входы.",
+        "why": "Сравните наблюдаемые stdout, stderr и код завершения, не смешивая с диагностикой сборки.",
+        "expected": "При успешном инструментированном запуске stdout совпадает, stderr пустой, код 0. При отсутствии поддержки запишите фактический отказ среды."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "В отдельной копии задайте limit = 12. Выберите граничный, наружный и неверно записанный вход, чтобы различать логику и разбор.",
+        "criteria": [
+          "12 даёт count 12, 13 и 12x дают invalid по разным причинам."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.distinguish-c17-diagnostics",
+    "prerequisites": [
+      "c.choose-boundary-test-partitions"
+    ]
+  }
+}

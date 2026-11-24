@@ -84,6 +84,15 @@ function overview({data, locale, t, resume, progress}) {
     '</header>' + modules;
 }
 
+function renderFiles(files, t, heading) {
+  if (!files) return '';
+  const items = Object.entries(files);
+  return '<div class="c-case-files"><h4>' + heading + '</h4>' +
+    (items.length ? items.map(([name, content]) => '<p><code>' + escape(name) + '</code></p>' +
+      codeBlock(content, t('Файл без содержимого', 'Empty file'))).join('') :
+      '<p>' + t('Файлов нет', 'No files') + '</p>') + '</div>';
+}
+
 function renderCode(code, t, {showResult = true} = {}) {
   if (!code) return '';
   const input = code.stdin ? '<div><h4>' + t('Ввод', 'Input') + '</h4>' + codeBlock(code.stdin) + '</div>' : '';
@@ -92,7 +101,12 @@ function renderCode(code, t, {showResult = true} = {}) {
   const diagnostic = code.diagnostic ? '<p><strong>' + t('Диагностика', 'Diagnostic') + '</strong> ' +
     escape(code.diagnostic) + '</p>' : '';
   return '<div class="c-example"><div><h4>main.c</h4>' + codeBlock(code.source) + '</div>' +
-    (input || result ? '<div class="c-example-io">' + input + result + '</div>' : '') + diagnostic + '</div>';
+    renderFiles(code.files, t, t('Файлы примера', 'Example files')) +
+    (input || result ? '<div class="c-example-io">' + input + result + '</div>' : '') +
+    (showResult ? renderFiles(code.outputFiles, t, t('Файлы результата', 'Result files')) +
+      (code.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(code.stderr) + '</div>' : '') +
+      (code.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(code.exitCode) + '</p>' : '') : '') +
+    diagnostic + '</div>';
 }
 
 function explanation(lesson, t) {
@@ -112,9 +126,9 @@ function explanation(lesson, t) {
   const bibliography = (lesson.reading ?? []).map(item => '<li><strong>' + escape(item.title) + '</strong> ' +
     escape([item.edition, item.section].filter(Boolean).join(' · ')) + '<p>' + escape(item.purpose) + '</p></li>').join('');
   const diagnostics = (lesson.diagnosticExercises ?? []).map(item =>
-    '<section class="c-panel"><h2>' + t('Разбор ошибки компиляции', 'Read a compiler diagnostic') + '</h2>' +
+    '<section class="c-panel"><h2>' + (item.phase === 'link' ? t('Разбор ошибки компоновки', 'Read a linker diagnostic') : t('Разбор ошибки компиляции', 'Read a compiler diagnostic')) + '</h2>' +
     '<p>' + t('Найдите место ошибки в программе и сравните его с сообщением компилятора.', 'Find the error in the program and compare its location with the compiler message.') +
-    '</p>' + codeBlock(item.source) + '<h3>' + t('Фрагмент сообщения Clang', 'Excerpt from the Clang diagnostic') +
+    '</p>' + codeBlock(item.source) + renderFiles(item.files, t, t('Файлы проекта', 'Project files')) + '<h3>' + t('Фрагмент сообщения Clang', 'Excerpt from the Clang diagnostic') +
     '</h3>' + codeBlock(Array.isArray(item.stderrIncludes) ? item.stderrIncludes.join(' · ') : item.stderrIncludes) + '</section>').join('');
   return '<div class="c-reading">' + contents + '<div><section class="c-panel"><h2>' + t('На этом уроке', 'In this lesson') +
     '</h2><p>' + escape(lesson.goal) + '</p>' + (prerequisites.length ? list(prerequisites) : '') + '</section>' + sections + diagnostics +
@@ -147,7 +161,11 @@ function practice(lesson, t, readonly) {
   const cases = work.cases.map(test => '<section class="c-test"><h3>' + escape(test.label) + '</h3>' +
     '<div class="c-case-pair"><div><h4>' + t('Ввод', 'Input') + '</h4>' + codeBlock(test.input, t('Ввод не нужен', 'No input')) +
     '</div><div><h4>' + t('Ожидаемый вывод', 'Expected output') + '</h4>' +
-    codeBlock(test.output, t('Пустой вывод', 'No output')) + '</div></div></section>').join('');
+    codeBlock(test.output, t('Пустой вывод', 'No output')) + '</div></div>' +
+    renderFiles(test.inputFiles, t, t('Входные файлы', 'Input files')) +
+    renderFiles(test.outputFiles, t, t('Изменённые и созданные файлы', 'Changed and created files')) +
+    (test.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(test.stderr) + '</div>' : '') +
+    (test.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(test.exitCode) + '</p>' : '') + '</section>').join('');
   const reference = work.referenceSolution;
   return '<section class="c-panel"><h2>' + escape(work.title) + '</h2><p>' + escape(work.task) +
     '</p><ol>' + steps + '</ol><details><summary>' + t('Подсказка', 'Hint') + '</summary><p>' + escape(work.hint) +

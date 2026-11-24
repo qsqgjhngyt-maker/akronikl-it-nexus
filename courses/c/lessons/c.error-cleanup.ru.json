@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.error-cleanup",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "Программирование на C",
+  "module": "Файлы и обработка ошибок",
+  "locale": "ru",
+  "title": "Пути ошибки и освобождение ресурсов",
+  "goal": "После частичного отказа закрыть каждый открытый поток по его состоянию и сообщить первую ошибку.",
+  "prerequisites": [
+    {
+      "text": "Проверяйте fopen перед использованием FILE * и проверяйте fclose."
+    },
+    {
+      "text": "Вспомните правило единоличного владельца и одного освобождения из модуля о памяти."
+    }
+  ],
+  "terms": [
+    {
+      "id": "resource-state",
+      "term": "Открытый ресурс",
+      "title": "Открытый ресурс",
+      "definition": "Поток, созданный успешным fopen. Программа должна вызвать fclose для него, даже если другой шаг завершился ошибкой."
+    },
+    {
+      "id": "primary-error",
+      "term": "Первичная ошибка",
+      "title": "Первичная ошибка",
+      "definition": "Первая ошибка по порядку выполнения. В этой задаче поздний сбой закрытия не затирает её."
+    },
+    {
+      "id": "controlled-failure",
+      "term": "Управляемый отказ",
+      "title": "Управляемый отказ",
+      "definition": "Учебная ветка, которая сообщает ожидаемую ошибку до вызова выбранной операции. Она позволяет проверить логику без повреждения файловой системы."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "За каждый открытый поток отвечает отдельная проверка",
+      "paragraphs": [
+        "Оператор считывает файл перед переносом на приёмку. Если файл назначения не открылся, чтение не началось, но поток входа уже открыт. Закрытие входа зависит от состояния входа.",
+        "У входа и выхода отдельные указатели. Значение NULL означает отсутствие соответствующего потока. Завершите обработку в одном блоке очистки, где каждый успешно открытый поток получает ровно один вызов fclose.",
+        "Сначала запоминайте причину сбоя, затем закрывайте потоки. Проверяйте результат fclose, но заменяйте им статус только при отсутствии предыдущей ошибки. Счётчики показывают число вызовов fclose, включая вызов, который сообщил ошибку."
+      ]
+    },
+    {
+      "title": "Приёмка не открылась, журнал всё равно закрывается",
+      "paragraphs": [
+        "В input/reading.txt лежит 42 и LF. В stdin передайте 1 и LF. Этот режим пропускает открытие выхода учебной веткой. Реальный fopen входа по-прежнему выполняется."
+      ],
+      "steps": [
+        "Исходный поток открывается. Указатель output остаётся NULL.",
+        "Первичной ошибкой становится open-output-error. Копирование не начинается.",
+        "Очистка вызывает fclose для входа и пропускает выход. Код 1 указывает на отказ."
+      ],
+      "trace": [
+        [
+          "Открытие входа",
+          "input != NULL",
+          "output == NULL"
+        ],
+        [
+          "Учебный отказ",
+          "open-output-error",
+          "выход не открыт"
+        ],
+        [
+          "Очистка",
+          "closed-input 1",
+          "closed-output 0"
+        ]
+      ],
+      "id": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nenum Mode {\n    RUN_NORMALLY = '0',\n    SIMULATE_OPEN_FAILURE = '1',\n    SIMULATE_WRITE_FAILURE = '2'\n};\n\nstatic int read_mode(void)\n{\n    int mode = getchar();\n    if (mode == EOF) {\n        return ferror(stdin) ? -1 : RUN_NORMALLY;\n    }\n    int tail = getchar();\n    if (tail == '\\n') {\n        tail = getchar();\n    }\n    if (tail != EOF || ferror(stdin)) {\n        return -1;\n    }\n    return mode == RUN_NORMALLY || mode == SIMULATE_OPEN_FAILURE ||\n           mode == SIMULATE_WRITE_FAILURE ? mode : -1;\n}\n\nint main(void)\n{\n    int mode = read_mode();\n    if (mode == -1) {\n        puts(\"invalid-mode\");\n        return 1;\n    }\n\n    FILE *input = fopen(\"input/reading.txt\", \"rb\");\n    FILE *output = NULL;\n    const char *problem = NULL;\n    if (input == NULL) {\n        problem = \"open-input-error\";\n    } else {\n        if (mode != SIMULATE_OPEN_FAILURE) {\n            output = fopen(\"received.txt\", \"wb\");\n        }\n        if (output == NULL) {\n            problem = \"open-output-error\";\n        } else {\n            int byte;\n            while ((byte = fgetc(input)) != EOF) {\n                if (mode == SIMULATE_WRITE_FAILURE) {\n                    problem = \"write-error\";\n                    break;\n                }\n                if (fputc(byte, output) == EOF) {\n                    problem = \"write-error\";\n                    break;\n                }\n            }\n            if (problem == NULL && ferror(input)) {\n                problem = \"read-error\";\n            }\n        }\n    }\n\n    int closed_input = 0;\n    int closed_output = 0;\n    if (input != NULL) {\n        ++closed_input;\n        if (fclose(input) == EOF && problem == NULL) {\n            problem = \"close-input-error\";\n        }\n    }\n    if (output != NULL) {\n        ++closed_output;\n        if (fclose(output) == EOF && problem == NULL) {\n            problem = \"close-output-error\";\n        }\n    }\n\n    puts(problem == NULL ? \"ok\" : problem);\n    printf(\"closed-input %d\\nclosed-output %d\\n\", closed_input, closed_output);\n    return problem == NULL ? 0 : 1;\n}\n",
+        "files": {
+          "input/reading.txt": "42\n"
+        },
+        "stdin": "1\n",
+        "output": "open-output-error\nclosed-input 1\nclosed-output 0\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {},
+        "cases": [
+          {
+            "input": "0\n",
+            "inputFiles": {
+              "input/reading.txt": "42\n"
+            },
+            "output": "ok\nclosed-input 1\nclosed-output 1\n",
+            "stderr": "",
+            "exitCode": 0,
+            "outputFiles": {
+              "received.txt": "42\n"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Проверьте условие очистки по счётчикам",
+      "paragraphs": [
+        "Если open-output-error сопровождается closed-input 0, найдите, требует ли условие очистки наличия выхода. В этой ветви вход был открыт отдельно и его надо закрыть.",
+        "Сообщение too few arguments для fclose указывает на пропущенный FILE *. Передавайте указатель на открытый поток. Никогда не подставляйте NULL и не повторяйте закрытие после вызова fclose."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Разложить отказ записи по состояниям",
+      "paragraphs": [
+        "В режиме 2 оба потока открываются. Программа сообщает write-error перед первой записью и закрывает оба потока. Пустой файл может уже существовать во временной файловой области. Проверьте, что неуспешный запуск не предлагает этот файл как готовый результат."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3, §7.21.7.1, §7.21.7.3, §7.21.10.3",
+      "language": "English",
+      "purpose": "Сверьте правила стандартной библиотеки для показанного потока и проверок."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "independent",
+      "kind": "choice",
+      "prompt": "Вход открыт, выход не открылся. Какие вызовы ещё должны произойти?",
+      "options": [
+        "Закрыть оба указателя.",
+        "Закрыть только вход.",
+        "Не закрывать ничего."
+      ],
+      "correct": 1,
+      "feedback": [
+        "Для выхода нет открытого потока.",
+        "За успешно открытый вход остаётся ответственность.",
+        "Ошибка выхода не закрывает вход."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "write-failure",
+      "kind": "choice",
+      "prompt": "Оба потока открылись, запись отклонена. Что видит ученик?",
+      "options": [
+        "Успешное копирование.",
+        "Только отказ открытия.",
+        "write-error и по одному закрытию обоих потоков."
+      ],
+      "correct": 2,
+      "feedback": [
+        "До записи дошли, но она не выполнена.",
+        "Открытие обоих потоков уже прошло.",
+        "Результат запуска требует кода 0, здесь код 1."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "error-priority",
+      "kind": "free",
+      "prompt": "Сначала получено write-error, затем fclose выхода тоже вернул EOF. Какую причину вывести и почему?",
+      "feedback": "Выведите write-error, потому что это первая ошибка. Вызов fclose всё равно выполнен. Если предыдущих ошибок нет, отказ fclose становится причиной результата.",
+      "recall": "idea"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    return fclose();\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "1\n",
+    "returnAnchor": "example",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nenum Mode {\n    RUN_NORMALLY = '0',\n    SIMULATE_OPEN_FAILURE = '1',\n    SIMULATE_WRITE_FAILURE = '2'\n};\n\nstatic int read_mode(void)\n{\n    int mode = getchar();\n    if (mode == EOF) {\n        return ferror(stdin) ? -1 : RUN_NORMALLY;\n    }\n    int tail = getchar();\n    if (tail == '\\n') {\n        tail = getchar();\n    }\n    if (tail != EOF || ferror(stdin)) {\n        return -1;\n    }\n    return mode == RUN_NORMALLY || mode == SIMULATE_OPEN_FAILURE ||\n           mode == SIMULATE_WRITE_FAILURE ? mode : -1;\n}\n\nint main(void)\n{\n    int mode = read_mode();\n    if (mode == -1) {\n        puts(\"invalid-mode\");\n        return 1;\n    }\n\n    FILE *input = fopen(\"input/labels.txt\", \"rb\");\n    FILE *output = NULL;\n    const char *problem = NULL;\n    if (input == NULL) {\n        problem = \"open-input-error\";\n    } else {\n        if (mode != SIMULATE_OPEN_FAILURE) {\n            output = fopen(\"labels-copy.txt\", \"wb\");\n        }\n        if (output == NULL) {\n            problem = \"open-output-error\";\n        } else {\n            int byte;\n            while ((byte = fgetc(input)) != EOF) {\n                if (mode == SIMULATE_WRITE_FAILURE) {\n                    problem = \"write-error\";\n                    break;\n                }\n                if (fputc(byte, output) == EOF) {\n                    problem = \"write-error\";\n                    break;\n                }\n            }\n            if (problem == NULL && ferror(input)) {\n                problem = \"read-error\";\n            }\n        }\n    }\n\n    int closed_input = 0;\n    int closed_output = 0;\n    /* TODO: the input has its own lifetime. */\n    if (input != NULL && output != NULL) {\n        ++closed_input;\n        if (fclose(input) == EOF && problem == NULL) {\n            problem = \"close-input-error\";\n        }\n    }\n    if (output != NULL) {\n        ++closed_output;\n        if (fclose(output) == EOF && problem == NULL) {\n            problem = \"close-output-error\";\n        }\n    }\n\n    puts(problem == NULL ? \"ok\" : problem);\n    printf(\"closed-input %d\\nclosed-output %d\\n\", closed_input, closed_output);\n    return problem == NULL ? 0 : 1;\n}\n"
+      },
+      {
+        "path": "input/labels.txt",
+        "content": "A7\nB4\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Обычное копирование",
+        "input": "0\n",
+        "inputFiles": {
+          "input/labels.txt": "A7\nB4\n"
+        },
+        "output": "ok\nclosed-input 1\nclosed-output 1\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "labels-copy.txt": "A7\nB4\n"
+        }
+      },
+      {
+        "label": "Управляемый отказ открытия выхода",
+        "input": "1\n",
+        "inputFiles": {
+          "input/labels.txt": "A7\nB4\n"
+        },
+        "output": "open-output-error\nclosed-input 1\nclosed-output 0\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Управляемый отказ записи",
+        "input": "2\n",
+        "inputFiles": {
+          "input/labels.txt": "A7\nB4\n"
+        },
+        "output": "write-error\nclosed-input 1\nclosed-output 1\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {
+          "labels-copy.txt": ""
+        }
+      },
+      {
+        "label": "Нет исходного файла",
+        "input": "0\n",
+        "inputFiles": {},
+        "output": "open-input-error\nclosed-input 0\nclosed-output 0\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Неверный режим",
+        "input": "3\n",
+        "inputFiles": {
+          "input/labels.txt": "A7\nB4\n"
+        },
+        "output": "invalid-mode\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Пустой входной файл",
+        "input": "0\n",
+        "inputFiles": {
+          "input/labels.txt": ""
+        },
+        "output": "ok\nclosed-input 1\nclosed-output 1\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "labels-copy.txt": ""
+        }
+      }
+    ],
+    "title": "Копии этикеток на новую смену",
+    "task": "Учебный файл input/labels.txt содержит этикетки. Поле stdin выбирает режим: пусто или 0 означает обычное копирование, 1 пропускает fopen выхода, 2 сообщает отказ перед первой записью при непустом входе. Для непустого stdin введите одну цифру и необязательный LF. Выполняйте реальные открытия и закрытия только для нужных потоков. Исправьте условие закрытия входа. Выведите первую причину или ok и число вызовов fclose для каждого потока. При ошибке код выхода 1. При успехе код 0 и точная копия labels-copy.txt.",
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 1 в stdin. Найдите условие около TODO.",
+        "why": "Выход пропущен учебной веткой. Заготовка ошибочно связывает закрытие входа с наличием выхода.",
+        "expected": "open-output-error, затем closed-input 0 и closed-output 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Оставьте в условии закрытия входа проверку только входа. Отдельно запустите 1, 2 и 0.",
+        "why": "При 1 выход не открывается. При 2 оба потока открылись до отказа. При 0 копирование завершается.",
+        "expected": "Закрытия входа и выхода по режимам: 1/0, 1/1 и 1/1. Файл результата предложен только при успехе."
+      }
+    ],
+    "criteria": [
+      "При режиме 1 первый статус open-output-error, closed-input 1, closed-output 0. Выход не создан.",
+      "При режиме 2 первый статус write-error, оба счётчика равны 1. Неуспешный запуск не предлагает выход к сохранению.",
+      "При режиме 0 stdout начинается с ok, а labels-copy.txt содержит A7, LF, B4, LF."
+    ],
+    "hint": "Вход закрывается, если input != NULL. Проверка output != NULL относится только к вызову fclose(output).",
+    "exercises": [
+      {
+        "title": "Открытие входа отклонено",
+        "task": "В отдельной копии измените только путь входа на input/missing-labels.txt. Оставьте режим 0. Предскажите обе строки счётчиков и проверьте, появился ли файл результата.",
+        "criteria": [
+          "open-input-error, затем closed-input 0 и closed-output 0. Код 1. Нового файла нет."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nenum Mode {\n    RUN_NORMALLY = '0',\n    SIMULATE_OPEN_FAILURE = '1',\n    SIMULATE_WRITE_FAILURE = '2'\n};\n\nstatic int read_mode(void)\n{\n    int mode = getchar();\n    if (mode == EOF) {\n        return ferror(stdin) ? -1 : RUN_NORMALLY;\n    }\n    int tail = getchar();\n    if (tail == '\\n') {\n        tail = getchar();\n    }\n    if (tail != EOF || ferror(stdin)) {\n        return -1;\n    }\n    return mode == RUN_NORMALLY || mode == SIMULATE_OPEN_FAILURE ||\n           mode == SIMULATE_WRITE_FAILURE ? mode : -1;\n}\n\nint main(void)\n{\n    int mode = read_mode();\n    if (mode == -1) {\n        puts(\"invalid-mode\");\n        return 1;\n    }\n\n    FILE *input = fopen(\"input/labels.txt\", \"rb\");\n    FILE *output = NULL;\n    const char *problem = NULL;\n    if (input == NULL) {\n        problem = \"open-input-error\";\n    } else {\n        if (mode != SIMULATE_OPEN_FAILURE) {\n            output = fopen(\"labels-copy.txt\", \"wb\");\n        }\n        if (output == NULL) {\n            problem = \"open-output-error\";\n        } else {\n            int byte;\n            while ((byte = fgetc(input)) != EOF) {\n                if (mode == SIMULATE_WRITE_FAILURE) {\n                    problem = \"write-error\";\n                    break;\n                }\n                if (fputc(byte, output) == EOF) {\n                    problem = \"write-error\";\n                    break;\n                }\n            }\n            if (problem == NULL && ferror(input)) {\n                problem = \"read-error\";\n            }\n        }\n    }\n\n    int closed_input = 0;\n    int closed_output = 0;\n    if (input != NULL) {\n        ++closed_input;\n        if (fclose(input) == EOF && problem == NULL) {\n            problem = \"close-input-error\";\n        }\n    }\n    if (output != NULL) {\n        ++closed_output;\n        if (fclose(output) == EOF && problem == NULL) {\n            problem = \"close-output-error\";\n        }\n    }\n\n    puts(problem == NULL ? \"ok\" : problem);\n    printf(\"closed-input %d\\nclosed-output %d\\n\", closed_input, closed_output);\n    return problem == NULL ? 0 : 1;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.preserve-first-error-clean-up-streams",
+    "prerequisites": [
+      "c.copy-file-check-eof-and-write",
+      "c.single-owner-cleanup"
+    ]
+  }
+}

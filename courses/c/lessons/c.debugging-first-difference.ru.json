@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.debugging-first-difference",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "Программирование на C",
+  "module": "Отладка, тестирование и безопасность памяти",
+  "title": "Трассировка до первого расхождения",
+  "goal": "Найти первое сравнение, которое расходится с контрактом, и проверить исправление на соседних входах.",
+  "prerequisites": [
+    {
+      "text": "Условия с двумя границами, логическое «или» и раздельное чтение stdout и stderr."
+    }
+  ],
+  "terms": [
+    {
+      "id": "trace",
+      "term": "Трасса",
+      "title": "Трасса",
+      "definition": "Строки с промежуточными значениями или результатами условий в порядке выполнения."
+    },
+    {
+      "id": "first-difference",
+      "term": "Первое расхождение",
+      "title": "Первое расхождение",
+      "definition": "Первый наблюдаемый факт, который отличается от прогноза по контракту."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Сначала прогноз, затем запуск",
+      "paragraphs": [
+        "Датчик принимает измерения от 20 до 70 включительно. При значении 70 оба условия отказа должны быть ложными. Запишите две ожидаемые отметки — below 0 и above 0 — прежде чем нажать «Запустить».",
+        "Сигнал accepted или invalid идёт в stdout. Отладочные значения идут в stderr, поэтому их добавление не меняет договор с другой программой, которая читает stdout."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Где разделяются 70 и 71",
+      "paragraphs": [
+        "Помощник read_value читает одну строку целиком. Он передаёт long только после проверки записи числа. Основная ветка отвечает за другой вопрос — допустимо ли это число."
+      ],
+      "steps": [
+        "Подайте 70. Сравнение 70 < 20 даёт 0, затем 70 > 70 тоже даёт 0.",
+        "В stderr увидите value 70 below 0 above 0. В stdout программа печатает accepted.",
+        "Проверьте прогноз на 69 и 71. При 71 первым отличится above, и ответ станет invalid."
+      ],
+      "trace": [
+        [
+          "69",
+          "below 0",
+          "above 0",
+          "accepted"
+        ],
+        [
+          "70",
+          "below 0",
+          "above 0",
+          "accepted"
+        ],
+        [
+          "71",
+          "below 0",
+          "above 1",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int below = value < 20;\n    int above = value > 70;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;\n}\n",
+        "stdin": "70\n",
+        "output": "accepted\n",
+        "stderr": "value 70 below 0 above 0\n",
+        "exitCode": 0,
+        "cases": [
+          {
+            "input": "69\n",
+            "output": "accepted\n",
+            "stderr": "value 69 below 0 above 0\n",
+            "exitCode": 0
+          },
+          {
+            "input": "71\n",
+            "output": "invalid\n",
+            "stderr": "value 71 below 0 above 1\n",
+            "exitCode": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Найдите первое отличающееся значение",
+      "paragraphs": [
+        "Если написать ≥ в виде >=, выход на 70 ошибочно станет invalid. В трассе значение 70 и below 0 по-прежнему совпадают с прогнозом. Ищите первую лишнюю единицу — above 1.",
+        "Трассу даёт наш fprintf. Она показывает только отмеченные нами факты. Отдельный тест компиляции демонстрирует пропущенный правый операнд. В такой сборке запуск ещё не начался."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенесите приём на другую шкалу",
+      "paragraphs": [
+        "В практике диапазон 30–90. Сначала предскажите метки для 90, затем найдите одну лишнюю проверку. После изменения проверьте 89, 90 и 91, чтобы увидеть все три соседних случая."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.8, 6.5.14, 7.21.6.1",
+      "language": "English",
+      "purpose": "Найти первое сравнение, которое расходится с контрактом, и проверить исправление на соседних входах."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "В наблюдаемой трассе для 70 стоят below 0 и above 1. Что отличается первым?",
+      "options": [
+        "Проверка above",
+        "Считанное значение 70",
+        "Проверка below"
+      ],
+      "correct": 0,
+      "feedback": [
+        "70 входит в диапазон, поэтому above должно быть 0.",
+        "Число совпадает с поданным входом.",
+        "70 не меньше 20. below 0 ожидаемо."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Какой единственный вход обнаруживает замену > 70 на >= 70?",
+      "options": [
+        "69",
+        "70",
+        "71"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Оба сравнения ложны.",
+        "Проверки расходятся ровно на 70.",
+        "Оба сравнения истинны."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Какие два прогноза запишете для 90 в практике и какая строка покажет причину сбоя?",
+      "feedback": "Ожидаются below 0 и above 0. При дефекте трасса сообщает value 90 below 0 above 1, хотя штатный вывод должен быть accepted.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int reading = 70;\n    if (reading > ) {\n        return 1;\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected expression"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Измерение на отметке 90",
+    "environment": "Clang / WASI · C17",
+    "task": "Диапазон 30–90 включителен. Программа читает первую строку как десятичное целое с необязательным знаком и пробелами по краям. Для числового ввода печатает в stderr две метки, в stdout — accepted или invalid. При неверной записи — только invalid в stdout. Сравните прогноз с трассой на 90 и исправьте одно условие.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int below = value < 30;\n    int above = value >= 90;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "90\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Перед нижней границей",
+        "input": "29\n",
+        "output": "invalid\n",
+        "stderr": "value 29 below 1 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "На нижней границе",
+        "input": "30\n",
+        "output": "accepted\n",
+        "stderr": "value 30 below 0 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "Сосед верхней границы",
+        "input": "89\n",
+        "output": "accepted\n",
+        "stderr": "value 89 below 0 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "На верхней границе",
+        "input": "90\n",
+        "output": "accepted\n",
+        "stderr": "value 90 below 0 above 0\n",
+        "exitCode": 0
+      },
+      {
+        "label": "За верхней границей",
+        "input": "91\n",
+        "output": "invalid\n",
+        "stderr": "value 91 below 0 above 1\n",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний символ",
+        "input": "90x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Для 90 stdout равен accepted, а stderr содержит value 90 below 0 above 0.",
+      "89 даёт accepted, 91 и 29 дают invalid. Подтвердите 30 как допустимую нижнюю границу.",
+      "Объясните первое расхождение по метке above. Не исправляйте формат трассы и штатного вывода ради совпадения."
+    ],
+    "hint": "Сравните ожидаемое и фактическое above для ровно 90. Ветка отвергает только значения больше 90.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int below = value < 30;\n    int above = value > 90;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запишите ожидаемые below и above для 90, затем запустите заготовку.",
+        "why": "Сопоставьте каждый промежуточный факт отдельно.",
+        "expected": "stdout: invalid. stderr: value 90 below 0 above 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте сравнение над верхней границей, повторите 90.",
+        "why": "Проверьте ровно ту ветку, где модель разошлась с трассой.",
+        "expected": "stdout: accepted. stderr: value 90 below 0 above 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте 89 и 91, затем нижнюю пару 29 и 30.",
+        "why": "Подтвердите поведение с обеих сторон каждой границы.",
+        "expected": "89 и 30 допустимы. 91 и 29 отклоняются."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "В отдельной копии сделайте диапазон 40–60 и спроектируйте тест на ошибку нижнего порога.",
+        "criteria": [
+          "Ввод 40 даёт accepted, 39 — invalid. Прогноз объясняет, при каком сравнении расходятся метки below."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.locate-first-observed-difference",
+    "prerequisites": [
+      "c.function-boundary-driver"
+    ]
+  }
+}

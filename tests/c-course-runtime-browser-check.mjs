@@ -230,6 +230,113 @@ try {
   await runPractice('allocation-failed 2 2 30\n1:10\n2:20\n', 0);
   console.log('C17_M8_GROWTH_PASS deterministic failure retains the exact accepted record prefix');
 
+  await openPractice('c.result-artifacts', 'Input files and result artifacts');
+  const artifactLesson = JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR, manifest.prefix,
+    'courses/c/lessons/c.result-artifacts.en.json'),'utf8'));
+  const artifactPath = 'stock-totals.tsv';
+  const fileTab = file => page.locator('.code-file-tab[data-open-file="'+file+'"]');
+  const resultPanel = page.locator('[data-runtime-files]');
+  const artifactEditor = page.locator('#editor');
+  await runPractice('ok\n',0);
+  assert.match(await resultPanel.textContent(), /stock-totals\.tsv \(0 B\)/);
+  assert.equal(await fileTab(artifactPath).count(),0);
+  await artifactEditor.fill(artifactLesson.practice.referenceSolution.source);
+  assert.equal(await resultPanel.count(),0);
+  await runPractice('ok\n',0);
+  assert.match(await resultPanel.textContent(), /stock-totals\.tsv \(19 B\)/);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'), resultPanel.getByRole('button',{name:'Download',exact:true}).click(),
+  ]);
+  assert.equal(download.suggestedFilename(),artifactPath);
+  const artifact = 'records\ttotal\n2\t11\n';
+  assert.deepEqual(await readFile(await download.path()),Buffer.from(artifact));
+  assert.equal(await fileTab(artifactPath).count(),0);
+  await resultPanel.getByRole('button',{name:'Save result files to project'}).click();
+  await fileTab(artifactPath).waitFor();
+  await page.reload();
+  await page.locator('[data-c-workspace] #editor').waitFor();
+  await fileTab(artifactPath).click();
+  assert.equal(await artifactEditor.inputValue(),artifact);
+  await fileTab('input/stock.tsv').click();
+  await artifactEditor.fill('12\t8\n26\t3junk\n');
+  await runPractice('invalid line 2\n',1);
+  assert.equal(await resultPanel.count(),0);
+  await fileTab(artifactPath).click();
+  assert.equal(await artifactEditor.inputValue(),artifact);
+  await page.screenshot({path:path.join(out,'m9-artifact-restore.png')});
+  await fileTab('input/stock.tsv').click();
+  await artifactEditor.fill('12\t9\n26\t3\n');
+  await runPractice('ok\n',0);
+  await page.waitForFunction(()=>document.querySelector('[data-c-save]').textContent.includes('saved'));
+  const baselineDraft = await page.evaluate(()=>{
+    const key=Object.keys(localStorage).find(key=>key.includes('c-course:v1:')&&key.endsWith('c.result-artifacts'));
+    return {key,raw:localStorage.getItem(key)};
+  });
+  assert.ok(baselineDraft.key&&baselineDraft.raw);
+  await page.evaluate(({key,raw})=>{
+    const other=JSON.parse(raw);
+    other.stdin='from a second tab';
+    localStorage.setItem(key,JSON.stringify(other));
+  },baselineDraft);
+  await resultPanel.locator('[data-save-runtime-files]').click();
+  assert.match(await page.locator('[data-c-save]').textContent(),/newer version/);
+  assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).stdin,baselineDraft.key),'from a second tab');
+  await page.evaluate(({key,raw})=>{
+    localStorage.setItem(key,raw);
+    window.nexusOriginalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem=function(target,value){
+      if(target===key)throw new DOMException('Synthetic draft quota','QuotaExceededError');
+      return window.nexusOriginalSetItem.call(this,target,value);
+    };
+  },baselineDraft);
+  await resultPanel.locator('[data-save-runtime-files]').click();
+  assert.match(await page.locator('[data-c-save]').textContent(),/could not be saved/);
+  await fileTab(artifactPath).click();
+  assert.equal(await artifactEditor.inputValue(),artifact);
+  await page.evaluate(()=>{Storage.prototype.setItem=window.nexusOriginalSetItem;delete window.nexusOriginalSetItem;});
+  await resultPanel.locator('[data-save-runtime-files]').click();
+  assert.equal(await artifactEditor.inputValue(),'records\ttotal\n2\t12\n');
+  console.log('C17_M9_ARTIFACT_PASS exact bytes, download, explicit save, reload and preserved report on invalid input');
+
+  await openPractice('c.translation-units', 'Translation units and linking');
+  await runPractice('trays=1\n', 0);
+  await fileTab('tray.c').click();
+  const tray = await page.locator('#editor').inputValue();
+  assert.ok(tray.includes('return items / 3;'));
+  const repairedTray = tray.replace('return items / 3;', 'return (items + 2) / 3;');
+  await page.locator('#editor').fill(repairedTray);
+  await runPractice('trays=2\n', 0);
+  await page.reload();
+  await page.locator('[data-c-workspace] #editor').waitFor();
+  await fileTab('tray.c').click();
+  assert.equal(await page.locator('#editor').inputValue(),repairedTray);
+  await fileTab('tray.h').click();
+  assert.match(await page.locator('#editor').inputValue(),/trays_needed/);
+  console.log('C17_M10_UNITS_PASS implementation changed independently, both C files linked, project restored');
+
+  await openPractice('c.capstone-delivery','Evidence and project delivery');
+  const capstone = JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR, manifest.prefix,
+    'courses/c/lessons/c.capstone-delivery.en.json'),'utf8'));
+  const initialReport = capstone.practice.files.find(file=>file.path==='summary.tsv').content;
+  const finalReport = capstone.practice.cases[0].outputFiles['summary.tsv'];
+  await fileTab('summary.tsv').click();
+  assert.equal(await page.locator('#editor').inputValue(),initialReport);
+  await fileTab('inventory.c').click();
+  await page.locator('#editor').fill(capstone.practice.referenceSolution.files['inventory.c']);
+  await runPractice('reported\n',0);
+  await fileTab('summary.tsv').click();
+  assert.equal(await page.locator('#editor').inputValue(),initialReport);
+  await resultPanel.locator('[data-save-runtime-files]').click();
+  assert.equal(await page.locator('#editor').inputValue(),finalReport);
+  await page.reload();
+  await page.locator('[data-c-workspace] #editor').waitFor();
+  await fileTab('summary.tsv').click();
+  assert.equal(await page.locator('#editor').inputValue(),finalReport);
+  await fileTab('inventory.c').click();
+  assert.equal(await page.locator('#editor').inputValue(),capstone.practice.referenceSolution.files['inventory.c']);
+  await page.screenshot({path:path.join(out,'m12-capstone-restored.png')});
+  console.log('C17_M12_CAPSTONE_PASS multi-file compile, exact report, explicit save, source and artifact restored');
+
   assert.deepEqual(fixture.errors, []);
   console.log('C17_DRAFT_RESTORE_PASS editor/stdin preserved after reload and locale switch; starter confirmation rejected; synthetic verified account storage');
   await writeFile(path.join(out, 'c17-workspace.json'), JSON.stringify({

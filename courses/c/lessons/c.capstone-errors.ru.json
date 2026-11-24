@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m12-v1",
+  "id": "c.capstone-errors",
+  "courseId": "c",
+  "moduleId": "c.m12",
+  "course": "Программирование на C",
+  "module": "Итоговый проект C17",
+  "locale": "ru",
+  "title": "Границы, отказы и восстановление",
+  "goal": "Различить невалидный файл, неизвестный номер, ошибочную команду и отказ записи по статусу, потоку и артефакту.",
+  "prerequisites": [
+    {
+      "text": "Понадобятся inventory_find, обработка результата fopen и проверка fclose. Начните в новой рабочей папке."
+    }
+  ],
+  "terms": [
+    {
+      "id": "early-validation",
+      "term": "Валидация до команд",
+      "title": "Валидация до команд",
+      "definition": "Файл проверяется целиком до чтения первой команды."
+    },
+    {
+      "id": "first-failure",
+      "term": "Первый отказ",
+      "title": "Первый отказ",
+      "definition": "Локализованная причина завершения. Ошибка закрытия не затирает уже зарегистрированный отказ записи."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Причина остановки зависит от стадии",
+      "paragraphs": [
+        "Если файл содержит номер дважды, остаётся неясно, у какой строки менять количество. Сначала загрузите и проверьте файл. Проверяйте формат, уникальность и ёмкость до добавления каждой записи. Ни одна команда ещё не выполняется.",
+        "Ошибки файла пишутся в stderr со статусом 1. Команда с корректным номером, которого нет в модели, печатает missing в stdout и допускает продолжение. Синтаксический отказ команды печатает invalid в stdout и останавливает выполнение со статусом 2. После него строки stdin не исполняются.",
+        "При отказе открытия, записи или закрытия отчёта статус 3, причина в stderr. Слово reported появляется только после успешного закрытия. Тестируем открытие с папкой summary.tsv, в которой есть keep.txt. Это воспроизводимый конфликт имени. При реальном отказе после открытия возможен неполный файл."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Два одинаковых номера останавливают чтение команд",
+      "paragraphs": [
+        "Файл содержит 10 с остатком 5, затем 0010 с остатком 0. Оба номера разбираются как число 10. В разборе команда report записала бы example-summary.tsv. По её результату можно проверить, добралась ли программа до команд."
+      ],
+      "steps": [
+        "Первая запись загружается. Перед добавлением второй inventory_find видит существующий номер.",
+        "Поток закрывается, stderr содержит duplicate-id и LF, статус 1. Stdout пуст.",
+        "В свежей папке example-summary.tsv не создан. Запись отчёта не начиналась."
+      ],
+      "trace": [
+        [
+          "10:5",
+          "count = 1",
+          ""
+        ],
+        [
+          "0010:0",
+          "duplicate-id",
+          "stderr"
+        ],
+        [
+          "report",
+          "not executed",
+          "exit 1"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <string.h>\n\n#include \"inventory.h\"\n\nenum { LINE_CAPACITY = 64 };\nenum LineStatus { LINE_EOF, LINE_OK, LINE_INVALID, LINE_IO_ERROR };\n\nstatic enum LineStatus read_line(FILE *stream, char line[LINE_CAPACITY])\n{\n    size_t used = 0;\n    int byte;\n    while ((byte = fgetc(stream)) != EOF && byte != '\\n') {\n        if (byte == 0 || used == LINE_CAPACITY - 1) {\n            return LINE_INVALID;\n        }\n        line[used++] = (char)byte;\n    }\n    line[used] = '\\0';\n    if (byte != EOF) {\n        return LINE_OK;\n    }\n    if (ferror(stream)) {\n        return LINE_IO_ERROR;\n    }\n    return used == 0 ? LINE_EOF : LINE_OK;\n}\n\nstatic int read_number(const char **cursor, int minimum, int *value)\n{\n    const char *p = *cursor;\n    unsigned digits = 0;\n    int number = 0;\n    while (*p >= '0' && *p <= '9') {\n        if (++digits > 4) {\n            return 0;\n        }\n        number = number * 10 + (*p++ - '0');\n    }\n    if (digits == 0 || number < minimum) {\n        return 0;\n    }\n    *cursor = p;\n    *value = number;\n    return 1;\n}\n\nstatic const char *load_records(Inventory *stock)\n{\n    FILE *input = fopen(\"records.tsv\", \"rb\");\n    if (input == NULL) {\n        return \"open-input-error\";\n    }\n    const char *problem = NULL;\n    char line[LINE_CAPACITY];\n    enum LineStatus status;\n    while ((status = read_line(input, line)) == LINE_OK) {\n        const char *p = line;\n        Record record;\n        if (!read_number(&p, 1, &record.id) || *p++ != '\\t' ||\n            !read_number(&p, 0, &record.quantity) || *p != '\\0') {\n            problem = \"invalid-record\";\n        } else if (inventory_find(stock, record.id) != NULL) {\n            problem = \"duplicate-id\";\n        } else if (stock->count == INVENTORY_CAPACITY) {\n            problem = \"capacity-error\";\n        } else {\n            stock->records[stock->count++] = record;\n        }\n        if (problem != NULL) {\n            break;\n        }\n    }\n    if (problem == NULL && status != LINE_EOF) {\n        problem = status == LINE_IO_ERROR ? \"read-input-error\" : \"invalid-record\";\n    }\n    if (fclose(input) != 0 && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    return problem;\n}\n\nstatic const char *write_report(const Inventory *stock)\n{\n    FILE *output = fopen(\"example-summary.tsv\", \"wb\");\n    if (output == NULL) {\n        return \"open-report-error\";\n    }\n    const char *problem = NULL;\n    if (fputs(\"id\\tquantity\\n\", output) == EOF) {\n        problem = \"write-report-error\";\n    }\n    for (size_t i = 0; problem == NULL && i < stock->count; ++i) {\n        const Record *record = &stock->records[i];\n        if (fprintf(output, \"%d\\t%d\\n\", record->id, record->quantity) < 0) {\n            problem = \"write-report-error\";\n        }\n    }\n    if (fclose(output) != 0 && problem == NULL) {\n        problem = \"close-report-error\";\n    }\n    return problem;\n}\n\nstatic int run_command(Inventory *stock, const char *line)\n{\n    int id;\n    if (strncmp(line, \"find \", 5) == 0) {\n        const char *p = line + 5;\n        if (read_number(&p, 1, &id) && *p == '\\0') {\n            const Record *match = inventory_find(stock, id);\n            if (match == NULL) {\n                puts(\"missing\");\n            } else {\n                printf(\"%d %d\\n\", match->id, match->quantity);\n            }\n            return 0;\n        }\n    } else if (strncmp(line, \"set \", 4) == 0) {\n        const char *p = line + 4;\n        int quantity;\n        if (read_number(&p, 1, &id) && *p++ == ' ' &&\n            read_number(&p, 0, &quantity) && *p == '\\0') {\n            puts(inventory_set(stock, id, quantity) ? \"ok\" : \"missing\");\n            return 0;\n        }\n    } else if (strcmp(line, \"report\") == 0) {\n        const char *problem = write_report(stock);\n        if (problem != NULL) {\n            fprintf(stderr, \"%s\\n\", problem);\n            return 3;\n        }\n        puts(\"reported\");\n        return 0;\n    }\n    puts(\"invalid\");\n    return 2;\n}\n\nint main(void)\n{\n    Inventory stock = {0};\n    const char *problem = load_records(&stock);\n    if (problem != NULL) {\n        fprintf(stderr, \"%s\\n\", problem);\n        return 1;\n    }\n    char line[LINE_CAPACITY];\n    enum LineStatus status;\n    while ((status = read_line(stdin, line)) == LINE_OK) {\n        int exit_status = run_command(&stock, line);\n        if (exit_status != 0) {\n            return exit_status;\n        }\n    }\n    if (status == LINE_INVALID) {\n        puts(\"invalid\");\n        return 2;\n    }\n    if (status == LINE_IO_ERROR) {\n        fputs(\"read-command-error\\n\", stderr);\n        return 2;\n    }\n    return 0;\n}\n",
+        "files": {
+          "inventory.c": "#include \"inventory.h\"\n\nconst Record *inventory_find(const Inventory *stock, int id)\n{\n    for (size_t i = 0; i < stock->count; ++i) {\n        if (stock->records[i].id == id) {\n            return &stock->records[i];\n        }\n    }\n    return NULL;\n}\n\nint inventory_set(Inventory *stock, int id, int quantity)\n{\n    if (quantity < 0 || quantity > MAX_VALUE) {\n        return 0;\n    }\n    for (size_t i = 0; i < stock->count; ++i) {\n        if (stock->records[i].id == id) {\n            stock->records[i].quantity = quantity;\n            return 1;\n        }\n    }\n    return 0;\n}\n",
+          "inventory.h": "#ifndef INVENTORY_H\n#define INVENTORY_H\n\n#include <stddef.h>\n\nenum { INVENTORY_CAPACITY = 64, MAX_VALUE = 9999 };\n\ntypedef struct {\n    int id;\n    int quantity;\n} Record;\n\ntypedef struct {\n    Record records[INVENTORY_CAPACITY];\n    size_t count;\n} Inventory;\n\nconst Record *inventory_find(const Inventory *stock, int id);\nint inventory_set(Inventory *stock, int id, int quantity);\n\n#endif\n",
+          "records.tsv": "10\t5\n0010\t0\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "report\n",
+        "output": "",
+        "stderr": "duplicate-id\n",
+        "exitCode": 1,
+        "outputFiles": {},
+        "cases": [
+          {
+            "input": "set 20 10000\nreport\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 2,
+            "inputFiles": {
+              "records.tsv": "10\t5\n20\t0\n"
+            },
+            "outputFiles": {}
+          },
+          {
+            "input": "set 99 4\nfind 20\n",
+            "output": "missing\n20 0\n",
+            "stderr": "",
+            "exitCode": 0,
+            "inputFiles": {
+              "records.tsv": "10\t5\n20\t0\n"
+            },
+            "outputFiles": {}
+          },
+          {
+            "input": "report\n",
+            "output": "",
+            "stderr": "open-report-error\n",
+            "exitCode": 3,
+            "inputFiles": {
+              "records.tsv": "10\t5\n20\t0\n",
+              "example-summary.tsv/keep.txt": "preserve\n"
+            },
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Где искать причину",
+      "paragraphs": [
+        "При диагнозе компиляции fclose проверьте аргумент FILE *. В запущенной утилите не ищите причину только по stdout. Пустой stdout с непустым stderr и статусом 1 означает, что отказ произошёл до команд."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Проверьте вывод на новом входе",
+      "paragraphs": [
+        "Если report был до неверной команды, старый файл может остаться. В отдельном запуске сравните два порядка команд. Различайте отсутствие нового отчёта и удаление ранее записанного."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3, §7.21.10.3",
+      "language": "English",
+      "purpose": "Сверьте указанные правила C17 с их применением в проекте."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "independent",
+      "kind": "choice",
+      "prompt": "В свежей папке с корректным файлом переданы set 20 10000 и report. Что наблюдаем?",
+      "options": [
+        "invalid, статус 2, отчёт не создан.",
+        "ok, затем пустой отчёт.",
+        "missing, оба шага исполнены."
+      ],
+      "correct": 0,
+      "feedback": [
+        "Количество вне диапазона. Обработка остановилась раньше report.",
+        "Количество не было записано.",
+        "Допустимость аргументов проверяется до поиска записи."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "transfer-check",
+      "kind": "choice",
+      "prompt": "Во входе корректный товар и команда report. По пути summary.tsv лежит папка с keep.txt. Какое наблюдение отличит этот отказ от ошибки данных?",
+      "options": [
+        "invalid в stdout, статус 2, папка пуста.",
+        "duplicate-id в stderr, статус 1.",
+        "open-report-error в stderr, статус 3, keep.txt остался прежним."
+      ],
+      "correct": 2,
+      "feedback": [
+        "Разбор команды успешно завершился.",
+        "Ошибки уникальности обнаруживаются при загрузке входа.",
+        "Сбой возник при открытии файла отчёта, до записи и подтверждения reported."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему отсутствие summary.tsv в примере говорит только о порядке событий? Что произойдёт, если действительный report сработал до ошибочной команды?",
+      "feedback": "Свежая папка и отсутствие вызова report исключают появление файла. Уже успешно записанный отчёт сохранится, ведь команда с ошибкой его не открывает.",
+      "recall": "example"
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "report\n",
+    "returnAnchor": "example",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <string.h>\n\n#include \"inventory.h\"\n\nenum { LINE_CAPACITY = 64 };\nenum LineStatus { LINE_EOF, LINE_OK, LINE_INVALID, LINE_IO_ERROR };\n\nstatic enum LineStatus read_line(FILE *stream, char line[LINE_CAPACITY])\n{\n    size_t used = 0;\n    int byte;\n    while ((byte = fgetc(stream)) != EOF && byte != '\\n') {\n        if (byte == 0 || used == LINE_CAPACITY - 1) {\n            return LINE_INVALID;\n        }\n        line[used++] = (char)byte;\n    }\n    line[used] = '\\0';\n    if (byte != EOF) {\n        return LINE_OK;\n    }\n    if (ferror(stream)) {\n        return LINE_IO_ERROR;\n    }\n    return used == 0 ? LINE_EOF : LINE_OK;\n}\n\nstatic int read_number(const char **cursor, int minimum, int *value)\n{\n    const char *p = *cursor;\n    unsigned digits = 0;\n    int number = 0;\n    while (*p >= '0' && *p <= '9') {\n        if (++digits > 4) {\n            return 0;\n        }\n        number = number * 10 + (*p++ - '0');\n    }\n    if (digits == 0 || number < minimum) {\n        return 0;\n    }\n    *cursor = p;\n    *value = number;\n    return 1;\n}\n\nstatic const char *load_records(Inventory *stock)\n{\n    FILE *input = fopen(\"records.tsv\", \"rb\");\n    if (input == NULL) {\n        return \"open-input-error\";\n    }\n    const char *problem = NULL;\n    char line[LINE_CAPACITY];\n    enum LineStatus status;\n    while ((status = read_line(input, line)) == LINE_OK) {\n        const char *p = line;\n        Record record;\n        if (!read_number(&p, 1, &record.id) || *p++ != '\\t' ||\n            !read_number(&p, 0, &record.quantity) || *p != '\\0') {\n            problem = \"invalid-record\";\n        /* TODO: reject a duplicate record before appending. */\n        } else if (stock->count == INVENTORY_CAPACITY) {\n            problem = \"capacity-error\";\n        } else {\n            stock->records[stock->count++] = record;\n        }\n        if (problem != NULL) {\n            break;\n        }\n    }\n    if (problem == NULL && status != LINE_EOF) {\n        problem = status == LINE_IO_ERROR ? \"read-input-error\" : \"invalid-record\";\n    }\n    if (fclose(input) != 0 && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    return problem;\n}\n\nstatic const char *write_report(const Inventory *stock)\n{\n    FILE *output = fopen(\"summary.tsv\", \"wb\");\n    if (output == NULL) {\n        return \"open-report-error\";\n    }\n    const char *problem = NULL;\n    if (fputs(\"id\\tquantity\\n\", output) == EOF) {\n        problem = \"write-report-error\";\n    }\n    for (size_t i = 0; problem == NULL && i < stock->count; ++i) {\n        const Record *record = &stock->records[i];\n        if (fprintf(output, \"%d\\t%d\\n\", record->id, record->quantity) < 0) {\n            problem = \"write-report-error\";\n        }\n    }\n    if (fclose(output) != 0 && problem == NULL) {\n        problem = \"close-report-error\";\n    }\n    return problem;\n}\n\nstatic int run_command(Inventory *stock, const char *line)\n{\n    int id;\n    if (strncmp(line, \"find \", 5) == 0) {\n        const char *p = line + 5;\n        if (read_number(&p, 1, &id) && *p == '\\0') {\n            const Record *match = inventory_find(stock, id);\n            if (match == NULL) {\n                puts(\"missing\");\n            } else {\n                printf(\"%d %d\\n\", match->id, match->quantity);\n            }\n            return 0;\n        }\n    } else if (strncmp(line, \"set \", 4) == 0) {\n        const char *p = line + 4;\n        int quantity;\n        if (read_number(&p, 1, &id) && *p++ == ' ' &&\n            read_number(&p, 0, &quantity) && *p == '\\0') {\n            puts(inventory_set(stock, id, quantity) ? \"ok\" : \"missing\");\n            return 0;\n        }\n    } else if (strcmp(line, \"report\") == 0) {\n        const char *problem = write_report(stock);\n        if (problem != NULL) {\n            fprintf(stderr, \"%s\\n\", problem);\n            return 3;\n        }\n        puts(\"reported\");\n        return 0;\n    }\n    puts(\"invalid\");\n    return 2;\n}\n\nint main(void)\n{\n    Inventory stock = {0};\n    const char *problem = load_records(&stock);\n    if (problem != NULL) {\n        fprintf(stderr, \"%s\\n\", problem);\n        return 1;\n    }\n    char line[LINE_CAPACITY];\n    enum LineStatus status;\n    while ((status = read_line(stdin, line)) == LINE_OK) {\n        int exit_status = run_command(&stock, line);\n        if (exit_status != 0) {\n            return exit_status;\n        }\n    }\n    if (status == LINE_INVALID) {\n        puts(\"invalid\");\n        return 2;\n    }\n    if (status == LINE_IO_ERROR) {\n        fputs(\"read-command-error\\n\", stderr);\n        return 2;\n    }\n    return 0;\n}\n"
+      },
+      {
+        "path": "inventory.c",
+        "content": "#include \"inventory.h\"\n\nconst Record *inventory_find(const Inventory *stock, int id)\n{\n    for (size_t i = 0; i < stock->count; ++i) {\n        if (stock->records[i].id == id) {\n            return &stock->records[i];\n        }\n    }\n    return NULL;\n}\n\nint inventory_set(Inventory *stock, int id, int quantity)\n{\n    if (quantity < 0 || quantity > MAX_VALUE) {\n        return 0;\n    }\n    for (size_t i = 0; i < stock->count; ++i) {\n        if (stock->records[i].id == id) {\n            stock->records[i].quantity = quantity;\n            return 1;\n        }\n    }\n    return 0;\n}\n"
+      },
+      {
+        "path": "inventory.h",
+        "content": "#ifndef INVENTORY_H\n#define INVENTORY_H\n\n#include <stddef.h>\n\nenum { INVENTORY_CAPACITY = 64, MAX_VALUE = 9999 };\n\ntypedef struct {\n    int id;\n    int quantity;\n} Record;\n\ntypedef struct {\n    Record records[INVENTORY_CAPACITY];\n    size_t count;\n} Inventory;\n\nconst Record *inventory_find(const Inventory *stock, int id);\nint inventory_set(Inventory *stock, int id, int quantity);\n\n#endif\n"
+      },
+      {
+        "path": "records.tsv",
+        "content": "32\t9\n32\t6\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Повтор номера 32",
+        "input": "report\n",
+        "inputFiles": {
+          "records.tsv": "32\t9\n32\t6\n"
+        },
+        "output": "",
+        "outputFiles": {},
+        "stderr": "duplicate-id\n",
+        "exitCode": 1
+      },
+      {
+        "label": "65-я запись за пределом",
+        "input": "report\n",
+        "inputFiles": {
+          "records.tsv": "1\t0\n2\t0\n3\t0\n4\t0\n5\t0\n6\t0\n7\t0\n8\t0\n9\t0\n10\t0\n11\t0\n12\t0\n13\t0\n14\t0\n15\t0\n16\t0\n17\t0\n18\t0\n19\t0\n20\t0\n21\t0\n22\t0\n23\t0\n24\t0\n25\t0\n26\t0\n27\t0\n28\t0\n29\t0\n30\t0\n31\t0\n32\t0\n33\t0\n34\t0\n35\t0\n36\t0\n37\t0\n38\t0\n39\t0\n40\t0\n41\t0\n42\t0\n43\t0\n44\t0\n45\t0\n46\t0\n47\t0\n48\t0\n49\t0\n50\t0\n51\t0\n52\t0\n53\t0\n54\t0\n55\t0\n56\t0\n57\t0\n58\t0\n59\t0\n60\t0\n61\t0\n62\t0\n63\t0\n64\t9999\n65\t0\n"
+        },
+        "output": "",
+        "outputFiles": {},
+        "stderr": "capacity-error\n",
+        "exitCode": 1
+      },
+      {
+        "label": "В файле пробел вместо TAB",
+        "input": "report\n",
+        "inputFiles": {
+          "records.tsv": "32 9\n"
+        },
+        "output": "",
+        "outputFiles": {},
+        "stderr": "invalid-record\n",
+        "exitCode": 1
+      },
+      {
+        "label": "Остановка перед отчётом",
+        "input": "set 20 10000\nreport\n",
+        "inputFiles": {
+          "records.tsv": "10\t5\n20\t0\n"
+        },
+        "output": "invalid\n",
+        "outputFiles": {},
+        "stderr": "",
+        "exitCode": 2
+      },
+      {
+        "label": "Команда с отсутствующим товаром",
+        "input": "set 78 1\nfind 32\n",
+        "inputFiles": {
+          "records.tsv": "32\t9\n"
+        },
+        "output": "missing\n32 9\n",
+        "outputFiles": {},
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Файл входа отсутствует",
+        "input": "report\n",
+        "inputFiles": {},
+        "output": "",
+        "outputFiles": {},
+        "stderr": "open-input-error\n",
+        "exitCode": 1
+      },
+      {
+        "label": "Папка занимает путь отчёта",
+        "input": "report\n",
+        "inputFiles": {
+          "records.tsv": "32\t9\n",
+          "summary.tsv/keep.txt": "preserve\n"
+        },
+        "output": "",
+        "outputFiles": {},
+        "stderr": "open-report-error\n",
+        "exitCode": 3
+      },
+      {
+        "label": "Отчёт до ошибки сохраняется",
+        "input": "report\nset 32 10000\nreport\n",
+        "inputFiles": {
+          "records.tsv": "32\t9\n"
+        },
+        "output": "reported\ninvalid\n",
+        "outputFiles": {
+          "summary.tsv": "id\tquantity\n32\t9\n"
+        },
+        "stderr": "",
+        "exitCode": 2
+      }
+    ],
+    "title": "Защитить выдачу журнала при дубликате",
+    "task": "В учебном журнале номер 32 встречается дважды. В заготовке пропущена проверка уникальности. Добавьте её до записи в массив. Проверьте контрольные случаи для неизвестного номера, неверного количества, переполнения и отказа открытия отчёта.",
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите стартовый дубликат с report.",
+        "why": "Две строки с одним ID делают отчёт неоднозначным.",
+        "expected": "Сломанная версия печатает reported и создаёт отчёт с повтором."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте проверку inventory_find и повторите этот и остальные контрольные случаи.",
+        "why": "Код 1 должен отличаться от статусов команд и отказа открытия.",
+        "expected": "На дубликате stdout пуст, stderr duplicate-id, код 1. У конфликта имени stderr open-report-error, код 3."
+      }
+    ],
+    "criteria": [
+      "При дубликате или 65-й уникальной строке отчёт не создаётся. Диагностика в stderr различима: duplicate-id и capacity-error.",
+      "Неизвестная запись даёт missing и продолжение. Недопустимое количество даёт invalid и статус 2 до выполнения report.",
+      "Папка summary.tsv с keep.txt остаётся прежней. При отказе открытия код 3, stdout пуст, stderr open-report-error."
+    ],
+    "hint": "Отлавливайте повтор после проверки записи и до увеличения count. Если файл невалиден, выйдите до цикла команд.",
+    "exercises": [
+      {
+        "title": "Дополнительная проверка",
+        "task": "В свежем запуске поменяйте порядок report и неверной команды. Запишите, когда файл существует, и найдите ошибку по статусу завершения.",
+        "criteria": [
+          "Выпишите прогноз до запуска. Сравните stdout, stderr, статус и файлы."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include <string.h>\n\n#include \"inventory.h\"\n\nenum { LINE_CAPACITY = 64 };\nenum LineStatus { LINE_EOF, LINE_OK, LINE_INVALID, LINE_IO_ERROR };\n\nstatic enum LineStatus read_line(FILE *stream, char line[LINE_CAPACITY])\n{\n    size_t used = 0;\n    int byte;\n    while ((byte = fgetc(stream)) != EOF && byte != '\\n') {\n        if (byte == 0 || used == LINE_CAPACITY - 1) {\n            return LINE_INVALID;\n        }\n        line[used++] = (char)byte;\n    }\n    line[used] = '\\0';\n    if (byte != EOF) {\n        return LINE_OK;\n    }\n    if (ferror(stream)) {\n        return LINE_IO_ERROR;\n    }\n    return used == 0 ? LINE_EOF : LINE_OK;\n}\n\nstatic int read_number(const char **cursor, int minimum, int *value)\n{\n    const char *p = *cursor;\n    unsigned digits = 0;\n    int number = 0;\n    while (*p >= '0' && *p <= '9') {\n        if (++digits > 4) {\n            return 0;\n        }\n        number = number * 10 + (*p++ - '0');\n    }\n    if (digits == 0 || number < minimum) {\n        return 0;\n    }\n    *cursor = p;\n    *value = number;\n    return 1;\n}\n\nstatic const char *load_records(Inventory *stock)\n{\n    FILE *input = fopen(\"records.tsv\", \"rb\");\n    if (input == NULL) {\n        return \"open-input-error\";\n    }\n    const char *problem = NULL;\n    char line[LINE_CAPACITY];\n    enum LineStatus status;\n    while ((status = read_line(input, line)) == LINE_OK) {\n        const char *p = line;\n        Record record;\n        if (!read_number(&p, 1, &record.id) || *p++ != '\\t' ||\n            !read_number(&p, 0, &record.quantity) || *p != '\\0') {\n            problem = \"invalid-record\";\n        } else if (inventory_find(stock, record.id) != NULL) {\n            problem = \"duplicate-id\";\n        } else if (stock->count == INVENTORY_CAPACITY) {\n            problem = \"capacity-error\";\n        } else {\n            stock->records[stock->count++] = record;\n        }\n        if (problem != NULL) {\n            break;\n        }\n    }\n    if (problem == NULL && status != LINE_EOF) {\n        problem = status == LINE_IO_ERROR ? \"read-input-error\" : \"invalid-record\";\n    }\n    if (fclose(input) != 0 && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    return problem;\n}\n\nstatic const char *write_report(const Inventory *stock)\n{\n    FILE *output = fopen(\"summary.tsv\", \"wb\");\n    if (output == NULL) {\n        return \"open-report-error\";\n    }\n    const char *problem = NULL;\n    if (fputs(\"id\\tquantity\\n\", output) == EOF) {\n        problem = \"write-report-error\";\n    }\n    for (size_t i = 0; problem == NULL && i < stock->count; ++i) {\n        const Record *record = &stock->records[i];\n        if (fprintf(output, \"%d\\t%d\\n\", record->id, record->quantity) < 0) {\n            problem = \"write-report-error\";\n        }\n    }\n    if (fclose(output) != 0 && problem == NULL) {\n        problem = \"close-report-error\";\n    }\n    return problem;\n}\n\nstatic int run_command(Inventory *stock, const char *line)\n{\n    int id;\n    if (strncmp(line, \"find \", 5) == 0) {\n        const char *p = line + 5;\n        if (read_number(&p, 1, &id) && *p == '\\0') {\n            const Record *match = inventory_find(stock, id);\n            if (match == NULL) {\n                puts(\"missing\");\n            } else {\n                printf(\"%d %d\\n\", match->id, match->quantity);\n            }\n            return 0;\n        }\n    } else if (strncmp(line, \"set \", 4) == 0) {\n        const char *p = line + 4;\n        int quantity;\n        if (read_number(&p, 1, &id) && *p++ == ' ' &&\n            read_number(&p, 0, &quantity) && *p == '\\0') {\n            puts(inventory_set(stock, id, quantity) ? \"ok\" : \"missing\");\n            return 0;\n        }\n    } else if (strcmp(line, \"report\") == 0) {\n        const char *problem = write_report(stock);\n        if (problem != NULL) {\n            fprintf(stderr, \"%s\\n\", problem);\n            return 3;\n        }\n        puts(\"reported\");\n        return 0;\n    }\n    puts(\"invalid\");\n    return 2;\n}\n\nint main(void)\n{\n    Inventory stock = {0};\n    const char *problem = load_records(&stock);\n    if (problem != NULL) {\n        fprintf(stderr, \"%s\\n\", problem);\n        return 1;\n    }\n    char line[LINE_CAPACITY];\n    enum LineStatus status;\n    while ((status = read_line(stdin, line)) == LINE_OK) {\n        int exit_status = run_command(&stock, line);\n        if (exit_status != 0) {\n            return exit_status;\n        }\n    }\n    if (status == LINE_INVALID) {\n        puts(\"invalid\");\n        return 2;\n    }\n    if (status == LINE_IO_ERROR) {\n        fputs(\"read-command-error\\n\", stderr);\n        return 2;\n    }\n    return 0;\n}\n",
+      "files": {
+        "inventory.c": "#include \"inventory.h\"\n\nconst Record *inventory_find(const Inventory *stock, int id)\n{\n    for (size_t i = 0; i < stock->count; ++i) {\n        if (stock->records[i].id == id) {\n            return &stock->records[i];\n        }\n    }\n    return NULL;\n}\n\nint inventory_set(Inventory *stock, int id, int quantity)\n{\n    if (quantity < 0 || quantity > MAX_VALUE) {\n        return 0;\n    }\n    for (size_t i = 0; i < stock->count; ++i) {\n        if (stock->records[i].id == id) {\n            stock->records[i].quantity = quantity;\n            return 1;\n        }\n    }\n    return 0;\n}\n",
+        "inventory.h": "#ifndef INVENTORY_H\n#define INVENTORY_H\n\n#include <stddef.h>\n\nenum { INVENTORY_CAPACITY = 64, MAX_VALUE = 9999 };\n\ntypedef struct {\n    int id;\n    int quantity;\n} Record;\n\ntypedef struct {\n    Record records[INVENTORY_CAPACITY];\n    size_t count;\n} Inventory;\n\nconst Record *inventory_find(const Inventory *stock, int id);\nint inventory_set(Inventory *stock, int id, int quantity);\n\n#endif\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\nint main(void)\n{\n    return fclose();\n}\n",
+      "files": {},
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "fclose"
+      ]
+    }
+  ],
+  "skill": {
+    "id": "c.validate-inventory-failures",
+    "prerequisites": [
+      "c.implement-inventory-modules",
+      "c.error-cleanup",
+      "c.reproducible-regression"
+    ]
+  }
+}

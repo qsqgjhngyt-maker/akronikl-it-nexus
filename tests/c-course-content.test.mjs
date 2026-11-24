@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import test from 'node:test';
+import {c17Program} from './helpers/c17-vectors.mjs';
 
 const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
 const manifest = read('courses/c/manifest.json');
@@ -8,12 +9,12 @@ const curriculum = read('courses/c/curriculum.json');
 const locales = ['ru', 'en'];
 const text = value => typeof value === 'string' && value.trim().length > 0;
 
-test('Восемь модулей C доступны, остальные помечены как запланированные', () => {
+test('Программа и материалы курса C соответствуют этапу', () => {
   assert.equal(manifest.id, 'c');
   assert.equal(manifest.languageId, 'c');
   assert.equal(manifest.standard, 'C17');
   assert.deepEqual(manifest.availableLocales, locales);
-  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4', 'c.m5', 'c.m6', 'c.m7', 'c.m8']);
+  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4', 'c.m5', 'c.m6', 'c.m7', 'c.m8', 'c.m9', 'c.m10', 'c.m11', 'c.m12']);
   const modules = curriculum.modules;
   assert.ok(modules.length > 1);
   assert.equal(new Set(modules.map(module => module.id)).size, modules.length);
@@ -32,9 +33,9 @@ test('Восемь модулей C доступны, остальные пом�
       assert.ok(text(module.completion[locale]), module.id);
     }
   }
-  assert.equal(manifest.availableTopicIds.length, 41);
-  assert.equal(curriculum.availableModuleCount, 8);
-  assert.equal(curriculum.availableTopicCount, 41);
+  assert.equal(manifest.availableTopicIds.length, 59);
+  assert.equal(curriculum.availableModuleCount, 12);
+  assert.equal(curriculum.availableTopicCount, 59);
   assert.deepEqual(manifest.availableTopicIds.slice(9, 14), [
     'c.read-input', 'c.conditions', 'c.counted-loops', 'c.sentinel-loops', 'c.guard-boundaries',
   ]);
@@ -53,7 +54,7 @@ test('Восемь модулей C доступны, остальные пом�
   assert.deepEqual(manifest.availableTopicIds.slice(32, 36), [
     'c.structures', 'c.enumerations', 'c.structure-arrays', 'c.structure-contracts',
   ]);
-  assert.deepEqual(manifest.availableTopicIds.slice(36), [
+  assert.deepEqual(manifest.availableTopicIds.slice(36, 41), [
     'c.allocation', 'c.ownership-and-release', 'c.resize-safely', 'c.allocate-bounds', 'c.dynamic-record-project',
   ]);
   assert.equal(modules.find(module => module.id === 'c.m8').project.status, 'implemented');
@@ -81,7 +82,7 @@ function executable(lesson) {
     examples: lesson.sections.flatMap(section => section.code ? [section.code] : []),
     files: lesson.practice.files,
     input: lesson.practice.stdin,
-    cases: lesson.practice.cases.map(({input, output, stderr, exitCode}) => ({input, output, stderr, exitCode})),
+    cases: lesson.practice.cases.map(({input, output, stderr, exitCode, inputFiles, outputFiles}) => ({input, output, stderr, exitCode, inputFiles, outputFiles})),
     solution: lesson.practice.referenceSolution,
     diagnostics: lesson.diagnosticExercises ?? [],
   };
@@ -120,8 +121,10 @@ for (const id of manifest.availableTopicIds) {
       const starter = practice.files.find(file => file.path === 'main.c')?.content;
       assert.ok(text(starter));
       assert.ok(text(practice.referenceSolution.source));
-      assert.notEqual(starter, practice.referenceSolution.source);
-      assert.notEqual(example.code.source, practice.referenceSolution.source);
+      const codeFiles = program => Object.fromEntries(Object.entries(c17Program(program).files)
+        .filter(([name]) => /\.(?:c|h)$/i.test(name)));
+      assert.notDeepEqual(codeFiles({files:practice.files}), codeFiles(practice.referenceSolution));
+      assert.notDeepEqual(codeFiles(example.code), codeFiles(practice.referenceSolution));
       assert.ok(text(practice.task) && text(practice.hint));
       assert.ok(practice.steps.length > 0 && practice.criteria.length > 0);
       assert.ok(practice.cases.length > 0);

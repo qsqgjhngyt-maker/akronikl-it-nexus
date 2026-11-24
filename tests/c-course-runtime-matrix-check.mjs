@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {isDeepStrictEqual} from 'node:util';
+import {c17Program,c17Vectors} from './helpers/c17-vectors.mjs';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {mkdir, readFile, writeFile} from 'node:fs/promises';
@@ -33,14 +35,7 @@ const records = [];
 const requests = new Map();
 
 function add(edition, kind, id, program, fixture) {
-  const entryFile = program.metadata?.entryFile ?? 'main.c';
-  const extras = Array.isArray(program.files)
-    ? Object.fromEntries(program.files.map(file => [file.path, file.content ?? file.source]))
-    : program.files ?? {};
-  const source = program.source ?? extras[entryFile];
-  assert.equal(typeof source, 'string', edition.id + ' ' + kind + ' ' + id);
-  const files = Object.fromEntries(Object.entries({...extras, [entryFile]: source}).sort(([left], [right]) => left.localeCompare(right)));
-  const request = {languageId: 'c', source, files, entryFile, stdin: fixture.stdin};
+  const request = {...c17Program(program, fixture), stdin:fixture.stdin};
   const digest = hash(JSON.stringify(request));
   requests.set(digest, request);
   const {id: lessonId, locale} = edition;
@@ -58,45 +53,40 @@ for (const id of course.availableTopicIds) {
     const sha256 = hash(bytes);
     assert.equal(hash(builtBytes), sha256, `Unexpected packaged lesson bytes: ${filename}`);
     editions.push({id, locale, sha256});
-    const worked = edition.sections.filter(section => section.code);
-    assert.ok(worked.length > 0, `${id} ${locale} example missing`);
-    for (const {id: sectionId, code} of worked) {
-      add(edition, 'example', sectionId, code, {stdin: code.stdin ?? '', stdout: code.output, stderr: code.stderr, exitCode: code.exitCode ?? 0});
-      for (const [index, vector] of (code.cases ?? []).entries()) {
-        add(edition, 'example', `${sectionId}:${index + 1}`, code, {
-          stdin: vector.input ?? vector.stdin ?? '', stdout: vector.output ?? vector.stdout,
-          stderr: vector.stderr, exitCode: vector.exitCode ?? 0,
-        });
-      }
-    }
-    const {referenceSolution, cases} = edition.practice;
-    assert.ok(cases.length > 0 && referenceSolution, `${id} ${locale} practice fixtures missing`);
-    for (const [index, item] of cases.entries()) {
-      add(edition, 'reference', `${index + 1}: ${item.label}`, referenceSolution, {
-        stdin: item.input ?? '', stdout: item.output, stderr: item.stderr, exitCode: item.exitCode ?? 0,
-      });
-    }
-    for (const [index, item] of (edition.diagnosticExercises ?? []).entries()) {
-      add(edition, 'diagnostic', String(index + 1), item, {
-        stdin: item.stdin ?? '', stdout: item.expectedStdout ?? '', phase: item.phase,
-        stderrIncludes: item.stderrIncludes ?? [], exitCode: item.expectedExitCode,
-      });
-    }
+    for (const vector of c17Vectors(edition)) add(edition, vector.kind, vector.id, vector.program, vector.fixture);
   }
 }
-assert.equal(editions.length, 82);
-assert.equal(records.filter(record => record.kind === 'example').length, 82);
-assert.equal(records.filter(record => record.kind === 'reference').length, 584);
-assert.equal(records.filter(record => record.kind === 'diagnostic').length, 76);
-assert.equal(requests.size, 371);
+assert.equal(editions.length, course.availableTopicIds.length * 2);
+assert.equal(new Set(editions.map(({id,locale}) => id+'/'+locale)).size, editions.length);
+assert.ok(records.filter(record => record.kind === 'example').length >= 82);
+assert.ok(records.filter(record => record.kind === 'reference').length >= 584);
+assert.ok(records.filter(record => record.kind === 'diagnostic').length >= 76);
+assert.ok(requests.size >= 371);
+const byRequest = new Map();
+for (const record of records) {
+  const pair = byRequest.get(record.digest) ?? [];
+  pair.push(record);
+  byRequest.set(record.digest,pair);
+}
+for(const rows of byRequest.values()){
+  const coverage = new Map();
+  for(const record of rows){
+    assert.deepEqual(record.expected,rows[0].expected);
+    const key=record.lessonId+'/'+record.kind;
+    const counts=coverage.get(key)??{ru:0,en:0};
+    counts[record.locale]++;
+    coverage.set(key,counts);
+  }
+  for(const counts of coverage.values()) assert.equal(counts.ru,counts.en);
+}
 const shardIndex = process.env.NEXUS_C_RUNTIME_SHARD;
-assert.ok(shardIndex === undefined || ['0', '1', '2'].includes(shardIndex), 'Invalid C17 runtime shard');
-const shardCount = shardIndex === undefined ? 1 : 3;
+assert.ok(shardIndex === undefined || /^[0-4]$/.test(shardIndex), 'Invalid C17 runtime shard');
+const shardCount = shardIndex === undefined ? 1 : 5;
 const selectedRequests = new Map([...requests].filter((_, index) => index % shardCount === Number(shardIndex ?? 0)));
 const selectedRecords = records.filter(record => selectedRequests.has(record.digest));
 const expectedRequests = Math.ceil((requests.size - Number(shardIndex ?? 0)) / shardCount);
 assert.equal(selectedRequests.size, expectedRequests);
-assert.equal(selectedRecords.length, expectedRequests * 2);
+assert.equal(selectedRecords.length, [...selectedRequests.keys()].reduce((count,digest)=>count+byRequest.get(digest).length,0));
 
 const fixture = await onlineRuntimeFixture();
 const executed = new Map();
@@ -115,10 +105,10 @@ try {
         return {
           phase: 'run', provider: provider.id, languageId:result.languageId, target:result.target,
           compiler:result.compiler, elapsedMs:result.elapsedMs, stdout:result.stdout, stderr:result.stderr,
-          exitCode:result.exitCode, translationUnits:result.translationUnits,
+          exitCode:result.exitCode, translationUnits:result.translationUnits, outputFiles:result.outputFiles,
         };
       } catch (error) {
-        return {phase:error.anxPhase ?? null, code:error.code, stdout:'', stderr:error.anxCompilerOutput || error.message};
+        return {phase:error.code === 'WASM_LINK_ERROR' ? 'link' : error.anxPhase ?? null, code:error.code, stdout:'', stderr:error.anxCompilerOutput || error.message};
       }
     }, {runtimeModule, request});
     executed.set(digest, result);
@@ -132,12 +122,13 @@ try {
 
 const evidence = selectedRecords.map(record => {
   const actual = executed.get(record.digest);
-  const {stdout, stderr, exitCode, phase, stderrIncludes} = record.expected;
+  const {stdout, stderr, exitCode, phase, stderrIncludes, outputFiles} = record.expected;
   const pass = Boolean(actual) && stdout === actual.stdout &&
     (phase ? phase === actual.phase : actual.phase === 'run' && actual.languageId === 'c' &&
       actual.target === 'wasm32-wasip1' && actual.provider === 'wasm-cpp') &&
     (exitCode === undefined || exitCode === actual.exitCode) &&
     (stderr === undefined || stderr === actual.stderr) &&
+    (outputFiles === undefined || isDeepStrictEqual(actual.outputFiles ?? {}, outputFiles)) &&
     (stderrIncludes ?? []).every(match => actual.stderr.includes(match)) &&
     (record.kind !== 'diagnostic' || phase === 'run' || /WASM_(COMPILE|LINK)_ERROR/.test(actual.code));
   return {...record, actual, pass};

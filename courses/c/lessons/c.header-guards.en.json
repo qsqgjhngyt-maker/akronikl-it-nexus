@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.header-guards",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "C programming",
+  "module": "The preprocessor and multi-file programs",
+  "locale": "en",
+  "title": "Headers and include guards",
+  "goal": "Trace two paths to a shared header, keep both includes, and define the type once per translation unit.",
+  "prerequisites": [
+    {
+      "text": "Recall structures and their members. The error arises because two include paths produce the same complete structure text."
+    },
+    {
+      "text": "Recall what #include and #define do during a build. That will help you see the limits of the guard."
+    }
+  ],
+  "terms": [
+    {
+      "id": "direct-include",
+      "term": "Direct inclusion",
+      "title": "Direct inclusion",
+      "definition": "main.c explicitly names the header in its own #include directive."
+    },
+    {
+      "id": "nested-include",
+      "term": "Nested inclusion",
+      "title": "Nested inclusion",
+      "definition": "One header includes another. For example, gauge_scale.h includes gauge.h."
+    },
+    {
+      "id": "include-guard",
+      "term": "Include guard",
+      "title": "Include guard",
+      "definition": "A #ifndef and #define pair using a unique name around a header body. A later visit sees the macro already defined and skips the body."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The working model",
+      "paragraphs": [
+        "The gauge project uses the Gauge type directly in its main file. The scale header is needed too and also includes gauge.h. Both paths are natural because each file declares its own dependencies.",
+        "At first, #ifndef GAUGE_H finds no definition. #define marks the first visit. When the scale includes gauge.h again, the condition is false and a second copy of the structure does not enter the C source.",
+        "The marker applies while processing one source file. A separately compiled .c starts its own preprocessing. A guard does not make it safe to put ordinary external function definitions in a header included from several .c files."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Build a gauge with two paths to gauge.h",
+      "paragraphs": [
+        "main.c includes gauge.h directly and also reaches it through gauge_scale.h. Predict how many definitions of struct Gauge remain in this translation unit."
+      ],
+      "steps": [
+        "The direct include defines GAUGE_H and passes through the structure definition.",
+        "The include from gauge_scale.h reaches gauge.h again. The marker exists already, so the body is skipped.",
+        "The scale header still defines DEFAULT_GAUGE_MM as 18. main creates one Gauge record and prints the field."
+      ],
+      "trace": [
+        [
+          "main.c → gauge.h",
+          "GAUGE_H is absent",
+          "include the structure"
+        ],
+        [
+          "main.c → gauge_scale.h → gauge.h",
+          "GAUGE_H is defined",
+          "skip the structure"
+        ],
+        [
+          "Run",
+          "sample.millimetres = 18",
+          "gauge=18 mm"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"gauge.h\"\n#include \"gauge_scale.h\"\n\nint main(void)\n{\n    struct Gauge sample = {DEFAULT_GAUGE_MM};\n    printf(\"gauge=%d mm\\n\", sample.millimetres);\n    return 0;\n}\n",
+        "files": {
+          "gauge.h": "#ifndef GAUGE_H\n#define GAUGE_H\nstruct Gauge {\n    int millimetres;\n};\n#endif\n",
+          "gauge_scale.h": "#ifndef GAUGE_SCALE_H\n#define GAUGE_SCALE_H\n#include \"gauge.h\"\n#define DEFAULT_GAUGE_MM 18\n#endif\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "gauge=18 mm\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Identify the failed build stage",
+      "paragraphs": [
+        "The message redefinition of 'Kit' means a complete structure reached the compiler twice. Trace both paths from main.c to kit.h and inspect the #ifndef, #define and #endif boundaries.",
+        "Removing an include can hide the fault while leaving kit.h fragile. Give it its own KIT_H guard and retain the direct dependency."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Predict, verify, and explain",
+      "paragraphs": [
+        "In a copy of the example, remove the guard from gauge.h. Predict the redefinition and locate the two include paths. Restore the guard, then swap the order of the two includes in main.c. Explain what remains the same."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.2, §6.7.2.3, §6.10.1–§6.10.2",
+      "language": "English",
+      "purpose": "Source inclusion, conditional directives, and structure tag declarations."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "second-route",
+      "kind": "choice",
+      "prompt": "gauge.h has already been included when the preprocessor reaches gauge_scale.h. What happens on its next visit to gauge.h?",
+      "options": [
+        "Another struct Gauge is included",
+        "The header body is skipped",
+        "The linker combines two structures later"
+      ],
+      "correct": 1,
+      "feedback": [
+        "GAUGE_H prevents another pass through the body.",
+        "The #ifndef condition is now false.",
+        "This happens during preprocessing, before linking."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "different-markers",
+      "kind": "choice",
+      "prompt": "Why should two distinct headers use different guard names?",
+      "options": [
+        "The first could otherwise disable the second header body",
+        "The name sets a structure member value",
+        "Only the linker uses the guard name"
+      ],
+      "correct": 0,
+      "feedback": [
+        "With the same macro, the second #ifndef would be false.",
+        "A guard records a visit. Instance data comes from the initializer.",
+        "The preprocessor checks the name."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "undo-shortcut",
+      "kind": "free",
+      "prompt": "A rebuild works after deleting the direct #include \"kit.h\". Why is it better to keep the include and fix kit.h?",
+      "feedback": "main.c uses the structure directly. A guard lets both main.c and kit_label.h include kit.h safely, so that dependency survives changes in the nested include path.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n#include \"kit.h\"\n#include \"kit_label.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int kits = read_digit();\n    if (kits < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    struct Kit order = {kits * PARTS_PER_KIT};\n    printf(\"parts=%d\\n\", order.parts);\n    return 0;\n}\n",
+      "files": {
+        "kit.h": "struct Kit {\n    int parts;\n};\n",
+        "kit_label.h": "#ifndef KIT_LABEL_H\n#define KIT_LABEL_H\n#include \"kit.h\"\n#define PARTS_PER_KIT 4\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "redefinition of 'Kit'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "2\n",
+    "title": "Guard the kit record",
+    "task": "Add a direct include of kit.h to main.c and keep kit_label.h. Protect all of struct Kit with KIT_H. Print parts= and the number of parts at four per kit. The first line of stdin is one digit followed by LF or end of input. Otherwise print invalid and exit with code 1.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"kit_label.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int kits = read_digit();\n    if (kits < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    struct Kit order = {kits * PARTS_PER_KIT};\n    printf(\"%d\\n\", order.parts); /* TODO: label the result. */\n    return 0;\n}\n"
+      },
+      {
+        "path": "kit.h",
+        "content": "struct Kit {\n    int parts;\n};\n"
+      },
+      {
+        "path": "kit_label.h",
+        "content": "#ifndef KIT_LABEL_H\n#define KIT_LABEL_H\n#include \"kit.h\"\n#define PARTS_PER_KIT 4\n#endif\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Two kits",
+        "input": "2\n",
+        "output": "parts=8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero kits",
+        "input": "0\n",
+        "output": "parts=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Nine without LF",
+        "input": "9",
+        "output": "parts=36\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Two digits",
+        "input": "12\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "Empty line",
+        "input": "\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "Both includes are present. kit.h has its own guard. Inputs 2, 0 and 9 yield parts=8, parts=0 and parts=36 respectively.",
+      "Two digits or an empty line yield invalid and exit code 1. stderr is empty for all run cases."
+    ],
+    "hint": "KIT_H must cover the body of kit.h itself. KIT_LABEL_H belongs to a different header and does not protect the direct path to kit.h.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"kit.h\"\n#include \"kit_label.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int kits = read_digit();\n    if (kits < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    struct Kit order = {kits * PARTS_PER_KIT};\n    printf(\"parts=%d\\n\", order.parts);\n    return 0;\n}\n",
+      "files": {
+        "kit.h": "#ifndef KIT_H\n#define KIT_H\nstruct Kit {\n    int parts;\n};\n#endif\n",
+        "kit_label.h": "#ifndef KIT_LABEL_H\n#define KIT_LABEL_H\n#include \"kit.h\"\n#define PARTS_PER_KIT 4\n#endif\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the supplied starter with 2.",
+        "why": "The only path to kit.h initially goes through kit_label.h.",
+        "expected": "8"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add a direct #include \"kit.h\" and build.",
+        "why": "Two paths now insert the unguarded struct Kit.",
+        "expected": "redefinition of 'Kit'"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add the kit.h guard and the parts= prefix.",
+        "why": "Both paths remain, and the definition passes through once.",
+        "expected": "parts=8"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Reverse the include order",
+        "task": "In a copy of your solution put kit_label.h before kit.h in main.c and run with 2 again. Point out where KIT_H is first defined now.",
+        "criteria": [
+          "The rebuild and parts=8 still work. Explain why the first visit now comes from kit_label.h."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.guard-header-inclusion",
+    "prerequisites": [
+      "c.configure-preprocessor"
+    ]
+  }
+}

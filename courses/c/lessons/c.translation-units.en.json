@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.translation-units",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "C programming",
+  "module": "The preprocessor and multi-file programs",
+  "locale": "en",
+  "title": "Translation units and linking",
+  "goal": "Name the file that promises a function, find the translation unit that defines it, and recognize a missing file at link time.",
+  "prerequisites": [
+    {
+      "text": "Recall function declarations and calls. They can now live in different source files."
+    },
+    {
+      "text": "Recall include guards. The caller and the implementation both include the same function contract."
+    }
+  ],
+  "terms": [
+    {
+      "id": "translation-unit",
+      "term": "Translation unit",
+      "title": "Translation unit",
+      "definition": "A .c source file after preprocessing, including its expanded headers and macro replacements."
+    },
+    {
+      "id": "object",
+      "term": "Object file",
+      "title": "Object file",
+      "definition": "A usual intermediate result of compiling one translation unit. It carries code and symbol information for the linker."
+    },
+    {
+      "id": "linker",
+      "term": "Linker",
+      "title": "Linker",
+      "definition": "The build stage that combines object files, matches references with definitions, and forms the program."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The working model",
+      "paragraphs": [
+        "A warehouse board adds the values for two shifts. shift.h promises shift_total with two int arguments and an int result. main.c is checked against that promise. shift.c includes the same header and supplies the body.",
+        "After preprocessing, each .c forms a separate translation unit. A tool such as Clang can translate them separately into object files and then link them. In Code Studio a single run command builds the listed .c files.",
+        "If shift.c is removed, the declaration remains in main.c so the source check passes. The linker cannot produce the program because the reference to shift_total has no definition. A location or the word error helps you navigate, and the symbol name often identifies the missing piece."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Add the morning and evening counts",
+      "paragraphs": [
+        "The project contains main.c, shift.h, and shift.c. Predict the output and identify the .c files that must be compiled."
+      ],
+      "steps": [
+        "main.c includes shift.h and calls shift_total(4, 7).",
+        "shift.c includes the same header and computes 4 + 7.",
+        "Linking both .c files resolves shift_total. The program runs and prints shift=11."
+      ],
+      "trace": [
+        [
+          "Check main.c",
+          "shift.h declares shift_total",
+          "Call is valid"
+        ],
+        [
+          "Check shift.c",
+          "The body of shift_total is present",
+          "Definition adds the values"
+        ],
+        [
+          "Link and run",
+          "Reference is resolved",
+          "shift=11"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"shift.h\"\n\nint main(void)\n{\n    printf(\"shift=%d\\n\", shift_total(4, 7));\n    return 0;\n}\n",
+        "files": {
+          "shift.h": "#ifndef SHIFT_H\n#define SHIFT_H\nint shift_total(int morning, int evening);\n#endif\n",
+          "shift.c": "#include \"shift.h\"\n\nint shift_total(int morning, int evening)\n{\n    return morning + evening;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "shift=11\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Identify the failed build stage",
+      "paragraphs": [
+        "When a build with tray.h identifies trays_needed and stops before running, check that tray.c exists in the project and is among the compiled units. A declaration gives the type. A definition supplies the body.",
+        "A source position attached to redefinition or 'file not found' points toward a source or header check. An unresolved trays_needed points toward the set of object files and spelling of the symbol."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Predict, verify, and explain",
+      "paragraphs": [
+        "In a copy of the worked project, keep main.c and shift.h while leaving out shift.c. Predict what happens to printf. Restore the same shift.c and run again. With regular Clang you can separately compile clang -std=c17 -c main.c shift.c and then link clang main.o shift.o -o shift."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.1–§5.1.1.2, §6.2.2, §6.9",
+      "language": "English",
+      "purpose": "Translation units, external linkage, and definitions."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "contract-without-definition",
+      "kind": "choice",
+      "prompt": "main.c and shift.h remain. shift_total is declared, but shift.c is left out. What happens?",
+      "options": [
+        "Linking fails on the unresolved shift_total",
+        "The header computes the sum itself",
+        "main runs and prints 0"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The linker has no definition of shift_total.",
+        "The header only provides the signature.",
+        "The build never produced a runnable program."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "compiled-list",
+      "kind": "choice",
+      "prompt": "Which files form separate translation units in this build?",
+      "options": [
+        "main.c and shift.c",
+        "main.c, shift.c and shift.h",
+        "Only shift.h"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The header is included in both .c files.",
+        "#include brings the header into the two .c files.",
+        "A declaration line does not run on its own."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "link-check",
+      "kind": "free",
+      "prompt": "The linker reports trays_needed even though tray.h opens and contains its declaration. Which two facts should you verify?",
+      "feedback": "Check that tray.c defines exactly that name and that this .c is actually compiled in the current build. Restore the missing file or correct the source list.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "link",
+      "source": "#include <stdio.h>\n#include \"tray.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int items = read_digit();\n    if (items < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"trays=%d\\n\", trays_needed(items));\n    return 0;\n}\n",
+      "files": {
+        "tray.h": "#ifndef TRAY_H\n#define TRAY_H\nint trays_needed(int items);\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "trays_needed"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "4\n",
+    "title": "Round up to whole trays",
+    "task": "Pack 0 to 9 items in trays of three. In tray.c count a partially filled tray. In main.c print trays= and slots= separated by one space. Slots equal three times the tray count. The first stdin line must contain exactly one digit followed by LF or end of input. For other input print invalid and exit 1.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"tray.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int items = read_digit();\n    if (items < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"trays=%d\\n\", trays_needed(items));\n    return 0;\n}\n"
+      },
+      {
+        "path": "tray.h",
+        "content": "#ifndef TRAY_H\n#define TRAY_H\nint trays_needed(int items);\n#endif\n"
+      },
+      {
+        "path": "tray.c",
+        "content": "#include \"tray.h\"\n\nint trays_needed(int items)\n{\n    return items / 3; /* TODO: include the partial tray. */\n}\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Four items",
+        "input": "4\n",
+        "output": "trays=2 slots=6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty batch",
+        "input": "0\n",
+        "output": "trays=0 slots=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Two full trays",
+        "input": "6\n",
+        "output": "trays=2 slots=6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Nine without LF",
+        "input": "9",
+        "output": "trays=3 slots=9\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid symbol",
+        "input": "n\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "Build main.c and tray.c with the declaration in tray.h. Inputs 0, 6, and 9 give trays=0 slots=0, trays=2 slots=6, and trays=3 slots=9 respectively.",
+      "Count a partial tray. The letter n produces invalid and exit code 1. stderr is empty for run cases."
+    ],
+    "hint": "For nonnegative n, (n + 2) / 3 gives the needed number of trays. Keep the definition in tray.c and use its return value in main.c.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"tray.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int items = read_digit();\n    if (items < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    int trays = trays_needed(items);\n    printf(\"trays=%d slots=%d\\n\", trays, trays * 3);\n    return 0;\n}\n",
+      "files": {
+        "tray.h": "#ifndef TRAY_H\n#define TRAY_H\nint trays_needed(int items);\n#endif\n",
+        "tray.c": "#include \"tray.h\"\n\nint trays_needed(int items)\n{\n    return (items + 2) / 3;\n}\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Build the three starter files and enter 4.",
+        "why": "Integer division rounds down here.",
+        "expected": "trays=1"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix tray.c and add the slot count in main.c.",
+        "why": "The remaining item needs a second tray.",
+        "expected": "trays=2 slots=6"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Open a separate copy without tray.c, then restore the module in that copy.",
+        "why": "The declaration remains while the body is missing.",
+        "expected": "A diagnostic names trays_needed. After restoration: trays=2 slots=6"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Check the boundary of a full tray",
+        "task": "Run with 6, then with 7, after predicting what changes. Repeat 7 in a copy with tray.c absent.",
+        "criteria": [
+          "Expect trays=2 slots=6, then trays=3 slots=9. Without the module the build reports trays_needed before running."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.link-translation-units",
+    "prerequisites": [
+      "c.guard-header-inclusion",
+      "c.function-declaration-call"
+    ]
+  }
+}

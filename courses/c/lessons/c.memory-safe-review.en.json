@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.memory-safe-review",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "C programming",
+  "module": "Debugging, testing and memory safety",
+  "title": "Reviewing bounds, lifetimes and integer types",
+  "goal": "Check the sign, index bound and array lifetime before accessing an element.",
+  "prerequisites": [
+    {
+      "text": "Array length, an output parameter, block lifetime and complete-input validation."
+    }
+  ],
+  "terms": [
+    {
+      "id": "array-bound",
+      "term": "Array bound",
+      "title": "Array bound",
+      "definition": "An array of length count has indices 0 through count − 1. count is useful as a bound; a one-past address cannot be dereferenced."
+    },
+    {
+      "id": "wide-unsigned",
+      "term": "Wide unsigned type",
+      "title": "Wide unsigned type",
+      "definition": "uintmax_t lets you compare a nonnegative value with a size_t bound before converting it to an index. This retains the original number during the check."
+    },
+    {
+      "id": "copy-while-live",
+      "term": "Copy from a live object",
+      "title": "Copy from a live object",
+      "definition": "Read from an array during its lifetime. A copied integer resides in a separate object and remains available after the array's lifetime ends."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Ask three questions before an access",
+      "paragraphs": [
+        "A readings table contains 8 and 13. Find where the index is still signed, where it is checked and where the array is alive. Put all three checks before values[index] in the review checklist.",
+        "A negative input is rejected directly. Casting it to size_t first loses its sign. Converting a large positive number to a narrower size_t can also produce a small value. The comparison in uintmax_t retains the magnitude until the check."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Read 13 safely at index 1",
+      "paragraphs": [
+        "copy_at is called while values and saved are alive. count is the element count calculated from the array in main. After checking index < count, the value fits in size_t and can be used for reading."
+      ],
+      "steps": [
+        "Supply 1. The input < 0 check lets it through, and uintmax_t stores 1 unchanged.",
+        "The test 1 >= 2 is false. copy_at copies values[1], which is 13, into saved.",
+        "Supply 2 and then −1. Both runs give invalid and neither reads an array element."
+      ],
+      "trace": [
+        [
+          "0",
+          "0 < 2",
+          "values[0]",
+          "8"
+        ],
+        [
+          "1",
+          "1 < 2",
+          "values[1]",
+          "13"
+        ],
+        [
+          "2",
+          "2 >= 2",
+          "—",
+          "invalid"
+        ],
+        [
+          "-1",
+          "negative sign",
+          "—",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nstatic int copy_at(const int values[], size_t count, long input, int *out)\n{\n    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}\n\nint main(void)\n{\n    long input;\n    if (!read_value(&input)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int saved;\n    const int values[] = {8, 13};\n    size_t count = sizeof values / sizeof values[0];\n    if (!copy_at(values, count, input, &saved)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n",
+        "stdin": "1\n",
+        "output": "13\n",
+        "stderr": "",
+        "exitCode": 0,
+        "cases": [
+          {
+            "input": "0\n",
+            "output": "8\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "2\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "-1\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Establish the safe order from the source",
+      "paragraphs": [
+        "Check the number first. Then form the index and check the length. A condition after values[index] cannot protect an access that already happened. Review the incorrect order on paper.",
+        "The diagnostic snippet uses value[0] although value has type int. The compiler rejects the expression. In the executable example, values is an array, and the count and lifetime must still be checked separately."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Keep the value after the block",
+      "paragraphs": [
+        "In practice, values belongs to the inner block and saved to the outer block. On success, copy_at transfers the integer into saved before the closing brace. After that brace, saved is the object available to print."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.3.1.3, 6.5.2.1, 6.5.6, 7.20.1.5",
+      "language": "English",
+      "purpose": "Check the sign, index bound and array lifetime before accessing an element."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which input must stop before conversion to uintmax_t?",
+      "options": [
+        "-1",
+        "1",
+        "2"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The input < 0 comparison catches a negative number.",
+        "1 is a valid index in a two-element array.",
+        "2 is nonnegative. The later index >= count check rejects it."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What can you print after the block containing values ends?",
+      "options": [
+        "The integer saved, copied from the array while it was alive",
+        "The value through a saved address of an element",
+        "An element after comparing its address with NULL"
+      ],
+      "correct": 0,
+      "feedback": [
+        "saved belongs to the outer block.",
+        "The array's lifetime has ended.",
+        "A NULL check does not extend an object's lifetime."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "List the order of input checking, conversion, array access and copying.",
+      "feedback": "Parse the line, reject negative input, compare the nonnegative number with count using uintmax_t, then read the live element at the checked index and copy it into saved.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int value = 8;\n    return value[0];\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "subscripted value",
+        "is not an array"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Three readings in a temporary array",
+    "environment": "Clang / WASI · C17",
+    "task": "Parse the first line as a decimal index with an optional sign and surrounding whitespace. Indices 0–2 are valid. Print the selected value, 21, 34 or 55, or invalid. Remove the condition that allows only index 0. Keep a copy of the integer after the inner block and retain all safety checks before access.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nstatic int copy_at(const int values[], size_t count, long input, int *out)\n{\n    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count || index != 0) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}\n\nint main(void)\n{\n    long input;\n    if (!read_value(&input)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int saved;\n    {\n        const int values[] = {21, 34, 55};\n        size_t count = sizeof values / sizeof values[0];\n        if (!copy_at(values, count, input, &saved)) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "First element",
+        "input": "0\n",
+        "output": "21\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Middle element",
+        "input": "1\n",
+        "output": "34\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Last element",
+        "input": "2\n",
+        "output": "55\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Equal to length",
+        "input": "3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Negative index",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Large integer",
+        "input": "2147483647\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unexpected suffix",
+        "input": "1x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "0, 1 and 2 give 21, 34 and 55. −1, 3 and input with a suffix give invalid.",
+      "Check the sign before the unsigned conversion and check the length before accessing the element.",
+      "After the inner block, read only the copied integer saved."
+    ],
+    "hint": "The condition index >= count already rejects all values at or above the upper bound. Examine what index != 0 adds.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nstatic int copy_at(const int values[], size_t count, long input, int *out)\n{\n    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}\n\nint main(void)\n{\n    long input;\n    if (!read_value(&input)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int saved;\n    {\n        const int values[] = {21, 34, 55};\n        size_t count = sizeof values / sizeof values[0];\n        if (!copy_at(values, count, input, &saved)) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 2 and identify the condition that rejects a valid index.",
+        "why": "Keep the guard against indices at or above count. The observable defect is reproduced in defined code.",
+        "expected": "The starter prints invalid; the contract expects 55."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Remove the extra restriction. Check 0, 2, 3 and −1.",
+        "why": "The checks confirm access to the edge elements and rejection just outside them.",
+        "expected": "The separate runs produce 21, 55, invalid and invalid."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Identify the last line where values is alive and the first read of the result outside the block.",
+        "why": "Verify that the value crosses the block boundary as a copy.",
+        "expected": "After the brace, saved is printed and no values address is kept there."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "In a separate copy, use {4, 7, 9, 12}; derive count with sizeof and choose three tests at the new boundary.",
+        "criteria": [
+          "2 gives 9, 3 gives 12 and 4 gives invalid. The checks remain in the safe order."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.review-bounds-lifetime-conversion",
+    "prerequisites": [
+      "c.choose-boundary-test-partitions",
+      "c.copy-before-lifetime-ends",
+      "c.checked-size-product"
+    ]
+  }
+}

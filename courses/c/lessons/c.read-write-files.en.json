@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.read-write-files",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "C programming",
+  "module": "Files and error handling",
+  "locale": "en",
+  "title": "Reading, writing and end of file",
+  "goal": "Copy a small log without changing its bytes, distinguish end of input from a read error, and verify that the result was written.",
+  "prerequisites": [
+    {
+      "text": "Know how to open and close a FILE * from the previous lesson. Here the program owns two streams in succession."
+    },
+    {
+      "text": "Recall the difference between an array and its length. This exercise uses a 64-byte buffer for its small fixture."
+    }
+  ],
+  "terms": [
+    {
+      "id": "end-of-file",
+      "term": "EOF",
+      "title": "EOF",
+      "definition": "A separate value returned by fgetc on end of stream or error. Check ferror while the stream is still open."
+    },
+    {
+      "id": "line-feed",
+      "term": "LF",
+      "title": "LF",
+      "definition": "A line feed. In this exercise file, it occupies one byte, like each digit."
+    },
+    {
+      "id": "byte-copy",
+      "term": "Byte-for-byte copy",
+      "title": "Byte-for-byte copy",
+      "definition": "The destination matches the source in length and in each byte. Modes rb and wb avoid text-mode translation."
+    },
+    {
+      "id": "run-output-file",
+      "term": "Run output file",
+      "title": "Run output file",
+      "definition": "A new or modified file in the isolated run area. It enters the editor's file list only after you explicitly save the result."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Keep both lines of a field log",
+      "paragraphs": [
+        "A duty worker hands a copy of a short log to the next shift. Keep both entries and their line feeds, and produce an empty copy when the log has no entries. The first line feed does not end the file.",
+        "fgetc returns int so this environment can distinguish a byte from EOF. After EOF, check ferror before fclose. A nonzero ferror indicates a read error. A zero ferror after EOF indicates normal end of input.",
+        "First read the small fixture into a bounded buffer. Open the separate copy.txt in wb only after the input has been read completely and closed. Check both the count returned by fwrite and the result of fclose: a buffered write can fail on close."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Why two one-digit numbers take four bytes",
+      "paragraphs": [
+        "The file input.txt contains 3, LF, 6, LF. Leave stdin empty. Before running, list the four bytes that should reach copy.txt."
+      ],
+      "steps": [
+        "Keep every byte, including LF. After fgetc returns EOF, check ferror before closing the input stream.",
+        "Open the separate destination once reading finishes. Pass four bytes to fwrite, then check that close succeeds.",
+        "Compare stdout with the result: stdout says written 4, and copy.txt contains two lines, each ending in LF."
+      ],
+      "trace": [
+        [
+          "First bytes",
+          "3 + LF",
+          "2 B"
+        ],
+        [
+          "Next bytes",
+          "6 + LF",
+          "4 B"
+        ],
+        [
+          "EOF",
+          "ferror = 0, input closed",
+          "4 B"
+        ],
+        [
+          "fwrite / fclose",
+          "copy.txt",
+          "written 4"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    unsigned char bytes[64];\n    size_t length = 0;\n    const char *problem = NULL;\n    int byte;\n    while ((byte = fgetc(input)) != EOF) {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    FILE *output = fopen(\"copy.txt\", \"wb\");\n    if (output == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    if (fwrite(bytes, 1, length, output) != length) {\n        problem = \"write-error\";\n    }\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-output-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    printf(\"written %zu\\n\", length);\n    return 0;\n}\n",
+        "files": {
+          "input.txt": "3\n6\n"
+        },
+        "stdin": "",
+        "output": "written 4\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "3\n6\n"
+        },
+        "cases": [
+          {
+            "input": "",
+            "inputFiles": {
+              "input.txt": ""
+            },
+            "output": "written 0\n",
+            "stderr": "",
+            "exitCode": 0,
+            "outputFiles": {
+              "copy.txt": ""
+            }
+          },
+          {
+            "input": "",
+            "inputFiles": {},
+            "output": "open-input-error\n",
+            "stderr": "",
+            "exitCode": 1,
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Distinguish EOF, an error, and a partial copy",
+      "paragraphs": [
+        "With a two-line route, written 2 indicates that the starter loop stopped at the first LF. Separate a line feed from EOF. If ferror is nonzero, report read-error without opening the destination.",
+        "A too few arguments diagnostic for ferror means the open stream was not passed. Call ferror(input) before fclose(input). You do not need to cause a device failure. Test that branch separately with a controlled stub."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Check a final line without LF",
+      "paragraphs": [
+        "In a separate copy, remove only the final LF from the fixture. Predict the length. Check that the copy did not gain a line feed and that the source is still available separately."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3, §7.21.7.1, §7.21.8.2, §7.21.10.3",
+      "language": "English",
+      "purpose": "Check the contracts of fgetc, ferror, fwrite, and fclose."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "empty",
+      "kind": "choice",
+      "prompt": "An empty input.txt opened successfully. The first fgetc returned EOF, and ferror is zero. What should appear after writing?",
+      "options": [
+        "read-error and no output file",
+        "An empty copy.txt and written 0",
+        "A file with one line feed and written 1"
+      ],
+      "correct": 1,
+      "feedback": [
+        "A zero ferror distinguishes this path from a read error.",
+        "Zero bytes were read. A successful write creates an empty file.",
+        "The program adds no bytes."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "int-not-char",
+      "kind": "choice",
+      "prompt": "How do you preserve the distinction between a byte and EOF?",
+      "options": [
+        "Store the result as char first",
+        "Stop at the first LF",
+        "Keep the result of fgetc in int for the EOF comparison"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Conversion to char can lose the distinction.",
+        "LF is a data byte within the file.",
+        "Convert to unsigned char after checking for EOF."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "write-check",
+      "kind": "free",
+      "prompt": "fwrite returned the expected byte count, but fclose on the output returned EOF. Why is the copy not ready?",
+      "feedback": "Buffered data may not have been written on close. Report close-output-error, exit with code 1, and do not offer the file as a successful result.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    return ferror();\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "",
+    "title": "Copy a route for the next shift",
+    "task": "The stop numbers are already in input/route.txt. The program does not use stdin. Fix the loop to read until EOF, keeping every byte, including LF. The fixture ranges from 0 to 64 bytes. Write copy.txt only after successfully reading and closing the input. Success yields written N, exit code 0, and a new file. A copy of empty input exists and contains 0 bytes. Missing input yields open-input-error, and more than 64 bytes yields input-too-long. Read, write, and close errors yield their own statuses and exit code 1. The source file stays unchanged.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/route.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    unsigned char bytes[64];\n    size_t length = 0;\n    const char *problem = NULL;\n    int byte;\n    while ((byte = fgetc(input)) != EOF && byte != '\\n') {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    FILE *output = fopen(\"copy.txt\", \"wb\");\n    if (output == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    if (fwrite(bytes, 1, length, output) != length) {\n        problem = \"write-error\";\n    }\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-output-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    printf(\"written %zu\\n\", length);\n    return 0;\n}\n"
+      },
+      {
+        "path": "input/route.txt",
+        "content": "18\n21\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Two stops with line feeds",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "18\n21\n"
+        },
+        "output": "written 6\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "18\n21\n"
+        }
+      },
+      {
+        "label": "Empty route",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": ""
+        },
+        "output": "written 0\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": ""
+        }
+      },
+      {
+        "label": "No trailing line feed",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "18\n21"
+        },
+        "output": "written 5\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "18\n21"
+        }
+      },
+      {
+        "label": "Missing route file",
+        "input": "",
+        "inputFiles": {},
+        "output": "open-input-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Numbers in stdin only",
+        "input": "18\n21\n",
+        "inputFiles": {},
+        "output": "open-input-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Exactly 64 bytes",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "777777777777777777777777777777777777777777777777777777777777777\n"
+        },
+        "output": "written 64\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "777777777777777777777777777777777777777777777777777777777777777\n"
+        }
+      },
+      {
+        "label": "File too long",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "7777777777777777777777777777777777777777777777777777777777777777\n"
+        },
+        "output": "input-too-long\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      }
+    ],
+    "criteria": [
+      "The lines 18 and 21 with a final LF yield written 6. The new copy.txt contains those exact six bytes.",
+      "An empty input/route.txt yields written 0 and an empty copy.txt. A missing input/route.txt yields open-input-error, exit code 1, and no new file.",
+      "Compare length and bytes. The source stays unchanged. A run file does not enter the editor without an explicit action."
+    ],
+    "hint": "In while, keep the condition (byte = fgetc(input)) != EOF. LF is a byte to copy. Keep the existing ferror check after the loop.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/route.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    unsigned char bytes[64];\n    size_t length = 0;\n    const char *problem = NULL;\n    int byte;\n    while ((byte = fgetc(input)) != EOF) {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    FILE *output = fopen(\"copy.txt\", \"wb\");\n    if (output == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    if (fwrite(bytes, 1, length, output) != length) {\n        problem = \"write-error\";\n    }\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-output-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    printf(\"written %zu\\n\", length);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Look at both lines in input/route.txt. Return to main.c, leave stdin empty, and run the starter.",
+        "why": "The starter stops at the first LF.",
+        "expected": "written 2. The temporary copy.txt contains only 18, with no LF."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the loop condition and run again. Download copy.txt from the run results. If an identical copy.txt has already been saved in the project, use a fresh project copy for this comparison.",
+        "why": "Compare both lines with the source and check the file length in the result list. Until an explicit save, copy.txt stays out of the editor's file list.",
+        "expected": "written 6. The copy.txt file has two lines, 18 and 21, each ending in LF."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Empty input and input without a trailing LF",
+        "task": "In a separate copy, clear input/route.txt without removing it. Run and download copy.txt. Then write 18 and 21 on two lines in that copy, without an LF after 21. Run and download again. Wait until the comparison is complete before saving output files to the project.",
+        "criteria": [
+          "Empty input gives written 0 and a zero-byte copy.txt. Without a trailing LF, expect written 5 and hexadecimal bytes 31 38 0A 32 31."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.copy-file-check-eof-and-write",
+    "prerequisites": [
+      "c.open-close-file-stream",
+      "c.complete-line-input"
+    ]
+  }
+}

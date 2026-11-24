@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.preprocessor",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "Программирование на C",
+  "module": "Препроцессор и многофайловые программы",
+  "locale": "ru",
+  "title": "Директивы, условная сборка и макросы",
+  "goal": "Проследить, как директивы собирают исходник до исполнения, и выбрать размер упаковки одной настройкой без изменения вводимых данных.",
+  "prerequisites": [
+    {
+      "text": "Уже знакомы int, умножение и приоритет операций. Здесь эти знания понадобятся, чтобы предсказать результат после замены макроса."
+    },
+    {
+      "text": "Знаете роль main, заголовка и запуска программы. В примерах решение при сборке сравнивается с вводом при запуске."
+    }
+  ],
+  "terms": [
+    {
+      "id": "directive",
+      "term": "Директива",
+      "title": "Директива",
+      "definition": "Указание препроцессору. Например, #include подставляет содержимое указанного заголовка."
+    },
+    {
+      "id": "macro",
+      "term": "Макрос",
+      "title": "Макрос",
+      "definition": "Имя или шаблон, который препроцессор заменяет последовательностью токенов. Это ещё не вычисленное значение."
+    },
+    {
+      "id": "conditional",
+      "term": "Условная обработка",
+      "title": "Условная обработка",
+      "definition": "Директивы #if, #elif и #else оставляют только выбранную ветвь для дальнейшей обработки. Это происходит до запуска main."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Рабочая модель",
+      "paragraphs": [
+        "Пункт выдачи использует два вида стойки. Номер конфигурации задаёт число мест. Ввод пользователя задаёт число групп только после запуска. Выбирайте профиль при сборке, если детали развертывания заранее известны и не должны меняться во время работы.",
+        "В #if участвуют константные выражения препроцессора. Условие определяет, какое определение CAPACITY останется. Если профиль не поддерживается, #error останавливает сборку с указанной диагностикой.",
+        "Макрос TOTAL(1 + 2) становится выражением ((1 + 2) * 8). Сохраните скобки вокруг каждого параметра и результата. Если бы параметр использовался дважды, аргумент с побочным эффектом тоже мог бы выполниться дважды."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Рассчитайте вместимость пункта выдачи",
+      "paragraphs": [
+        "Заголовок устанавливает DELIVERY_MODE в 1. Предскажите число мест на трёх стойках, записанных выражением 1 + 2. stdin пуст."
+      ],
+      "steps": [
+        "Сначала #include делает определения из delivery_policy.h доступными в основном исходнике.",
+        "Ровно одна ветвь #if оставляет CAPACITY 8. Предсказывайте выбор ветви до разбора main.",
+        "Подставьте 1 + 2 в TOTAL, сохраняя скобки, затем посчитайте 3 × 8."
+      ],
+      "trace": [
+        [
+          "Обработка заголовка",
+          "DELIVERY_MODE == 1",
+          "CAPACITY = 8"
+        ],
+        [
+          "Раскрытие TOTAL",
+          "((1 + 2) * 8)",
+          "24"
+        ],
+        [
+          "Запуск",
+          "printf",
+          "capacity=8 total=24"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"delivery_policy.h\"\n\nint main(void)\n{\n    printf(\"capacity=%d total=%d\\n\", CAPACITY, TOTAL(1 + 2));\n    return 0;\n}\n",
+        "files": {
+          "delivery_policy.h": "#ifndef DELIVERY_POLICY_H\n#define DELIVERY_POLICY_H\n#define DELIVERY_MODE 1\n\n#if DELIVERY_MODE == 1\n#define CAPACITY 8\n#elif DELIVERY_MODE == 2\n#define CAPACITY 12\n#else\n#error unsupported DELIVERY_MODE\n#endif\n\n#define TOTAL(count) ((count) * CAPACITY)\n#endif\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "capacity=8 total=24\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Найдите этап сбоя",
+      "paragraphs": [
+        "Профиль 3 в отдельной заготовке PACK_KIND вызывает сообщение unsupported PACK_KIND до выполнения printf. Найдите #error и восстановите разрешённую настройку.",
+        "Если программа запускается, но арифметика неверна, сначала выпишите раскрытое выражение. Проверка приоритета операций отличается от поиска причины остановки сборки."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Предскажите, проверьте и объясните",
+      "paragraphs": [
+        "В отдельной копии разборного примера измените только DELIVERY_MODE с 1 на 2. Предскажите полный вывод capacity=12 total=36, затем соберите и сравните. Верните 1 и мысленно раскройте TOTAL без внутренних скобок: (1 + 2 * 8) дало бы 17. Объясните разницу."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.2, §6.10.1–§6.10.3",
+      "language": "English",
+      "purpose": "Порядок обработки исходника, условия и замена макросов."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "same-stdin",
+      "kind": "choice",
+      "prompt": "В разборе DELIVERY_MODE изменён с 1 на 2. Когда программа сможет показать новый результат?",
+      "options": [
+        "После пересборки и запуска",
+        "При вводе 2 в stdin в уже запущенной программе",
+        "Сразу после редактирования без сборки"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Пересборка повторно применит условные директивы.",
+        "Ввод не переопределяет директиву в готовой программе.",
+        "Запущенный бинарный файл не меняется от сохранения исходника."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "precedence",
+      "kind": "choice",
+      "prompt": "Что вычислит корректный TOTAL(1 + 2) при CAPACITY 8?",
+      "options": [
+        "17",
+        "24",
+        "11"
+      ],
+      "correct": 1,
+      "feedback": [
+        "17 получилось бы без скобок вокруг аргумента.",
+        "Скобки ставят сложение перед умножением.",
+        "Макрос содержит умножение, а не простое сложение 8 и 3."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "build-vs-run",
+      "kind": "free",
+      "prompt": "Ученик получил unsupported PACK_KIND. Почему смена числа в stdin не поможет и какой файл надо проверить?",
+      "feedback": "Диагностику выдала сборка до запуска. Сверьте PACK_KIND в packing_config.h с поддерживаемыми 0 и 1.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include \"packing_config.h\"\n\nint main(void)\n{\n    return 0;\n}\n",
+      "files": {
+        "packing_config.h": "#ifndef PACKING_CONFIG_H\n#define PACKING_CONFIG_H\n#define PACK_KIND 3\n\n#if PACK_KIND == 0\n#define PACK_SIZE 1\n#elif PACK_KIND == 1\n#define PACK_SIZE 6\n#else\n#error unsupported PACK_KIND\n#endif\n\n#define BOX_AMOUNT(count) ((count) * PACK_SIZE)\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "unsupported PACK_KIND"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "3\n",
+    "title": "Пересчитайте коробки в штуки",
+    "task": "Профиль 1 означает 6 предметов в коробке. Установите его в packing_config.h, а в main.c передайте boxes в BOX_AMOUNT. Первая строка stdin содержит ровно одну цифру и заканчивается LF или концом ввода. На корректный ввод печатайте items= и число штук, на плохой — invalid и код 1.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"packing_config.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int boxes = read_digit();\n    if (boxes < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"items=%d\\n\", boxes); /* TODO: use BOX_AMOUNT. */\n    return 0;\n}\n"
+      },
+      {
+        "path": "packing_config.h",
+        "content": "#ifndef PACKING_CONFIG_H\n#define PACKING_CONFIG_H\n#define PACK_KIND 0\n\n#if PACK_KIND == 0\n#define PACK_SIZE 1\n#elif PACK_KIND == 1\n#define PACK_SIZE 6\n#else\n#error unsupported PACK_KIND\n#endif\n\n#define BOX_AMOUNT(count) ((count) * PACK_SIZE)\n#endif\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Три коробки",
+        "input": "3\n",
+        "output": "items=18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ноль коробок",
+        "input": "0\n",
+        "output": "items=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Одна цифра без LF",
+        "input": "9",
+        "output": "items=54\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Две цифры",
+        "input": "10\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "Буква",
+        "input": "x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "Для 3, 0 и 9 напечатаны 18, 0 и 54 с префиксом items=. stderr пуст.",
+      "Для двух цифр или символа x напечатано invalid, код завершения 1. Код использует макрос, а не жёстко заданный множитель в main."
+    ],
+    "hint": "Сверьте оба изменения. Сами директивы выбирают размер коробки, но main должен применить BOX_AMOUNT.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"packing_config.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int boxes = read_digit();\n    if (boxes < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"items=%d\\n\", BOX_AMOUNT(boxes));\n    return 0;\n}\n",
+      "files": {
+        "packing_config.h": "#ifndef PACKING_CONFIG_H\n#define PACKING_CONFIG_H\n#define PACK_KIND 1\n\n#if PACK_KIND == 0\n#define PACK_SIZE 1\n#elif PACK_KIND == 1\n#define PACK_SIZE 6\n#else\n#error unsupported PACK_KIND\n#endif\n\n#define BOX_AMOUNT(count) ((count) * PACK_SIZE)\n#endif\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите исходную заготовку с 3.",
+        "why": "Она печатает само число коробок.",
+        "expected": "items=3"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Выберите профиль 1 и вызовите BOX_AMOUNT(boxes).",
+        "why": "Умножение теперь использует настройку сборки.",
+        "expected": "items=18"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте 9 без LF и 10 с LF.",
+        "why": "Один символ годится, два нарушают формат.",
+        "expected": "items=54 и invalid соответственно"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Проверьте прежний профиль",
+        "task": "В копии решения замените PACK_KIND на 0 и снова подайте 3. Затем верните профиль 1.",
+        "criteria": [
+          "Профиль 0 даёт items=3, профиль 1 даёт items=18. Назовите строку, ответственную за выбор и строку, которая потребляет это значение."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.configure-preprocessor",
+    "prerequisites": [
+      "c.read-compiler-diagnostics"
+    ]
+  }
+}

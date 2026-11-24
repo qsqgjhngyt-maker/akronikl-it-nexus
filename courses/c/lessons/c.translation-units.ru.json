@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.translation-units",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "Программирование на C",
+  "module": "Препроцессор и многофайловые программы",
+  "locale": "ru",
+  "title": "Единицы трансляции и компоновка",
+  "goal": "Назвать файл, который обещает функцию, найти единицу трансляции с её определением и отличить отсутствие файла при компоновке от ошибки исходника.",
+  "prerequisites": [
+    {
+      "text": "Умеете читать объявление и вызов функции. Теперь они могут располагаться в разных исходных файлах."
+    },
+    {
+      "text": "Знаете защиту заголовков. Один контракт функции включается и вызывающей, и реализующей стороной."
+    }
+  ],
+  "terms": [
+    {
+      "id": "translation-unit",
+      "term": "Единица трансляции",
+      "title": "Единица трансляции",
+      "definition": "Исходный файл .c вместе с результатом его предварительной обработки, включая заголовки и раскрытие макросов."
+    },
+    {
+      "id": "object",
+      "term": "Объектный файл",
+      "title": "Объектный файл",
+      "definition": "Результат отдельной компиляции единицы трансляции в типичной цепочке инструментов. Он хранит код и сведения о символах для будущей компоновки."
+    },
+    {
+      "id": "linker",
+      "term": "Компоновщик",
+      "title": "Компоновщик",
+      "definition": "Этап сборки, который соединяет объектные файлы, разрешает ссылки по определениям и формирует программу."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Рабочая модель",
+      "paragraphs": [
+        "Табло склада складывает два числа смены. Заголовок shift.h обещает функцию shift_total с двумя аргументами int и результатом int. main.c проверяется по этому обещанию. shift.c включает тот же заголовок и даёт тело функции.",
+        "После обработки заголовков каждый .c образует отдельную единицу трансляции. Инструмент наподобие Clang может перевести их по отдельности в объектные файлы и затем скомпоновать. В Code Studio кнопка запуска собирает перечисленные .c одним действием.",
+        "Если убрать shift.c, в main.c остаётся объявление, поэтому проверка исходника проходит. Программа не появляется: на этапе компоновки ссылка на shift_total остаётся без определения. Путь, строка и слово error помогают ориентироваться, но решающим бывает имя символа."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Сложите выдачу утренней и вечерней смены",
+      "paragraphs": [
+        "В проекте есть main.c, shift.h и shift.c. Предскажите и вывод, и минимальный набор компилируемых .c."
+      ],
+      "steps": [
+        "main.c включает shift.h и вызывает shift_total(4, 7).",
+        "shift.c включает тот же заголовок и вычисляет 4 + 7.",
+        "Компоновка с двумя .c находит определение shift_total. После запуска печатается shift=11."
+      ],
+      "trace": [
+        [
+          "Проверка main.c",
+          "shift.h объявляет shift_total",
+          "Вызов корректен"
+        ],
+        [
+          "Проверка shift.c",
+          "Есть тело shift_total",
+          "В определении сумма"
+        ],
+        [
+          "Компоновка и запуск",
+          "Ссылка разрешена",
+          "shift=11"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"shift.h\"\n\nint main(void)\n{\n    printf(\"shift=%d\\n\", shift_total(4, 7));\n    return 0;\n}\n",
+        "files": {
+          "shift.h": "#ifndef SHIFT_H\n#define SHIFT_H\nint shift_total(int morning, int evening);\n#endif\n",
+          "shift.c": "#include \"shift.h\"\n\nint shift_total(int morning, int evening)\n{\n    return morning + evening;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "shift=11\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Найдите этап сбоя",
+      "paragraphs": [
+        "Если сборка с tray.h сообщает о символе trays_needed и не запускается, проверьте наличие tray.c в новом проекте и перечне единиц трансляции. Объявление сообщает тип, а определение поставляет тело.",
+        "Ошибка redefinition или 'file not found' с указанием позиции в исходнике подсказывает стадию проверки .c и заголовков. Неразрешённая ссылка на trays_needed подсказывает проверку комплекта объектов и точного имени."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Предскажите, проверьте и объясните",
+      "paragraphs": [
+        "В копии разборного проекта оставьте main.c и shift.h, уберите из копии shift.c. Предскажите, что произойдёт с printf. Затем верните тот же shift.c и повторите запуск. В обычном Clang можно отдельно собрать clang -std=c17 -c main.c shift.c, затем связать clang main.o shift.o -o shift."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.1–§5.1.1.2, §6.2.2, §6.9",
+      "language": "English",
+      "purpose": "Единицы трансляции, внешняя связь и определения."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "contract-without-definition",
+      "kind": "choice",
+      "prompt": "Оставлены main.c и shift.h. Имя shift_total объявлено, но shift.c убран. Что случится?",
+      "options": [
+        "Будет ошибка компоновки с unresolved shift_total",
+        "Заголовок сам вычислит сумму",
+        "main выполнится и напечатает 0"
+      ],
+      "correct": 0,
+      "feedback": [
+        "При компоновке неоткуда взять тело shift_total.",
+        "В заголовке только сигнатура.",
+        "Готовая программа не сформировалась."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "compiled-list",
+      "kind": "choice",
+      "prompt": "Какие файлы образуют отдельные единицы трансляции в этой сборке?",
+      "options": [
+        "main.c и shift.c",
+        "main.c, shift.c и shift.h",
+        "Только shift.h"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Заголовок включается в текст двух .c.",
+        "Заголовок входит в оба .c через #include.",
+        "Строка объявления не запускается самостоятельно."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "link-check",
+      "kind": "free",
+      "prompt": "Компоновщик сообщает о trays_needed, хотя tray.h открывается и содержит строку объявления. Какие два факта проверите?",
+      "feedback": "Нужны определение с точно тем же именем в tray.c и участие именно этого .c в текущей сборке. Восстановите файл либо исправьте перечень исходников.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "link",
+      "source": "#include <stdio.h>\n#include \"tray.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int items = read_digit();\n    if (items < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"trays=%d\\n\", trays_needed(items));\n    return 0;\n}\n",
+      "files": {
+        "tray.h": "#ifndef TRAY_H\n#define TRAY_H\nint trays_needed(int items);\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "trays_needed"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "4\n",
+    "title": "Округлите число мест для лотков",
+    "task": "Упакуйте от 0 до 9 предметов в лотки по три. В tray.c реализуйте округление вверх для неполного лотка, в main.c напечатайте trays= и slots= через пробел. slots равен числу лотков × 3. Первая строка stdin — ровно одна цифра с LF или концом ввода. Иной формат: invalid и код 1.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"tray.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int items = read_digit();\n    if (items < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"trays=%d\\n\", trays_needed(items));\n    return 0;\n}\n"
+      },
+      {
+        "path": "tray.h",
+        "content": "#ifndef TRAY_H\n#define TRAY_H\nint trays_needed(int items);\n#endif\n"
+      },
+      {
+        "path": "tray.c",
+        "content": "#include \"tray.h\"\n\nint trays_needed(int items)\n{\n    return items / 3; /* TODO: include the partial tray. */\n}\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Четыре предмета",
+        "input": "4\n",
+        "output": "trays=2 slots=6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая партия",
+        "input": "0\n",
+        "output": "trays=0 slots=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Два полных лотка",
+        "input": "6\n",
+        "output": "trays=2 slots=6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Девять без LF",
+        "input": "9",
+        "output": "trays=3 slots=9\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недопустимый символ",
+        "input": "n\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "Используются main.c и tray.c, объявление вынесено в tray.h. Ввод 0 даёт trays=0 slots=0, 6 даёт trays=2 slots=6, 9 даёт trays=3 slots=9.",
+      "Неполный лоток учитывается. Буква n отклоняется строкой invalid с кодом 1. stderr пуст в случаях запуска."
+    ],
+    "hint": "Для неотрицательного n формула (n + 2) / 3 даёт нужное число лотков. Храните тело только в tray.c и используйте возвращённый результат в main.c.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"tray.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int items = read_digit();\n    if (items < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    int trays = trays_needed(items);\n    printf(\"trays=%d slots=%d\\n\", trays, trays * 3);\n    return 0;\n}\n",
+      "files": {
+        "tray.h": "#ifndef TRAY_H\n#define TRAY_H\nint trays_needed(int items);\n#endif\n",
+        "tray.c": "#include \"tray.h\"\n\nint trays_needed(int items)\n{\n    return (items + 2) / 3;\n}\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Соберите три файла заготовки и подайте 4.",
+        "why": "Целочисленное деление округляет вниз.",
+        "expected": "trays=1"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте tray.c и добавьте число мест в main.c.",
+        "why": "Второй лоток нужен для оставшегося предмета.",
+        "expected": "trays=2 slots=6"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Откройте отдельную копию без tray.c, затем восстановите модуль в копии.",
+        "why": "Строка объявления остаётся, а тело пропало.",
+        "expected": "Диагностика trays_needed, после восстановления trays=2 slots=6"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Проверьте переход с полного лотка",
+        "task": "Дайте 6, затем 7, и предскажите изменение. Повторите 7 на копии с отсутствующим tray.c.",
+        "criteria": [
+          "Нужны trays=2 slots=6 и trays=3 slots=9. Без модуля сборка выдаёт диагностику trays_needed до запуска."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.link-translation-units",
+    "prerequisites": [
+      "c.guard-header-inclusion",
+      "c.function-declaration-call"
+    ]
+  }
+}

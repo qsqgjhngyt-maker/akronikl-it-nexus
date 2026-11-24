@@ -20,7 +20,7 @@ const json = async file => JSON.parse(await readFile(resolveFixtureFile(frontend
 const manifest = await json('courses/c/manifest.json');
 const topicIds = manifest.availableTopicIds;
 const lessonCount = topicIds.length;
-assert.equal(lessonCount, 41);
+assert.equal(lessonCount, 59);
 const lessons = {};
 for (const locale of ['ru', 'en']) {
   lessons[locale] = await Promise.all(manifest.availableTopicIds.map(id => json('courses/c/lessons/' + id + '.' + locale + '.json')));
@@ -155,7 +155,7 @@ async function openCourse(page, locale, width) {
   await page.goto(GATEWAY_ORIGIN + '/#view=academy');
   const card = page.locator('a[data-academy-course="c"]');
   await card.waitFor();
-  assert.match(await card.innerText(), /Модули 1–8|Modules 1–8/);
+  assert.match(await card.innerText(), /Модули 1–12|Modules 1–12/);
   assert.equal(requests.filter(request => request.width === width).length, 0, 'Academy should not preload C modules or lessons');
   await card.click();
   await course(page).getByRole('heading', { level:1, name:manifest.title.ru }).waitFor();

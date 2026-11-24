@@ -59,7 +59,7 @@ try {
     await page.goto(fixture.origin + '/offline.html#view=academy');
     await page.locator('a[data-academy-course="c"]').click();
     await root.getByRole('heading', { level:1, name:courseManifest.title.ru }).waitFor();
-    assert.equal(await root.locator('.c-outline a').count(), 41);
+    assert.equal(await root.locator('.c-outline a').count(), 59);
     await capture('cold-academy-c-390');
     await root.locator('.c-outline a').first().click();
     await root.locator('.c-stages [aria-current="page"]').filter({ hasText:'Объяснение' }).waitFor();
@@ -159,6 +159,17 @@ try {
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m8-reference-en-390');
   });
+  await check('Файловый урок и итоговый проект открываются без сети', async () => {
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.result-artifacts&stage=practice&locale=ru');
+    await root.getByRole('heading',{level:1,name:'Входные файлы и выходные артефакты'}).waitFor();
+    assert.ok(await root.getByText('input/stock.tsv',{exact:true}).count());
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.capstone-delivery&stage=practice&locale=en');
+    await root.getByRole('heading',{level:1,name:'Evidence and project delivery'}).waitFor();
+    await root.getByText('Reference solution',{exact:true}).click();
+    assert.ok(await root.getByText('inventory.c',{exact:true}).count());
+    assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(),0);
+    await capture('cold-m12-reference-en-390');
+  });
   await check('Ресурсы C пришли из Service Worker с SHA из сборки', async () => {
     const expected = [
       'offline.html', ...[
@@ -171,6 +182,7 @@ try {
         'courses/c/lessons/c.text-project.ru.json', 'courses/c/lessons/c.addresses-and-pointers.ru.json', 'courses/c/lessons/c.pointer-lifetime-errors.en.json',
         'courses/c/lessons/c.pointer-lifetime-errors.ru.json', 'courses/c/lessons/c.structures.ru.json', 'courses/c/lessons/c.structure-contracts.en.json',
         'courses/c/lessons/c.structure-contracts.ru.json', 'courses/c/lessons/c.allocation.ru.json', 'courses/c/lessons/c.dynamic-record-project.en.json',
+        'courses/c/lessons/c.result-artifacts.ru.json', 'courses/c/lessons/c.capstone-delivery.en.json',
       ].map(file => build.prefix + file),
     ];
     const manifest = new Map(build.files.map(record => [record.file, record.sha256]));

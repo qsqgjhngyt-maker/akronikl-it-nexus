@@ -1,8 +1,9 @@
 import {accountStoragePrefix, verifiedAccount} from './account-storage.js';
 import {bindCodeStudio, codeStudioMarkup} from '../sandbox/code-studio.js';
-import {normalizeWorkspacePath} from '../sandbox/code-workspace.js';
+import {createCodeWorkspace, normalizeWorkspacePath} from '../sandbox/code-workspace.js';
 import {parseRuntimeError} from '../sandbox/diagnostics.js';
 import {MODERN_CPP_TOOLCHAIN} from '../sandbox/runtime-assets.js';
+import {showRuntimeFileResults} from '../sandbox/runtime-files.js';
 import {pickProvider} from '../sandbox/sandbox.js';
 
 const entryFile = 'main.c';
@@ -78,6 +79,7 @@ export function bindCCourseWorkspace({
     readable = false;
   }
   const opened = draft ?? initial;
+  const account = verifiedAccount();
   const events = new AbortController();
   const {signal} = events;
   let disposed = false;
@@ -142,6 +144,51 @@ export function bindCCourseWorkspace({
     };
   }
 
+  function clearFileResults() {
+    outputs.querySelector('[data-runtime-files]')?.remove();
+  }
+
+  function saveRunFiles(files, base) {
+    if (!readable) throw Error('C_COURSE_DRAFT_UNAVAILABLE');
+    if (Object.keys(files).some(path => normalizeWorkspacePath(path) !== path)) {
+      throw Error('RUNTIME_FILE_PATH_INVALID');
+    }
+
+    // Validate the change before updating either the stored draft or the editor.
+    const before = studio.getSnapshot();
+    const candidate = createCodeWorkspace({
+      languageId: 'c', entryFile, activeFile: before.activeFile, files: before.files,
+    });
+    const after = candidate.applyRuntimeFiles(files, base);
+    const next = JSON.stringify({
+      version: 1, files: after.files.map(({path, content}) => ({path, content})),
+      activeFile: after.activeFile, stdin: stdin.value,
+    });
+    try {
+      const current = storage.getItem(key);
+      if ((current ?? null) !== originalRaw && current !== next) {
+        saveStatus.textContent = t('В другой вкладке есть новая версия. Файлы запуска не сохранены.',
+          'Another tab has a newer version. Run files were not saved.');
+        throw Error('C_COURSE_DRAFT_CONFLICT');
+      }
+      storage.setItem(key, next);
+    } catch (error) {
+      if (error.message !== 'C_COURSE_DRAFT_CONFLICT') {
+        saveStatus.textContent = t('Файлы запуска сохранить не удалось. Рабочая область не изменилась.',
+          'The run files could not be saved. Your workspace is unchanged.');
+      }
+      throw error;
+    }
+    // The same write was checked on a detached workspace. The live update is synchronous.
+    studio.applyRuntimeFiles(files, base);
+    clearTimeout(saveTimer);
+    originalRaw = next;
+    dirty = false;
+    saveStatus.textContent = t('Файлы запуска добавлены в сохранённый черновик.',
+      'The run files were added to your saved draft.');
+    onSaved?.({lessonId});
+  }
+
   function flush() {
     clearTimeout(saveTimer);
     if (!dirty) return true;
@@ -172,6 +219,7 @@ export function bindCCourseWorkspace({
     dirty = true;
     if (programChanged) {
       revision++;
+      clearFileResults();
       studio.clearRuntimeDiagnostics();
       if (!outputs.hidden) runStatus.textContent = t(
         'Ниже результат предыдущего запуска. Запустите текущую работу, чтобы проверить изменения.',
@@ -195,10 +243,13 @@ export function bindCCourseWorkspace({
     if (running || disposed) return;
     const request = studio.runtimeRequest(stdin.value);
     const runRevision = revision;
+    const current = () => !disposed && host.isConnected && verifiedAccount() === account &&
+      revision === runRevision;
     let completed;
     running = true;
     runButton.disabled = true;
     outputs.hidden = true;
+    clearFileResults();
     studio.clearRuntimeDiagnostics();
     runStatus.textContent = t('Компилируем и запускаем программу C17…', 'Compiling and running the C17 program…');
     try {
@@ -212,6 +263,12 @@ export function bindCCourseWorkspace({
       const status = t(`${runtime} · код выхода ${result.exitCode}`, `${runtime} · exit code ${result.exitCode}`);
       runStatus.textContent = revision === runRevision ? status :
         t(`${status} · до последних изменений`, `${status} · before the last changes`);
+      if (exactC17 && result.exitCode === 0 && current()) {
+        showRuntimeFileResults({
+          output: outputs, result, request, locale, current,
+          studio: readable ? {applyRuntimeFiles: saveRunFiles} : undefined,
+        });
+      }
       completed = {lessonId, result, current: revision === runRevision};
     } catch (error) {
       if (disposed) return;
@@ -262,6 +319,7 @@ export function bindCCourseWorkspace({
       if (!flush()) return false;
       disposed = true;
       events.abort();
+      clearFileResults();
       studio.dispose();
       return true;
     },

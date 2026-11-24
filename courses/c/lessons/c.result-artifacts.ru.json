@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.result-artifacts",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "Программирование на C",
+  "module": "Файлы и обработка ошибок",
+  "locale": "ru",
+  "title": "Входные файлы и выходные артефакты",
+  "goal": "Проверить отчёт по пути и содержимому, отличить выход одного запуска от файла в редакторе и сохранить результат явным действием.",
+  "prerequisites": [
+    {
+      "text": "Вспомните проверку всей таблицы перед использованием сводки. Здесь программа пишет отчёт только после проверки."
+    },
+    {
+      "text": "Применяйте проверки записи и закрытия из предыдущих тем. Статус ok появляется после обеих."
+    }
+  ],
+  "terms": [
+    {
+      "id": "input-file",
+      "term": "Исходный файл",
+      "title": "Исходный файл",
+      "definition": "Файл проекта, который программа получает во временной копии запуска. В примере он открывается только в rb."
+    },
+    {
+      "id": "delta",
+      "term": "Выход запуска",
+      "title": "Выход запуска",
+      "definition": "Новый или изменённый файл после выполнения. Совпадающий с входным снимком файл может отсутствовать в списке результатов."
+    },
+    {
+      "id": "explicit-save",
+      "term": "Явное сохранение",
+      "title": "Явное сохранение",
+      "definition": "Действие, которое переносит выбранный результат из запуска в учебную рабочую область. Само сообщение ok файлы редактора не изменяет."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "У отчёта есть путь, данные и срок жизни",
+      "paragraphs": [
+        "Смена сдаёт сводку по измерениям. Следующей смене нужен файл с заголовком и числами, а не только сообщение ok. Разделяйте исходную таблицу, файл запуска и явное сохранение в редакторе.",
+        "После проверки всех строк и закрытия входа откройте выход на запись. Проверьте fprintf и fclose. При неверной строке программа выходит до fopen выхода. Адаптер предлагает действия только для актуального успешного запуска.",
+        "Скачивание проверяет фактический файл результата. Для появления в редакторе требуется отдельное сохранение. Если артефакт совпал по байтам с уже переданным файлом, новой дельты может не быть."
+      ]
+    },
+    {
+      "title": "Сводка по двум измерениям",
+      "paragraphs": [
+        "В reading.tsv две строки: 7, TAB, 3, LF и 8, TAB, 0, LF. В таблице отчёта должны появиться заголовок и одна строка данных. Предскажите количество и сумму."
+      ],
+      "steps": [
+        "Проверьте две записи. Получите count 2 и total 3. Закройте вход.",
+        "Откройте totals.tsv в wb. Запишите поля records и total через TAB, затем строку 2, TAB, 3. Обе строки оканчиваются LF.",
+        "Только после успешного fclose напечатайте ok. Сверьте путь и 18 байтов файла отдельно от stdout."
+      ],
+      "trace": [
+        [
+          "reading.tsv",
+          "две записи",
+          "2 / 3"
+        ],
+        [
+          "totals.tsv",
+          "records<TAB>total<LF>",
+          "2<TAB>3<LF>"
+        ],
+        [
+          "stdout",
+          "ok",
+          "выход отдельно"
+        ]
+      ],
+      "id": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"reading.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n\n    FILE *report = fopen(\"totals.tsv\", \"wb\");\n    if (report == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    int failed = fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total) < 0;\n    int report_close = fclose(report);\n    if (failed || report_close == EOF) {\n        puts(failed ? \"write-error\" : \"close-output-error\");\n        return 1;\n    }\n    puts(\"ok\");\n    return 0;\n}\n",
+        "files": {
+          "reading.tsv": "7\t3\n8\t0\n"
+        },
+        "stdin": "",
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "totals.tsv": "records\ttotal\n2\t3\n"
+        },
+        "cases": [
+          {
+            "input": "",
+            "inputFiles": {
+              "reading.tsv": "7\t3\n8\tx\n"
+            },
+            "output": "invalid line 2\n",
+            "stderr": "",
+            "exitCode": 1,
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Убедиться, что ok соответствует файлу",
+      "paragraphs": [
+        "Если stdout равен ok, а отчёт пуст, проверьте наличие fprintf перед fclose. Если отчёта нет в списке, проверьте путь, код выхода и было ли изменение. Совпадающие байты уже переданного файла не дают нового результата.",
+        "Clang сообщает too few arguments для fprintf, если пропущен аргумент формата. Передайте FILE * и строку формата. Отдельно проверяйте возвращаемый результат записи."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Сравнить отчёты из двух независимых запусков",
+      "paragraphs": [
+        "Не сохраняйте первый отчёт в редактор до сравнения. В отдельной копии замените значение второй записи на некорректное и запустите снова. Предскажите, почему окно нового запуска не может предлагать отчёт старого, даже если ранее он был скачан."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3, §7.21.6.1",
+      "language": "English",
+      "purpose": "Сверьте правила стандартной библиотеки для показанного потока и проверок."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "evidence",
+      "kind": "choice",
+      "prompt": "stdout содержит ok. Какая проверка подтверждает правильность отчёта?",
+      "options": [
+        "Сравнить путь и точные байты скачанного файла.",
+        "Увидеть ok дважды.",
+        "Проверить исходный файл и считать его отчётом."
+      ],
+      "correct": 0,
+      "feedback": [
+        "Так проверяются имя, заголовок и данные независимо от stdout.",
+        "Повтор сообщения не даёт содержимого отчёта.",
+        "Источник и отчёт имеют разный формат."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "no-result",
+      "kind": "choice",
+      "prompt": "Вторая строка не прошла проверку. Что должен показать этот запуск?",
+      "options": [
+        "Отчёт только по первой строке.",
+        "invalid line 2, код 1 и ни одного нового файла.",
+        "Старый отчёт как новый результат."
+      ],
+      "correct": 1,
+      "feedback": [
+        "Вся таблица проверяется до открытия отчёта.",
+        "Выход ещё не открывался.",
+        "Каждый запуск имеет свой результат."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "save",
+      "kind": "free",
+      "prompt": "Позавчера вы сохранили отчёт в редактор. Сегодня программа завершилась с ошибкой. Почему старый файл может остаться в списке, но не быть результатом сегодняшнего запуска?",
+      "feedback": "Явное сохранение добавило старый отчёт в рабочую область. Сегодняшняя программа не создала нового файла и не меняет редактор автоматически.",
+      "recall": "idea"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    return fprintf(stdout);\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"input/stock.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n\n    FILE *report = fopen(\"stock-totals.tsv\", \"wb\");\n    if (report == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    int failed = 0; /* TODO: write the table before closing report. */\n    int report_close = fclose(report);\n    if (failed || report_close == EOF) {\n        puts(failed ? \"write-error\" : \"close-output-error\");\n        return 1;\n    }\n    puts(\"ok\");\n    return 0;\n}\n"
+      },
+      {
+        "path": "input/stock.tsv",
+        "content": "12\t8\n26\t3\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Две строки склада",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3\n"
+        },
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "stock-totals.tsv": "records\ttotal\n2\t11\n"
+        }
+      },
+      {
+        "label": "Неверная вторая запись",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3junk\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Нет входного файла",
+        "input": "",
+        "inputFiles": {},
+        "output": "open-input-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Пустой вход, нулевой отчёт",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": ""
+        },
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "stock-totals.tsv": "records\ttotal\n0\t0\n"
+        }
+      },
+      {
+        "label": "Отказ сохраняет прежний отчёт",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3junk\n",
+          "stock-totals.tsv": "previous\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Совпадающий отчёт уже существует",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3\n",
+          "stock-totals.tsv": "records\ttotal\n2\t11\n"
+        },
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      }
+    ],
+    "title": "Файл сводки для склада",
+    "task": "Прочитайте input/stock.tsv по правилам предыдущего урока: уникальный номер от 1 до 9999, TAB, количество от 0 до 999, LF. Поле stdin оставьте пустым. Когда вся таблица принята, запишите заголовок records TAB total LF и строку N TAB S LF в stock-totals.tsv. Дополните строку кода рядом с TODO. Проверьте результат записи и закрытия, затем выведите ok. При неверной строке выведите invalid line N и код 1, не открывая отчёт. Скачайте успешный результат, сравните путь и байты и только потом явно сохраните в редактор.",
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "В чистой учебной копии запустите заготовку с пустым stdin. Откройте список файлов результата.",
+        "why": "Выход открыт и закрыт, но заготовка не печатает в него таблицу.",
+        "expected": "stdout равен ok, файл stock-totals.tsv имеет 0 байтов."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте fprintf с заголовком и данными. Сохраните проверку fclose. Снова запустите и скачайте отчёт.",
+        "why": "Количество, сумма и разделители нужны в файле. В редакторе отчёт появляется только после явного сохранения результата.",
+        "expected": "stdout равен ok. В stock-totals.tsv 19 байтов: records TAB total LF 2 TAB 11 LF."
+      }
+    ],
+    "criteria": [
+      "При двух корректных строках точный текст stock-totals.tsv — records TAB total LF 2 TAB 11 LF. Исходный input/stock.tsv не меняется.",
+      "При неверной второй строке — invalid line 2, код 1, дельта пуста и действий со старым результатом нет.",
+      "До явного сохранения нового отчёта нет в файлах чистой учебной копии. После подтверждения сохранения проверьте, что в рабочей области открываются обе строки."
+    ],
+    "hint": "Используйте fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total). Отрицательный результат означает отказ записи.",
+    "exercises": [
+      {
+        "title": "Отказ после удачного отчёта",
+        "task": "Скачайте удачный результат, сохраните его в учебный проект и убедитесь, что файл виден в редакторе. Затем замените количество второй записи на 3junk и запустите снова. Сравните список результатов этого запуска и ранее сохранённый файл.",
+        "criteria": [
+          "Новый запуск даёт invalid line 2 и код 1. Нового результата нет. Сохранённый отчёт остаётся с 2 TAB 11 LF, пока вы его не измените."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"input/stock.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n\n    FILE *report = fopen(\"stock-totals.tsv\", \"wb\");\n    if (report == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    int failed = fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total) < 0;\n    int report_close = fclose(report);\n    if (failed || report_close == EOF) {\n        puts(failed ? \"write-error\" : \"close-output-error\");\n        return 1;\n    }\n    puts(\"ok\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.verify-run-artifact-before-save",
+    "prerequisites": [
+      "c.validate-all-file-records",
+      "c.preserve-first-error-clean-up-streams"
+    ]
+  }
+}
