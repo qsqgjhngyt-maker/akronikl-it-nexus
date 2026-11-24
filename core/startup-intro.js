@@ -129,7 +129,7 @@ function showIntro({preview=false}={}){
  startupDeadline=later(fallback,8000);armLimit();video.src=sourceURL();play();
 }
 function controlsMarkup(){
- return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку при открытии</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>Заставка появляется при открытии Nexus. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';
+ return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку в приложении</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>На странице входа доступен ручной просмотр. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';
 }
 function syncSettings(){
  const {value,writable}=preference();

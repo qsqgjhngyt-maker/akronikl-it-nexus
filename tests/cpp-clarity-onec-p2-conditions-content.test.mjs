@@ -121,7 +121,11 @@ test('Условия: содержательная редакция сохран
   assert.deepEqual(semantic(current),semantic(old),'Accepted semantics: '+p);
  }
  const p='courses/onec-education/candidate.css',old=git('show',accepted+':'+p).toString();
- assert.equal(await readFile(p,'utf8'),"@import url('../../styles/clarity-onec-code-studio.css');\n@import url('../../styles/clarity-onec-p2-types.css');\n"+old);
+ const historical="@import url('../../styles/clarity-onec-code-studio.css');\n@import url('../../styles/clarity-onec-p2-types.css');\n"+old;
+ const stylesheet=await readFile(p,'utf8');
+ assert.equal(stylesheet.slice(0,historical.length),historical,'Историческая таблица стилей и её импорты');
+ const courseReferenceStyles=stylesheet.slice(historical.length);
+ if(courseReferenceStyles)assert.equal(hash(courseReferenceStyles),'2b765a5a60d89468410899dd6816d68957a6417ad74ccb5671d1a9bf1aa904ba','Точное дополнение для справочников 1С в выпуске C17');
  const css=await readFile('styles/clarity-onec-code-studio.css','utf8');
  assert.equal(hash(css),'403f23e6146c6737685cb0305f32ed77d3a1a4c6327470d8d69da59209f78a84');
  assert.match(css,/\.onec-integrated\s*\{/);

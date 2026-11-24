@@ -33,7 +33,15 @@ export function createAssetStore({indexedDB=globalThis.indexedDB,name='nexus-ver
   async ready(id,records){
    const row=await get('generations',id);
    if(!row||JSON.stringify(row.hashes)!==JSON.stringify(records.map(r=>r.sha256)))return false;
-   for(const record of records){try{if(!await read(record))return false}catch{return false}}
+   const verifiedSizes=new Map();
+   for(const record of records){
+    if(verifiedSizes.has(record.sha256)){
+     if(verifiedSizes.get(record.sha256)!==record.bytes)return false;
+     continue;
+    }
+    try{if(!await read(record))return false}catch{return false}
+    verifiedSizes.set(record.sha256,record.bytes);
+   }
    return true;
   },
   async activate(id){await write(['control'],tx=>{const store=tx.objectStore('control'),req=store.get('active');req.onsuccess=()=>store.put({id:'active',generation:id,previous:req.result?.generation||null})})},
