@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.pointer-parameters",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "C programming",
+  "module": "Pointers, addresses and memory bounds",
+  "title": "Changing an object through a parameter",
+  "goal": "Pass addresses of the caller’s objects and save the first value before swapping them.",
+  "prerequisites": [
+    {
+      "text": "You need function arguments and parameters, plus reading and writing through a dereference."
+    }
+  ],
+  "terms": [
+    {
+      "id": "pointer-parameter",
+      "term": "Pointer parameter",
+      "title": "Pointer parameter",
+      "definition": "A local copy of the passed address. A write through that address may update the passed object."
+    },
+    {
+      "id": "temporary",
+      "term": "Temporary copy",
+      "title": "Temporary copy",
+      "definition": "A separate object that preserves an old value before it is overwritten."
+    },
+    {
+      "id": "alias",
+      "term": "Alias",
+      "title": "Alias",
+      "definition": "Another expression naming the same object. Equal pointers that are valid for access can dereference to one object."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Swap the caller’s objects",
+      "paragraphs": [
+        "A function must order two measurement limits. Pass the addresses of the existing objects, so the results go into the caller’s variables.",
+        "C passes each argument by value. Here the copied value is an address, so a and &low point to the same low object. Changing the parameter a itself would change only its local copy of the address.",
+        "Establish pointer validity before reading or writing. In the example the addresses come from two live int objects, and the function also rejects NULL."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Swap 9 and 4",
+      "paragraphs": [
+        "Save the first value separately, then trace the assignments in their execution order."
+      ],
+      "steps": [
+        "The swap call passes the addresses of low and high. The check accepts both live objects.",
+        "saved = *a preserves 9 in a separate object. *a = *b changes low to 4.",
+        "*b = saved writes the earlier value 9 to high."
+      ],
+      "trace": [
+        [
+          "Before call",
+          "low = 9",
+          "high = 4"
+        ],
+        [
+          "int saved = *a",
+          "saved = 9",
+          "low = 9, high = 4"
+        ],
+        [
+          "*a = *b",
+          "saved = 9",
+          "low = 4, high = 4"
+        ],
+        [
+          "*b = saved",
+          "saved = 9",
+          "low = 4, high = 9"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic void swap(int *a, int *b)\n{\n    if (a == NULL || b == NULL) {\n        return;\n    }\n    int saved = *a;\n    *a = *b;\n    *b = saved;\n}\n\nint main(void)\n{\n    int low = 9;\n    int high = 4;\n    swap(&low, &high);\n    printf(\"%d %d\\n\", low, high);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "4 9\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Save the integer before overwriting",
+      "paragraphs": [
+        "In swap(&low, high), the second argument supplies an integer. Clang rejects it for an int * parameter. Use &high to get the second object’s address.",
+        "The declaration int *saved = a makes another pointer to the same object. After *a = *b, a read through *saved sees the new value. Copy the old integer into a separate int before writing."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "One address can be passed twice",
+      "paragraphs": [
+        "Predict normalize(&low, &low) when low is 6. Both reads give 6, so the already-ordered branch returns without writing. The contract allows this pair."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.5.3.2, 6.5.16.1, 6.7.6.3",
+      "language": "English",
+      "purpose": "Check passing arguments by value, dereferencing and assignment."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "After *a = *b in the example with 9 and 4, what are low and saved?",
+      "options": [
+        "low = 4, saved = 9",
+        "low = 9, saved = 4",
+        "low = 4, saved = 4"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The separate integer preserved 9 before the write to low.",
+        "The high value 4 is copied into low.",
+        "The separate integer saved still holds the old value."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What does normalize(&low, &low) return when low is 6?",
+      "options": [
+        "1, it swaps",
+        "0, already ordered",
+        "-1, missing address"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Both parameters read the same value 6.",
+        "The first read does not exceed the second, so there is no write.",
+        "Both pointers can refer to the same live object."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "The starter declares saved as int * and assigns it low. Trace the two writes for input 12 and -2. How can you keep 12 before the first write?",
+      "feedback": "After *low = *high both objects hold -2. *saved reads -2 too because it points to low. Copy *low into a separate int before the first write.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#pragma clang diagnostic error \"-Wint-conversion\"\n\nstatic void swap(int *a, int *b)\n{\n    (void)a;\n    (void)b;\n}\n\nint main(void)\n{\n    int low = 9;\n    int high = 4;\n    swap(&low, high);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible integer to pointer conversion"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Order two limits",
+    "task": "Read two integers from -99 to 99 on separate lines, a lower and an upper limit. The normalize function takes addresses of two live int objects, checks for NULL and swaps values only when they are out of order. Return 1 for a swap, 0 for an already ordered pair and -1 for NULL without writing. Print both values and the swap indicator separated by spaces. Print invalid for malformed input. Ignore subsequent lines.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int normalize(int *low, int *high)\n{\n    if (low == NULL || high == NULL) {\n        return -1;\n    }\n    if (*low <= *high) {\n        return 0;\n    }\n\n    int *saved = low; /* TODO: preserve the old value. */\n    *low = *high;\n    *high = *saved;\n    return 1;\n}\n\nint main(void)\n{\n    int low;\n    int high;\n    if (read_integer(-99, 99, &low) != READ_OK ||\n        read_integer(-99, 99, &high) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int changed = normalize(&low, &high);\n    printf(\"%d %d %d\\n\", low, high, changed);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "12\n-2\n",
+    "returnAnchor": "example",
+    "hint": "Decide whether saved should hold the address low or the integer stored there before the assignment.",
+    "criteria": [
+      "12 and -2 give -2 12 1. -2 and 12 give -2 12 0. 3 and 3 give 3 3 0.",
+      "The NULL checks precede every dereference.",
+      "If valid addresses are equal, the value stays the same and the return is 0."
+    ],
+    "cases": [
+      {
+        "label": "Out of order",
+        "input": "12\n-2\n",
+        "output": "-2 12 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Already ordered",
+        "input": "-2\n12\n",
+        "output": "-2 12 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Equal values",
+        "input": "3\n3\n",
+        "output": "3 3 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Reversed domain extremes",
+        "input": "99\n-99\n",
+        "output": "-99 99 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ordered domain extremes",
+        "input": "-99\n99\n",
+        "output": "-99 99 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Final record without newline",
+        "input": "0\n-1",
+        "output": "-1 0 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing second value",
+        "input": "12\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra character in second line",
+        "input": "12\n-2x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Value outside range",
+        "input": "100\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int normalize(int *low, int *high)\n{\n    if (low == NULL || high == NULL) {\n        return -1;\n    }\n    if (*low <= *high) {\n        return 0;\n    }\n\n    int saved = *low;\n    *low = *high;\n    *high = saved;\n    return 1;\n}\n\nint main(void)\n{\n    int low;\n    int high;\n    if (read_integer(-99, 99, &low) != READ_OK ||\n        read_integer(-99, 99, &high) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int changed = normalize(&low, &high);\n    printf(\"%d %d %d\\n\", low, high, changed);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open Practice with input 12 and -2. Select Run my code.",
+        "why": "Trace what the saved pointer reads after the write to low.",
+        "expected": "The starter prints -2 -2 1. The expected result is -2 12 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Save a copy of the first integer instead of another address, then rerun.",
+        "why": "An independent integer retains the original value.",
+        "expected": "The output is -2 12 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run -2 and 12, then 3 and 3, in separate runs.",
+        "why": "Check both the ordered and equal cases.",
+        "expected": "The outputs are -2 12 0 and 3 3 0."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Save a copy of your corrected main.c in a separate text file. In the editor, replace the second argument of normalize with &low for one run. With input 8 and 2, explain both numbers and the returned indicator. Restore your saved code.",
+        "criteria": [
+          "Output 8 2 0 shows that comparing 8 with itself is already ordered.",
+          "With the distinct addresses restored, the same input gives 2 8 1."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.update-through-parameter",
+    "prerequisites": [
+      "c.read-write-through-pointer",
+      "c.parameter-value-return"
+    ]
+  }
+}

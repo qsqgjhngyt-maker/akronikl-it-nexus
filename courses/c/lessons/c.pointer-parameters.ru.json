@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.pointer-parameters",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "Программирование на C",
+  "module": "Указатели, адреса и границы памяти",
+  "title": "Изменение объекта через параметр",
+  "goal": "Передать адреса объектов вызывающего кода и сохранить первое значение до перестановки.",
+  "prerequisites": [
+    {
+      "text": "Понадобятся аргументы и параметры функций, а также чтение и запись через разыменование."
+    }
+  ],
+  "terms": [
+    {
+      "id": "pointer-parameter",
+      "term": "Параметр-указатель",
+      "title": "Параметр-указатель",
+      "definition": "Локальная копия переданного адреса. Запись через этот адрес может изменить принятый объект."
+    },
+    {
+      "id": "temporary",
+      "term": "Временная копия",
+      "title": "Временная копия",
+      "definition": "Отдельный объект, сохраняющий прежнее значение до того, как оно будет перезаписано."
+    },
+    {
+      "id": "alias",
+      "term": "Псевдоним",
+      "title": "Псевдоним",
+      "definition": "Другое выражение, обозначающее тот же объект. Если указатели равны и действительны, их разыменования могут обозначать один объект."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Перестановка в объектах вызывающего кода",
+      "paragraphs": [
+        "Функции нужно упорядочить две границы измерений. Вместо вычисления двух возвращаемых чисел передадим адреса существующих объектов. Тогда результат окажется в тех же переменных.",
+        "C передаёт значение каждого аргумента. Здесь копируется адрес, поэтому параметр a и результат &low указывают на один объект low. Изменение самого параметра a затронуло бы только локальную копию адреса.",
+        "Перед чтением или записью должна выполняться проверка допустимости указателей. В примере адреса получены от двух живых int, а функция дополнительно отклоняет NULL."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Переставить 9 и 4",
+      "paragraphs": [
+        "Сначала сохраните левое число отдельно, затем проследите присваивания в том порядке, в котором они выполняются."
+      ],
+      "steps": [
+        "Вызов swap передаёт адреса low и high. Проверка допускает эти живые объекты.",
+        "saved = *a сохраняет 9 в отдельном объекте. *a = *b меняет low на 4.",
+        "*b = saved записывает прежнее число 9 в high."
+      ],
+      "trace": [
+        [
+          "До вызова",
+          "low = 9",
+          "high = 4"
+        ],
+        [
+          "int saved = *a",
+          "saved = 9",
+          "low = 9, high = 4"
+        ],
+        [
+          "*a = *b",
+          "saved = 9",
+          "low = 4, high = 4"
+        ],
+        [
+          "*b = saved",
+          "saved = 9",
+          "low = 4, high = 9"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic void swap(int *a, int *b)\n{\n    if (a == NULL || b == NULL) {\n        return;\n    }\n    int saved = *a;\n    *a = *b;\n    *b = saved;\n}\n\nint main(void)\n{\n    int low = 9;\n    int high = 4;\n    swap(&low, &high);\n    printf(\"%d %d\\n\", low, high);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "4 9\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Сохранить число до перезаписи",
+      "paragraphs": [
+        "При swap(&low, high) второй аргумент передаёт число. Clang отклоняет такое обращение к параметру int *. Адрес второго объекта получается через &high.",
+        "Запись int *saved = a сохраняет ещё один адрес того же объекта. После *a = *b чтение через *saved даст уже новое значение. Сохраните прежнее число в int saved до записи."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Один адрес можно передать дважды",
+      "paragraphs": [
+        "Предскажите normalize(&low, &low) для low = 6. Оба чтения дают 6, поэтому условие уже правильного порядка завершает функцию без записи. В договоре такая пара допустима."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.5.3.2, 6.5.16.1, 6.7.6.3",
+      "language": "English",
+      "purpose": "Сверьте передачу аргументов по значению, разыменование и присваивание."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "После *a = *b в примере с 9 и 4 чему равны low и saved?",
+      "options": [
+        "low = 4, saved = 9",
+        "low = 9, saved = 4",
+        "low = 4, saved = 4"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Значение 9 было сохранено отдельно до записи в low.",
+        "Правая граница содержит 4 и копируется в low.",
+        "Отдельное целое saved сохраняет прежнее число."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Что возвращает normalize(&low, &low) при low = 6?",
+      "options": [
+        "1, перестановка выполнена",
+        "0, порядок уже соблюдён",
+        "-1, адрес отсутствует"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Оба параметра обращаются к одному значению 6.",
+        "Первое чтение не больше второго, записи нет.",
+        "Один живой объект можно передать дважды."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "В заготовке saved имеет тип int * и получает low. Для ввода 12 и -2 проследите записи. Как сохранить 12 до первой записи?",
+      "feedback": "После *low = *high оба объекта равны -2. *saved тоже даёт -2, потому что saved указывает на low. Скопируйте *low в отдельную переменную int до первой записи.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#pragma clang diagnostic error \"-Wint-conversion\"\n\nstatic void swap(int *a, int *b)\n{\n    (void)a;\n    (void)b;\n}\n\nint main(void)\n{\n    int low = 9;\n    int high = 4;\n    swap(&low, high);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible integer to pointer conversion"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Упорядочить два предела",
+    "task": "Прочитайте два целых числа от -99 до 99 на отдельных строках, нижний и верхний предел. Функция normalize принимает адреса двух живых int, проверяет NULL и меняет пределы только при обратном порядке. Возвращайте 1 после перестановки, 0 при правильном порядке, -1 при NULL без записи. Напечатайте оба предела и признак перестановки через пробел. Для неверного ввода напечатайте invalid. Последующие строки игнорируются.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int normalize(int *low, int *high)\n{\n    if (low == NULL || high == NULL) {\n        return -1;\n    }\n    if (*low <= *high) {\n        return 0;\n    }\n\n    int *saved = low; /* TODO: preserve the old value. */\n    *low = *high;\n    *high = *saved;\n    return 1;\n}\n\nint main(void)\n{\n    int low;\n    int high;\n    if (read_integer(-99, 99, &low) != READ_OK ||\n        read_integer(-99, 99, &high) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int changed = normalize(&low, &high);\n    printf(\"%d %d %d\\n\", low, high, changed);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "12\n-2\n",
+    "returnAnchor": "example",
+    "hint": "Спросите, должен ли saved хранить адрес переменной low или её целое значение до присваивания.",
+    "criteria": [
+      "12 и -2 дают -2 12 1, -2 и 12 дают -2 12 0, 3 и 3 дают 3 3 0.",
+      "Проверки NULL выполняются до любого разыменования.",
+      "При совпадении действительных адресов значение остаётся прежним и возвращается 0."
+    ],
+    "cases": [
+      {
+        "label": "Обратный порядок",
+        "input": "12\n-2\n",
+        "output": "-2 12 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Порядок уже правильный",
+        "input": "-2\n12\n",
+        "output": "-2 12 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Равные значения",
+        "input": "3\n3\n",
+        "output": "3 3 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Границы диапазона в обратном порядке",
+        "input": "99\n-99\n",
+        "output": "-99 99 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Границы диапазона в правильном порядке",
+        "input": "-99\n99\n",
+        "output": "-99 99 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последнее число без перевода строки",
+        "input": "0\n-1",
+        "output": "-1 0 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нет второго значения",
+        "input": "12\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний символ во второй строке",
+        "input": "12\n-2x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Значение вне диапазона",
+        "input": "100\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int normalize(int *low, int *high)\n{\n    if (low == NULL || high == NULL) {\n        return -1;\n    }\n    if (*low <= *high) {\n        return 0;\n    }\n\n    int saved = *low;\n    *low = *high;\n    *high = saved;\n    return 1;\n}\n\nint main(void)\n{\n    int low;\n    int high;\n    if (read_integer(-99, 99, &low) != READ_OK ||\n        read_integer(-99, 99, &high) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int changed = normalize(&low, &high);\n    printf(\"%d %d %d\\n\", low, high, changed);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте «Практику» с вводом 12 и -2. Нажмите «Запустить мою работу».",
+        "why": "Проследите, что сохраняет указатель saved после записи в low.",
+        "expected": "Заготовка печатает -2 -2 1. Ожидается -2 12 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Замените сохранение адреса копированием первого числа и повторите.",
+        "why": "Восстановите прежнее число из отдельной переменной.",
+        "expected": "Вывод -2 12 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Отдельно проверьте -2 и 12, затем 3 и 3.",
+        "why": "Убедитесь, что правильный порядок и равенство обходятся без записи.",
+        "expected": "Выводы -2 12 0 и 3 3 0."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. В редакторе для одного прогона замените второй аргумент normalize на &low. При вводе 8 и 2 объясните оба числа и возвращённый признак. Верните сохранённый код.",
+        "criteria": [
+          "Вывод 8 2 0 подтверждает, что сравнение 8 с самим собой даёт уже правильный порядок.",
+          "При восстановленных разных адресах тот же ввод даёт 2 8 1."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.update-through-parameter",
+    "prerequisites": [
+      "c.read-write-through-pointer",
+      "c.parameter-value-return"
+    ]
+  }
+}

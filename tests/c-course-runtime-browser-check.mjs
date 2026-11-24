@@ -181,6 +181,19 @@ try {
   await page.screenshot({path:path.join(out, 'm5-line-filter.png')});
   console.log('C17_M5_FILTER_PASS prefix and rejection count confirmed in the lesson editor');
 
+  await openPractice('c.pointer-lifetime-errors', 'Lifetime and pointer errors');
+  const pointerEditor = page.locator('#editor');
+  const pointerStarter = await pointerEditor.inputValue();
+  const copyStep = '/* TODO: copy the temporary reading into the output object. */';
+  assert.ok(pointerStarter.includes(copyStep));
+  await runPractice('17\n', 0);
+  await pointerEditor.fill(pointerStarter.replace(copyStep, '*out = temporary;'));
+  await runPractice('27\n', 0);
+  await page.screenshot({path:path.join(out, 'm6-output-pointer.png')});
+  await page.locator('[data-c-stdin]').fill('27x\n');
+  await runPractice('invalid\n', 0);
+  console.log('C17_M6_OUT_PASS valid reading copied, malformed value rejected without writing');
+
   assert.deepEqual(fixture.errors, []);
   console.log('C17_DRAFT_RESTORE_PASS editor/stdin preserved after reload and locale switch; starter confirmation rejected; synthetic verified account storage');
   await writeFile(path.join(out, 'c17-workspace.json'), JSON.stringify({
@@ -190,6 +203,7 @@ try {
     module3: {bonusBeforeExit:1, bonusAfterExit:0, directCalls:'120 3000', unknownUnit:'invalid'},
     module4: {original:'3 -1 3 2', starter:'3 3 2 -1', sorted:'-1 2 3 3', empty:'empty'},
     module5: {starter:'ERR\nrejected 1\n', prefix:'ERR fan\nERR\nrejected 1\n'},
+    module6: {starter:'17', copied:'27', rejected:'invalid'},
   }, null, 2) + '\n');
 } finally {
   await fixture.close();

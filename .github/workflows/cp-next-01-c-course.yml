@@ -20,6 +20,7 @@ on:
       - 'tools/check-academy-m3.mjs'
       - 'tools/check-academy-m4.mjs'
       - 'tools/check-academy-m5.mjs'
+      - 'tools/check-academy-m6.mjs'
       - 'locales/*/ui.json'
   push:
     branches: [feature/cp-next-01-c-agent-team-20261124]
@@ -33,9 +34,13 @@ concurrency:
 
 jobs:
   verify:
-    name: Контент, сохранение, браузер и автономное чтение
+    name: Контент и браузер · Clang/WASI ${{ matrix.runtime_shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime_shard: [0, 1]
     env:
       NEXUS_FRONTEND_DIR: /tmp/nexus-c-course
       NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
@@ -48,11 +53,13 @@ jobs:
         with:
           node-version: 22
       - name: Проверить контракты курса и критический граф загрузки
+        if: matrix.runtime_shard == 0
         run: |
           node --test tests/c-course-content.test.mjs tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/pwa-controller-graph-compatibility.test.mjs
           node tests/shared-presentation-check.mjs
           node tools/check-cpp-course-perf.mjs
       - name: Проверить результаты примеров, эталонов и диагностик в Clang C17
+        if: matrix.runtime_shard == 0
         run: node tests/c-course-native-compiler-check.mjs
       - name: Собрать публичный кандидат и подключить Chrome среды CI
         run: |
@@ -63,10 +70,12 @@ jobs:
           printf 'NEXUS_CHROME_PATH=%s\n' "$chrome" >> "$GITHUB_ENV"
           node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-cp-next-01-ci --version 0.1.7-alpha.2.4.6-ui1a.10.24.0
       - name: Пройти уроки и проверить сохранение на трёх ширинах
+        if: matrix.runtime_shard == 0
         env:
           NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-c-evidence/online
         run: node tests/c-course-browser-check.mjs
       - name: Открыть материалы C после отключения сети и перезапуска Chromium
+        if: matrix.runtime_shard == 0
         env:
           NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-c-evidence/offline
         run: node tests/c-course-offline-browser-check.mjs
@@ -75,14 +84,15 @@ jobs:
           NEXUS_PINNED_RUNTIME_DIR: ${{ runner.temp }}/nexus-c-runtime
           NEXUS_GOLD_EVIDENCE: ${{ runner.temp }}/nexus-c-evidence/runtime-bytes
           NEXUS_C_EVIDENCE_DIR: ${{ runner.temp }}/nexus-c-evidence/wasi
+          NEXUS_C_RUNTIME_SHARD: ${{ matrix.runtime_shard }}
         run: |
           set -euo pipefail
           node tools/prepare-academy-gold-runtime-fixture.mjs
-          node tests/c-course-runtime-browser-check.mjs
+          if [ "$NEXUS_C_RUNTIME_SHARD" = 0 ]; then node tests/c-course-runtime-browser-check.mjs; fi
           node tests/c-course-runtime-matrix-check.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cp-next-01-${{ github.event.pull_request.head.sha || github.sha }}
+          name: cp-next-01-${{ github.event.pull_request.head.sha || github.sha }}-${{ matrix.runtime_shard }}
           path: ${{ runner.temp }}/nexus-c-evidence
           retention-days: 30

@@ -84,11 +84,18 @@ for (const id of course.availableTopicIds) {
     }
   }
 }
-assert.equal(editions.length, 54);
-assert.equal(records.filter(record => record.kind === 'example').length, 54);
-assert.equal(records.filter(record => record.kind === 'reference').length, 364);
-assert.equal(records.filter(record => record.kind === 'diagnostic').length, 48);
-assert.ok(records.some(record => record.kind === 'diagnostic'));
+assert.equal(editions.length, 64);
+assert.equal(records.filter(record => record.kind === 'example').length, 64);
+assert.equal(records.filter(record => record.kind === 'reference').length, 458);
+assert.equal(records.filter(record => record.kind === 'diagnostic').length, 58);
+assert.equal(requests.size, 290);
+const shardIndex = process.env.NEXUS_C_RUNTIME_SHARD;
+assert.ok(shardIndex === undefined || ['0', '1'].includes(shardIndex), 'Invalid C17 runtime shard');
+const shardCount = shardIndex === undefined ? 1 : 2;
+const selectedRequests = new Map([...requests].filter((_, index) => index % shardCount === Number(shardIndex ?? 0)));
+const selectedRecords = records.filter(record => selectedRequests.has(record.digest));
+assert.equal(selectedRequests.size, requests.size / shardCount);
+assert.equal(selectedRecords.length, records.length / shardCount);
 
 const fixture = await onlineRuntimeFixture();
 const executed = new Map();
@@ -97,7 +104,7 @@ try {
   await fixture.page.goto(fixture.origin + '/#view=home');
   await fixture.page.locator('.visual-home').waitFor();
   await fixture.waitReady();
-  for (const [digest, request] of requests) {
+  for (const [digest, request] of selectedRequests) {
     const result = await fixture.page.evaluate(async ({runtimeModule, request}) => {
       const {pickProvider} = await import(runtimeModule);
       const {provider} = await pickProvider(request);
@@ -122,7 +129,7 @@ try {
   await fixture.close();
 }
 
-const evidence = records.map(record => {
+const evidence = selectedRecords.map(record => {
   const actual = executed.get(record.digest);
   const {stdout, stderr, exitCode, phase, stderrIncludes} = record.expected;
   const pass = Boolean(actual) && stdout === actual.stdout &&
@@ -135,16 +142,18 @@ const evidence = records.map(record => {
   return {...record, actual, pass};
 });
 const failed = evidence.filter(record => !record.pass);
-const totals = Object.fromEntries(['example', 'reference', 'diagnostic'].map(kind => [kind, records.filter(record => record.kind === kind).length]));
+const totals = Object.fromEntries(['example', 'reference', 'diagnostic'].map(kind => [kind, selectedRecords.filter(record => record.kind === kind).length]));
 const status = failed.length || infrastructureError || fixture.errors.length ? 'FAIL' : 'PASS';
 await writeFile(path.join(out, 'c17-runtime-matrix.json'), JSON.stringify({
   status, sourceCommit, sourceTree, generation:build.assetGeneration, version:build.version, buildManifestSha256:hash(buildBytes),
-  editions, totals, uniqueRequests: requests.size, realRuns: executed.size, failedCases: failed.length,
+  editions, totals, uniqueRequests:selectedRequests.size, realRuns:executed.size, failedCases:failed.length,
+  shard:{index:Number(shardIndex ?? 0),count:shardCount,fullRequests:requests.size,fullCases:records.length},
   infrastructureError, browserErrors: fixture.errors, cases: evidence,
   transport: 'Chromium · exact local SHA-256-pinned Clang/WASI bytes · verified service worker · synthetic account',
 }, null, 2) + '\n');
 console.log('C17_MATRIX_' + status + ' ' + JSON.stringify({
-  editions: editions.length, ...totals, uniqueRequests: requests.size, realRuns: executed.size, failed: failed.length,
+  editions:editions.length, ...totals, uniqueRequests:selectedRequests.size, realRuns:executed.size, failed:failed.length,
+  shard:Number(shardIndex ?? 0), shardCount,
 }));
 for (const item of failed) console.log(JSON.stringify({lessonId:item.lessonId, locale:item.locale, kind:item.kind, id:item.id,
   expected:item.expected, actual:item.actual}));
