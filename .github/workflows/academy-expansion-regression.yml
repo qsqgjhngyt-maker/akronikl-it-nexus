@@ -70,6 +70,13 @@ jobs:
           git rev-parse HEAD | tee "$NEXUS_CLARITY_EVIDENCE/C12.txt"
           node tools/check-cpp-clarity-preservation.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/C12.txt"
           node tests/cpp-clarity-onec-p2-negative-controls.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/C12.txt"
+      - name: Повторить точный допуск на исходнике P4-Q
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/nexus-p4q" 981746eaeb656d7f393257dd00efbcac3e03ddf0
+          cd "$RUNNER_TEMP/nexus-p4q"
+          git rev-parse HEAD | tee "$NEXUS_CLARITY_EVIDENCE/P4Q-EXACT.txt"
+          GITHUB_HEAD_REF=feature/akronikl-p4q-corpus-20261028 node tools/startup-intro-ci-route.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/P4Q-EXACT.txt"
       - name: Проверить отказ допуска P4-Q к кандидату
         run: |
           set -euo pipefail
@@ -78,7 +85,7 @@ jobs:
             echo 'Кандидат ошибочно получил допуск P4-Q' >&2
             exit 1
           fi
-          rg -F 'P4-Q release branch' "$NEXUS_CLARITY_EVIDENCE/P4Q-REJECTION.txt"
+          grep -F 'P4-Q release branch' "$NEXUS_CLARITY_EVIDENCE/P4Q-REJECTION.txt"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -188,6 +195,7 @@ jobs:
       - name: Десять эталонов, сохранение, cold offline и реальный Clang/WASI
         if: matrix.suite == 'references'
         env:
+          PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
           NEXUS_PINNED_RUNTIME_DIR: ${{ runner.temp }}/academy-expansion-runtime
           NEXUS_GOLD_EVIDENCE: ${{ runner.temp }}/browser-evidence/runtime-bytes
           NEXUS_REFERENCE_EVIDENCE: ${{ runner.temp }}/browser-evidence/references
