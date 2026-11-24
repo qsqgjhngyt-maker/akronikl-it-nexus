@@ -26,13 +26,14 @@ export async function bindPublicContent(route){
    bindBlogSections(blog);void bindBlogMedia(blog,{signal:mediaController.signal});
   }
  }
- const editorial=publishedEditorialPost(slug);
- if(editorial){render({home:{},posts:[editorial]});return;}
  // Публичные материалы версии доступны сразу; серверная лента добавляется отдельно.
  if(!slug)render({home:{},posts:[]});
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
  mediaController.signal.addEventListener('abort',()=>controller.abort(),{once:true});
  try{
+  const editorial=slug?await publishedEditorialPost(slug):null;
+  if(mediaController.signal.aborted)return;
+  if(editorial){render({home:{},posts:[editorial]});return;}
   const response=await fetch('/api/v2/content/feed'+(slug?'?slug='+encodeURIComponent(slug):''),{credentials:'omit',cache:'no-store',redirect:'error',signal:controller.signal,headers:{accept:'application/json'}});
   if(!response.ok)throw Error();const data=await response.json();
   if(mediaController.signal.aborted)return;
