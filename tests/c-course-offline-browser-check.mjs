@@ -59,7 +59,7 @@ try {
     await page.goto(fixture.origin + '/offline.html#view=academy');
     await page.locator('a[data-academy-course="c"]').click();
     await root.getByRole('heading', { level:1, name:courseManifest.title.ru }).waitFor();
-    assert.equal(await root.locator('.c-outline a').count(), 14);
+    assert.equal(await root.locator('.c-outline a').count(), 19);
     await capture('cold-academy-c-390');
     await root.locator('.c-outline a').first().click();
     await root.locator('.c-stages [aria-current="page"]').filter({ hasText:'Объяснение' }).waitFor();
@@ -93,12 +93,24 @@ try {
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m2-reference-en-390');
   });
+  await check('Последний урок M2 ведёт в M3 без сети, проект читается на английском', async () => {
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.guard-boundaries&stage=practice&locale=ru');
+    await root.locator('footer').getByRole('link', {name:/Следующий урок: Объявление, определение и вызов/}).click();
+    await root.getByRole('heading', {level:1, name:'Объявление, определение и вызов', exact:true}).waitFor();
+    await capture('cold-m3-ru-390');
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.function-project&stage=practice&locale=en');
+    await root.getByRole('heading', {level:1, name:'Project: unit conversion', exact:true}).waitFor();
+    await root.getByText('Reference solution', {exact:true}).click();
+    assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
+    await capture('cold-m3-project-en-390');
+  });
   await check('Ресурсы C пришли из Service Worker с SHA из сборки', async () => {
     const expected = [
       'offline.html', ...[
         'core/c-course.mjs', 'core/c-course.css', 'courses/c/manifest.json', 'courses/c/curriculum.json',
         'courses/c/lessons/' + firstId + '.ru.json', 'courses/c/lessons/' + firstId + '.en.json',
         'courses/c/lessons/c.m1-project.ru.json', 'courses/c/lessons/c.read-input.ru.json', 'courses/c/lessons/c.read-input.en.json',
+        'courses/c/lessons/c.guard-boundaries.ru.json', 'courses/c/lessons/c.functions.ru.json', 'courses/c/lessons/c.function-project.en.json',
       ].map(file => build.prefix + file),
     ];
     const manifest = new Map(build.files.map(record => [record.file, record.sha256]));

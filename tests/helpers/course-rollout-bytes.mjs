@@ -27,12 +27,13 @@ if(existsSync(candidateFile)){
   activePins.set(pin.path,pin);
  }
 }
-const m2File='docs/ru/03-content/cp-next-01/M2_PRESENTATION_BYTES.json';
-if(existsSync(m2File)){
- for(const pin of JSON.parse(readFileSync(m2File)).files){
+for(const module of ['M2','M3']){
+ const pinFile='docs/ru/03-content/cp-next-01/'+module+'_PRESENTATION_BYTES.json';
+ if(!existsSync(pinFile))continue;
+ for(const pin of JSON.parse(readFileSync(pinFile)).files){
   const previous=activePins.get(pin.path);
-  assert.ok(previous,'Existing R1 pin: '+pin.path);
-  assert.equal(pin.beforeSha256,previous.newSha256,'Previous R1 pin: '+pin.path);
+  assert.ok(previous,'Existing presentation pin for '+module+': '+pin.path);
+  assert.equal(pin.beforeSha256,previous.newSha256,'Previous presentation pin for '+module+': '+pin.path);
   activePins.set(pin.path,pin);
  }
 }

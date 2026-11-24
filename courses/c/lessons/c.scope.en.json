@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.scope",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "C programming",
+  "module": "Functions and decomposition",
+  "title": "Scope and lifetime",
+  "goal": "Distinguish name scope from object lifetime and predict independent calls.",
+  "prerequisites": [
+    {
+      "text": "Understand blocks, numeric functions and an accumulator."
+    }
+  ],
+  "terms": [
+    {
+      "id": "scope",
+      "term": "Scope",
+      "title": "Scope",
+      "definition": "The region of source text where a name refers to a declaration."
+    },
+    {
+      "id": "lifetime",
+      "term": "Lifetime",
+      "title": "Lifetime",
+      "definition": "The period of execution during which the object exists."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "Every trip needs its own total. If it survives between calls, the next calculation accidentally inherits an earlier result.",
+        "Scope concerns the source, while lifetime concerns execution. Local static retains a value across calls without widening name visibility.",
+        "On a function declaration, static gives the name internal linkage: it can name this function within the source file. Local static on minutes gives the object a lifetime that spans the entire program."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Worked example",
+      "paragraphs": [
+        "Find the two step variables. Explain which one is used inside the inner block and which one is printed."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int total = 8;\n    {\n        int step = 2;\n        total += step;\n    }\n    int step = 7;\n    printf(\"%d %d\\n\", total, step);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "10 7\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Start → total 8 → enter → Outer object",
+        "Inner block → step 2 → total 10 → Inner object",
+        "After block → new step 7 → 10 7 → Different object"
+      ],
+      "trace": [
+        [
+          "Start",
+          "total 8",
+          "enter",
+          "Outer object"
+        ],
+        [
+          "Inner block",
+          "step 2",
+          "total 10",
+          "Inner object"
+        ],
+        [
+          "After block",
+          "new step 7",
+          "10 7",
+          "Different object"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "paragraphs": [
+        "Find the block boundary when the compiler reports an undeclared name. The inner step is outside its scope after the closing brace.",
+        "Two calls with equal arguments expose unwanted accumulation in a local static."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Transfer to practice",
+      "paragraphs": [
+        "Equal trips should take equal time. An ordinary local accumulator starts at zero on each call. A returned number can be stored after the function exits."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.1, 6.2.4",
+      "language": "English",
+      "purpose": "Distinguish name scope from object lifetime and predict independent calls."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What is printed?",
+      "options": [
+        "10 2",
+        "10 7",
+        "17 7"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The inner step is no longer in scope.",
+        "2 was added, then the new step is printed.",
+        "7 never contributes to total."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int total = 8;\n    {\n        int step = 2;\n        total += step;\n    }\n    int step = 7;\n    printf(\"%d %d\\n\", total, step);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Why might the starter print 6 12 for equal trips?",
+      "options": [
+        "Input was mistyped",
+        "static retained the previous total",
+        "There is only one read"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Two inputs of 2 are valid.",
+        "The second call starts at 6.",
+        "Two records are read."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why do two repaired calls give 6 6 for 2 and 2?",
+      "feedback": "Each call owns a minutes initialised to zero. Two additions of 3 produce 6 independently of the prior call.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void) {\n    { int inside = 2; (void)inside; }\n    return inside;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Independent trips",
+    "task": "Enter two trips with 0 to 10 stops each. Each stop adds 3 minutes to its trip. Repair trip_minutes so calls do not share a total. Print two results or invalid. The supplied read_integer function checks the first two lines. A missing line, an invalid number or an out-of-range value gives invalid. The program ignores any later input.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int trip_minutes(int stops)\n{\n    static int minutes = 0; /* TODO: each trip starts from zero. */\n    for (int visit = 0; visit < stops; ++visit) {\n        minutes += 3;\n    }\n    return minutes;\n}\n\nint main(void)\n{\n    int first;\n    int second;\n    if (read_integer(0, 10, &first) != READ_OK ||\n        read_integer(0, 10, &second) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int day_one = trip_minutes(first);\n    int day_two = trip_minutes(second);\n    printf(\"%d %d\\n\", day_one, day_two);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n2\n",
+    "returnAnchor": "example",
+    "hint": "Trace the initial minutes on each call.",
+    "criteria": [
+      "2 and 2 give 6 6.",
+      "10 and 0 give 30 0.",
+      "A call is independent of the previous call."
+    ],
+    "cases": [
+      {
+        "label": "Equal trips",
+        "input": "2\n2\n",
+        "output": "6 6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Different trips",
+        "input": "2\n4\n",
+        "output": "6 12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero and maximum",
+        "input": "0\n10\n",
+        "output": "0 30\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero after the maximum",
+        "input": "10\n0\n",
+        "output": "30 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing second trip",
+        "input": "2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int trip_minutes(int stops)\n{\n    int minutes = 0;\n    for (int visit = 0; visit < stops; ++visit) {\n        minutes += 3;\n    }\n    return minutes;\n}\n\nint main(void)\n{\n    int first;\n    int second;\n    if (read_integer(0, 10, &first) != READ_OK ||\n        read_integer(0, 10, &second) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int day_one = trip_minutes(first);\n    int day_two = trip_minutes(second);\n    printf(\"%d %d\\n\", day_one, day_two);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Enter 2 on each of two lines, then run the starter.",
+        "why": "Distinguish name scope from object lifetime and predict independent calls.",
+        "expected": "The starter prints 6 12. Two identical trips should give 6 6."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Trace the starting value of minutes for each call. Fix the accumulator and try 2 and 2, then 10 and 0.",
+        "why": "The change must satisfy the contract.",
+        "expected": "The corrected output is 6 6 for two trips with two stops each, and 30 0 for ten and zero stops."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check a distinct boundary case and explain the result.",
+        "why": "Different cases distinguish the parts of the rule.",
+        "expected": "A call is independent of the previous call."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Show the starting and ending totals for trips of 2 and 4 stops before and after the fix.",
+        "criteria": [
+          "Before the fix the second call goes from 6 to 18.",
+          "After the fix it goes from 0 to 12."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.local-scope-lived-object",
+    "prerequisites": [
+      "c.parameter-value-return"
+    ]
+  }
+}

@@ -117,12 +117,51 @@ try {
       'akronikl:it-nexus:account-store:v1:synthetic-runtime-online:'));
   });
   assert.equal(accountScoped, true);
+  async function openPractice(lessonId) {
+    await page.goto(origin + '/#course=c&lesson=' + lessonId + '&stage=practice&locale=en');
+    await page.locator('[data-c-workspace] #editor').waitFor();
+  }
+
+  async function runPractice(expectedOutput, exitCode) {
+    await page.locator('[data-c-run]').click();
+    await page.waitForFunction(() => !document.querySelector('[data-c-run]').disabled, null, {timeout:240000});
+    assert.equal(await page.locator('[data-c-stdout]').textContent(), expectedOutput);
+    assert.match(await page.locator('[data-c-result]').textContent(), new RegExp('C17 · Clang/WASI · exit code ' + exitCode + '$'));
+  }
+
+  await openPractice('c.function-test-cases');
+  await page.locator('[data-c-stdin]').fill('');
+  await runPractice('49 0\nfail 50 expected 5 got 0\n51 5\npassed 2\n', 1);
+  const bonusEditor = page.locator('#editor');
+  const bonusStarter = await bonusEditor.inputValue();
+  assert.ok(bonusStarter.includes('score > 50'));
+  await bonusEditor.fill(bonusStarter.replace('score > 50', 'score >= 50'));
+  await runPractice('49 0\n50 5\n51 5\npassed 3\n', 0);
+  await page.screenshot({path:path.join(out, 'm3-bonus-boundary.png')});
+
+  await openPractice('c.function-project');
+  const project = JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR, manifest.prefix,
+    'courses/c/lessons/c.function-project.en.json')));
+  const solution = project.practice.referenceSolution.source;
+  const main = solution.indexOf('int main(void)');
+  assert.ok(main > 0);
+  const editor = page.locator('#editor');
+  await editor.fill(solution.slice(0, main) + 'int main(void) {\n' +
+    '    printf("%d %d\\n", minutes_to_seconds(2), kilometers_to_meters(3));\n    return 0;\n}\n');
+  await page.locator('[data-c-stdin]').fill('');
+  await runPractice('120 3000\n', 0);
+  await page.screenshot({path:path.join(out, 'm3-direct-calls.png')});
+  await editor.fill(solution);
+  await page.locator('[data-c-stdin]').fill('3\n2\n');
+  await runPractice('invalid\n', 0);
+
   assert.deepEqual(fixture.errors, []);
   console.log('C17_DRAFT_RESTORE_PASS editor/stdin preserved after reload and locale switch; starter confirmation rejected; synthetic verified account storage');
   await writeFile(path.join(out, 'c17-workspace.json'), JSON.stringify({
     status: 'PASS', generation: manifest.assetGeneration, version: manifest.version,
     buildManifestSha256: createHash('sha256').update(manifestBytes).digest('hex'),
     result, diagnostic, accountScoped, editorRestored: true, stdinRestored: true, starterDismissalPreservedDraft: true,
+    module3: {bonusBeforeExit:1, bonusAfterExit:0, directCalls:'120 3000', unknownUnit:'invalid'},
   }, null, 2) + '\n');
 } finally {
   await fixture.close();

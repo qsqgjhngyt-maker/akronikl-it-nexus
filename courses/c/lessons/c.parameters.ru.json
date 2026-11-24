@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.parameters",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "Программирование на C",
+  "module": "Функции и декомпозиция",
+  "title": "Параметры, результат и передача значения",
+  "goal": "Объяснить передачу int по значению и сохранить результат вызова.",
+  "prerequisites": [
+    {
+      "text": "Различать параметр и аргумент в вызове функции."
+    }
+  ],
+  "terms": [
+    {
+      "id": "parameter",
+      "term": "Параметр",
+      "title": "Параметр",
+      "definition": "Локальный объект, который получает значение аргумента."
+    },
+    {
+      "id": "return",
+      "term": "Возвращаемое значение",
+      "title": "Возвращаемое значение",
+      "definition": "Результат, доставленный к месту вызова."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "После начисления бонуса исходный балл нужен для журнала. Вызов передаёт значение original в локальный score.",
+        "Присваивание score оставляет original прежним. Чтобы сохранить новый балл, вызывающая сторона должна использовать возвращённое значение."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Разбор на примере",
+      "paragraphs": [
+        "Запишите оба числа, которые увидит пользователь после изменения score."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int add_bonus(int score, int bonus)\n{\n    score += bonus;\n    return score;\n}\n\nint main(void)\n{\n    int original = 9;\n    int increased = add_bonus(original, 6);\n    printf(\"%d %d\\n\", original, increased);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "9 15\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Вход → original 9 → score 9 → Копия",
+        "Прибавление → score 9 → score 15 → original остаётся 9",
+        "Возврат → 15 → increased 15 → Пара 9 15"
+      ],
+      "trace": [
+        [
+          "Вход",
+          "original 9",
+          "score 9",
+          "Копия"
+        ],
+        [
+          "Прибавление",
+          "score 9",
+          "score 15",
+          "original остаётся 9"
+        ],
+        [
+          "Возврат",
+          "15",
+          "increased 15",
+          "Пара 9 15"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Диагностика",
+      "paragraphs": [
+        "Сам по себе вызов допустим, даже если результат нигде не сохранён. Отладка начинается с сравнения ожидаемого и наблюдаемого вывода.",
+        "Функция int должна передавать число через return. Компилятор отклонит return без значения."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенос в практику",
+      "paragraphs": [
+        "Нулевая цена после скидки допустима. Скидка больше цены отклоняется до вызова. После вызова напечатайте и исходную цену, и новый результат."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.8.6.4",
+      "language": "English",
+      "purpose": "Объяснить передачу int по значению и сохранить результат вызова."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что печатает пример?",
+      "options": [
+        "9 15",
+        "15 15",
+        "9 9"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Вернулись 15, исходное число 9.",
+        "Параметр не меняет original.",
+        "Вызов сохраняет результат."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int add_bonus(int score, int bonus)\n{\n    score += bonus;\n    return score;\n}\n\nint main(void)\n{\n    int original = 9;\n    int increased = add_bonus(original, 6);\n    printf(\"%d %d\\n\", original, increased);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Где нужно исправить потерю результата?",
+      "options": [
+        "В присваивании в main",
+        "В формате %d",
+        "В типе discount"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Сохраните возвращаемый int.",
+        "int уже выводится правильно.",
+        "Тип скидки соответствует договору."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему original остаётся 9, когда score изменён?",
+      "feedback": "Два разных объекта. При вызове score получает копию значения original, затем меняется только score.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int score(void) { return; }\nint main(void) { return score(); }\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "non-void function"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Цена до и после скидки",
+    "task": "Прочитайте цену и скидку от 0 до 100 на разных строках. Скидка больше цены даёт invalid. Сохраните результат discounted_price и напечатайте его рядом с исходной ценой. Готовая функция read_integer проверяет первые две строки. Пропуск, неверное число или выход за диапазон дают invalid. Остальной ввод программа игнорирует.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int discounted_price(int amount, int discount)\n{\n    amount -= discount;\n    return amount;\n}\n\nint main(void)\n{\n    int price;\n    int discount;\n    if (read_integer(0, 100, &price) != READ_OK ||\n        read_integer(0, 100, &discount) != READ_OK ||\n        discount > price) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int after = price;\n    discounted_price(price, discount); /* TODO: use its return value. */\n    printf(\"%d %d\\n\", price, after);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "40\n5\n",
+    "returnAnchor": "example",
+    "hint": "Заготовка компилируется. Найдите место, где результат вычисляется, но не сохраняется.",
+    "criteria": [
+      "40 и 5 дают 40 35.",
+      "Граница 5 и 5 даёт 5 0.",
+      "Цена сохраняется отдельно."
+    ],
+    "cases": [
+      {
+        "label": "Обычная скидка",
+        "input": "40\n5\n",
+        "output": "40 35\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Скидка равна цене",
+        "input": "5\n5\n",
+        "output": "5 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Без скидки",
+        "input": "100\n0\n",
+        "output": "100 100\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Скидка больше цены",
+        "input": "5\n6\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ошибочная строка",
+        "input": "40x\n5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int discounted_price(int amount, int discount)\n{\n    amount -= discount;\n    return amount;\n}\n\nint main(void)\n{\n    int price;\n    int discount;\n    if (read_integer(0, 100, &price) != READ_OK ||\n        read_integer(0, 100, &discount) != READ_OK ||\n        discount > price) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int after = discounted_price(price, discount);\n    printf(\"%d %d\\n\", price, after);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Введите цену 40 и скидку 5 на отдельных строках и запустите заготовку.",
+        "why": "Объяснить передачу int по значению и сохранить результат вызова.",
+        "expected": "Заготовка печатает 40 40. По условию ожидаются исходная цена и результат 40 35."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Сохраните результат вызова discounted_price. Запустите ещё раз с тем же вводом и проверьте равные цену и скидку.",
+        "why": "Исправление должно подтвердить договор.",
+        "expected": "При вводе 40 и 5 получится 40 35. При вводе 5 и 5 получится 5 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте отличающийся граничный случай и объясните вывод.",
+        "why": "Случаи показывают, какая часть правила работает.",
+        "expected": "Цена сохраняется отдельно."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Предскажите ответ при записи расчёта обратно в price и двукратной печати price.",
+        "criteria": [
+          "Для 40 и 5 получится 35 35.",
+          "Исходная цена больше не хранится отдельно."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.parameter-value-return",
+    "prerequisites": [
+      "c.function-declaration-call"
+    ]
+  }
+}

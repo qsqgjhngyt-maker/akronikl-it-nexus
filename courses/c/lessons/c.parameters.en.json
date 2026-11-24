@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.parameters",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "C programming",
+  "module": "Functions and decomposition",
+  "title": "Parameters, returns and passing values",
+  "goal": "Explain passing an int by value and save the call result.",
+  "prerequisites": [
+    {
+      "text": "Distinguish a parameter from an argument in a function call."
+    }
+  ],
+  "terms": [
+    {
+      "id": "parameter",
+      "term": "Parameter",
+      "title": "Parameter",
+      "definition": "A local object receiving an argument value."
+    },
+    {
+      "id": "return",
+      "term": "Return value",
+      "title": "Return value",
+      "definition": "The result delivered to the call site."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "A log needs the original score after a bonus. The call supplies original’s value to a local score.",
+        "Assignment to score does not change original. The caller uses the return value to keep the new score."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Worked example",
+      "paragraphs": [
+        "Write both numbers the user will see after score changes."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int add_bonus(int score, int bonus)\n{\n    score += bonus;\n    return score;\n}\n\nint main(void)\n{\n    int original = 9;\n    int increased = add_bonus(original, 6);\n    printf(\"%d %d\\n\", original, increased);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "9 15\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Call → original 9 → score 9 → Value copy",
+        "Add → score 9 → score 15 → original stays 9",
+        "Return → 15 → increased 15 → Pair 9 15"
+      ],
+      "trace": [
+        [
+          "Call",
+          "original 9",
+          "score 9",
+          "Value copy"
+        ],
+        [
+          "Add",
+          "score 9",
+          "score 15",
+          "original stays 9"
+        ],
+        [
+          "Return",
+          "15",
+          "increased 15",
+          "Pair 9 15"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "paragraphs": [
+        "A bare call can compile even when its result is ignored. Debug by comparing expected and observed output.",
+        "An int function needs a return value. Clang rejects return without an expression."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Transfer to practice",
+      "paragraphs": [
+        "A final price of zero is valid. Reject a discount exceeding the price before the call. Afterwards print both the original price and the result."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.8.6.4",
+      "language": "English",
+      "purpose": "Explain passing an int by value and save the call result."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the example print?",
+      "options": [
+        "9 15",
+        "15 15",
+        "9 9"
+      ],
+      "correct": 0,
+      "feedback": [
+        "15 is returned and the original is 9.",
+        "A parameter does not update original.",
+        "The result is saved."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int add_bonus(int score, int bonus)\n{\n    score += bonus;\n    return score;\n}\n\nint main(void)\n{\n    int original = 9;\n    int increased = add_bonus(original, 6);\n    printf(\"%d %d\\n\", original, increased);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Where should a discarded result be fixed?",
+      "options": [
+        "The assignment in main",
+        "The %d format",
+        "The type of discount"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Store the returned int.",
+        "The int is already printed correctly.",
+        "The discount type matches the contract."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why does original stay 9 when score changes?",
+      "feedback": "They are distinct objects. The call copies original’s value and only modifies score.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int score(void) { return; }\nint main(void) { return score(); }\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "non-void function"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Price before and after a discount",
+    "task": "Read price and discount from 0 to 100 on separate lines. If discount exceeds price, print invalid. Save the result of discounted_price and print it beside the original price. The supplied read_integer function checks the first two lines. A missing line, an invalid number or an out-of-range value gives invalid. The program ignores any later input.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int discounted_price(int amount, int discount)\n{\n    amount -= discount;\n    return amount;\n}\n\nint main(void)\n{\n    int price;\n    int discount;\n    if (read_integer(0, 100, &price) != READ_OK ||\n        read_integer(0, 100, &discount) != READ_OK ||\n        discount > price) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int after = price;\n    discounted_price(price, discount); /* TODO: use its return value. */\n    printf(\"%d %d\\n\", price, after);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "40\n5\n",
+    "returnAnchor": "example",
+    "hint": "The starter compiles. Find where the result is computed but discarded.",
+    "criteria": [
+      "40 and 5 give 40 35.",
+      "The boundary 5 and 5 gives 5 0.",
+      "The original price remains separate."
+    ],
+    "cases": [
+      {
+        "label": "Ordinary discount",
+        "input": "40\n5\n",
+        "output": "40 35\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Discount equals price",
+        "input": "5\n5\n",
+        "output": "5 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "No discount",
+        "input": "100\n0\n",
+        "output": "100 100\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Discount exceeds price",
+        "input": "5\n6\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid record",
+        "input": "40x\n5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int discounted_price(int amount, int discount)\n{\n    amount -= discount;\n    return amount;\n}\n\nint main(void)\n{\n    int price;\n    int discount;\n    if (read_integer(0, 100, &price) != READ_OK ||\n        read_integer(0, 100, &discount) != READ_OK ||\n        discount > price) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int after = discounted_price(price, discount);\n    printf(\"%d %d\\n\", price, after);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Enter the price 40 and discount 5 on separate lines, then run the starter.",
+        "why": "Explain passing an int by value and save the call result.",
+        "expected": "The starter prints 40 40. The contract calls for the original price and the result, 40 35."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Save the return value of discounted_price. Run again with the same input, then try matching price and discount.",
+        "why": "The change must satisfy the contract.",
+        "expected": "Inputs 40 and 5 give 40 35. Inputs 5 and 5 give 5 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check a distinct boundary case and explain the result.",
+        "why": "Different cases distinguish the parts of the rule.",
+        "expected": "The original price remains separate."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Predict the outcome if the result is saved into price and price is printed twice.",
+        "criteria": [
+          "40 and 5 produce 35 35.",
+          "The original price is no longer stored separately."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.parameter-value-return",
+    "prerequisites": [
+      "c.function-declaration-call"
+    ]
+  }
+}

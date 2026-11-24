@@ -84,9 +84,10 @@ for (const id of course.availableTopicIds) {
     }
   }
 }
-assert.equal(editions.length, 28);
-assert.equal(records.filter(record => record.kind === 'reference').length, 146);
-assert.equal(records.filter(record => record.kind === 'diagnostic').length, 22);
+assert.equal(editions.length, 38);
+assert.equal(records.filter(record => record.kind === 'example').length, 38);
+assert.equal(records.filter(record => record.kind === 'reference').length, 192);
+assert.equal(records.filter(record => record.kind === 'diagnostic').length, 32);
 assert.ok(records.some(record => record.kind === 'diagnostic'));
 
 const fixture = await onlineRuntimeFixture();

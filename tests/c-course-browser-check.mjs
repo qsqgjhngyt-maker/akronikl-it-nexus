@@ -18,7 +18,9 @@ const build = JSON.parse(buildBytes);
 const prefix = '/' + build.prefix;
 const json = async file => JSON.parse(await readFile(resolveFixtureFile(frontend, build.prefix + file)));
 const manifest = await json('courses/c/manifest.json');
-assert.equal(manifest.availableTopicIds.length, 14);
+const topicIds = manifest.availableTopicIds;
+const lessonCount = topicIds.length;
+assert.equal(lessonCount, 19);
 const lessons = {};
 for (const locale of ['ru', 'en']) {
   lessons[locale] = await Promise.all(manifest.availableTopicIds.map(id => json('courses/c/lessons/' + id + '.' + locale + '.json')));
@@ -153,7 +155,7 @@ async function openCourse(page, locale, width) {
   await page.goto(GATEWAY_ORIGIN + '/#view=academy');
   const card = page.locator('a[data-academy-course="c"]');
   await card.waitFor();
-  assert.match(await card.innerText(), /Модули 1–2|Modules 1–2/);
+  assert.match(await card.innerText(), /Модули 1–3|Modules 1–3/);
   assert.equal(requests.filter(request => request.width === width).length, 0, 'Academy should not preload C modules or lessons');
   await card.click();
   await course(page).getByRole('heading', { level:1, name:manifest.title.ru }).waitFor();
@@ -219,7 +221,7 @@ async function checkDraft(page, first, next, words, {studied = 0, complete = tru
   assert.equal(await stdin.inputValue(), input);
   await course(page).locator('.c-lesson-header .back-link').click();
   await course(page).getByRole('heading', { level:1, name:manifest.title[first.locale] }).waitFor();
-  assert.match(await course(page).locator('header.c-panel').innerText(), new RegExp('Studied ' + studied + ' / 14'));
+  assert.match(await course(page).locator('header.c-panel').innerText(), new RegExp('Studied ' + studied + ' / ' + lessonCount));
   await course(page).getByRole('link', { name:words[10] + first.title, exact:true }).click();
   await lessonReady(page, first, words[2]);
   assert.equal(await editor.inputValue(), changed);
@@ -318,7 +320,7 @@ try {
           await lessonReady(page, lessons.en[0], words[2]);
           await checkDraft(page, lessons.en[0], lessons.en[1], words);
           await checkSelfcheckWriteFailure(page, lessons.en[0], words);
-          for (const id of ['c.m1-project', 'c.read-input']) {
+          for (const id of ['c.m1-project', 'c.read-input', 'c.guard-boundaries', 'c.functions']) {
             const index = lessons.en.findIndex(lesson => lesson.id === id);
             await course(page).locator('.c-lesson-header .back-link').click();
             await course(page).locator('.c-outline').getByRole('link', {name:lessons.en[index].title, exact:true}).click();
@@ -332,9 +334,12 @@ try {
           'C practice and progress must cause no API mutation');
         const observed = [...new Set(requests.filter(request => request.pathname.startsWith(prefix)).map(request => request.pathname.slice(prefix.length)))];
         const lessonFiles = observed.filter(file => file.startsWith('courses/c/lessons/'));
-        assert.equal(lessonFiles.filter(file => file.endsWith('.' + locale + '.json')).length, 14);
-        assert.equal(lessonFiles.length, width === 1366 && locale === 'en' ? 17 : 14);
-        const result = { width, locale, lessons:14, stageViews:42, durationMs:Math.round(performance.now() - started), status:'PASS' };
+        const expectedFiles = topicIds.map(id => 'courses/c/lessons/' + id + '.' + locale + '.json');
+        if (width === 1366 && locale === 'en') {
+          expectedFiles.push(...['c.what-is-c', 'c.m1-project', 'c.read-input', 'c.guard-boundaries', 'c.functions'].map(id => 'courses/c/lessons/' + id + '.ru.json'));
+        }
+        assert.deepEqual(lessonFiles.sort(), expectedFiles.sort());
+        const result = { width, locale, lessons:lessonCount, stageViews:lessonCount * 3, durationMs:Math.round(performance.now() - started), status:'PASS' };
         results.push(result);
         console.log(JSON.stringify(result));
       } finally {
