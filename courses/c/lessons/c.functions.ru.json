@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.functions",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "Программирование на C",
+  "module": "Функции и декомпозиция",
+  "title": "Объявление, определение и вызов",
+  "goal": "Провести по трассе прототип, вызов и возврат из числовой функции.",
+  "prerequisites": [
+    {
+      "text": "Уметь проверить два целых и применить return."
+    }
+  ],
+  "terms": [
+    {
+      "id": "declaration",
+      "term": "Объявление",
+      "title": "Объявление",
+      "definition": "Связывает имя с типом функции. Прототип также задаёт типы параметров."
+    },
+    {
+      "id": "definition",
+      "term": "Определение",
+      "title": "Определение",
+      "definition": "Содержит тело, выполняемое при вызове."
+    },
+    {
+      "id": "argument",
+      "term": "Аргумент",
+      "title": "Аргумент",
+      "definition": "Выражение, значение которого получает параметр."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "Перед расчётом площади мастер уточняет, какие размеры понадобятся. Прототип функции задаёт похожий договор: имя, тип результата и параметры.",
+        "Прототип заканчивается точкой с запятой. Определение содержит тело. Код ниже main доступен через ранее увиденный прототип.",
+        "В C17 прототип int f(void) означает, что у функции нет параметров. Объявление int f() оставляет параметры неуточнёнными."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Разбор на примере",
+      "paragraphs": [
+        "Предскажите результат rect_area(3, 4) и найдите в исходнике объявление, место вызова и определение."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int rect_area(int width, int height);\n\nint main(void)\n{\n    int floor = rect_area(3, 4);\n    printf(\"%d\\n\", floor);\n    return 0;\n}\n\nstatic int rect_area(int width, int height)\n{\n    return width * height;\n}\n",
+        "stdin": "",
+        "output": "12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "До вызова → 3, 4 → параметры → Вход в тело",
+        "В теле → 3 × 4 → 12 → return передаёт число",
+        "main → floor = 12 → 12 → Печать результата"
+      ],
+      "trace": [
+        [
+          "До вызова",
+          "3, 4",
+          "параметры",
+          "Вход в тело"
+        ],
+        [
+          "В теле",
+          "3 × 4",
+          "12",
+          "return передаёт число"
+        ],
+        [
+          "main",
+          "floor = 12",
+          "12",
+          "Печать результата"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Диагностика",
+      "paragraphs": [
+        "Прототип позволяет заметить вызов с недостающим аргументом при компиляции. Сопоставьте фактические числа в скобках с параметрами.",
+        "Если прототип есть, но определение отсутствует, компиляция исходника может пройти. Для создания исполняемой программы понадобится определение при компоновке."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенос в практику",
+      "paragraphs": [
+        "Для ячеек тоже разделите расчёт и внешний ввод. Ноль рядов даёт нулевую вместимость даже при положительном числе мест в ряду."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.7.6.3, 6.9.1",
+      "language": "English",
+      "purpose": "Провести по трассе прототип, вызов и возврат из числовой функции."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Когда выполняется width * height?",
+      "options": [
+        "В прототипе",
+        "При вызове rect_area",
+        "После main"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Прототип только сообщает типы.",
+        "Тело исполняется при вызове.",
+        "main уже нужен результат."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int rect_area(int width, int height);\n\nint main(void)\n{\n    int floor = rect_area(3, 4);\n    printf(\"%d\\n\", floor);\n    return 0;\n}\n\nstatic int rect_area(int width, int height)\n{\n    return width * height;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Что компилятор замечает в вызове с одним числом?",
+      "options": [
+        "Не хватает второго аргумента",
+        "Нет рядов",
+        "Площадь отрицательна"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Сопоставьте вызов с прототипом.",
+        "Количество рядов здесь не проверяется.",
+        "Смысл величины проверяет само приложение."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему вызов корректен, хотя тело находится ниже main?",
+      "feedback": "Компилятор видел прототип до вызова. При выполнении вызов переводит управление к телу и получает int.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int cells(int rows, int count) { return rows * count; }\nint main(void) { return cells(2); }\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Ячейки в секции",
+    "task": "Прочитайте число рядов и ячеек в ряду на отдельных строках, от 0 до 50. Сохраните объявление, вызов и определение slot_count. Исправьте расчёт. Напечатайте число ячеек или invalid. Готовая функция read_integer проверяет первые две строки. Пропуск, неверное число или выход за диапазон дают invalid. Остальной ввод программа игнорирует.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int slot_count(int rows, int per_row);\n\nint main(void)\n{\n    int rows;\n    int per_row;\n    if (read_integer(0, 50, &rows) != READ_OK ||\n        read_integer(0, 50, &per_row) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", slot_count(rows, per_row));\n    return 0;\n}\n\nstatic int slot_count(int rows, int per_row)\n{\n    return rows + per_row; /* TODO: return capacity. */\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n6\n",
+    "returnAnchor": "example",
+    "hint": "Сравните сложение и произведение при нуле рядов.",
+    "criteria": [
+      "2 и 6 дают 12, 0 и 6 дают 0.",
+      "slot_count считает, main читает и печатает.",
+      "Неверные данные отклоняются до расчёта."
+    ],
+    "cases": [
+      {
+        "label": "Два ряда",
+        "input": "2\n6\n",
+        "output": "12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ноль рядов",
+        "input": "0\n6\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Максимум",
+        "input": "50\n50\n",
+        "output": "2500\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нет второй записи",
+        "input": "6\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недопустимый размер",
+        "input": "51\n2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int slot_count(int rows, int per_row);\n\nint main(void)\n{\n    int rows;\n    int per_row;\n    if (read_integer(0, 50, &rows) != READ_OK ||\n        read_integer(0, 50, &per_row) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", slot_count(rows, per_row));\n    return 0;\n}\n\nstatic int slot_count(int rows, int per_row)\n{\n    return rows * per_row;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Введите 2 и 6 на отдельных строках и запустите заготовку.",
+        "why": "Провести по трассе прототип, вызов и возврат из числовой функции.",
+        "expected": "Заготовка складывает числа и печатает 8. По условию нужно 12."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте расчёт в slot_count. Сравните результаты для 2 и 6, затем для 0 и 6.",
+        "why": "Исправление должно подтвердить договор.",
+        "expected": "Исправленная программа печатает 12 и 0 соответственно."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте отличающийся граничный случай и объясните вывод.",
+        "why": "Случаи показывают, какая часть правила работает.",
+        "expected": "Неверные данные отклоняются до расчёта."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Переместите определение выше main в копии и уберите отдельный прототип. Объясните, почему тест по-прежнему даёт 12.",
+        "criteria": [
+          "Определение видно при проверке вызова.",
+          "2 и 6 дают 12."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.function-declaration-call",
+    "prerequisites": [
+      "c.guard-control-flow"
+    ]
+  }
+}

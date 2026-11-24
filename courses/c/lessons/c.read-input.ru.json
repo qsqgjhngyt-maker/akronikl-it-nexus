@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.read-input",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "Программирование на C",
+  "module": "Ввод, условия и циклы",
+  "locale": "ru",
+  "title": "Чтение строки и проверка ввода",
+  "goal": "Безопасно получить одно целое из строки и определить, почему запись можно использовать в вычислениях.",
+  "prerequisites": [
+    {
+      "text": "Уметь печатать значение int через %d."
+    },
+    {
+      "text": "Знать, зачем проверять данные до деления в M1."
+    }
+  ],
+  "terms": [
+    {
+      "id": "record",
+      "term": "Запись",
+      "title": "Запись",
+      "definition": "Последовательность байтов до перевода строки. Последняя непустая запись может завершиться концом ввода."
+    },
+    {
+      "id": "eof",
+      "term": "Конец потока (EOF)",
+      "title": "Конец потока (EOF)",
+      "definition": "Отдельное значение, возвращаемое getchar при исчерпании данных или ошибке чтения. Код различает их через ferror."
+    },
+    {
+      "id": "remainder",
+      "term": "Хвост разбора",
+      "title": "Хвост разбора",
+      "definition": "Символы, оставшиеся после числа. Здесь допускаются только пробельные символы."
+    },
+    {
+      "id": "range",
+      "term": "Диапазон",
+      "title": "Диапазон",
+      "definition": "Множество допустимых для задачи значений. Проверяется до приведения к int."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "Счётчик ячеек зарядной стойки принимает от 1 до 48. Оператор набирает строку, поэтому к числу иногда приписывают единицу или нажимают Enter без данных. Отделите чтение записи, распознавание числа и проверку правила стойки.",
+        "Буфер ёмкостью 64 байта вмещает 63 байта текста и завершающий нулевой байт. Перевод строки не сохраняется. Слишком длинная запись отклоняется целиком, даже если её начало выглядит корректно.",
+        "Обозначения READ_OK, READ_END и READ_BAD означают «получено число», «новой записи нет» и «запись непригодна». Указатель end библиотека использует как закладку в строке. Его устройство разберём позже, сейчас важна позиция.",
+        "Функции read_line и read_integer уже заданы. Проследите их результат: строка → число и остаток строки → проверка диапазона → статус. В main вы решите, что вывести для каждого статуса."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Допустимое число ячеек",
+      "paragraphs": [
+        "Во вводе перед 18 есть пробел и табуляция, после числа — пробел. Проследите этот вход по листингу и назовите число, которое сохранится в cells.",
+        "read_line ограничивает и сохраняет запись. strtol читает десятичное число и отмечает позицию после цифр. Функция возвращает READ_OK после всех проверок и только тогда записывает число в cells."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int cells;\n    if (read_integer(1, 48, &cells) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"cells %d\\n\", cells);\n    return 0;\n}\n",
+        "stdin": " \t18 \n",
+        "output": "cells 18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Сначала считываются байты до \\n или EOF. ferror отделяет ошибку потока от штатного конца.",
+        "Перед strtol сбрасываем errno. Если цифр нет, end остаётся на начале. Для слишком большого числа возможна ERANGE.",
+        "После проверки диапазона пропускаем пробелы в хвосте. Оставшийся символ означает лишние данные.",
+        "Код main читает cells только при READ_OK."
+      ],
+      "trace": [
+        [
+          "Чтение",
+          "пробел, табуляция, 18, пробел",
+          "допустимая запись",
+          "Символ перевода строки потреблён"
+        ],
+        [
+          "Разбор",
+          "начало строки",
+          "18",
+          "Хвост содержит только пробел"
+        ],
+        [
+          "Контракт",
+          "18 в [1, 48]",
+          "READ_OK",
+          "Печать cells 18"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Число распознано, запись отклонена",
+      "paragraphs": [
+        "Для 18A strtol получает 18, но закладка указывает на A. Если проверять только число, программа ошибочно примет запись.",
+        "Не храните результат getchar в char. Тогда служебное EOF может совпасть с байтом данных. Макрос EOF сравнивается с результатом типа int.",
+        "strtol ожидает адрес переменной end. Если передать end вместо &end, компилятор сообщит о несовместимом типе. Ошибочный фрагмент служит для чтения диагностики."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Отделите число от договора",
+      "paragraphs": [
+        "Мысленно замените 18 на 0 во входной строке. Разбор числа остаётся успешным, но договор стойки отвергает значение.",
+        "Пустая строка отделена от пустого потока. Для этого приложения оба случая дают invalid, однако во втором программа ещё не получила ни одной записи."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.21.7.6, 7.4.1.10, 7.22.1.4",
+      "language": "English",
+      "purpose": "Проверить сигналы конца потока, допустимый аргумент isspace и правила strtol."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что выведет пример с пробелами вокруг 18?",
+      "options": [
+        "invalid",
+        "cells 18",
+        "cells 0"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Пробельные символы допустимы.",
+        "Число в диапазоне, хвост пробельный.",
+        "Начальные пробелы пропускает strtol."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int cells;\n    if (read_integer(1, 48, &cells) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"cells %d\\n\", cells);\n    return 0;\n}\n",
+        "stdin": " \t18 \n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Почему 18A надо отклонить после успешного чтения 18?",
+      "options": [
+        "На хвосте осталось A",
+        "18 превышает предел",
+        "errno всегда ненулевой"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Проверяется вся запись.",
+        "18 попадает в диапазон.",
+        "errno сброшен перед разбором."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Как обработать EOF после символов 1 и 8 без перевода строки? Как отличается пустой поток?",
+      "feedback": "Непустую недописанную строку можно обработать как запись с числом 18. Пустой поток даёт READ_END.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdlib.h>\n\nint main(void)\n{\n    char *end;\n    (void)strtol(\"18\", end, 10);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Показание термометра, введённое оператором",
+    "task": "Дополните проверку хвоста в готовом помощнике. Программа читает первую строку с одним целым от −40 до 60. Пробелы вокруг числа допустимы. Корректное значение печатается после temperature, все нарушения как invalid.",
+    "hint": "После цикла с isspace место end указывает либо на завершающий ноль, либо на первый лишний символ.",
+    "criteria": [
+      "Оба предела диапазона принимаются. 61 отклоняется.",
+      "Хвост 12C и второе число в той же строке отклоняются.",
+      "Лишние данные не печатаются. Корректное число с пробелами распознаётся.",
+      "CRLF и нулевой байт проверяются точными входными данными. Обычное поле ввода в браузере не подходит для посимвольного ввода этих случаев."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 12C.",
+        "why": "Наблюдаем, чего не хватает в проверке.",
+        "expected": "Заготовка ошибочно принимает число в начале."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте символ после пробельного хвоста.",
+        "why": "Нужно принять строку целиком.",
+        "expected": "12C даёт invalid, 12 продолжает работать."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Сравните -40, 60 и 61.",
+        "why": "Проверяются обе границы и выход за предел.",
+        "expected": "Только 61 отклоняется."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Граничный перенос",
+        "task": "Составьте строку с числом -1, которая отклоняется из-за хвоста, и строку с этим же числом, которая принимается. Объясните отличие.",
+        "criteria": [
+          "-1x отклоняется, -1 с пробелами принимается.",
+          "Объяснение отделяет значение от записи."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    /* TODO: reject any non-whitespace left after the integer. */\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int degrees;\n    if (read_integer(-40, 60, &degrees) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"temperature %d\\n\", degrees);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "-12\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Обычная отрицательная температура",
+        "input": "-12\n",
+        "output": "temperature -12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Допустимый нижний предел",
+        "input": "-40\n",
+        "output": "temperature -40\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Допустимый верхний предел",
+        "input": "60\n",
+        "output": "temperature 60\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пробел, табуляция, +5, пробел, табуляция и перевод строки",
+        "input": " \t+5 \t\n",
+        "output": "temperature 5\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "10 с окончанием CRLF (два байта, проверка в наборе тестов)",
+        "input": "10\r\n",
+        "output": "temperature 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Завершающий перевод строки отсутствует",
+        "input": "5",
+        "output": "temperature 5\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Число ниже диапазона",
+        "input": "-41\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Положительное значение за верхней границей",
+        "input": "61\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Хвост после числа",
+        "input": "12C\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Второе число в той же строке",
+        "input": "12 13\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Три пробела и перевод строки",
+        "input": "   \n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой поток",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Переполнение long",
+        "input": "999999999999999999999999999999999999\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "64 пробела и перевод строки (предел превышен)",
+        "input": "                                                                \n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "61 пробел, затем 12 и перевод строки (ровно 63 байта до конца строки)",
+        "input": "                                                             12\n",
+        "output": "temperature 12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "12, нулевой байт и перевод строки (проверка в наборе тестов)",
+        "input": "12\u0000\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int degrees;\n    if (read_integer(-40, 60, &degrees) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"temperature %d\\n\", degrees);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.checked-line-input",
+    "prerequisites": [
+      "c.integer-quotient-remainder"
+    ]
+  }
+}

@@ -1,0 +1,241 @@
+name: Академия — регрессия расширения
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/academy-expansion-regression.yml'
+      - 'tools/check-academy-expansion.mjs'
+      - 'tests/academy-expansion-regression.test.mjs'
+      - 'docs/ru/03-content/cp-next-01/REGRESSION_POLICY_RU.md'
+      - 'tools/check-academy-m2.mjs'
+      - 'tests/academy-m2-scope.test.mjs'
+      - 'docs/ru/03-content/cp-next-01/M2_*.md'
+      - 'docs/ru/03-content/cp-next-01/M2_*.json'
+      - 'tools/check-academy-m3.mjs'
+      - 'tests/academy-m3-scope.test.mjs'
+      - 'docs/ru/03-content/cp-next-01/M3_*.md'
+      - 'docs/ru/03-content/cp-next-01/M3_*.json'
+      - 'tools/check-academy-m4.mjs'
+      - 'tests/academy-m4-scope.test.mjs'
+      - 'docs/ru/03-content/cp-next-01/M4_*.md'
+      - 'docs/ru/03-content/cp-next-01/M4_*.json'
+      - 'tools/check-nexus-perf-01.mjs'
+      - 'tools/measure-nexus-performance.mjs'
+      - 'tools/check-academy-scalability-browser.mjs'
+      - 'tests/nexus-perf-01-scope.test.mjs'
+      - 'docs/ru/03-content/cp-next-01/PERF01_*.md'
+      - 'docs/ru/03-content/cp-next-01/PERF01_*.json'
+      - 'core/blog-presentation.js'
+      - 'core/learning-views.js'
+      - 'tests/platform-startup-*.mjs'
+      - 'courses/c/**'
+      - 'core/c-course*'
+      - 'core/app.js'
+      - 'core/academy-*.js'
+      - 'core/code-hub-presentation.js'
+      - 'pwa/**'
+      - 'sandbox/**'
+      - 'tests/c-course-*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: academy-expansion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scope:
+    name: Точный SHA и сохранность контрактов
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NEXUS_REGRESSION_BASE: ${{ github.event.pull_request.base.sha }}
+      NEXUS_REGRESSION_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Защищённые файлы, область PERF-01 и отрицательные контроли
+        env:
+          NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/scope-evidence
+        run: |
+          set -euo pipefail
+          node tools/check-nexus-perf-01.mjs
+          node --test tests/academy-expansion-regression.test.mjs tests/academy-m2-scope.test.mjs tests/academy-m3-scope.test.mjs tests/academy-m4-scope.test.mjs tests/nexus-perf-01-scope.test.mjs tests/onec-historical-routing.test.mjs tests/onec-platform-ci-route.test.mjs tests/content-publication-route.test.mjs | tee "$NEXUS_ACADEMY_EVIDENCE/CONTROLS.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-expansion-scope-${{ github.sha }}
+          path: ${{ runner.temp }}/scope-evidence/
+          retention-days: 30
+
+  historical:
+    name: Неизменённые исторические проверки
+    needs: scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NEXUS_CLARITY_EVIDENCE: /tmp/academy-expansion-historical
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Повторить Preservation и семь отрицательных проверок на C12
+        run: |
+          set -euo pipefail
+          mkdir -p "$NEXUS_CLARITY_EVIDENCE"
+          git worktree add --detach "$RUNNER_TEMP/nexus-c12" a944f7221f76622a1d6bb41f5159e0f1cfa3a614
+          cd "$RUNNER_TEMP/nexus-c12"
+          git rev-parse HEAD | tee "$NEXUS_CLARITY_EVIDENCE/C12.txt"
+          node tools/check-cpp-clarity-preservation.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/C12.txt"
+          node tests/cpp-clarity-onec-p2-negative-controls.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/C12.txt"
+      - name: Повторить точный допуск на исходнике P4-Q
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/nexus-p4q" 981746eaeb656d7f393257dd00efbcac3e03ddf0
+          cd "$RUNNER_TEMP/nexus-p4q"
+          git rev-parse HEAD | tee "$NEXUS_CLARITY_EVIDENCE/P4Q-EXACT.txt"
+          GITHUB_HEAD_REF=feature/akronikl-p4q-corpus-20261028 node tools/startup-intro-ci-route.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/P4Q-EXACT.txt"
+      - name: Проверить отказ допуска P4-Q к кандидату
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$NEXUS_CLARITY_EVIDENCE/P4Q-CANDIDATE.txt"
+          if GITHUB_HEAD_REF=feature/cp-next-01-c-agent-team-20261124 node tools/startup-intro-ci-route.mjs > "$NEXUS_CLARITY_EVIDENCE/P4Q-REJECTION.txt" 2>&1; then
+            echo 'Кандидат ошибочно получил допуск P4-Q' >&2
+            exit 1
+          fi
+          grep -F 'P4-Q release branch' "$NEXUS_CLARITY_EVIDENCE/P4Q-REJECTION.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-expansion-historical-${{ github.sha }}
+          path: /tmp/academy-expansion-historical/
+          retention-days: 30
+          if-no-files-found: error
+
+  contracts:
+    name: Содержание, сохранение, производительность и native C++
+    needs: scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      NEXUS_CLARITY_EVIDENCE: /tmp/academy-expansion-contracts
+      NEXUS_QT_EVIDENCE_DIR: /tmp/academy-expansion-contracts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Контракты и материалы действующих курсов
+        run: |
+          set -euo pipefail
+          mkdir -p "$NEXUS_CLARITY_EVIDENCE"
+          node tools/check-content-review.mjs
+          node --test --test-concurrency=1 \
+            tests/reference-courses-content.test.mjs tests/reference-courses-rollout.test.mjs \
+            tests/cpp-clarity-content.test.mjs tests/cpp-clarity-*-content.test.mjs \
+            tests/cpp-clarity-r3-state.test.mjs tests/cpp-clarity-r3-writer.test.mjs \
+            tests/cpp-clarity-r3-session.test.mjs tests/cpp-clarity-r3-onec-writer.test.mjs \
+            tests/cpp-clarity-r3-transfer.test.mjs tests/cpp-clarity-regression.test.mjs \
+            tests/onec-offline-data.test.mjs tests/content-contract.test.mjs \
+            tests/c-course-content.test.mjs tests/runtime-files.test.mjs \
+            tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs \
+            tests/platform-lazy-imports.test.mjs tests/pwa-controller-graph-compatibility.test.mjs \
+            tests/akronikl-context-runtime.test.mjs \
+            | tee "$NEXUS_CLARITY_EVIDENCE/CONTRACTS.txt"
+      - name: Точные прежние лимиты, изоляция и сохранение
+        run: |
+          set -euo pipefail
+          node tools/check-cpp-course-perf.mjs
+          node tests/shared-presentation-check.mjs
+          node tests/code-studio-foundation-check.mjs
+          for check in workspace-persistence-resume offline-learning offline-transfer pwa-policy pwa-controller account-storage-isolation; do
+            node "tests/$check-check.mjs"
+          done
+      - name: Программы C++20 и отрицательные контроли native
+        run: |
+          set -euo pipefail
+          node tools/check-cpp-clarity-host.mjs | tee "$NEXUS_CLARITY_EVIDENCE/CPP-HOST.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-expansion-contracts-${{ github.sha }}
+          path: /tmp/academy-expansion-contracts/
+          retention-days: 30
+          if-no-files-found: error
+
+  browser:
+    name: Браузерная регрессия · ${{ matrix.suite }}
+    needs: scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [editions, onec, references]
+    env:
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Собрать непубликованный кандидат и подключить Chrome
+        run: |
+          set -euo pipefail
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
+          chrome="$(command -v google-chrome)"
+          "$chrome" --version
+          export NEXUS_FRONTEND_DIR="$RUNNER_TEMP/academy-expansion-frontend"
+          node tools/build-cpp-clarity-candidate.mjs
+          printf 'NEXUS_CHROME_PATH=%s\nNEXUS_FRONTEND_DIR=%s\n' "$chrome" "$NEXUS_FRONTEND_DIR" >> "$GITHUB_ENV"
+      - name: 302 редакции прежних курсов на трёх ширинах
+        if: matrix.suite == 'editions'
+        env:
+          NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/browser-evidence
+        run: node tests/reference-courses-rollout-browser.mjs . "$NEXUS_FRONTEND_DIR" "$NEXUS_ACADEMY_EVIDENCE"
+      - name: 1С P1/P2, ответы, работа и холодное чтение
+        if: matrix.suite == 'onec'
+        env:
+          NEXUS_CLARITY_EVIDENCE: ${{ runner.temp }}/browser-evidence
+        run: |
+          set -euo pipefail
+          node tests/cpp-clarity-reference-visibility-browser.mjs
+          node tests/cpp-clarity-onec-p1-browser.mjs
+          node tests/cpp-clarity-onec-p2-types-browser.mjs
+          node tests/cpp-clarity-onec-p2-conditions-browser.mjs
+          node tests/cpp-clarity-onec-p2-module-browser.mjs
+      - name: Десять эталонов, сохранение, cold offline и реальный Clang/WASI
+        if: matrix.suite == 'references'
+        env:
+          PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
+          NEXUS_PINNED_RUNTIME_DIR: ${{ runner.temp }}/academy-expansion-runtime
+          NEXUS_GOLD_EVIDENCE: ${{ runner.temp }}/browser-evidence/runtime-bytes
+          NEXUS_REFERENCE_EVIDENCE: ${{ runner.temp }}/browser-evidence/references
+        run: |
+          set -euo pipefail
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+          node tests/reference-courses-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-expansion-browser-${{ matrix.suite }}-${{ github.sha }}
+          path: ${{ runner.temp }}/browser-evidence/
+          retention-days: 30
+          if-no-files-found: error

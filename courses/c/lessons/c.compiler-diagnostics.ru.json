@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.compiler-diagnostics",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "Программирование на C",
+  "module": "Первые программы на C",
+  "locale": "ru",
+  "title": "Читаем диагностику компилятора",
+  "goal": "Найти первое сообщение, исправить его и отдельно проверить смысл результата.",
+  "prerequisites": [
+    {
+      "text": "Запускать C17-программу в Code Studio."
+    },
+    {
+      "text": "Читать объявление переменной и строку printf."
+    }
+  ],
+  "terms": [
+    {
+      "id": "diagnostic",
+      "term": "Диагностика",
+      "title": "Диагностика",
+      "definition": "Сообщение компилятора о проблеме. В нём часто есть файл, позиция и причина."
+    },
+    {
+      "id": "identifier",
+      "term": "Идентификатор",
+      "title": "Идентификатор",
+      "definition": "Имя из программы, например cargo. Регистр и порядок букв имеют значение."
+    },
+    {
+      "id": "stdout",
+      "term": "Стандартный вывод",
+      "title": "Стандартный вывод",
+      "definition": "Текст, который печатает запущенная программа. Диагностику сборки смотрят отдельно."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Где искать причину",
+      "paragraphs": [
+        "Вы открыли образец и решили переименовать переменную, но исправили имя только в одном месте. Нажатие «Запустить» сначала компилирует код. Текст ошибки может появиться ещё до запуска.",
+        "Найдите первое сообщение об ошибке в вашем исходнике. Прочитайте имя файла, строку, столбец и фразу о проблеме. Следующие сообщения могут быть следствием первого.",
+        "После исправления повторите сборку и проверьте вывод. При успешной сборке программа всё ещё может вычислять другое значение, чем требует задача."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Корректная строка и опечатка",
+      "paragraphs": [
+        "В рабочей версии cargo объявлена и так же названа в вызове printf. В копии попробуйте заменить только аргумент printf на carog."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7;\n    printf(\"Cargo: %d\\n\", cargo);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "Cargo: 7\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Запустите исходный пример. У объявления cargo и обращения в printf одинаковое имя, программа печатает Cargo: 7.",
+        "Сделайте в копии одну замену cargo → carog только в printf. Найдите сообщение Clang с фрагментом undeclared identifier и именем carog. Точный номер столбца зависит от вашего форматирования.",
+        "Исправьте carog на cargo. После новой сборки снова проверьте одну строку stdout."
+      ],
+      "trace": [
+        [
+          "Рабочая версия",
+          "cargo",
+          "Cargo: 7",
+          "Сборка и запуск"
+        ],
+        [
+          "Опечатка в printf",
+          "carog",
+          "нет строки stdout",
+          "Ошибка при сборке"
+        ],
+        [
+          "Поправили имя",
+          "cargo",
+          "Cargo: 7",
+          "Сборка и запуск"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Два коротких эксперимента",
+      "paragraphs": [
+        "Если убрать ; после int cargo = 7, диагностика Clang сообщит expected и покажет место, где ожидалась точка с запятой. Проверяйте указанную строку и конец предыдущей строки.",
+        "Если заменить 7 на 6, сборка успешна и программа печатает Cargo: 6. Сравнить с ожидаемым Cargo: 7 поможет самостоятельный запуск."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Успех сборки и проверка смысла",
+      "paragraphs": [
+        "Сначала меняйте минимальный фрагмент, который объясняет первое сообщение. Когда сборка снова проходит, проверяйте вычисление на известном входе.",
+        "Запишите отдельно, что произошло на сборке, и что появилось в stdout после запуска. Так можно проверить и исправление имени, и исправление формулы."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.3, §6.2.1, §6.8.3",
+      "language": "English",
+      "purpose": "Проверить требование к диагностике, видимость имён и запись выражений как инструкций."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какое сообщение связано с заменой cargo на carog только в printf?",
+      "options": [
+        "В компиляции появился фрагмент undeclared identifier",
+        "В stdout появилась строка Cargo: 0",
+        "В stdout появилась строка carog"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Обращение ссылается на необъявленное имя.",
+        "До запуска дело не дойдёт.",
+        "Компилятор не запустит программу с этой ошибкой."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7;\n    printf(\"Cargo: %d\\n\", cargo);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Сборка проходит, но вместо Total: 19 программа выводит Total: 13. Что проверить первым?",
+      "options": [
+        "Вычисление total",
+        "Номер сообщения об ошибке компиляции",
+        "Клавишу запуска"
+      ],
+      "correct": 0,
+      "feedback": [
+        "16 - 3 = 13, хотя по условию надо прибавить 3.",
+        "Успешная сборка не выдала такой ошибки.",
+        "Строка вывода подтверждает, что запуск был."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Какие два отдельных факта нужно записать после исправления опечатки и формулы?",
+      "feedback": "Сборка прошла без ошибки. В запуске получен ожидаемый stdout.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Разберите две проблемы расчёта",
+    "task": "В заготовке расчёта к основной партии из 16 мест добавили ещё 3. Сначала устраним ошибку сборки. Затем добейтесь правильной строки Total: 19, вычисляя число из base и extra.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    int base = 16;\n    int extra = 3;\n    int total = bas - extra;\n    printf(\"Total: %d\\n\", total);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Основная партия и добавленные места",
+        "input": "",
+        "output": "Total: 19\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Названо необъявленное имя bas, ошибка исправлена в выражении.",
+      "После исправления имени отдельно замечен результат Total: 13.",
+      "В окончательной версии total вычисляется из base и extra, наблюдается Total: 19."
+    ],
+    "hint": "Первый запуск заготовки выявляет проблему с именем. Когда сборка проходит, сравните знак операции со словом «добавили».",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int base = 16;\n    int extra = 3;\n    int total = base + extra;\n    printf(\"Total: %d\\n\", total);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку, прочтите первое сообщение и исправьте только имя.",
+        "why": "Меняйте по одной причине за раз.",
+        "expected": "Ошибка с bas исчезает."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Снова запустите. Сверьте вывод с условием.",
+        "why": "13 получается при вычитании.",
+        "expected": "Видно Total: 13, хотя ожидалось 19."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте выражение и запустите ещё раз.",
+        "why": "Проверка вычисления требует stdout.",
+        "expected": "Получено Total: 19."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенесите правило",
+        "task": "В копии рабочей версии измените extra на 0, предскажите результат и проверьте его. Почему для нуля ошибочный знак мог остаться незамеченным?",
+        "criteria": [
+          "Вывод Total: 16.",
+          "При нуле результат сложения и вычитания одинаков.",
+          "Случай с extra = 3 отличает формулы."
+        ]
+      }
+    ]
+  },
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7;\n    printf(\"Cargo: %d\\n\", carog);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier",
+        "carog"
+      ]
+    },
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7\n    printf(\"Cargo: %d\\n\", cargo);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected",
+        ";"
+      ]
+    },
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int base = 16;\n    int extra = 3;\n    int total = bas - extra;\n    printf(\"Total: %d\\n\", total);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier",
+        "bas"
+      ]
+    }
+  ],
+  "skill": {
+    "id": "c.read-compiler-diagnostics",
+    "prerequisites": [
+      "c.variables-types",
+      "c.arithmetic-conversion"
+    ]
+  }
+}

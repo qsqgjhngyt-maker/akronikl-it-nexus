@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m4-v1",
+  "id": "c.array-parameters",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m4",
+  "course": "C programming",
+  "module": "Arrays and elementary algorithms",
+  "title": "Passing an array and its length",
+  "goal": "Pass an array and its active element count to a function. Explain why the same buffer can give different results with different lengths.",
+  "prerequisites": [
+    {
+      "text": "Check an index before reading an array element and trace the iterations of a loop."
+    }
+  ],
+  "terms": [
+    {
+      "id": "capacity",
+      "term": "Capacity",
+      "title": "Capacity",
+      "definition": "The number of elements allocated in the array."
+    },
+    {
+      "id": "active-length",
+      "term": "Active length",
+      "title": "Active length",
+      "definition": "The count of initial elements the function must process. It can be zero."
+    },
+    {
+      "id": "array-parameter",
+      "term": "Array parameter",
+      "title": "Array parameter",
+      "definition": "A declaration such as const int values[] in a function parameter list. C adjusts it to a const int * parameter."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "One buffer can hold different numbers of active readings",
+      "paragraphs": [
+        "Three cards on a table show 5, 8 and 2. In one call all three readings should be added. In another, the meter has supplied no active readings yet. The readings array still has three slots in both cases. Passing an active length of zero tells the function to skip all of them.",
+        "The contract has two parts. Pass the array’s starting address and the active length. The caller checks that the length is from 0 through capacity. The loop then reads only indices below length.",
+        "In main, readings names the array. The parameter declaration const int values[] becomes const int * inside sum. There, sizeof values gives the size of a pointer. The active element count comes from length."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Sum three readings, then zero",
+      "paragraphs": [
+        "The first call to sum passes an active length of 3. Here it equals the capacity. The second passes the same array and an active length of 0. Trace the changes in total and count the array reads."
+      ],
+      "steps": [
+        "First call. total starts at 0.",
+        "After reading indices 0, 1 and 2, the totals are 5, 13 and 15.",
+        "Second call. With length = 0, the first condition is false. The function returns the starting value 0."
+      ],
+      "trace": [
+        [
+          "length = 3, index = 0",
+          "Read 5",
+          "total = 5"
+        ],
+        [
+          "length = 3, index = 1",
+          "Read 8",
+          "total = 13"
+        ],
+        [
+          "length = 3, index = 2",
+          "Read 2",
+          "total = 15"
+        ],
+        [
+          "length = 0, index = 0",
+          "0 < 0 is false",
+          "No reads, total = 0"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int sum(const int values[], int length)\n{\n    int total = 0;\n    for (int index = 0; index < length; ++index) {\n        total += values[index];\n    }\n    return total;\n}\n\nint main(void)\n{\n    const int readings[] = {5, 8, 2};\n    int capacity = (int)(sizeof readings / sizeof readings[0]);\n    printf(\"%d\\n\", sum(readings, capacity));\n    printf(\"%d\\n\", sum(readings, 0));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "15\n0\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "The result reveals where the loop stopped",
+      "paragraphs": [
+        "A loop with index < length − 1 skips the last active position. Summing exposes that mistake when the last value is nonzero. For a threshold count, choose a case where the last element meets the threshold.",
+        "The compiler example declares two parameters for first_or_zero. The call supplies one argument. Locate the missing length in the declaration and explain where the program can compute it."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Choose a test using only part of the array",
+      "paragraphs": [
+        "For readings 2, 7 and 9 with threshold 7, predict the number of matches at lengths 3, 2 and 0. Only the full traversal includes the last value, 9. Trace how the length changes what the function does with the same array."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.3.2.1, 6.5.3.4, 6.7.6.3",
+      "language": "English",
+      "purpose": "Check array-to-pointer conversion, the sizeof exception and array parameter adjustment."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does sum(readings, 0) return in the example?",
+      "options": [
+        "0",
+        "5",
+        "15"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The first loop condition is false. The initial total is returned.",
+        "A sum of 5 requires reading the first element.",
+        "The sum is 15 when all three elements are processed."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What does sizeof values give inside sum with a const int values[] parameter?",
+      "options": [
+        "The array capacity in elements",
+        "The pointer size in bytes",
+        "The active length supplied by the caller"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Compute capacity while the array type is available.",
+        "C adjusted the parameter type to a pointer.",
+        "The active length is passed separately in length."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "The array has four slots and the function receives length = 2. Which indices may this call read, and what must the caller check first?",
+      "feedback": "This call reads only indices 0 and 1. The caller checks 0 ≤ length ≤ capacity. When length is 2, the body of a loop using index < length runs twice.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int first_or_zero(const int values[], int length)\n{\n    if (length == 0) {\n        return 0;\n    }\n    return values[0];\n}\n\nint main(void)\n{\n    const int values[] = {5, 8, 2};\n    return first_or_zero(values);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments to function call"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Active readings at or above a threshold",
+    "task": "The readings array contains 5, 8, 2 and 8. The first input line gives an active length from 0 to 4 inclusive. The second gives a threshold from −99 to 99. Count how many of the first length values are at least the threshold. Print the count on one line. Print invalid for a missing line, malformed integer or out-of-range value. The supplied read_integer function handles the first two lines. Further input is ignored. Fix the loop limit in count_at_least.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int values[], int length, int threshold)\n{\n    int count = 0;\n    for (int index = 0; index < length - 1; ++index) {\n        if (values[index] >= threshold) {\n            ++count;\n        }\n    }\n    return count;\n}\n\nint main(void)\n{\n    const int readings[] = {5, 8, 2, 8};\n    int capacity = (int)(sizeof readings / sizeof readings[0]);\n    int length;\n    int threshold;\n    if (read_integer(0, capacity, &length) != READ_OK ||\n        read_integer(-99, 99, &threshold) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", count_at_least(readings, length, threshold));\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "4\n8\n",
+    "returnAnchor": "example",
+    "hint": "Compare the last index visited by the starter with the final index in the active range. The range depends on length.",
+    "criteria": [
+      "Inputs 4 and 8 should give 2, 2 and 8 should give 1, and 0 and 8 should give 0. Enter each pair on separate lines.",
+      "The function reads only the active range and counts values equal to the threshold.",
+      "A length above capacity or below zero is rejected before the call to count_at_least."
+    ],
+    "cases": [
+      {
+        "label": "Full array with repeated matches",
+        "input": "4\n8\n",
+        "output": "2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Only the first two readings",
+        "input": "2\n8\n",
+        "output": "1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero active length",
+        "input": "0\n8\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "All four readings match",
+        "input": "4\n2\n",
+        "output": "4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "One reading below the threshold",
+        "input": "1\n9\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Length above capacity",
+        "input": "5\n8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Negative length",
+        "input": "-1\n8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing threshold",
+        "input": "4\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra character after the threshold",
+        "input": "4\n8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int values[], int length, int threshold)\n{\n    int count = 0;\n    for (int index = 0; index < length; ++index) {\n        if (values[index] >= threshold) {\n            ++count;\n        }\n    }\n    return count;\n}\n\nint main(void)\n{\n    const int readings[] = {5, 8, 2, 8};\n    int capacity = (int)(sizeof readings / sizeof readings[0]);\n    int length;\n    int threshold;\n    if (read_integer(0, capacity, &length) != READ_OK ||\n        read_integer(-99, 99, &threshold) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", count_at_least(readings, length, threshold));\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open Practice and check that 4 and 8 are on separate input lines. Select Run my code.",
+        "why": "Look for the match at the last value, 8.",
+        "expected": "The starter prints 1. With all four readings active, the required count is 2."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the loop bound in count_at_least and run again. Then change the first line to 2 and then to 0.",
+        "why": "The length sets the active range. At zero, the loop never starts.",
+        "expected": "The three runs at lengths 4, 2 and 0 give 2, 1 and 0 with threshold 8."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Try length 5 with threshold 8. Keep main’s input check before the function call.",
+        "why": "A length greater than capacity violates the contract.",
+        "expected": "The output is invalid. The counting function is never called."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Save your code to a local text file. In the lesson editor, replace readings with 6, 4, 6, 9 and 6. Keep threshold 6 and try the full length 5, the prefix of length 2, and length 0. Restore your saved code afterwards.",
+        "criteria": [
+          "At the same threshold, the outputs are 4, 1 and 0 respectively.",
+          "Capacity comes from the declared array. The loop uses length."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.array-length-contract",
+    "prerequisites": [
+      "c.array-index-range"
+    ]
+  }
+}

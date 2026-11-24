@@ -191,7 +191,14 @@ export const wasmRuntimeProvider={
     }
     const capability=this.inspect(request);
     patchState({status:'loading-toolchain',phase:'toolchain',percent:0,lastError:null});
-    return requestWorker('run',{request},capability);
+    try {
+      return await requestWorker('run',{request},capability);
+    } catch (error) {
+      if (state.status === 'loading-toolchain' && !pending.size) {
+        patchState({status:'error',phase:null,percent:null,lastError:error.message});
+      }
+      throw error;
+    }
   },
   shutdown(){resetWorker('shutdown')}
 };

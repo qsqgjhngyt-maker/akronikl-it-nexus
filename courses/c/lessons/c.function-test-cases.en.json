@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.function-test-cases",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "C programming",
+  "module": "Functions and decomposition",
+  "title": "Testing functions separately",
+  "goal": "Test a numerical computation independently of input and output.",
+  "prerequisites": [
+    {
+      "text": "Call an independent function and choose boundary values."
+    }
+  ],
+  "terms": [
+    {
+      "id": "pure",
+      "term": "Pure function",
+      "title": "Pure function",
+      "definition": "Returns a value from arguments without changing outside objects or printing."
+    },
+    {
+      "id": "driver",
+      "term": "Test driver",
+      "title": "Test driver",
+      "definition": "Calls a function with known inputs and compares the results."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "Check a power limiter before building its interface by calling the computation with known numbers.",
+        "Write expected values before execution. A function contract and a presentation check are separate layers."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Worked example",
+      "paragraphs": [
+        "Check −5, 70 and 50. The computations are independent of evaluation order inside printf."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int clamp50(int number)\n{\n    if (number < 0) {\n        return 0;\n    }\n    if (number > 50) {\n        return 50;\n    }\n    return number;\n}\n\nint main(void)\n{\n    printf(\"%d %d %d\\n\", clamp50(-5), clamp50(70), clamp50(50));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "0 50 50\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "−5 → below 0 → 0 → Lower limit",
+        "70 → above 50 → 50 → Upper limit",
+        "50 → in range → 50 → Preserve value"
+      ],
+      "trace": [
+        [
+          "−5",
+          "below 0",
+          "0",
+          "Lower limit"
+        ],
+        [
+          "70",
+          "above 50",
+          "50",
+          "Upper limit"
+        ],
+        [
+          "50",
+          "in range",
+          "50",
+          "Preserve value"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "paragraphs": [
+        "At input 50, x > 50 and x >= 50 select different branches. Both branches of clamp50 return 50 for that input. In the bonus task, taking the inclusive branch at 50 changes the result from 0 to 5.",
+        "The driver compares a returned value with the expectation. A function with a void return type supplies no value."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Transfer to practice",
+      "paragraphs": [
+        "The bonus driver reports the exact argument and mismatched expectation. The calculation itself prints nothing.",
+        "The value returned by bonus depends only on score, so the same argument gives the same result in any test order."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.5.8, 6.8.6.4",
+      "language": "English",
+      "purpose": "Test a numerical computation independently of input and output."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does clamp50(70) return?",
+      "options": [
+        "70",
+        "50",
+        "0"
+      ],
+      "correct": 1,
+      "feedback": [
+        "70 exceeds the maximum.",
+        "The upper limit applies.",
+        "The lower limit applies to negative values."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int clamp50(int number)\n{\n    if (number < 0) {\n        return 0;\n    }\n    if (number > 50) {\n        return 50;\n    }\n    return number;\n}\n\nint main(void)\n{\n    printf(\"%d %d %d\\n\", clamp50(-5), clamp50(70), clamp50(50));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "The bonus is 5 for a score of at least 50 and 0 otherwise. For which input does using > in place of >= change the return value?",
+      "options": [
+        "49",
+        "50",
+        "51"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Both checks are false.",
+        "The inclusive condition gives a bonus of 5 at 50. Strict > leaves it at 0.",
+        "Both checks are true."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How can the check survive a change in presentation format?",
+      "feedback": "Call the function from a separate driver and compare the returned value. A different main format does not change the call contract.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static void result(void) {}\nint main(void) { return result() == 5; }\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "invalid operands"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Bonus at the threshold",
+    "task": "bonus returns 5 for a score of at least 50, otherwise 0. No input is needed. Fix the comparison and confirm calls with 49, 50 and 51 using the supplied driver.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nstatic int bonus(int score)\n{\n    if (score > 50) {\n        return 5;\n    }\n    return 0;\n}\n\nstatic int check_bonus(int score, int expected)\n{\n    int actual = bonus(score);\n    if (actual != expected) {\n        printf(\"fail %d expected %d got %d\\n\", score, expected, actual);\n        return 0;\n    }\n\n    printf(\"%d %d\\n\", score, actual);\n    return 1;\n}\n\nint main(void)\n{\n    int passes = check_bonus(49, 0);\n    passes += check_bonus(50, 5);\n    passes += check_bonus(51, 5);\n    printf(\"passed %d\\n\", passes);\n    if (passes != 3) {\n        return 1;\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "hint": "Inspect the line for 50 in the starter. It shows the expected result and the observed one.",
+    "criteria": [
+      "Print 49 0, 50 5 and 51 5 in that order.",
+      "The driver prints passed 3 and exits with status 0.",
+      "The calculation neither reads input nor prints output."
+    ],
+    "cases": [
+      {
+        "label": "Three calls in one driver",
+        "input": "",
+        "output": "49 0\n50 5\n51 5\npassed 3\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nstatic int bonus(int score)\n{\n    if (score >= 50) {\n        return 5;\n    }\n    return 0;\n}\n\nstatic int check_bonus(int score, int expected)\n{\n    int actual = bonus(score);\n    if (actual != expected) {\n        printf(\"fail %d expected %d got %d\\n\", score, expected, actual);\n        return 0;\n    }\n\n    printf(\"%d %d\\n\", score, actual);\n    return 1;\n}\n\nint main(void)\n{\n    int passes = check_bonus(49, 0);\n    passes += check_bonus(50, 5);\n    passes += check_bonus(51, 5);\n    printf(\"passed %d\\n\", passes);\n    if (passes != 3) {\n        return 1;\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Leave the input empty and run the starter. Look at the result for 50.",
+        "why": "Test a numerical computation independently of input and output.",
+        "expected": "The driver prints fail 50 expected 5 got 0 and passed 2, then exits with status 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the condition in bonus and run the same test driver again.",
+        "why": "The change must satisfy the contract.",
+        "expected": "The driver prints 49 0, 50 5 and 51 5 in order, followed by passed 3, and exits with status 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check a distinct boundary case and explain the result.",
+        "why": "Different cases distinguish the parts of the rule.",
+        "expected": "The calculation neither reads input nor prints output."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "In a copy, set the threshold to 60 and design three tests around it.",
+        "criteria": [
+          "59, 60 and 61 give 0, 5 and 5.",
+          "Record all three expectations before executing."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.function-boundary-driver",
+    "prerequisites": [
+      "c.local-scope-lived-object"
+    ]
+  }
+}

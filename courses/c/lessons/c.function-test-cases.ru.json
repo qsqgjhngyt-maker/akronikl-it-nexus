@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.function-test-cases",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "Программирование на C",
+  "module": "Функции и декомпозиция",
+  "title": "Отдельная проверка функций",
+  "goal": "Проверить числовой расчёт отдельно от ввода и вывода.",
+  "prerequisites": [
+    {
+      "text": "Вызывать независимую функцию и выбирать граничные значения."
+    }
+  ],
+  "terms": [
+    {
+      "id": "pure",
+      "term": "Чистая функция",
+      "title": "Чистая функция",
+      "definition": "Возвращает число по аргументам, не меняя внешние объекты и не печатая."
+    },
+    {
+      "id": "driver",
+      "term": "Тестовый драйвер",
+      "title": "Тестовый драйвер",
+      "definition": "Вызывает функцию на известных входах и сравнивает ответы."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "Проверяем ограничитель мощности до настройки интерфейса. Для этого запускаем вычисление на известных числах.",
+        "Запишите ожидаемые результаты до запуска. Договор функции и проверка видимого представления относятся к разным уровням."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Разбор на примере",
+      "paragraphs": [
+        "Сверьте три случая −5, 70 и 50. Расчёт в примере не зависит от порядка вызовов внутри printf."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int clamp50(int number)\n{\n    if (number < 0) {\n        return 0;\n    }\n    if (number > 50) {\n        return 50;\n    }\n    return number;\n}\n\nint main(void)\n{\n    printf(\"%d %d %d\\n\", clamp50(-5), clamp50(70), clamp50(50));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "0 50 50\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "−5 → ниже 0 → 0 → Нижняя граница",
+        "70 → выше 50 → 50 → Верхняя граница",
+        "50 → допустимо → 50 → Значение сохраняется"
+      ],
+      "trace": [
+        [
+          "−5",
+          "ниже 0",
+          "0",
+          "Нижняя граница"
+        ],
+        [
+          "70",
+          "выше 50",
+          "50",
+          "Верхняя граница"
+        ],
+        [
+          "50",
+          "допустимо",
+          "50",
+          "Значение сохраняется"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Диагностика",
+      "paragraphs": [
+        "При входе 50 условия x > 50 и x >= 50 выбирают разные ветви. Для clamp50 обе ветви дают 50, поэтому его результат не обнаружит разницу. В задаче с bonus выбор ветви при 50 меняет результат с 0 на 5.",
+        "Драйвер сравнивает возвращаемое значение с ожиданием. Функция с типом результата void значения не возвращает."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенос в практику",
+      "paragraphs": [
+        "Драйвер бонуса пишет аргумент и точное расхождение ожидания с фактом. Чистая функция сама ничего не печатает.",
+        "Число из bonus зависит только от score, поэтому одинаковый аргумент даёт одинаковый результат при любом порядке проверок."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.5.8, 6.8.6.4",
+      "language": "English",
+      "purpose": "Проверить числовой расчёт отдельно от ввода и вывода."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что возвращает clamp50(70)?",
+      "options": [
+        "70",
+        "50",
+        "0"
+      ],
+      "correct": 1,
+      "feedback": [
+        "70 превышает максимум.",
+        "Срабатывает верхний предел.",
+        "Нижний предел подходит для отрицательных."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int clamp50(int number)\n{\n    if (number < 0) {\n        return 0;\n    }\n    if (number > 50) {\n        return 50;\n    }\n    return number;\n}\n\nint main(void)\n{\n    printf(\"%d %d %d\\n\", clamp50(-5), clamp50(70), clamp50(50));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Бонус равен 5, если результат не меньше 50, и 0 иначе. При каком аргументе ошибка > вместо >= меняет возвращаемое значение?",
+      "options": [
+        "49",
+        "50",
+        "51"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Оба условия ложны.",
+        "При 50 правильное условие даёт бонус 5. Строгое > оставит 0.",
+        "Оба условия истинны."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Как сохранить проверку при изменении формата интерфейса?",
+      "feedback": "Вызовите функцию в отдельном драйвере и сравните возвращаемое число. Смена оформления main не меняет контракт этого вызова.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static void result(void) {}\nint main(void) { return result() == 5; }\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "invalid operands"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Бонус у порога",
+    "task": "bonus возвращает 5 при результате от 50 включительно, иначе 0. Ввод не нужен. Исправьте сравнение и проверьте вызовы 49, 50 и 51 готовым драйвером.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nstatic int bonus(int score)\n{\n    if (score > 50) {\n        return 5;\n    }\n    return 0;\n}\n\nstatic int check_bonus(int score, int expected)\n{\n    int actual = bonus(score);\n    if (actual != expected) {\n        printf(\"fail %d expected %d got %d\\n\", score, expected, actual);\n        return 0;\n    }\n\n    printf(\"%d %d\\n\", score, actual);\n    return 1;\n}\n\nint main(void)\n{\n    int passes = check_bonus(49, 0);\n    passes += check_bonus(50, 5);\n    passes += check_bonus(51, 5);\n    printf(\"passed %d\\n\", passes);\n    if (passes != 3) {\n        return 1;\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "hint": "Найдите строку для 50 в заготовке. Она показывает, чем ожидание отличается от факта.",
+    "criteria": [
+      "Строки 49 0, 50 5, 51 5 идут по порядку.",
+      "Драйвер печатает passed 3 и завершает работу с 0.",
+      "Расчёт не зависит от ввода и не пишет вывод."
+    ],
+    "cases": [
+      {
+        "label": "Три вызова одного драйвера",
+        "input": "",
+        "output": "49 0\n50 5\n51 5\npassed 3\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nstatic int bonus(int score)\n{\n    if (score >= 50) {\n        return 5;\n    }\n    return 0;\n}\n\nstatic int check_bonus(int score, int expected)\n{\n    int actual = bonus(score);\n    if (actual != expected) {\n        printf(\"fail %d expected %d got %d\\n\", score, expected, actual);\n        return 0;\n    }\n\n    printf(\"%d %d\\n\", score, actual);\n    return 1;\n}\n\nint main(void)\n{\n    int passes = check_bonus(49, 0);\n    passes += check_bonus(50, 5);\n    passes += check_bonus(51, 5);\n    printf(\"passed %d\\n\", passes);\n    if (passes != 3) {\n        return 1;\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с пустым полем ввода и посмотрите на результат для 50.",
+        "why": "Проверить числовой расчёт отдельно от ввода и вывода.",
+        "expected": "Видны строка fail 50 expected 5 got 0, итог passed 2 и код завершения 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте условие bonus и повторите запуск с тем же драйвером.",
+        "why": "Исправление должно подтвердить договор.",
+        "expected": "Строки 49 0, 50 5 и 51 5 идут по порядку. Драйвер печатает passed 3, код завершения 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте отличающийся граничный случай и объясните вывод.",
+        "why": "Случаи показывают, какая часть правила работает.",
+        "expected": "Расчёт не зависит от ввода и не пишет вывод."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "В копии смените порог на 60 и придумайте три проверки вокруг него.",
+        "criteria": [
+          "Для 59, 60, 61 ожидаются 0, 5, 5.",
+          "Все три результата записаны до запуска."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.function-boundary-driver",
+    "prerequisites": [
+      "c.local-scope-lived-object"
+    ]
+  }
+}

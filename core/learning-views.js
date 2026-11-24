@@ -1,12 +1,11 @@
 import {referenceBadge} from './reference-course-routes.mjs';
 import {termReferenceMarkup} from './nexus-learning-ui.js';
 import {brandMarkMarkup} from '../core/brand-mark.js';
-import {programmingHubMarkup} from './code-hub-presentation.js';
 import {textFor} from './i18n.js';
 import {glossaryItems,richText,benchmarkMarkup} from './lesson-presentation.js';
 import {codeStudioMarkup} from '../sandbox/code-studio.js';
 import {languageLabel} from '../sandbox/languages.js';
-import {continuationNote,continuationCard,recentProjectsMarkup,orderedCppLessons,learningLaboratory} from './nexus-learning-discovery.js';
+import {continuationNote,continuationCard,recentProjectsMarkup,orderedCppLessons,learningLaboratory} from './nexus-learning-resume.js';
 import {graphicsPromoMarkup} from '../effects/nexus-graphics-lab.js';
 import {learnerAcademyEntries} from './academy-presentation.js';
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -46,7 +45,7 @@ function learningSearch(id,label){return `<div class="learning-search-row"><labe
 function learningEmpty(){return `<p class="learning-search-empty" data-search-empty hidden>${e(t('learningUi.empty'))}</p>`}
 function practicumProgress(p){return `<div class="practicum-progress"><span data-practicum-count></span><div class="progress" role="progressbar" aria-label="${e(t('learningUi.checklistProgress'))}" aria-valuemin="0" aria-valuemax="${p.tasks.length}" aria-valuenow="0"><i></i></div></div>`}
 function learningContentNote(){return prefs.uiLocale==='en'?`<p class="learning-content-note">${e(t('learningUi.ruMaterials'))}</p>`:''}
-function programmingHub(){return shell(programmingHubMarkup({programming,cpp,prefs,t,progress,cppContinuation,continuationNote,recentProjectsMarkup,visualIcon}),'academy')}
+function programmingHub(){return shell(deps.programmingHubMarkup({programming,cpp,prefs,t,progress,cppContinuation,continuationNote,recentProjectsMarkup,visualIcon}),'academy')}
 function practicumData(id){return cpp?.practicumsRu?.practicums?.find(item=>item.id===id)||null}
 function practicumView(id){
   const p=practicumData(id);if(!p)return shell(`<section class="placeholder"><h1>${e(t('journey.error.practicum'))}</h1></section>`,'academy');

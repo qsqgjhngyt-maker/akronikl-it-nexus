@@ -1,5 +1,4 @@
 import {withProjectWriter} from '../project-studio/project-writer.js';
-import {codeStudioHomeMarkup,bindCodeStudioHome} from '../project-studio/code-studio-home.js';
 import {accountSessionStorage,verifiedAccount} from './account-storage.js';
 import {createLearningProgressReader} from '../akronikl/learning/progress.js';
 import {bindAdministrationNavigation} from './administration-navigation.js';
@@ -7,8 +6,6 @@ import {bindCppLearningPath as bindSharedLearningPath} from './learning-path-con
 import {glassSelect,visualIcon} from './controls-presentation.js';
 import {mountInterfaceUpdate} from '../pwa/interface-update.js';
 import {createLearningViews} from './learning-views.js';
-import {programmingHubMarkup} from './code-hub-presentation.js';
-import {academyCatalogMarkup,bindAcademyCatalog} from './academy-catalog.js';
 import {nexusShellMarkup} from './shell-presentation.js';
 import {glossaryItems,richText,benchmarkMarkup} from './lesson-presentation.js';
 let offlineCenterModule=null;
@@ -25,9 +22,9 @@ import {configureNexusAppearance,bindNexusAppearance} from '../effects/nexus-app
 import {bindGlassSelects} from './glass-select.js';
 import {bindNexusShell} from './nexus-shell.js';
 import {bindNexusLearningUi,bindGlossaryDrawer} from './nexus-learning-ui.js';
-import {createLearningResume,continuationNote,continuationCard,recentProjectsMarkup,bindRecentProjects,discoveryPageMarkup,bindLearningDiscovery,focusLearningSection} from './nexus-learning-discovery.js';
+import {createLearningResume,bindRecentProjects,focusLearningSection} from './nexus-learning-resume.js';
 import {languageJourney,languageJourneyDialogMarkup,bindLanguageJourneys} from './nexus-language-journey.js';
-import {ensurePracticeWorkingCopy} from './nexus-practices.js';
+import {academyCatalogMarkup,bindAcademyCatalog} from './academy-catalog.js';
 import {learnerAcademyEntries} from './academy-presentation.js';
 import {bindNexusStudioUi} from './nexus-studio-ui.js';
 import {bindNexusAccountAccess} from './nexus-account-access.js';
@@ -47,15 +44,18 @@ const loadSandboxRuntime=async()=>sandboxRuntimeModule??=await import('../sandbo
 const loadGraphicsWorkshop=async()=>graphicsWorkshopModule??=await import('../effects/nexus-graphics-workshop.js');
 const loadAdministration=async()=>administrationModule??=await import('./administration.js');
 const loadFinal=async()=>{finalModule??=await import('../course-final/view.js');await finalModule.ensureFinalStyles();return finalModule};
+let discoveryModule,codeStudioHomeModule,codeHubModule;
+const loadCodeStudioHome=async()=>codeStudioHomeModule??=await import('../project-studio/code-studio-home.js');
+const loadCodeHub=async()=>codeHubModule??=await import('./code-hub-presentation.js');
 const viewResume=createViewResume(),learningResume=createLearningResume();
 let cppLearningFilter='topics',renderSequence=0,goldPresentation=null,disposeOrbit=null,disposeTerms=null;
 let onecController=null,learningController=null;
 function replaceRoute(page){learningController?.dispose();learningController=null;onecController?.dispose();onecController=null;finalController?.dispose();finalController=null;disposeTerms?.();disposeTerms=null;disposeOrbit?.();disposeOrbit=null;document.onkeydown=null;root.innerHTML=page}
 const academyViewFilter={category:'all',availability:'all',query:''};
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const route=()=>{const p=new URLSearchParams(location.hash.replace(/^#/,''));return{view:p.get('view')||'home',course:p.get('course'),lesson:p.get('lesson'),tab:p.get('tab')||'overview',practicum:p.get('practicum'),project:p.get('project'),template:p.get('template'),focus:p.get('focus'),section:p.get('section'),locale:p.get('locale')}};
+const route=()=>{const p=new URLSearchParams(location.hash.replace(/^#/,''));return{view:p.get('view')||'home',course:p.get('course'),lesson:p.get('lesson'),tab:p.get('tab')||'overview',practicum:p.get('practicum'),project:p.get('project'),template:p.get('template'),stage:p.get('stage'),focus:p.get('focus'),section:p.get('section'),locale:p.get('locale')}};
 const readLearningProgress=createLearningProgressReader({readIdentity:verifiedAccount,loadCourse:()=>cpp||cppLanding||getCppOutline(),readState:loadState,readResume:(course,state)=>learningResume.continuation(course,state.courses?.cpp?.lessons),readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readLesson:()=>route().course==='cpp'?route().lesson:null});
-const assistantBridge=createLazyAssistantBridge({root,readIdentity:()=>verifiedAccount(),readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:route,readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>['ru','en'].includes(route().locale)?route().locale:prefs.courseLocale,readEditor:()=>root.querySelector('#editor'),readLearningProgress});
+const assistantBridge=createLazyAssistantBridge({root,readIdentity:()=>verifiedAccount(),readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:route,readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>['ru','en'].includes(route().locale)?route().locale:prefs.courseLocale,readEditor:()=>route().course==='c'?null:root.querySelector('#editor'),readLearningProgress});
 addEventListener('nexus:context-invalidated',()=>{delete root.dataset.akroniklRoute});
 const PROJECT_STUDIO_VERSION='0.1.7-alpha.2.4.6-ui1a.10.10.2-p4q.6';
 async function loadProjectStudio(){
@@ -84,7 +84,7 @@ function progress(){return cppProgramProgress(loadState(),cpp?.curriculum??cppLa
 function migration(){const m=inspectLegacyCppV7();if(!m.found)return'';if(m.alreadyImported)return`<div class="migration done"><div><strong>✓ Прогресс C++ v7 импортирован</strong><span>Исходный localStorage старого курса сохранён.</span></div></div>`;return`<div class="migration"><div><strong>Найден прогресс старого C++ v7: ${m.done}/40</strong><span>Импорт безопасно перенесёт его на стабильные ID Nexus.</span></div><button class="btn" id="importLegacy">Импортировать</button></div>`}
 
 function visualShell(body,active){return nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon})}
-function sharedViews(onecResume=null){return createLearningViews({onecResume,academyGoldMarkup:goldPresentation?.academyGoldMarkup,prefs,t,cpp:cpp||cppLanding,catalog,programming,projectStudioApi,loadState,lessonState,visualIcon,progress,cppContinuation,shell,visualShell,migration,setAkroniklContext,accountHomeCardMarkup,cppLearningFilter})}
+function sharedViews(onecResume=null){return createLearningViews({onecResume,programmingHubMarkup:codeHubModule?.programmingHubMarkup,academyGoldMarkup:goldPresentation?.academyGoldMarkup,prefs,t,cpp:cpp||cppLanding,catalog,programming,projectStudioApi,loadState,lessonState,visualIcon,progress,cppContinuation,shell,visualShell,migration,setAkroniklContext,accountHomeCardMarkup,cppLearningFilter})}
 function cppContinuation(){return learningResume.continuation(cpp||cppLanding,loadState().courses?.cpp?.lessons||{})}
 async function home(){
  let onecResume=null;
@@ -115,14 +115,14 @@ function placeholder(v){if(v==='akronikl')return shell(assistantPageMarkup(prefs
 
 function codeStudioStart(){
  const storage=accountSessionStorage();let recent=[];try{recent=JSON.parse(storage.getItem('akronikl:code-studio:view:v1:recent')||'[]')}catch{}
- return visualShell(codeStudioHomeMarkup({projects:projectStudioApi.listProjects(),recentIds:Array.isArray(recent)?recent:[],t}),'code-studio');
+ return visualShell(codeStudioHomeModule.codeStudioHomeMarkup({projects:projectStudioApi.listProjects(),recentIds:Array.isArray(recent)?recent:[],t}),'code-studio');
 }
 function bindStandaloneStudio(){
- const mount=document.querySelector('[data-code-studio-home]');if(!mount||!projectStudioApi)return;
+ const mount=document.querySelector('[data-code-studio-home]');if(!mount||!projectStudioApi||!codeStudioHomeModule)return;
  const account=verifiedAccount()?.accountId,storage=accountSessionStorage(),key='akronikl:code-studio:view:v1:recent';
  const check=()=>{if(!account||verifiedAccount()?.accountId!==account)throw Error('ACCOUNT_STORAGE_CONTEXT_CHANGED')};
  const open=async id=>{check();if(!projectStudioApi.getProject(id))throw Error('PROJECT_NOT_FOUND');let recent=[];try{recent=JSON.parse(storage.getItem(key)||'[]')}catch{}storage.setItem(key,JSON.stringify([id,...(Array.isArray(recent)?recent:[]).filter(v=>typeof v==='string'&&v!==id)].slice(0,10)));location.hash='#view=code-studio&project='+encodeURIComponent(id)};
- bindCodeStudioHome({mount,t,onCreate:input=>withProjectWriter(()=>{check();return projectStudioApi.createProject(input)}),onOpen:open,findProject:id=>{check();return projectStudioApi.getProject(id)},listCloud:async()=>{check();const api=await import('../sync/cloud-sync.js');check();return api.listCloudProjects()},importCloud:async id=>{check();const api=await import('../sync/cloud-sync.js');check();return api.importCloudProject(id)}});
+ codeStudioHomeModule.bindCodeStudioHome({mount,t,onCreate:input=>withProjectWriter(()=>{check();return projectStudioApi.createProject(input)}),onOpen:open,findProject:id=>{check();return projectStudioApi.getProject(id)},listCloud:async()=>{check();const api=await import('../sync/cloud-sync.js');check();return api.listCloudProjects()},importCloud:async id=>{check();const api=await import('../sync/cloud-sync.js');check();return api.importCloudProject(id)}});
 }
 function standaloneProject(projectId){
  const ps=projectStudioApi,project=ps.getProject(projectId);if(!project)return visualShell('<section class="placeholder"><h1>'+e(t('studio.missing'))+'</h1><a class="btn" href="#view=code-studio">Code Studio</a></section>','code-studio');
@@ -172,18 +172,55 @@ async function bind(){
   document.querySelectorAll('[data-practicum][data-task]').forEach(x=>x.onchange=async()=>{const id=x.dataset.practicum,idx=Number(x.dataset.task),checked=x.checked;try{await withCourseStateWriter(()=>{const set=new Set(loadState().courses?.cpp?.practicums?.[id]?.tasks||[]);checked?set.add(idx):set.delete(idx);patchPracticum(id,{tasks:[...set].sort((a,b)=>a-b)});});}catch{x.checked=!checked;alert(prefs.uiLocale==='en'?'The mark was not saved.':'Отметка не сохранена.');}})
 
   bindNexusLearningUi(t);
-  bindLearningDiscovery(t);
+  discoveryModule?.bindLearningDiscovery(t);
   bindRecentProjects({loadProjects:async()=>(await loadProjectStudio()).listProjects(),t,locale:prefs.uiLocale});
   bindNexusStudioUi(prefs.uiLocale);
   bindNexusAccountAccess(prefs.uiLocale);
   if(administrationModule&&route().view==='admin')void administrationModule.bindAdministration({tab:route().tab});else void bindAdministrationNavigation().catch(()=>{});void bindPublicContent(route());
   bindFeedbackUi({locale:prefs.uiLocale,catalog:catalog.courses,route:route(),version:PROJECT_STUDIO_VERSION});
 }
-async function render(){delete root.dataset.akroniklRoute;assistantBridge.invalidate();const sequence=++renderSequence;let renderHash=location.hash;viewResume.begin(location.hash||'#view=home');const r=route();let page,onecModule;if(r.view==='course-final'){const mod=await loadFinal();if(sequence!==renderSequence||renderHash!==location.hash)return;page=visualShell(mod.courseFinalMarkup(prefs.uiLocale),'academy')}else if(r.view==='offline'){offlineCenterModule??=await import('../pwa/offline-center.js');if(sequence!==renderSequence||renderHash!==location.hash)return;page=shell(offlineCenterModule.offlineCenterMarkup(),'offline')}else if(r.course==='onec'||r.course==='1c-enterprise'){onecModule=await import('../courses/onec-education/integration.mjs');if(sequence!==renderSequence||renderHash!==location.hash)return;page=visualShell(onecModule.onecIntegrationMarkup(),'academy')}else if(r.course==='cpp'){const courseReady=cpp||getCppCourse();
+async function render(){delete root.dataset.akroniklRoute;assistantBridge.invalidate();const sequence=++renderSequence;let renderHash=location.hash;viewResume.begin(location.hash||'#view=home');const r=route();const isCurrent=()=>sequence===renderSequence&&renderHash===location.hash;let page,onecModule,cModule;if(r.view==='course-final'){const mod=await loadFinal();if(sequence!==renderSequence||renderHash!==location.hash)return;page=visualShell(mod.courseFinalMarkup(prefs.uiLocale),'academy')}else if(r.view==='offline'){offlineCenterModule??=await import('../pwa/offline-center.js');if(sequence!==renderSequence||renderHash!==location.hash)return;page=shell(offlineCenterModule.offlineCenterMarkup(),'offline')}else if(r.course==='c'){cModule=await import('./c-course.mjs');if(sequence!==renderSequence||renderHash!==location.hash)return;page=visualShell('<section data-c-course><p role="status">Загрузка курса / Loading course…</p></section>','academy')}else if(r.course==='onec'||r.course==='1c-enterprise'){onecModule=await import('../courses/onec-education/integration.mjs');if(sequence!==renderSequence||renderHash!==location.hash)return;page=visualShell(onecModule.onecIntegrationMarkup(),'academy')}else if(r.course==='cpp'){const courseReady=cpp||getCppCourse();
 const pilot=!!r.lesson;const runtimeReady=!pilot&&(r.lesson||r.practicum)?loadSandboxRuntime():null;
 const [loadedCourse]=await Promise.all([courseReady,runtimeReady,r.lesson&&!pilot?prepareCppGoldLesson(courseReady,r.lesson,prefs.courseLocale,async()=>{
  goldPresentation??=await import('./academy-gold-presentation.js');await goldPresentation.ensureGoldStyles();
-}):null]);cpp=loadedCourse;if(sequence!==renderSequence||renderHash!==location.hash)return;page=pilot?visualShell('<section data-r3-mount><p role="status">Загрузка урока / Loading lesson…</p></section>','academy'):r.lesson?lessonView(r.lesson):r.practicum?practicumView(r.practicum):r.tab==='practicums'?practicums():r.tab==='projects'?projectsView():overview()}else if(r.view==='code-studio'){const ps=await loadProjectStudio();if(sequence!==renderSequence||renderHash!==location.hash)return;if(r.project&&ps.getProject(r.project)?.origin?.courseId==='cpp')cpp??=await getCppCourse();page=r.project?standaloneProject(r.project):codeStudioStart()}else if(r.view==='computer-graphics'||r.course==='computer-graphics'){page=visualShell((await loadGraphicsWorkshop()).graphicsWorkshopMarkup(t),'academy')}else if(r.view==='programming'){programming??=await getProgrammingLanguages();cpp??=await getCppCourse();page=programmingHub()}else if((r.view==='project-studio'||r.view==='projects')&&r.project&&(await loadProjectStudio()).getProject(r.project)?.origin?.kind==='graphics-lab'){page=visualShell((await loadGraphicsWorkshop()).graphicsWorkshopMarkup(t),'projects')}else if(r.view==='project-studio'||r.view==='projects'){cpp??=await getCppCourse();const ps=await loadProjectStudio();if(sequence!==renderSequence||renderHash!==location.hash)return;if(r.template&&!r.project){const [kind,id]=String(r.template).split(':');if(kind==='cpp'){const def=courseProjectById(id);if(def){const project=await withProjectWriter(()=>ensurePracticeWorkingCopy(ps,def));history.replaceState(null,'',`${location.pathname}${location.search}#view=project-studio&project=${encodeURIComponent(project.id)}`);renderHash=location.hash;r.project=project.id}}}page=r.project?projectStudioProject(r.project):projectStudioDashboard()}else if(r.view==='home'||r.view==='academy'){if(!cpp)cppLanding??=await getCppOutline();page=r.view==='home'?await home():academy()}else if(r.view==='labs'||r.view==='practices'){cpp??=await getCppCourse();page=visualShell(discoveryPageMarkup({kind:r.view,course:cpp,contentFor:lessonData,projects:r.view==='practices'?(await loadProjectStudio()).listProjects():[],state:loadState().courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:prefs.courseLocale}),r.view)}else if(r.view==='admin'){page=visualShell((await loadAdministration()).administrationMarkup(r.tab),'admin')}else if(r.view==='blog'){page=visualShell(blogMarkup(),'blog')}else if(r.view==='feedback'){page=visualShell(feedbackPageMarkup(prefs.uiLocale),'home')}else if(r.view==='reviews'){page=visualShell(reviewsPageMarkup(prefs.uiLocale),'home')}else if(r.view==='feedback-admin'){page=visualShell(moderationPageMarkup(prefs.uiLocale),'home')}else if(r.view==='skills'){if(!cpp)cppLanding??=await getCppOutline();const {skillMapMarkup}=await import('./nexus-learning-skills.mjs');page=visualShell(skillMapMarkup({cpp:cpp||cppLanding,lessonStates:loadState().courses?.cpp?.lessons??{},locale:prefs.uiLocale}),'skills')}else page=r.view==='account'?shell(accountPageMarkup(prefs.uiLocale,r.tab),'home'):placeholder(r.view);if(sequence!==renderSequence||renderHash!==location.hash)return;replaceRoute(page);if(onecModule){onecController=onecModule.mountOnecIntegration(root.querySelector('[data-onec-platform-mount]'),{locale:prefs.courseLocale,isCurrent:()=>sequence===renderSequence,onViewChange:view=>{if(sequence!==renderSequence)return;learningResume.rememberOnec(view);assistantBridge.invalidate();setAkroniklContext({...view,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});root.dataset.akroniklRoute=view.hash;},openAssistant:(button,context)=>{setAkroniklContext({...context,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});void assistantBridge.open(button);}});await onecController.ready;if(sequence!==renderSequence||renderHash!==location.hash)return;}globalThis.__NEXUS_BOOT_OK__?.();document.querySelector('#boot-status')?.remove();await bind();if(sequence!==renderSequence)return;assistantBridge.bindEditor();
+}):null]);cpp=loadedCourse;if(sequence!==renderSequence||renderHash!==location.hash)return;page=pilot?visualShell('<section data-r3-mount><p role="status">Загрузка урока / Loading lesson…</p></section>','academy'):r.lesson?lessonView(r.lesson):r.practicum?practicumView(r.practicum):r.tab==='practicums'?practicums():r.tab==='projects'?projectsView():overview()}else if(r.view==='code-studio'){
+ const [ps]=await Promise.all([loadProjectStudio(),r.project?null:loadCodeStudioHome()]);
+ if(!isCurrent())return;
+ if(r.project&&ps.getProject(r.project)?.origin?.courseId==='cpp')cpp??=await getCppCourse();
+ page=r.project?standaloneProject(r.project):codeStudioStart();
+}else if(r.view==='computer-graphics'||r.course==='computer-graphics'){page=visualShell((await loadGraphicsWorkshop()).graphicsWorkshopMarkup(t),'academy')
+}else if(r.view==='programming'){
+ const [,languages,course]=await Promise.all([loadCodeHub(),programming||getProgrammingLanguages(),cpp||getCppCourse()]);
+ if(!isCurrent())return;
+ programming??=languages;cpp??=course;page=programmingHub();
+}else if(r.view==='project-studio'||r.view==='projects'){
+ const [ps,course]=await Promise.all([loadProjectStudio(),r.project?null:(cpp||getCppCourse())]);
+ if(!isCurrent())return;
+ const origin=r.project?ps.getProject(r.project)?.origin:null;
+ if(origin?.kind==='graphics-lab'){
+  page=visualShell((await loadGraphicsWorkshop()).graphicsWorkshopMarkup(t),'projects');
+ }else{
+  if(!r.project||origin?.courseId==='cpp')cpp??=course??await getCppCourse();
+  if(!isCurrent())return;
+  if(r.template&&!r.project){
+   const [kind,id]=String(r.template).split(':');
+   const def=kind==='cpp'?courseProjectById(id):null;
+   if(def){
+    const {ensurePracticeWorkingCopy}=await import('./nexus-practices.js');
+    if(!isCurrent())return;
+    const project=await withProjectWriter(()=>isCurrent()?ensurePracticeWorkingCopy(ps,def):null);
+    if(!project||!isCurrent())return;
+    history.replaceState(null,'',location.pathname+location.search+'#view=project-studio&project='+encodeURIComponent(project.id));
+    renderHash=location.hash;r.project=project.id;
+   }
+  }
+  page=r.project?projectStudioProject(r.project):projectStudioDashboard();
+ }
+}else if(r.view==='academy'){
+ const outline=cpp||cppLanding||await getCppOutline();
+ if(!isCurrent())return;
+ if(!cpp)cppLanding??=outline;page=academy();
+}else if(r.view==='home'){if(!cpp)cppLanding??=await getCppOutline();page=await home()}else if(r.view==='labs'||r.view==='practices'){const [mod,course]=await Promise.all([import('./nexus-learning-discovery.js'),cpp||getCppCourse()]);if(!isCurrent())return;discoveryModule=mod;cpp??=course;page=visualShell(discoveryModule.discoveryPageMarkup({kind:r.view,course:cpp,contentFor:lessonData,projects:r.view==='practices'?(await loadProjectStudio()).listProjects():[],state:loadState().courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:prefs.courseLocale}),r.view)}else if(r.view==='admin'){page=visualShell((await loadAdministration()).administrationMarkup(r.tab),'admin')}else if(r.view==='blog'){page=visualShell(blogMarkup(),'blog')}else if(r.view==='feedback'){page=visualShell(feedbackPageMarkup(prefs.uiLocale),'home')}else if(r.view==='reviews'){page=visualShell(reviewsPageMarkup(prefs.uiLocale),'home')}else if(r.view==='feedback-admin'){page=visualShell(moderationPageMarkup(prefs.uiLocale),'home')}else if(r.view==='skills'){if(!cpp)cppLanding??=await getCppOutline();const {skillMapMarkup}=await import('./nexus-learning-skills.mjs');page=visualShell(skillMapMarkup({cpp:cpp||cppLanding,lessonStates:loadState().courses?.cpp?.lessons??{},locale:prefs.uiLocale}),'skills')}else page=r.view==='account'?shell(accountPageMarkup(prefs.uiLocale,r.tab),'home'):placeholder(r.view);if(sequence!==renderSequence||renderHash!==location.hash)return;replaceRoute(page);if(cModule){const active=()=>sequence===renderSequence&&renderHash===location.hash;const mounted=await cModule.mountCCourse(root.querySelector('[data-c-course]'),{lessonId:r.lesson,stage:r.stage,locale:r.locale||prefs.courseLocale,isCurrent:active});if(!active()){mounted?.dispose();return;}learningController=mounted;setAkroniklContext({courseId:'c',lessonId:r.lesson,sectionId:null,taskId:null,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});}if(onecModule){onecController=onecModule.mountOnecIntegration(root.querySelector('[data-onec-platform-mount]'),{locale:prefs.courseLocale,isCurrent:()=>sequence===renderSequence,onViewChange:view=>{if(sequence!==renderSequence)return;learningResume.rememberOnec(view);assistantBridge.invalidate();setAkroniklContext({...view,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});root.dataset.akroniklRoute=view.hash;},openAssistant:(button,context)=>{setAkroniklContext({...context,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});void assistantBridge.open(button);}});await onecController.ready;if(sequence!==renderSequence||renderHash!==location.hash)return;}globalThis.__NEXUS_BOOT_OK__?.();document.querySelector('#boot-status')?.remove();await bind();if(sequence!==renderSequence)return;assistantBridge.bindEditor();
   const header=root.querySelector('.nexus-footer-actions');if(header&&!header.querySelector('[data-akronikl-open]')){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.akroniklOpen='';b.textContent='Akronikl';header.append(b);}if(renderHash===location.hash)root.dataset.akroniklRoute=renderHash;if(r.course==='cpp'&&r.lesson)learningResume.remember(cpp,r.lesson,r.focus);const resumed=viewResume.restore();if(!resumed)focusLearningSection(r.focus);if(!resumed&&(r.view==='computer-graphics'||r.course==='computer-graphics'))scrollTo(0,0)}
 function renderFailure(err){console.error(err);const detail=e(err?.stack||err?.message||err);if(t){const body=`<section class="placeholder nexus-route-message" role="alert"><span class="eyebrow">NEXUS</span><h1>${e(t('shell.error.title'))}</h1><p>${e(t('shell.error.text'))}</p><div class="hero-actions"><a class="btn primary" href="#view=home">${e(t('shell.error.home'))}</a><button class="btn" id="retryRoute">${e(t('shell.error.retry'))}</button></div><details><summary>${e(t('shell.error.details'))}</summary><pre class="route-error-detail">${detail}</pre></details></section>`;replaceRoute(shell(body,route().view==='project-studio'?'projects':'home'));document.querySelector('#boot-status')?.remove();bind();document.querySelector('#retryRoute')?.addEventListener('click',()=>safeRender())}else{const b=document.querySelector('#boot-status');if(b){b.className='boot-error';b.innerHTML=`<strong>Nexus не запустился / Nexus could not start</strong><pre>${detail}</pre>`}}}
 async function prepareLearningNavigation(){return (!learningController||await learningController.prepareNavigation())&&(!onecController?.prepareNavigation||await onecController.prepareNavigation());}

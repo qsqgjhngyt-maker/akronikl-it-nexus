@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.build-and-run",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Source, build and execution",
+  "goal": "Identify the stage at which a program changes. Fix a build error first, then fix its behaviour.",
+  "prerequisites": [
+    {
+      "text": "You can distinguish the program text from the text displayed in the result area."
+    }
+  ],
+  "terms": [
+    {
+      "id": "compile",
+      "term": "Compilation",
+      "title": "Compilation",
+      "definition": "Translating the source after checking the rules of the language."
+    },
+    {
+      "id": "link",
+      "term": "Linking",
+      "title": "Linking",
+      "definition": "Joining translated code with the implementations it needs, such as puts from the library."
+    },
+    {
+      "id": "run",
+      "term": "Execution",
+      "title": "Execution",
+      "definition": "Running the program after a successful build."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "One click, several stages",
+      "paragraphs": [
+        "When a control panel says Sensor ready, you see the result of running a program. First there was the main.c source file, then the environment prepared a program, then it ran it. Editing the text does not by itself change previous output.",
+        "In practice a build handles inclusions, compilation and linking. Code Studio starts these actions with one click and runs C17 via Clang/WASI. The names of the stages help you tell where the operation stopped.",
+        "The builder checks whether it can translate the source. It does not know whether you need ready or waiting. That requires predicting and comparing the program result."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "The sensor is ready",
+      "paragraphs": [
+        "Open main.c. Before running, name the source file and the expected output line. After running, find the result separately from the build messages."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Sensor ready\");\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "Sensor ready\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "The source contains puts(\"Sensor ready\");",
+        "When building, the compiler sees a complete call statement terminated by a semicolon. The build prepares the program for execution.",
+        "On execution, puts writes the line. Only now does Sensor ready appear on stdout."
+      ],
+      "trace": [
+        [
+          "Read main.c",
+          "puts call",
+          "Source line",
+          "Predict the future output"
+        ],
+        [
+          "Build",
+          "Complete call followed by ;",
+          "Executable program",
+          "No program stdout yet"
+        ],
+        [
+          "Run",
+          "Compiled program",
+          "Sensor ready",
+          "puts wrote the line to stdout"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Two different failures",
+      "paragraphs": [
+        "Make a copy and remove the ; after puts. The compiler reports malformed syntax and that run produces no new program output. Exact wording depends on the Clang version. Reinsert the ; and run again.",
+        "Now keep the syntax valid but replace ready with waiting. The build can succeed. Comparing the output with the goal reveals the wrong text."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Build first, then compare",
+      "paragraphs": [
+        "The new status starter has two different problems. Fix one thing at a time to see which problem each edit resolves.",
+        "Do not stop at the first successful build. Check the exact output, including the colon and the space following it."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.2, §5.1.1.3, §5.1.2",
+      "language": "English",
+      "purpose": "Defines the translation stages and diagnostic requirements."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "After a successful build and run, what goes to stdout?",
+      "options": [
+        "Sensor ready on one line",
+        "The declaration of puts",
+        "The entire main.c source"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct. The executed call writes only the message.",
+        "The declaration is used at build time.",
+        "The source is edited rather than copied to stdout."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Sensor ready\");\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "The compiler reports a missing ;. What does this run produce?",
+      "options": [
+        "Fresh output with the previous text",
+        "No new program output because the build stopped",
+        "Empty output after every build"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The build must succeed first.",
+        "Correct. The new version cannot run yet.",
+        "A successfully built program can print."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How do you tell a build error from a program that builds successfully but reports the wrong status?",
+      "feedback": "With a build error, fix the source using the diagnostic and rebuild. After a successful run, compare the status that actually printed with the requirement.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Build a status indicator",
+    "task": "Edit the starter main.c until a successful run prints Status: ready. Fix the build with waiting unchanged first. Record what happens, then edit the message.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Status: waiting\")\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "After the syntax and text fixes",
+        "input": "",
+        "output": "Status: ready\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "After the first change, it builds and prints Status: waiting.",
+      "After the second change, stdout contains only Status: ready.",
+      "You can explain each error separately."
+    ],
+    "hint": "The puts call needs a terminating ;. The message is between quotes.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Status: ready\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the initial starter.",
+        "why": "Capture the original symptom.",
+        "expected": "There is a build diagnostic and no new stdout line."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add the ; and run.",
+        "why": "One edit checks one hypothesis.",
+        "expected": "The build succeeds and Status: waiting appears."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Replace waiting with ready and repeat.",
+        "why": "Now you are checking execution rather than syntax.",
+        "expected": "Stdout is exactly Status: ready."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "In a copy of your finished program, remove the closing quote temporarily. Record the stage where it stops, restore the quote and change the message to Status: offline.",
+        "criteria": [
+          "Name the stage of each check and compare the final output with the prediction."
+        ]
+      }
+    ]
+  },
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Sensor ready\")\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected",
+        ";"
+      ]
+    },
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Status: waiting\")\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected",
+        ";"
+      ]
+    }
+  ],
+  "skill": {
+    "id": "c.separate-build-run",
+    "prerequisites": [
+      "c.read-exact-output"
+    ]
+  }
+}

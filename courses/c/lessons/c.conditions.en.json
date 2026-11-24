@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.conditions",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "C programming",
+  "module": "Input, selection and loops",
+  "locale": "en",
+  "title": "Conditions and logical operators",
+  "goal": "Choose a branch by priority and guard a calculation with a condition evaluated before it.",
+  "prerequisites": [
+    {
+      "text": "Read a validated integer from one line."
+    },
+    {
+      "text": "Know why remainder with a zero divisor is invalid."
+    }
+  ],
+  "terms": [
+    {
+      "id": "predicate",
+      "term": "Predicate",
+      "title": "Predicate",
+      "definition": "A check whose result is true or false. In C a condition with value 0 is false."
+    },
+    {
+      "id": "short",
+      "term": "Short-circuit evaluation",
+      "title": "Short-circuit evaluation",
+      "definition": "&& skips its right operand after a false left operand. || skips the right after a true left operand."
+    },
+    {
+      "id": "priority",
+      "term": "Branch priority",
+      "title": "Branch priority",
+      "definition": "The order of tests in if / else if. The first matching branch runs."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "A maintenance marker should fall exactly on an interval boundary. A zero interval cannot be used as the divisor of the remainder operation, so test the interval first.",
+        "&& and || evaluate their left operand first. For example, a != 0 && x % a == 0 attempts the remainder only after checking a. ! changes zero to 1 and any nonzero value to 0.",
+        "Separate if statements are checked independently. An if / else if / else chain selects one result when several rules can apply."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Checking a maintenance marker",
+      "paragraphs": [
+        "distance is 12 and interval is zero. Predict whether 12 % 0 is evaluated.",
+        "Trace the listing with interval = 5 and interval = 6. For each value, say whether the right operand is evaluated and which branch is taken."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int distance = 12;\n    int interval = 0;\n\n    if (interval > 0 && distance % interval == 0) {\n        puts(\"aligned\");\n    } else {\n        puts(\"inspect\");\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "inspect\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Check interval before the % expression.",
+        "&& skips its right operand after a false left operand.",
+        "The false condition selects the else branch."
+      ],
+      "trace": [
+        [
+          "interval > 0",
+          "0 > 0",
+          "false",
+          "Skip the right operand"
+        ],
+        [
+          "&&",
+          "left operand false",
+          "false",
+          "No remainder is calculated"
+        ],
+        [
+          "else",
+          "fallback branch",
+          "inspect",
+          "One line is printed"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "The guard comes before calculation",
+      "paragraphs": [
+        "Swapping the operands can accidentally attempt remainder with a zero divisor. Reason through that unsafe variant without running it.",
+        "Both && and || need two operands. If && is followed immediately by ), Clang reports that it expected an expression."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Priority when multiple rules match",
+      "paragraphs": [
+        "Consider 0 0 in the packing task. It matches “no stock” and “invalid pack size”. The contract gives the invalid size priority.",
+        "Reading zero successfully differs from a parsing error. read_integer reports a status separately, so zero does not signal failure."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.13, 6.5.14, 6.8.4.1",
+      "language": "English",
+      "purpose": "Review short-circuit evaluation and branch selection."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What happens with interval = 0?",
+      "options": [
+        "Print aligned immediately",
+        "Print inspect without evaluating %",
+        "Evaluate % first"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The left test is false.",
+        "&& skips the remainder.",
+        "&& guards the calculation."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int distance = 12;\n    int interval = 0;\n\n    if (interval > 0 && distance % interval == 0) {\n        puts(\"aligned\");\n    } else {\n        puts(\"inspect\");\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Which edit removes the protection from a zero interval?",
+      "options": [
+        "Swap the operands of &&",
+        "Choose interval = 6",
+        "Change the printed word inspect"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The remainder becomes the left operand.",
+        "A positive divisor is valid.",
+        "Only the printed text changes."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "With stock = 0 and pack = 0, which two tests are true and why must invalid come first?",
+      "feedback": "Both tests for zero are true. A bad pack size takes precedence. Testing stock first would print empty for an invalid request.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int a = 1;\n    int b = 2;\n    if (a > 0 &&) {\n        return b;\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected expression"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Classify stock for packing",
+    "task": "Read two lines, stock and pack size, each from 0 to 100. Print invalid for invalid input or a pack size of zero. Print empty for zero stock. Otherwise print ready if stock divides exactly and partial if it leaves a remainder. Ignore input after the two records.",
+    "hint": "The first two branches make % safe in the remaining branches. Add an else if for exact division before the final else.",
+    "criteria": [
+      "18 and 6 give ready. 19 and 6 give partial.",
+      "0 and 0 give invalid. 0 and 7 give empty.",
+      "Print exactly one line in each branch."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Write down the ordered rules.",
+        "why": "Some conditions overlap.",
+        "expected": "An invalid pack size takes priority over stock status."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add a branch for zero remainder.",
+        "why": "Earlier checks exclude a zero divisor.",
+        "expected": "18 and 6 give ready."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Compare 0 0 and 0 7 using two lines of input.",
+        "why": "Both have empty stock.",
+        "expected": "Explain the different outcomes through priority."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Choose a neighbouring boundary case",
+        "task": "With a pack size of 100, find two adjacent valid stock counts for which the answer changes.",
+        "criteria": [
+          "99 and 100 give partial.",
+          "100 and 100 give ready."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int stock;\n    int pack;\n    if (read_integer(0, 100, &stock) != READ_OK ||\n        read_integer(0, 100, &pack) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    if (pack == 0) {\n        puts(\"invalid\");\n    } else if (stock == 0) {\n        puts(\"empty\");\n    /* TODO: classify non-empty stock with no remainder. */\n    } else {\n        puts(\"partial\");\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "18\n6\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Whole packs",
+        "input": "18\n6\n",
+        "output": "ready\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Leftover stock",
+        "input": "19\n6\n",
+        "output": "partial\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty stock",
+        "input": "0\n7\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid pack takes priority over empty stock",
+        "input": "0\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Maximum pack size",
+        "input": "100\n100\n",
+        "output": "ready\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Size out of range",
+        "input": "30\n101\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing second record",
+        "input": "5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "First record is invalid",
+        "input": "x\n2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int stock;\n    int pack;\n    if (read_integer(0, 100, &stock) != READ_OK ||\n        read_integer(0, 100, &pack) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    if (pack == 0) {\n        puts(\"invalid\");\n    } else if (stock == 0) {\n        puts(\"empty\");\n    } else if (stock % pack == 0) {\n        puts(\"ready\");\n    } else {\n        puts(\"partial\");\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.ordered-conditions",
+    "prerequisites": [
+      "c.checked-line-input"
+    ]
+  }
+}

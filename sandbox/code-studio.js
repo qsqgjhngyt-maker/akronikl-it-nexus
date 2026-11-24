@@ -3,6 +3,7 @@ import {createCodeWorkspace,normalizeWorkspacePath} from './code-workspace.js';
 
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 const CPP_KEYWORDS=new Set('alignas alignof and and_eq asm atomic_cancel atomic_commit atomic_noexcept auto bitand bitor bool break case catch char char8_t char16_t char32_t class compl concept const consteval constexpr constinit const_cast continue co_await co_return co_yield decltype default delete do double dynamic_cast else enum explicit export extern false float for friend goto if inline int long mutable namespace new noexcept not not_eq nullptr operator or or_eq private protected public register reinterpret_cast requires return short signed sizeof static_assert static_cast struct switch template this thread_local throw true try typedef typeid typename union unsigned using virtual void volatile wchar_t while xor xor_eq override final'.split(' '));
+const C_KEYWORDS=new Set('auto break case char const continue default do double else enum extern float for goto if inline int long register restrict return short signed sizeof static struct switch typedef union unsigned void volatile while _Alignas _Alignof _Atomic _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local'.split(' '));
 const CPP_TYPES=new Set('std string vector array map unordered_map set unordered_set deque list forward_list queue priority_queue stack unique_ptr shared_ptr weak_ptr optional variant tuple pair size_t ptrdiff_t uint8_t uint16_t uint32_t uint64_t int8_t int16_t int32_t int64_t'.split(' '));
 const BRACKET_OPEN={'(':')','[':']','{':'}'};
 const BRACKET_CLOSE={')':'(',']':'[','}':'{'};
@@ -31,7 +32,8 @@ function bracketPair(source,caret){
   return null;
 }
 
-function cppHighlight(source,matched=[]){
+function cFamilyHighlight(source,matched=[],languageId='cpp'){
+  const keywords=languageId==='c'?C_KEYWORDS:CPP_KEYWORDS;
   const matchSet=new Set(matched||[]);let i=0;let lineStart=true;const out=[];
   const push=(text,cls='',start=i)=>{
     if(!text)return;
@@ -50,7 +52,7 @@ function cppHighlight(source,matched=[]){
       const quote=ch;let j=i+1,escaped=false;while(j<source.length){const c=source[j];if(c==='\n'&&!escaped)break;if(!escaped&&c===quote){j++;break}escaped=!escaped&&c==='\\';if(c!=='\\')escaped=false;j++}push(source.slice(i,j),quote==='"'?'tok-string':'tok-char',i);i=j;continue
     }
     if(/[0-9]/.test(ch)){let j=i+1;while(j<source.length&&/[0-9A-Fa-fxXbB._'uUlLfF]/.test(source[j]))j++;push(source.slice(i,j),'tok-number',i);i=j;continue}
-    if(/[A-Za-z_]/.test(ch)){let j=i+1;while(j<source.length&&/[A-Za-z0-9_]/.test(source[j]))j++;const word=source.slice(i,j);push(word,CPP_KEYWORDS.has(word)?'tok-keyword':CPP_TYPES.has(word)?'tok-type':'tok-identifier',i);i=j;continue}
+    if(/[A-Za-z_]/.test(ch)){let j=i+1;while(j<source.length&&/[A-Za-z0-9_]/.test(source[j]))j++;const word=source.slice(i,j);push(word,keywords.has(word)?'tok-keyword':languageId==='cpp'&&CPP_TYPES.has(word)?'tok-type':'tok-identifier',i);i=j;continue}
     if('()[]{}'.includes(ch)){push(ch,'tok-bracket',i);i++;continue}
     if('+-*/%=!<>?:&|^~.,;'.includes(ch)){let j=i+1;while(j<source.length&&'+-*/%=!<>?:&|^~'.includes(source[j])&&j-i<3)j++;push(source.slice(i,j),'tok-operator',i);i=j;continue}
     push(ch,'',i);i++;
@@ -66,7 +68,7 @@ function sourceIndexAtLineColumn(source,line=1,column=1){
   const lines=String(source).split('\n');let index=0;const target=Math.max(1,Math.min(Number(line)||1,lines.length));for(let i=1;i<target;i++)index+=lines[i-1].length+1;return Math.min(String(source).length,index+Math.max(0,(Number(column)||1)-1));
 }
 
-const fileIcon=path=>/\.(?:h|hpp|hh|hxx)$/i.test(path)?'H':/\.(?:c|cc|cpp|cxx|c\+\+)$/i.test(path)?'C++':'•';
+const fileIcon=path=>/\.(?:h|hpp|hh|hxx)$/i.test(path)?'H':/\.c$/i.test(path)?'C':/\.(?:cc|cpp|cxx|c\+\+)$/i.test(path)?'C++':'•';
 const seedFiles=({source='',files=null,entryFile='main.cpp'}={})=>{
   if(Array.isArray(files)&&files.length)return files.map(file=>({...file,content:String(file?.content??'')}));
   return[{path:entryFile,content:String(source??''),languageId:'cpp'}];
@@ -129,7 +131,7 @@ export function bindCodeStudio({editor,locale='ru',languageId='cpp',fileName='ma
     updateFileLabels();
   };
   const renderGutter=()=>{if(!gutter)return;const lines=editor.value.split('\n').length;const levels=new Map();for(const item of activeDiagnostics()){if(!item?.line)continue;const current=levels.get(Number(item.line));const next=item.providerLimit?'limit':item.level==='warning'?'warning':'error';if(!current||next==='error'||(next==='warning'&&current==='limit'))levels.set(Number(item.line),next)}gutter.innerHTML=Array.from({length:lines},(_,i)=>{const level=levels.get(i+1)||'',active=i===editor.value.slice(0,editor.selectionStart).split('\n').length-1;return `<span class="${level?`problem-line ${level}`:''}${active?' current-editor-line':''}">${i+1}</span>`}).join('')};
-  const renderHighlight=()=>{if(!highlight)return;const pair=bracketPair(editor.value,editor.selectionStart);highlight.innerHTML=`<code>${languageId==='cpp'?cppHighlight(editor.value,pair):genericHighlight(editor.value,pair)}</code>`;highlight.scrollTop=editor.scrollTop;highlight.scrollLeft=editor.scrollLeft};
+  const renderHighlight=()=>{if(!highlight)return;const pair=bracketPair(editor.value,editor.selectionStart);highlight.innerHTML=`<code>${['cpp','c'].includes(languageId)?cFamilyHighlight(editor.value,pair,languageId):genericHighlight(editor.value,pair)}</code>`;highlight.scrollTop=editor.scrollTop;highlight.scrollLeft=editor.scrollLeft};
   const renderCursor=()=>{if(!cursorEl)return;const pos=editor.selectionStart;const before=editor.value.slice(0,pos);const lines=before.split('\n');const line=lines.length,col=lines.at(-1).length+1;cursorEl.textContent=`Ln ${line}, Col ${col}`};
   const initialStageHeight=stage?Math.max(240,Math.round(stage.getBoundingClientRect?.().height||parseFloat(getComputedStyle(stage).height)||340)):340;
   let currentStageHeight=initialStageHeight;
@@ -177,7 +179,7 @@ export function bindCodeStudio({editor,locale='ru',languageId='cpp',fileName='ma
   const setRuntimeDiagnostics=items=>{runtimeDiagnostics=(items||[]).map(item=>({...item,file:item.file||workspace.activeFile,level:item.providerLimit?'provider-limit':'error'}));renderGutter();renderProblems()};
   const clearRuntimeDiagnostics=()=>{runtimeDiagnostics=[];renderGutter();renderProblems()};
   const insertText=(text,start=editor.selectionStart,end=editor.selectionEnd)=>{editor.setRangeText(text,start,end,'end');syncWorkspace();syncVisuals();scheduleHistory();emitInput('insertText')};
-  const addFile=()=>{const name=prompt(en?'New file name':'Имя нового файла',(workspace.activeFile.includes('/')?workspace.activeFile.slice(0,workspace.activeFile.lastIndexOf('/')+1):'')+'NewFile.cpp');if(!name)return;try{const safe=normalizeWorkspacePath(name);const initial=/\.(?:h|hpp|hh|hxx)$/i.test(safe)?'#pragma once\n':'';workspace.addFile(safe,initial);histories.delete(safe);fileViews.delete(safe);switchFile(safe)}catch(error){alert(error.message)}};
+  const addFile=()=>{const name=prompt(en?'New file name':'Имя нового файла',(workspace.activeFile.includes('/')?workspace.activeFile.slice(0,workspace.activeFile.lastIndexOf('/')+1):'')+(languageId==='c'?'NewFile.c':'NewFile.cpp'));if(!name)return;try{const safe=normalizeWorkspacePath(name);const initial=/\.(?:h|hpp|hh|hxx)$/i.test(safe)?'#pragma once\n':'';workspace.addFile(safe,initial);histories.delete(safe);fileViews.delete(safe);switchFile(safe)}catch(error){alert(error.message)}};
   const renameFile=path=>{const next=prompt(en?'Rename file':'Новое имя файла',path);if(!next||next===path)return;const safe=normalizeWorkspacePath(path),target=normalizeWorkspacePath(next);try{clearTimeout(historyTimer);clearTimeout(viewTimer);rememberView();syncWorkspace();const oldView=fileViews.get(safe);if(oldView){fileViews.set(target,oldView);fileViews.delete(safe)}try{workspace.renameFile(safe,target)}catch(error){if(oldView){fileViews.set(safe,oldView);fileViews.delete(target)}throw error}const oldHistory=histories.get(safe);histories.delete(safe);if(oldHistory)histories.set(target,oldHistory);renderFileChrome();syncVisuals();scheduleViewPersistence()}catch(error){alert(error.message)}};
   const removeFile=path=>{if(!confirm(en?`Delete ${path}?`:`Удалить ${path}?`))return;const safe=normalizeWorkspacePath(path);try{clearTimeout(historyTimer);clearTimeout(viewTimer);rememberView();syncWorkspace();const wasActive=workspace.activeFile===safe;fileViews.delete(safe);workspace.removeFile(safe);histories.delete(safe);if(wasActive)switchFile(workspace.activeFile,{emit:false,syncCurrent:false});renderFileChrome();syncVisuals();notifyWorkspaceChange('file-removed-ui');editor.dispatchEvent(new CustomEvent('nexus-workspace-active',{bubbles:true,detail:{path:workspace.activeFile}}))}catch(error){alert(error.message)}};
   const resetWorkspace=(nextFiles,nextActive=workspace.entryFile,{emit=true}={})=>{clearTimeout(historyTimer);clearTimeout(viewTimer);histories.clear();fileViews.clear();saveSessionViewState({version:1,files:{}});staticDiagnostics=[];runtimeDiagnostics=[];workspace.replaceFiles(nextFiles,{activeFile:nextActive});const file=workspace.getFile();applyingHistory=true;editor.value=file?.content??'';applyingHistory=false;restoreEditorView(workspace.activeFile);historyFor(workspace.activeFile);renderFileChrome();syncVisuals();renderProblems();if(emit)emitInput('insertReplacementText');return studioSnapshot()};

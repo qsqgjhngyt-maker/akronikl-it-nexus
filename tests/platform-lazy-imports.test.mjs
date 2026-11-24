@@ -5,7 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const app=await fs.readFile(path.join(root,'core/app.js'),'utf8');
-const heavy=['../pwa/offline-center.js','../sandbox/sandbox.js','../effects/nexus-graphics-workshop.js','./administration.js'];
+const heavy=['../pwa/offline-center.js','../sandbox/sandbox.js','../effects/nexus-graphics-workshop.js','./administration.js','./nexus-learning-discovery.js','./nexus-practices.js','./code-hub-presentation.js','../project-studio/code-studio-home.js'];
 async function graph(){
  const seen=new Set();
  async function walk(rel){
@@ -34,6 +34,13 @@ test('Large tools no longer belong to the critical Home static import graph',asy
   assert.ok(!app.includes('from '+String.fromCharCode(39)+module+String.fromCharCode(39)),'Heavy static import retained: '+module);
   assert.ok(!result.files.has(path.posix.normalize(path.posix.join('core',module))),'Heavy transitive startup import: '+module);
  }
+ for(const file of ['project-studio/project-transfer.js','sandbox/virtual-files.js','project-studio/project-templates.js']){
+  assert.ok(!result.files.has(file),'Route-only dependency in Home startup: '+file);
+ }
+ for(const file of ['core/academy-catalog.js','core/academy-course-cards.js','core/nexus-learning-resume.js']){
+  assert.ok(result.files.has(file),'Critical Academy projection must be ready with Home: '+file);
+ }
+ assert.ok(result.bytes<=608000,'PERF-01 retains 5% startup headroom');
 });
 test('Heavy routes load dependencies before render/bind',()=>{
  assert.match(app,/const runtimeReady=!pilot&&\(r\.lesson\|\|r\.practicum\)\?loadSandboxRuntime\(\):null/);

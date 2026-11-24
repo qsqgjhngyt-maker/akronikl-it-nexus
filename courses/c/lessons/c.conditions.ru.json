@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.conditions",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "Программирование на C",
+  "module": "Ввод, условия и циклы",
+  "locale": "ru",
+  "title": "Условия и логические операторы",
+  "goal": "Выбрать ветвь по приоритету и защитить вычисление условием, которое проверяется раньше.",
+  "prerequisites": [
+    {
+      "text": "Уметь прочитать проверенное число из строки."
+    },
+    {
+      "text": "Знать, почему целочисленный остаток с нулевым делителем недопустим."
+    }
+  ],
+  "terms": [
+    {
+      "id": "predicate",
+      "term": "Предикат",
+      "title": "Предикат",
+      "definition": "Проверка с результатом истина или ложь. В C условие ложно при значении 0."
+    },
+    {
+      "id": "short",
+      "term": "Короткое вычисление",
+      "title": "Короткое вычисление",
+      "definition": "&& не вычисляет правую часть при ложной левой. || не вычисляет правую при истинной левой."
+    },
+    {
+      "id": "priority",
+      "term": "Приоритет ветвей",
+      "title": "Приоритет ветвей",
+      "definition": "Порядок проверок в цепочке if / else if. Выполняется первая подходящая ветвь."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "В расписании обслуживания отметка должна приходиться на точную границу интервала. При нулевом интервале вычислять остаток нельзя, поэтому сначала проверяют сам интервал.",
+        "Операторы && и || вычисляют левый операнд первым. Например, a != 0 && x % a == 0 допускает остаток только после проверки a. Оператор ! превращает 0 в 1, ненулевое значение в 0.",
+        "Отдельные if проверяются независимо. Цепочка if / else if / else нужна, когда ответ должен быть ровно один, а несколько условий могут быть истинными."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Проверка отметки обслуживания",
+      "paragraphs": [
+        "distance равно 12, interval равен 0. Предскажите, будет ли вычислено 12 % 0.",
+        "Проследите листинг для interval = 5 и interval = 6. Для каждого значения укажите, вычислится ли правая часть и какую ветвь выберет программа."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int distance = 12;\n    int interval = 0;\n\n    if (interval > 0 && distance % interval == 0) {\n        puts(\"aligned\");\n    } else {\n        puts(\"inspect\");\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "inspect\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Проверяем interval до операции %.",
+        "Из-за ложного левого операнда правая часть && не вычисляется.",
+        "Ложное условие переводит управление в else."
+      ],
+      "trace": [
+        [
+          "interval > 0",
+          "0 > 0",
+          "ложь",
+          "Правый операнд пропущен"
+        ],
+        [
+          "&&",
+          "ложный левый",
+          "ложь",
+          "Не вычисляем остаток"
+        ],
+        [
+          "else",
+          "страховочная ветвь",
+          "inspect",
+          "Напечатана одна строка"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Защита стоит до вычисления",
+      "paragraphs": [
+        "Переставив части условия, вы можете случайно вычислить остаток при нуле. Не запускайте вариант с вычислением раньше защиты. Для нулевой границы проверяйте путь глазами на трассе.",
+        "Условия с && и || используют два операнда. Если оставить && без второго выражения перед ), Clang покажет, что ожидается выражение."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Приоритет там, где правила пересекаются",
+      "paragraphs": [
+        "Продумайте случай 0 0 в задаче про упаковки. Он одновременно подходит под «пусто» и «неправильный размер». Договор даёт приоритет неправильному размеру.",
+        "Различайте корректное значение 0 и ошибку преобразования. read_integer сообщает свой статус отдельно, так что результат чтения нуля не означает ошибку."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.13, 6.5.14, 6.8.4.1",
+      "language": "English",
+      "purpose": "Сверить короткое вычисление и выбор ветви."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что делает программа при interval = 0?",
+      "options": [
+        "Сразу печатает aligned",
+        "Печатает inspect без %",
+        "Сначала выполняет %"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Левое условие ложно.",
+        "&& пропускает остаток от деления.",
+        "&& защищает вычисление."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int distance = 12;\n    int interval = 0;\n\n    if (interval > 0 && distance % interval == 0) {\n        puts(\"aligned\");\n    } else {\n        puts(\"inspect\");\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "При каком изменении исчезает защита от нулевого интервала?",
+      "options": [
+        "Обменять местами операнды &&",
+        "Выбрать interval = 6",
+        "Изменить строку inspect"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Остаток попадёт в левый операнд.",
+        "Положительный делитель допустим.",
+        "Изменится лишь надпись."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "В случае stock = 0 и pack = 0 какие две проверки истинны и почему нужна первая ветвь invalid?",
+      "feedback": "Обе проверки на ноль истинны. Недопустимый размер важнее состояния склада. Если начать с stock, программа выведет empty для некорректного запроса.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int a = 1;\n    int b = 2;\n    if (a > 0 &&) {\n        return b;\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected expression"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Классификатор запасов",
+    "task": "Прочитайте две строки от 0 до 100, запас и размер упаковки. При неверном вводе или размере 0 выдайте invalid. При запасе 0 выдайте empty. Остальной запас классифицируйте как ready для точного разбиения и partial при остатке. После двух записей остальной ввод игнорируется.",
+    "hint": "После первых двух ветвей % безопасен. Добавьте else if для точного деления перед последним else.",
+    "criteria": [
+      "18 и 6 дают ready, 19 и 6 дают partial.",
+      "0 и 0 дают invalid, 0 и 7 дают empty.",
+      "В каждой ветви только одна строка результата."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запишите правила по порядку.",
+        "why": "Условия могут пересекаться.",
+        "expected": "Неправильный размер важнее состояния склада."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте ветвь для нулевого остатка.",
+        "why": "Проверки до неё исключают деление на ноль.",
+        "expected": "18 и 6 дают ready."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Сравните 0 0 и 0 7 на двух строках.",
+        "why": "Оба случая имеют пустой запас.",
+        "expected": "Отличие объясняется приоритетом размера."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Выберите похожий пограничный случай",
+        "task": "Подберите два допустимых заказа с размером 100 на соседних значениях запаса, для которых результат меняется.",
+        "criteria": [
+          "99 и 100 дают partial.",
+          "100 и 100 дают ready."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int stock;\n    int pack;\n    if (read_integer(0, 100, &stock) != READ_OK ||\n        read_integer(0, 100, &pack) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    if (pack == 0) {\n        puts(\"invalid\");\n    } else if (stock == 0) {\n        puts(\"empty\");\n    /* TODO: classify non-empty stock with no remainder. */\n    } else {\n        puts(\"partial\");\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "18\n6\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Полные упаковки",
+        "input": "18\n6\n",
+        "output": "ready\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Остаток",
+        "input": "19\n6\n",
+        "output": "partial\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой запас",
+        "input": "0\n7\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевой размер важнее пустого запаса",
+        "input": "0\n0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Предел размера",
+        "input": "100\n100\n",
+        "output": "ready\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Размер вне диапазона",
+        "input": "30\n101\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Вторая строка отсутствует",
+        "input": "5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Первый ввод ошибочен",
+        "input": "x\n2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int stock;\n    int pack;\n    if (read_integer(0, 100, &stock) != READ_OK ||\n        read_integer(0, 100, &pack) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    if (pack == 0) {\n        puts(\"invalid\");\n    } else if (stock == 0) {\n        puts(\"empty\");\n    } else if (stock % pack == 0) {\n        puts(\"ready\");\n    } else {\n        puts(\"partial\");\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.ordered-conditions",
+    "prerequisites": [
+      "c.checked-line-input"
+    ]
+  }
+}

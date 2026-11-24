@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.arithmetic-and-conversions",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Arithmetic and type conversions",
+  "goal": "Choose the order of operations and keep the fractional part when needed.",
+  "prerequisites": [
+    {
+      "text": "Understand int and double."
+    },
+    {
+      "text": "Read a printf format string."
+    }
+  ],
+  "terms": [
+    {
+      "id": "operator",
+      "term": "Operator",
+      "title": "Operator",
+      "definition": "A symbol for an operation on values, such as * or /."
+    },
+    {
+      "id": "operand",
+      "term": "Operand",
+      "title": "Operand",
+      "definition": "A value to which an operator applies."
+    },
+    {
+      "id": "cast",
+      "term": "Explicit conversion",
+      "title": "Explicit conversion",
+      "definition": "An expression such as (double)x that produces the value of x in another type."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Two results from the same data",
+      "paragraphs": [
+        "A workshop has 17 parts and 4 stations. For its reserve, subtract the 5 parts used in a test run, then double the remainder. For the average workload, divide the original 17 parts among the 4 stations.",
+        "Parentheses group the subtraction so it happens before the multiplication in (pieces - 5) * 2. In pieces - 5 * 2, the multiplication is evaluated first.",
+        "The result of / depends on its operand types. Two int operands produce an integer result. Convert one operand to double before dividing and the other also participates in floating-point division."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Spare parts and an average",
+      "paragraphs": [
+        "Compare the expressions for reserve and average. What value will each produce first?"
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int pieces = 17;\n    int stations = 4;\n    int reserve = (pieces - 5) * 2;\n    double average = (double)pieces / stations;\n    printf(\"%d %.2f\\n\", reserve, average);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "24 4.25\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "First pieces - 5 gives 12. Then 12 * 2 gives the integer reserve = 24.",
+        "The cast (double)pieces gives 17.0. Dividing by 4 gives 4.25.",
+        "printf shows reserve as an integer and average with two digits after the decimal point."
+      ],
+      "trace": [
+        [
+          "(pieces - 5)",
+          "17 and 5",
+          "12",
+          "int"
+        ],
+        [
+          "(pieces - 5) * 2",
+          "12 and 2",
+          "24",
+          "int"
+        ],
+        [
+          "(double)pieces / stations",
+          "17.0 and 4",
+          "4.25",
+          "double"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Where the value changes",
+      "paragraphs": [
+        "With double average = pieces / stations, integer division runs first, then 4 is converted to 4.0. The %.2f format prints 4.00.",
+        "In (double)(pieces / stations), the parentheses still place integer division first. Converting after that operation cannot recover the discarded fraction."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Try a different set of parentheses",
+      "paragraphs": [
+        "To check a calculation, explain the type of both operands at the moment of division. Seeing double to the left of = does not answer that question.",
+        "These numbers are small and the number of stations is known and positive. For user input, check the range and the divisor."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.3.1.4, §6.5.5, §6.5.6",
+      "language": "English",
+      "purpose": "Check numeric conversions, division, and additive operators."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which line does the example print?",
+      "options": [
+        "24 4.25",
+        "7 4.25",
+        "24 4.00"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Subtraction happens first and one operand is converted before division.",
+        "Here multiplication happens after the subtraction in parentheses.",
+        "4.00 would result if both division operands remained int."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int pieces = 17;\n    int stations = 4;\n    int reserve = (pieces - 5) * 2;\n    double average = (double)pieces / stations;\n    printf(\"%d %.2f\\n\", reserve, average);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Which expression preserves the fractional part when stations is positive?",
+      "options": [
+        "(double)pieces / stations",
+        "(double)(pieces / stations)",
+        "pieces / stations"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The conversion happens before division.",
+        "The division inside the parentheses already produces an integer.",
+        "Two int operands give integer division."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why do (17 - 5) * 2 and 17 - 5 * 2 give different results? Name the first operation in each.",
+      "feedback": "With parentheses, 17 - 5 comes first and the result is 24. Without parentheses, 5 * 2 comes first and the result is 7.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "A reserve and daily average",
+    "task": "You have 19 cans and use 6 for setup. The reserve is twice the remaining number. Also calculate the average number of cans per day over 4 days using the original count of 19. Print the whole reserve and then the average with two digits after the decimal point, separated by a space.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    int cans = 19;\n    int used = 6;\n    int batches = 2;\n    int days = 4;\n    int reserve = 0;\n    double pace = 0.0;\n    /* TODO: compute reserve and pace from the named values. */\n    printf(\"%d %.2f\\n\", reserve, pace);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Output for the specified data",
+        "input": "",
+        "output": "26 4.75\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "The results are 26 and 4.75.",
+      "The expressions use the variables provided in the starter.",
+      "Subtraction happens before multiplication and conversion precedes division."
+    ],
+    "hint": "One recipe needs parentheses. The other needs (double). Check what each pair of parentheses applies to.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cans = 19;\n    int used = 6;\n    int batches = 2;\n    int days = 4;\n    int reserve = (cans - used) * batches;\n    double pace = (double)cans / days;\n    printf(\"%d %.2f\\n\", reserve, pace);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Replace the initial reserve and pace values with expressions.",
+        "why": "Separate the two formulas into distinct operations.",
+        "expected": "Multiply the remaining count and divide the original count."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run the program.",
+        "why": "Check both the calculation and the format.",
+        "expected": "The output is one line, 26 4.75."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Set cans to 20 and run again.",
+        "why": "Changing the data reveals whether the formulas use the variables.",
+        "expected": "The result is 28 5.00."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Restore cans = 19. Predict the result, then try (double)(cans / days) in a copy and compare the output.",
+        "criteria": [
+          "The original gives 26 4.75.",
+          "The modified version gives 26 4.00.",
+          "Name the operation that loses the fraction."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.arithmetic-conversion",
+    "prerequisites": [
+      "c.variables-types",
+      "c.output-formatting"
+    ]
+  }
+}
