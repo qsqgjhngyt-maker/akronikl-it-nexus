@@ -55,7 +55,7 @@ export function verifyC17EditorialPins(receipt,previous,helperSha256){
 export function verifyC17ConditionsCIPins(receipt,previous,helperSha256){
  const testPath='tests/cpp-clarity-onec-p2-conditions-content.test.mjs';
  assert.equal(receipt.baselineCI,'ec1dcb71731ef3c2fdef912ee641a4079c4ef3c9','C17 conditions CI baseline');
- assert.equal(receipt.sourceCommit,'d087900ff9ead3ec8438da33df2ccfff8cf3b057','C17 conditions CI product');
+ assert.equal(receipt.sourceCommit,'39588ecca9dfb577714c81c83a228663cf5a5e4b','C17 conditions CI product');
  assert.deepEqual(receipt.test,{
   path:testPath,
   beforeSha256:'603b4d33a7159dc3a02cedb827902a8253499a8a2889159a462bbb7ae68f528d',
