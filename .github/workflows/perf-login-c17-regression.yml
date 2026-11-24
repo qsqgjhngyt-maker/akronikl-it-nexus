@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NEXUS_PRODUCT_SHA: '241809418a06c139da028dd0be589f170e3068b0'
+  NEXUS_PRODUCT_SHA: 'd087900ff9ead3ec8438da33df2ccfff8cf3b057'
   NEXUS_HEAD_REF: ${{ github.event.pull_request.head.ref }}
 
 jobs:
@@ -47,31 +47,46 @@ jobs:
           import {execFileSync} from 'node:child_process';
 
           const base='b170c7f64ab70bb6f0499f10704ac38a1d75e97c';
-          const candidate='241809418a06c139da028dd0be589f170e3068b0';
+          const previousProduct='241809418a06c139da028dd0be589f170e3068b0';
+          const candidate='d087900ff9ead3ec8438da33df2ccfff8cf3b057';
           const initialCI='6f198ddcc7b5ea7bec4b59826f4646505e28b0cd';
           const auditedCI='4ef8371b43478036eff0b4fb7fb02122e62bd610';
-          const productTree='b8ad64a7cc15ffdd402dfddd2af1725c6f3f5074';
+          const acceptedCI='9e77c0562842083741a8154069ca0af0ef71906e';
+          const integration='0ee9bdbee6493559cc7edc8295f0d734ae3677ad';
+          const productTree='bff266a7d368b5ce748e609acfbd2749d530ee1f';
           const workflow='.github/workflows/perf-login-c17-regression.yml';
           const repository='qsqgjhngyt-maker/akronikl-it-nexus';
           const prBranch='feature/perf-login-c17-editorial';
           const receipt='docs/ru/03-content/cp-next-01/C17_EDITORIAL_PRESENTATION_BYTES.json';
           const verifier='tests/helpers/course-rollout-bytes.mjs';
+          const conditions='tests/cpp-clarity-onec-p2-conditions-content.test.mjs';
+          const conditionsPin=['M','8d4d6e133ef88830c8f7f92b7723c7c29a201994'];
           const editorialCI={
             [receipt]:['A','a9b09f0068ae3a567be537349593355e9b757c53'],
             'tests/c17-editorial-presentation-pin.test.mjs':['A','cd80aa367e54688b37778b0e53061c637b6f8e90'],
             [verifier]:['M','895e16683ed40741ab418a3bb7e8510195558f93'],
           };
           const product={
+            'akronikl/context.js':['M','8575598953d7e070fdeccb03e4b5062bbef7437b'],
+            'akronikl/presence.css':['M','9187c23df869ed724adedd39b3d8911a5355b7ba'],
+            'akronikl/presence.js':['M','73cb6eb453088e877675df45c9c351b52c377faf'],
             'assets/blog/c17-course-1536.jpg':['A','b76db3b6132be89c6b44b736a86b2ae3b236b094'],
             'assets/blog/c17-course-768.jpg':['A','a23d4f2fc0742b624d2207c10ec1181054e5d22c'],
             'core/blog-editorial-text.js':['A','1072ad651cabeae0ed104717ae4d43dbd0f41bff'],
             'core/blog-presentation.js':['M','f63fee129eef9501b7a4820e13d4b97172cd7220'],
             'core/blog-publications-20261109.js':['M','9fa697c2164433f5abb21e6301a1a4b33911aed4'],
+            'core/c-course.css':['M','d3ca8d8069d8197791d689993cd42482da830b6b'],
+            'core/c-course.mjs':['M','739d2fcf6ee851a36a8975dd94205594fd1e656b'],
             'core/content-public.js':['M','05053f2d4c515f12d9858372a713300f685ac832'],
+            'core/nexus-learning-ui.js':['M','f3867769713bd53e1b2a4eb2e9f0ee4831b30243'],
             'core/startup-intro.js':['M','2a47671c1fb6555bc90a7e3ad4b638492936452c'],
+            'courses/onec-education/candidate.css':['M','5095ac3a4987995b82dc2f302501fb90d66e6cda'],
             'pwa/durable-store.js':['M','4219b1f03fc1c16dfb9f5f7ff35d2b61e2be5e9f'],
             'server-access/public/entry.html':['M','46004933c0e5bda586ee991a355823bfb52a309d'],
             'server-access/public/entry.js':['M','24205a9b4c5bc4f874cd4352bc16d5f2b71e870d'],
+            'tests/c-course-browser-check.mjs':['M','1495ccfb474045b210e90e7f393376febb610429'],
+            'tests/c-course-offline-browser-check.mjs':['M','22ac2458a2437d22c84508412be010c3a8c29d75'],
+            'tests/onec-platform-browser.mjs':['M','b7fd24e836eebc844463b91ebccbe24aeeb6b878'],
             'tests/startup-intro-launch-browser-check.mjs':['M','19d4f03281435eedb39067584bc7b7882cfc9ce7'],
           };
           const git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{encoding:'utf8'}).trimEnd();
@@ -87,9 +102,9 @@ jobs:
             }
             return output;
           }
-          function verifyCI(rows,workflowOperation){
-            assert.equal(rows.length,4);
-            const remaining=new Map([...Object.entries(editorialCI),[workflow,[workflowOperation,null]]]);
+          function verifyCI(rows,entries){
+            assert.equal(rows.length,entries.length);
+            const remaining=new Map(entries);
             for(const {file,op,mode,blob} of rows){
               const approved=remaining.get(file);
               assert(approved,'Неутверждённый путь CI: '+file);
@@ -110,11 +125,13 @@ jobs:
             assert.equal(input.base,base);
             assert.match(input.head,/^[a-f0-9]{40}$/);
             assert.equal(input.checkout,input.head);
-            assert.deepEqual(input.parents,[auditedCI]);
+            assert.deepEqual(input.parents,[integration]);
+            assert.deepEqual(input.integrationParents,[acceptedCI,candidate]);
+            assert.deepEqual(input.acceptedCIParents,[auditedCI]);
             assert.deepEqual(input.auditedCIParents,[initialCI]);
-            assert.deepEqual(input.initialCIParents,[candidate]);
+            assert.deepEqual(input.initialCIParents,[previousProduct]);
             assert.equal(input.productTree,productTree);
-            assert.equal(input.productDelta.length,11);
+            assert.equal(input.productDelta.length,21);
             const remaining=new Map(Object.entries(product));
             for(const {file,op,mode,blob} of input.productDelta){
               assert.equal(mode,'100644',file);
@@ -122,8 +139,8 @@ jobs:
               remaining.delete(file);
             }
             assert.equal(remaining.size,0);
-            verifyCI(input.workflowDelta,'A');
-            verifyCI(input.headDelta,'M');
+            verifyCI(input.workflowDelta,[...Object.entries(editorialCI),[conditions,conditionsPin],[workflow,['A',null]]]);
+            verifyCI(input.headDelta,[[conditions,conditionsPin],[workflow,['M',null]]]);
           }
           const env=process.env;
           assert.equal(env.NEXUS_EVENT_BASE,base);
@@ -135,7 +152,9 @@ jobs:
             checkout:git('rev-parse','HEAD'),parents:git('show','-s','--format=%P',head).split(' '),
             productTree:git('rev-parse',candidate+'^{tree}'),productDelta:delta(base,candidate),workflowDelta:delta(candidate,head),
             initialCIParents:git('show','-s','--format=%P',initialCI).split(' '),
-            auditedCIParents:git('show','-s','--format=%P',auditedCI).split(' '),headDelta:delta(auditedCI,head),
+            auditedCIParents:git('show','-s','--format=%P',auditedCI).split(' '),
+            acceptedCIParents:git('show','-s','--format=%P',acceptedCI).split(' '),
+            integrationParents:git('show','-s','--format=%P',integration).split(' '),headDelta:delta(integration,head),
           };
           verify(input);
           const controls={
@@ -148,9 +167,12 @@ jobs:
             wrongCICheckpoint:copy=>{copy.parents=[candidate];},
             wrongCIParent:copy=>{copy.initialCIParents=[base];},
             wrongAuditCheckpoint:copy=>{copy.auditedCIParents=[base];},
+            wrongAcceptedCheckpoint:copy=>{copy.acceptedCIParents=[base];},
+            wrongIntegrationProduct:copy=>{copy.integrationParents[1]=previousProduct;},
             mixedCIFix:copy=>{copy.headDelta.push({...copy.headDelta[0],file:'core/app.js'});},
-            wrongReceiptBlob:copy=>{copy.headDelta.find(row=>row.file===receipt).blob='0'.repeat(40);},
+            wrongReceiptBlob:copy=>{copy.workflowDelta.find(row=>row.file===receipt).blob='0'.repeat(40);},
             wrongVerifierBlob:copy=>{copy.workflowDelta.find(row=>row.file===verifier).blob='0'.repeat(40);},
+            wrongStylesheetTest:copy=>{copy.headDelta.find(row=>row.file===conditions).blob='0'.repeat(40);},
             wrongTree:copy=>{copy.productTree='0'.repeat(40);},
             extraProduct:copy=>{copy.productDelta.push({...copy.productDelta[0],file:'core/app.js'});},
             missingProduct:copy=>{copy.productDelta.pop();},
