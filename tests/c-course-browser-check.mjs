@@ -190,7 +190,7 @@ async function checkWorkWindow(page, width) {
     assert.equal(await dialog.locator('[data-gold-work-panel="task"]').isVisible(), true);
   }
   await dialog.locator('[data-gold-work-close]').click();
-  await dialog.waitFor({state:'hidden'});
+  await root.locator('dialog.gold-work-dialog').waitFor({state:'detached'});
   assert.equal(await editor.inputValue(), text);
   assert.equal(await opener.evaluate(button => button === document.activeElement), true);
   await original.dispose();
