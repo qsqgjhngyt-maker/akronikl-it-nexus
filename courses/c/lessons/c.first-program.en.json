@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.first-program",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Your first program from scratch",
+  "goal": "Assemble the main.c structure. Write lines with quotation marks inside the text and predict the exact result.",
+  "prerequisites": [
+    {
+      "text": "You know how to build and run main.c. You can tell output apart from a compiler diagnostic."
+    }
+  ],
+  "terms": [
+    {
+      "id": "header",
+      "term": "Header",
+      "title": "Header",
+      "definition": "A file containing declarations. stdio.h declares standard input and output functions."
+    },
+    {
+      "id": "statement",
+      "term": "Statement",
+      "title": "Statement",
+      "definition": "An action in the code. A puts call in this lesson ends with a semicolon."
+    },
+    {
+      "id": "escape",
+      "term": "Escape sequence",
+      "title": "Escape sequence",
+      "definition": "A notation starting with a backslash. Inside a string, \\\" represents one quotation mark in the text."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The structure and its contents",
+      "paragraphs": [
+        "A short program starts by including the declarations it needs. Next is int main(void): int relates to the exit status and void here means main takes no parameters. A pair of braces marks its body.",
+        "Calls inside the body go in order. The argument of puts is a string literal. Its outer quotes are needed in the source and do not appear in the output.",
+        "When a quotation mark belongs in the message, write \\\" inside the string. The backslash tells the compiler that the next quote is part of the text."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "A queue display with quotation marks",
+      "paragraphs": [
+        "Type the program into a new main.c. Predict the two lines of output, ignoring the delimiters of each literal."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Queue \\\"A\\\"\");\n    puts(\"Next: ticket 3\");\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "Queue \"A\"\nNext: ticket 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Including stdio.h makes the declaration of puts available.",
+        "The first call prints Queue, a space and A in quotation marks. The compiler translates each \\\" into one printed quotation mark.",
+        "The second puts starts the next line after the first. return 0 reports successful completion."
+      ],
+      "trace": [
+        [
+          "First puts",
+          "Queue label string literal",
+          "Queue \"A\"",
+          "The quotes around A are part of the text"
+        ],
+        [
+          "Second puts",
+          "Next: ticket 3",
+          "Next: ticket 3",
+          "Prints on a new line"
+        ],
+        [
+          "return 0",
+          "Two printed lines",
+          "Exit status 0",
+          "Only the two lines appear in stdout"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "When a quote ends the text too early",
+      "paragraphs": [
+        "If you type puts(\"Queue \"A\"\");, the first inner quote prematurely ends the string. The compiler can no longer read the call as one argument. Put a backslash before each inner quote.",
+        "If you want quotation marks solely as source delimiters, escapes would add unwanted characters to the output. Check which quotes are part of the requested text."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Print a new card of your own",
+      "paragraphs": [
+        "A new printer issues a three-line check-in card. It differs from the queue display in purpose, lettering, number and number of lines. Break the request into three independent calls.",
+        "If everything fits on one line, check how many puts calls you have and their arguments. Compare output character by character before opening the solution."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.2.2.1, §6.4.4.4, §6.4.5, §7.21.7.9",
+      "language": "English",
+      "purpose": "Specifies the form of main, string literals and the puts call."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What is the first output line?",
+      "options": [
+        "Queue \"A\"",
+        "\"Queue A\"",
+        "Queue with backslashes around A"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct. The inner marks print and the outer marks delimit the literal.",
+        "The outer quotation marks do not print.",
+        "The backslashes encode the quotation marks in the source."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Queue \\\"A\\\"\");\n    puts(\"Next: ticket 3\");\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Why does puts(\"Queue \"A\"\"); not express a single text argument?",
+      "options": [
+        "The unescaped inner quote terminates the literal",
+        "puts cannot print letters",
+        "The semicolon belongs inside the argument"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct. Escape the quotation marks that belong to the message.",
+        "puts prints string literals that contain letters.",
+        "The ; ends the entire statement after the call."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "What do the outer and escaped inner quotation marks each do?",
+      "feedback": "Distinguish the syntax that delimits a literal from quotation marks that are part of the data. In this example the backslashes are used only in source notation.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "A check-in card",
+    "task": "Print exactly three lines: CHECK IN, Desk \"B\", Ticket 8. Use three puts calls and the standard main.c structure. The second line contains printed quotation marks.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Card\");\n    /* Add the remaining lines here. */\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Check-in card",
+        "input": "",
+        "output": "CHECK IN\nDesk \"B\"\nTicket 8\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "The lines are in the required order with no empty line.",
+      "Exactly two quotation marks surround B.",
+      "You can explain the role of stdio.h and return 0."
+    ],
+    "hint": "The second literal needs two \\\" escapes. Its outer quotes remain ordinary delimiters.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"CHECK IN\");\n    puts(\"Desk \\\"B\\\"\");\n    puts(\"Ticket 8\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Predict the three output lines.",
+        "why": "Identify which quotes must print.",
+        "expected": "The second line contains Desk and a quoted B."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Replace Card and add two calls.",
+        "why": "This keeps the three actions distinguishable.",
+        "expected": "The program builds and prints three lines."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check spaces, quotes and ticket number.",
+        "why": "Line count alone does not check content.",
+        "expected": "The result matches character by character."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Make a copy for a different desk. Print Desk \"C\" and Ticket 11 while leaving the first line alone. Explain why the number of lines stays the same.",
+        "criteria": [
+          "You change the arguments to two calls while preserving the number of commands."
+        ]
+      }
+    ]
+  },
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    puts(\"Queue \"A\"\");\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected"
+      ]
+    }
+  ],
+  "skill": {
+    "id": "c.write-first-program",
+    "prerequisites": [
+      "c.separate-build-run"
+    ]
+  }
+}

@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.compiler-diagnostics",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Read compiler diagnostics",
+  "goal": "Find the first diagnostic, fix it, and check the meaning of the result separately.",
+  "prerequisites": [
+    {
+      "text": "Run a C17 program in Code Studio."
+    },
+    {
+      "text": "Read a variable declaration and a printf call."
+    }
+  ],
+  "terms": [
+    {
+      "id": "diagnostic",
+      "term": "Diagnostic",
+      "title": "Diagnostic",
+      "definition": "A compiler message describing a problem. It often gives a file, location, and reason."
+    },
+    {
+      "id": "identifier",
+      "term": "Identifier",
+      "title": "Identifier",
+      "definition": "A name used in a program, such as cargo. Letter order and case matter."
+    },
+    {
+      "id": "stdout",
+      "term": "Standard output",
+      "title": "Standard output",
+      "definition": "Text printed by a running program. Read build diagnostics separately."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "How to find the cause",
+      "paragraphs": [
+        "You open an example and rename a variable, but change its name in only one place. Clicking Run compiles the code first. An error may appear before the program starts.",
+        "Find the first error message in your own source. Read the file name, line, column, and description. Later messages may follow from the first one.",
+        "After correcting the error, rebuild and check the output. A program that builds can still calculate something different from what the task requires."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "A working line and a typo",
+      "paragraphs": [
+        "In the working version, cargo is declared and its name matches in the call to printf. In a copy, change only the printf argument to carog."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7;\n    printf(\"Cargo: %d\\n\", cargo);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "Cargo: 7\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Run the original example. The declaration and the reference in printf use the same name. The program prints Cargo: 7.",
+        "In a copy, change only cargo → carog in printf. Look for a Clang message containing undeclared identifier and the name carog. The column number depends on your formatting.",
+        "Change carog back to cargo. After rebuilding, check the single line of stdout again."
+      ],
+      "trace": [
+        [
+          "Working version",
+          "cargo",
+          "Cargo: 7",
+          "Builds and runs"
+        ],
+        [
+          "Typo in printf",
+          "carog",
+          "no stdout line",
+          "Build error"
+        ],
+        [
+          "Name corrected",
+          "cargo",
+          "Cargo: 7",
+          "Builds and runs"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Two short experiments",
+      "paragraphs": [
+        "Remove the semicolon after int cargo = 7. Clang reports expected and points near the place where the semicolon belongs. Check the reported line and the end of the line before it.",
+        "Change 7 to 6 and compilation still succeeds. The program prints Cargo: 6. Compare that with the intended Cargo: 7 by running it."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "A successful build and a correct result",
+      "paragraphs": [
+        "Start by changing the smallest fragment that explains the first message. When the build succeeds again, check the calculation on known data.",
+        "Record the build outcome and the stdout of a later run separately. This lets you verify the name fix and the formula fix."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.3, §6.2.1, §6.8.3",
+      "language": "English",
+      "purpose": "Check the diagnostic requirement, scope of names, and expression statements."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What happens after changing cargo to carog only in printf?",
+      "options": [
+        "Compilation reports undeclared identifier",
+        "stdout shows Cargo: 0",
+        "stdout shows carog"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The expression refers to an undeclared name.",
+        "Compilation fails before the program starts.",
+        "The compiler cannot launch the program with this error."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7;\n    printf(\"Cargo: %d\\n\", cargo);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "The build succeeds but the program prints Total: 13 instead of Total: 19. What should you inspect first?",
+      "options": [
+        "The calculation of total",
+        "The location of a compile error",
+        "The Run control"
+      ],
+      "correct": 0,
+      "feedback": [
+        "16 - 3 = 13, but the task asks you to add 3.",
+        "This successful build contains no such error.",
+        "The output shows that the program ran."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "What two distinct facts should you record after fixing the spelling and formula?",
+      "feedback": "The build succeeds. A subsequent run produces the expected stdout.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Diagnose two problems in a calculation",
+    "task": "A shipment holds 16 base items and 3 additional items. First fix the build error in the starter. Then make it print Total: 19 by computing the result from base and extra.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    int base = 16;\n    int extra = 3;\n    int total = bas - extra;\n    printf(\"Total: %d\\n\", total);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Base shipment with extra items",
+        "input": "",
+        "output": "Total: 19\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Name the undeclared identifier bas and correct the reference.",
+      "After fixing the name, observe Total: 13 separately.",
+      "The final total is computed from base and extra and the program prints Total: 19."
+    ],
+    "hint": "The first run exposes a name problem. Once the build succeeds, compare the operator with the word additional.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int base = 16;\n    int extra = 3;\n    int total = base + extra;\n    printf(\"Total: %d\\n\", total);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter, read the first diagnostic, and fix the name only.",
+        "why": "Change one cause at a time.",
+        "expected": "The bas diagnostic disappears."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run again and compare the output with the task.",
+        "why": "13 results from subtraction.",
+        "expected": "The program prints Total: 13, but the expected total is 19."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the expression and run once more.",
+        "why": "The calculation must be checked in stdout.",
+        "expected": "The result is Total: 19."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "In a copy of the correct version, set extra to 0, predict the output, and test. Why could the wrong operator go unnoticed with zero?",
+        "criteria": [
+          "The output is Total: 16.",
+          "Adding and subtracting zero have the same result.",
+          "The case extra = 3 distinguishes the formulas."
+        ]
+      }
+    ]
+  },
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7;\n    printf(\"Cargo: %d\\n\", carog);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier",
+        "carog"
+      ]
+    },
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cargo = 7\n    printf(\"Cargo: %d\\n\", cargo);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected",
+        ";"
+      ]
+    },
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int base = 16;\n    int extra = 3;\n    int total = bas - extra;\n    printf(\"Total: %d\\n\", total);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier",
+        "bas"
+      ]
+    }
+  ],
+  "skill": {
+    "id": "c.read-compiler-diagnostics",
+    "prerequisites": [
+      "c.variables-types",
+      "c.arithmetic-conversion"
+    ]
+  }
+}

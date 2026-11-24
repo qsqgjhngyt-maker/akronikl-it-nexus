@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.formatted-output",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Output and formatting",
+  "goal": "Build a line with numbers, a character and a percent sign. Match each printf conversion to its argument.",
+  "prerequisites": [
+    {
+      "text": "You can build main.c, call puts and write a string in quotes."
+    }
+  ],
+  "terms": [
+    {
+      "id": "format",
+      "term": "Format",
+      "title": "Format",
+      "definition": "A string describing ordinary text and positions for substitutions."
+    },
+    {
+      "id": "specifier",
+      "term": "Conversion specifier",
+      "title": "Conversion specifier",
+      "definition": "Notation starting with %. For example %d tells printf how to print an int argument."
+    },
+    {
+      "id": "argument",
+      "term": "Argument",
+      "title": "Argument",
+      "definition": "A value passed to a function. For printf, supply the values after the format in substitution order."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "A template for a line",
+      "paragraphs": [
+        "The shelf’s number, weight and section can change. A format lets you keep the ordinary text while passing the values separately. printf prints the ordinary parts as written and replaces conversion specifiers with values.",
+        "%d prints an int, %.2f prints a double with two digits after the point, and %c prints one character. The literal 'A' uses single quotes and fits %c. The string \"A\" is a different value and does not fit this conversion.",
+        "%% prints a percent sign and consumes no argument. printf does not add a newline automatically. Write \\n in the format to end the current line."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "A shelf label",
+      "paragraphs": [
+        "Before running, match the first, second and third substitutions to their arguments. Then count the arguments required for the line with the percent sign."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    printf(\"Shelf %d: %.2f kg (%c)\\n\", 5, 1.25, 'A');\n    printf(\"Loaded: %d%%\\n\", 75);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "Shelf 5: 1.25 kg (A)\nLoaded: 75%\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "The first %d prints 5. %.2f prints 1.25. %c prints A. Parentheses and the unit kg are ordinary text.",
+        "In the second call, %d consumes 75. %% prints %. The two notations starting with % need just one argument here.",
+        "The two \\n sequences supply the line breaks. The C locale uses a point for the decimal separator. These programs leave that setting alone."
+      ],
+      "trace": [
+        [
+          "%d",
+          "Position 1",
+          "5",
+          "5 is an int"
+        ],
+        [
+          "%.2f",
+          "Position 2",
+          "1.25",
+          "1.25 is a double"
+        ],
+        [
+          "%c",
+          "Position 3",
+          "A",
+          "A character literal was supplied"
+        ],
+        [
+          "%%",
+          "No argument",
+          "%",
+          "Two signs in the format represent one printed sign"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "A wrong type is more serious than wrong text",
+      "paragraphs": [
+        "Keep argument types consistent even if the layout looks right. Using %f with the int 5 makes the type differ from what printf expects. C does not define that behaviour. If the compiler detects the mismatch, fix the type or format before running.",
+        "The letter f does not convert an integer argument to double. A newline is not printed as two characters when the string contains one backslash followed by n."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Write a new format",
+      "paragraphs": [
+        "The independent task needs a line for volume in litres and a second line for fullness. Write the format yourself. The value 2.5 requires two decimal places: 2.50.",
+        "Underline the substitutions that consume arguments. Check their order and types. Then compare the result with the specified spacing and punctuation."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.6.1, §7.21.6.3",
+      "language": "English",
+      "purpose": "Specifies printf-family formatting and argument type requirements."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What is the second output line?",
+      "options": [
+        "Loaded: 75%",
+        "Loaded: 75%%",
+        "Loaded: %75"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct. %% produces one sign.",
+        "Two signs are format notation.",
+        "The number comes before the sign."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    printf(\"Shelf %d: %.2f kg (%c)\\n\", 5, 1.25, 'A');\n    printf(\"Loaded: %d%%\\n\", 75);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "To display 2.50, what specifies two digits after the point?",
+      "options": [
+        "%.2f",
+        "%d",
+        "The n after a backslash"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct. Precision .2 gives two decimal places.",
+        "%d requires an int and prints an integer.",
+        "A newline does not change number formatting."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why should %% not be matched to an argument?",
+      "feedback": "A good explanation identifies %% as a way to print one percent sign. A number is matched to another conversion, such as %d.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "A tray label",
+    "task": "Print Tray 3: 2.50 L (B) followed by Fill: 80% on the next line. Pass the numbers and B as separate printf arguments. No input is needed.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    printf(\"Item\\n\");\n    /* Replace the placeholder with a format and its arguments. */\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Tray label",
+        "input": "",
+        "output": "Tray 3: 2.50 L (B)\nFill: 80%\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "The first line contains 2.50 and the second contains one % sign.",
+      "The numeric values are not written directly into the format text.",
+      "You can point to the conversion that consumes each argument."
+    ],
+    "hint": "Use %d after Tray. Volume is similar to the weight example, so use %.2f. Write %% for a printed percent sign.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    printf(\"Tray %d: %.2f L (%c)\\n\", 3, 2.5, 'B');\n    printf(\"Fill: %d%%\\n\", 80);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Mark the argument order for both lines.",
+        "why": "This makes incorrect substitution easier to diagnose.",
+        "expected": "Identify int, double, a character and the separate second-line integer."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Write the printf calls.",
+        "why": "The format and the arguments work together.",
+        "expected": "Output matches the specification."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Set the volume to 1.75 and the fullness to 60.",
+        "why": "The printed values should depend on the arguments.",
+        "expected": "The lines contain 1.75 and 60%, with the other layout unchanged."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Make a variant for tray 7 and section C, then change only the volume in a second run. Predict the differences before you run them.",
+        "criteria": [
+          "You can point to the argument that controls each part of the result."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.match-format-arguments",
+    "prerequisites": [
+      "c.write-first-program"
+    ]
+  }
+}

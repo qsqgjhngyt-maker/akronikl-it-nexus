@@ -1,0 +1,65 @@
+name: Академия — первый модуль C17
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cp-next-01-c-course.yml'
+      - 'core/c-course*'
+      - 'core/app.js'
+      - 'core/academy-*.js'
+      - 'core/code-hub-presentation.js'
+      - 'courses/c/**'
+      - 'courses/catalog.json'
+      - 'courses/programming/languages.json'
+      - 'pwa/**'
+      - 'sandbox/**'
+      - 'tests/c-course-*'
+  push:
+    branches: [feature/cp-next-01-c-agent-team-20261124]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: c-course-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Контент, сохранение, браузер и автономное чтение
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-c-course
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Проверить контракты курса и критический граф загрузки
+        run: |
+          node --test tests/c-course-content.test.mjs tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/pwa-controller-graph-compatibility.test.mjs
+          node tests/shared-presentation-check.mjs
+      - name: Проверить результаты примеров, эталонов и диагностик в Clang C17
+        run: node tests/c-course-native-compiler-check.mjs
+      - name: Собрать публичный кандидат и установить Chromium
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
+          tools/qa-browser-driver/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-cp-next-01-ci --version 0.1.7-alpha.2.4.6-ui1a.10.24.0
+      - name: Пройти уроки и проверить сохранение на трёх ширинах
+        env:
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-c-evidence/online
+        run: node tests/c-course-browser-check.mjs
+      - name: Открыть материалы C после отключения сети и перезапуска Chromium
+        env:
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-c-evidence/offline
+        run: node tests/c-course-offline-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cp-next-01-${{ github.sha }}
+          path: ${{ runner.temp }}/nexus-c-evidence
+          retention-days: 30

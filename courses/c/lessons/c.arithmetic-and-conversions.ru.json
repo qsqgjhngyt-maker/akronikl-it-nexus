@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.arithmetic-and-conversions",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "Программирование на C",
+  "module": "Первые программы на C",
+  "locale": "ru",
+  "title": "Арифметика и преобразования типов",
+  "goal": "Выбирать порядок вычислений и сохранять дробную часть, когда она нужна.",
+  "prerequisites": [
+    {
+      "text": "Знать назначение int и double."
+    },
+    {
+      "text": "Читать формат строки printf."
+    }
+  ],
+  "terms": [
+    {
+      "id": "operator",
+      "term": "Оператор",
+      "title": "Оператор",
+      "definition": "Обозначение действия над значениями, например * или /."
+    },
+    {
+      "id": "operand",
+      "term": "Операнд",
+      "title": "Операнд",
+      "definition": "Значение, к которому применяется оператор."
+    },
+    {
+      "id": "cast",
+      "term": "Явное преобразование",
+      "title": "Явное преобразование",
+      "definition": "Запись вида (double)x, которая даёт значение x в новом типе."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Два результата из одних данных",
+      "paragraphs": [
+        "В мастерской есть 17 деталей и 4 рабочих места. Для запаса сначала вычтем 5 деталей на пробный запуск, потом удвоим остаток. Для оценки нагрузки разделим исходные 17 деталей на 4 места.",
+        "Скобки задают часть выражения, которую нужно вычислить до умножения. В (pieces - 5) * 2 сначала выполняется вычитание. В pieces - 5 * 2 первым будет умножение.",
+        "Результат / зависит от типов его операндов. Два int дают целый результат. Если преобразовать один операнд в double до деления, второй тоже участвует в вещественном вычислении."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Резерв деталей и среднее",
+      "paragraphs": [
+        "Сравните выражения для reserve и average. Какое значение первым получит каждое из них?"
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int pieces = 17;\n    int stations = 4;\n    int reserve = (pieces - 5) * 2;\n    double average = (double)pieces / stations;\n    printf(\"%d %.2f\\n\", reserve, average);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "24 4.25\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Сначала pieces - 5 даёт 12. Затем 12 * 2 даёт целый reserve = 24.",
+        "Преобразование (double)pieces даёт 17.0. Деление на 4 даёт 4.25.",
+        "printf выводит reserve как целое число, average — с двумя знаками после точки."
+      ],
+      "trace": [
+        [
+          "(pieces - 5)",
+          "17 и 5",
+          "12",
+          "int"
+        ],
+        [
+          "(pieces - 5) * 2",
+          "12 и 2",
+          "24",
+          "int"
+        ],
+        [
+          "(double)pieces / stations",
+          "17.0 и 4",
+          "4.25",
+          "double"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Где меняется значение",
+      "paragraphs": [
+        "Если записать double average = pieces / stations, сначала произойдёт целое деление, затем 4 преобразуется в 4.0. Формат %.2f напечатает 4.00.",
+        "В (double)(pieces / stations) скобки тоже оставляют целое деление первым. Преобразование после операции не возвращает уже потерянную дробную часть."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Проверьте другую расстановку скобок",
+      "paragraphs": [
+        "При проверке вычислений объясните, какой тип имели оба операнда в момент деления. Одной записи double слева от = недостаточно, чтобы ответить.",
+        "Числа в примерах малы, а число мест известно и больше нуля. Когда значения приходят от пользователя, диапазон и делитель придётся проверять."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.3.1.4, §6.5.5, §6.5.6",
+      "language": "English",
+      "purpose": "Сверить преобразования чисел, правила деления и операции сложения и вычитания."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какую строку напечатает пример?",
+      "options": [
+        "24 4.25",
+        "7 4.25",
+        "24 4.00"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Сначала вычитаем, а до деления преобразуем один операнд.",
+        "Здесь умножение выполняется после вычитания в скобках.",
+        "4.00 получится, если оба операнда деления останутся int."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int pieces = 17;\n    int stations = 4;\n    int reserve = (pieces - 5) * 2;\n    double average = (double)pieces / stations;\n    printf(\"%d %.2f\\n\", reserve, average);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Какая запись сохраняет дробную часть при положительном stations?",
+      "options": [
+        "(double)pieces / stations",
+        "(double)(pieces / stations)",
+        "pieces / stations"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Преобразование происходит перед делением.",
+        "Деление в скобках уже даст целое.",
+        "Два int дают целое деление."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему в выражениях (17 - 5) * 2 и 17 - 5 * 2 разные результаты? Назовите первое действие в каждом.",
+      "feedback": "Со скобками первое действие — 17 - 5, результат 24. Без скобок первым идёт 5 * 2, результат 7.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Запас банок и средний расход",
+    "task": "Для запуска приготовили 19 банок. На настройку ушло 6, запас равен удвоенному остатку. Рассчитайте запас и среднее число банок на день за 4 дня, взяв исходные 19. Выведите оба значения через пробел: целый запас, затем среднее с двумя знаками после точки.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    int cans = 19;\n    int used = 6;\n    int batches = 2;\n    int days = 4;\n    int reserve = 0;\n    double pace = 0.0;\n    /* TODO: compute reserve and pace from the named values. */\n    printf(\"%d %.2f\\n\", reserve, pace);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Вывод для данных задания",
+        "input": "",
+        "output": "26 4.75\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Вычислены 26 и 4.75.",
+      "В выражениях используются переменные из заготовки.",
+      "Вычитание выполняется до умножения, преобразование — до деления."
+    ],
+    "hint": "Здесь один рецепт со скобками, а второй с (double). Проверьте, к чему относится каждая пара скобок.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int cans = 19;\n    int used = 6;\n    int batches = 2;\n    int days = 4;\n    int reserve = (cans - used) * batches;\n    double pace = (double)cans / days;\n    printf(\"%d %.2f\\n\", reserve, pace);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Подставьте выражения вместо начальных значений reserve и pace.",
+        "why": "Разложите две формулы на отдельные действия.",
+        "expected": "Умножение берёт остаток, деление берёт исходное количество."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Запустите программу.",
+        "why": "Так проверяется вычисление и формат.",
+        "expected": "В выводе одна строка 26 4.75."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Измените cans на 20 и снова запустите.",
+        "why": "Связь с переменными заметна при изменении данных.",
+        "expected": "Появится 28 5.00."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенесите правило",
+        "task": "Верните cans = 19. Запишите прогноз, затем сделайте пробную копию с (double)(cans / days) и сравните вывод.",
+        "criteria": [
+          "В исходном варианте 26 4.75.",
+          "В пробном варианте 26 4.00.",
+          "Указано, где теряется дробная часть."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.arithmetic-conversion",
+    "prerequisites": [
+      "c.variables-types",
+      "c.output-formatting"
+    ]
+  }
+}

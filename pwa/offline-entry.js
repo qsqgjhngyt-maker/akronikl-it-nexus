@@ -159,7 +159,7 @@ async function compiler(){
  button.disabled=false;
 }
 async function render(){
- if((!new URLSearchParams(location.hash.slice(1)).has('copy')||new URLSearchParams(location.hash.slice(1)).get('copy')===session?.id)&&await clarityController?.handleRoute(location.hash,locale))return;if(clarityController&&!await clarityController.prepareNavigation())return;clarityController?.dispose();clarityController=null;
+ if((!new URLSearchParams(location.hash.slice(1)).has('copy')||new URLSearchParams(location.hash.slice(1)).get('copy')===session?.id)&&await clarityController?.handleRoute?.(location.hash,locale))return;if(clarityController&&!await clarityController.prepareNavigation())return;clarityController?.dispose();clarityController=null;
  const renderHash=location.hash,seq=++renderSequence;delete root.dataset.akroniklRoute;assistantBridge.invalidate();
  await renderCurrent(seq);
  if(seq===renderSequence&&renderHash===location.hash){root.dataset.akroniklRoute=renderHash;if(!root.querySelector('[data-akronikl-open],#askAkronikl')){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.akroniklOpen='';b.textContent='Akronikl';root.prepend(b);}}
@@ -194,6 +194,15 @@ async function renderCurrent(seq){
  if(['projects','project-studio'].includes(route.get('view')))return projectList();
  const kind=route.has('lesson')?'lesson':route.has('practicum')?'practicum':'exercise';
  const lessonId=route.get('lesson');
+ if(route.get('course')==='c'){
+  const {mountCCourse}=await import('../core/c-course.mjs');
+  const active=()=>seq===renderSequence;
+  if(!active())return;
+  root.innerHTML='<section data-c-course></section>';
+  const mounted=await mountCCourse(root.querySelector('[data-c-course]'),{lessonId,stage:route.get('stage'),locale:route.get('locale')||locale,readonly:true,isCurrent:active});
+  if(!active()){mounted?.dispose();return;}
+  clarityController=mounted;return;
+ }
  // Публичное чтение 1С без подключения её личного хранилища к C++ vault.
  if(lessonId&&['onec','1c-enterprise'].includes(route.get('course'))){
   const [{CLARITY_COURSES},ui]=await Promise.all([import('../core/clarity-course-registry.mjs'),import('../core/cpp-clarity-r3-renderer.mjs')]);if(seq!==renderSequence)return;

@@ -15,6 +15,8 @@ export function academyCourseCards(catalog) {
   const byId = new Map(catalog.courses.map(course=>[course.id,course]));
   return learnerAcademyEntries(catalog).map(entry=>{
     const course=entry.id==='programming' ? byId.get('cpp')??entry : entry;
+    if (course.id==='c') return {...course,profile:{topics:9,modules:1,name:course.title,
+      outcome:{ru:'Написать, запустить и проверить первую программу на C17.',en:'Write, run and check your first C17 program.'}}};
     const profile=availableCourseCards[course.id];
     if (!profile) return course;
     return {...course,profile,...(course.id==='cpp'?{}:{category:'one-c',categoryTitle:category1c})};
