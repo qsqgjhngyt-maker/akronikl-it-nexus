@@ -36,7 +36,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Проверить C17, продуктовые пути, режимы файлов и единственный CI-файл
+      - name: Проверить C17, продуктовые пути и точные файлы CI
         env:
           NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/scope-evidence
         run: |
@@ -49,10 +49,18 @@ jobs:
           const base='b170c7f64ab70bb6f0499f10704ac38a1d75e97c';
           const candidate='241809418a06c139da028dd0be589f170e3068b0';
           const initialCI='6f198ddcc7b5ea7bec4b59826f4646505e28b0cd';
+          const auditedCI='4ef8371b43478036eff0b4fb7fb02122e62bd610';
           const productTree='b8ad64a7cc15ffdd402dfddd2af1725c6f3f5074';
           const workflow='.github/workflows/perf-login-c17-regression.yml';
           const repository='qsqgjhngyt-maker/akronikl-it-nexus';
           const prBranch='feature/perf-login-c17-editorial';
+          const receipt='docs/ru/03-content/cp-next-01/C17_EDITORIAL_PRESENTATION_BYTES.json';
+          const verifier='tests/helpers/course-rollout-bytes.mjs';
+          const editorialCI={
+            [receipt]:['A','a9b09f0068ae3a567be537349593355e9b757c53'],
+            'tests/c17-editorial-presentation-pin.test.mjs':['A','cd80aa367e54688b37778b0e53061c637b6f8e90'],
+            [verifier]:['M','895e16683ed40741ab418a3bb7e8510195558f93'],
+          };
           const product={
             'assets/blog/c17-course-1536.jpg':['A','b76db3b6132be89c6b44b736a86b2ae3b236b094'],
             'assets/blog/c17-course-768.jpg':['A','a23d4f2fc0742b624d2207c10ec1181054e5d22c'],
@@ -79,6 +87,20 @@ jobs:
             }
             return output;
           }
+          function verifyCI(rows,workflowOperation){
+            assert.equal(rows.length,4);
+            const remaining=new Map([...Object.entries(editorialCI),[workflow,[workflowOperation,null]]]);
+            for(const {file,op,mode,blob} of rows){
+              const approved=remaining.get(file);
+              assert(approved,'Неутверждённый путь CI: '+file);
+              assert.equal(mode,'100644',file);
+              assert.equal(op,approved[0],file);
+              if(approved[1])assert.equal(blob,approved[1],file);
+              else assert.match(blob,/^[a-f0-9]{40}$/);
+              remaining.delete(file);
+            }
+            assert.equal(remaining.size,0);
+          }
           function verify(input){
             assert.equal(input.event,'pull_request');
             assert.equal(input.repository,repository);
@@ -88,7 +110,8 @@ jobs:
             assert.equal(input.base,base);
             assert.match(input.head,/^[a-f0-9]{40}$/);
             assert.equal(input.checkout,input.head);
-            assert.deepEqual(input.parents,[initialCI]);
+            assert.deepEqual(input.parents,[auditedCI]);
+            assert.deepEqual(input.auditedCIParents,[initialCI]);
             assert.deepEqual(input.initialCIParents,[candidate]);
             assert.equal(input.productTree,productTree);
             assert.equal(input.productDelta.length,11);
@@ -99,13 +122,8 @@ jobs:
               remaining.delete(file);
             }
             assert.equal(remaining.size,0);
-            assert.equal(input.workflowDelta.length,1);
-            const [ci]=input.workflowDelta;
-            assert.equal(ci.file,workflow);
-            assert.equal(ci.mode,'100644');
-            assert.equal(ci.op,'A');
-            assert.match(ci.blob,/^[a-f0-9]{40}$/);
-            assert.deepEqual(input.headDelta,[{...ci,op:'M'}]);
+            verifyCI(input.workflowDelta,'A');
+            verifyCI(input.headDelta,'M');
           }
           const env=process.env;
           assert.equal(env.NEXUS_EVENT_BASE,base);
@@ -116,7 +134,8 @@ jobs:
             pr:env.NEXUS_PR_NUMBER,branch:env.NEXUS_HEAD_REF,base:env.NEXUS_EVENT_BASE,head,
             checkout:git('rev-parse','HEAD'),parents:git('show','-s','--format=%P',head).split(' '),
             productTree:git('rev-parse',candidate+'^{tree}'),productDelta:delta(base,candidate),workflowDelta:delta(candidate,head),
-            initialCIParents:git('show','-s','--format=%P',initialCI).split(' '),headDelta:delta(initialCI,head),
+            initialCIParents:git('show','-s','--format=%P',initialCI).split(' '),
+            auditedCIParents:git('show','-s','--format=%P',auditedCI).split(' '),headDelta:delta(auditedCI,head),
           };
           verify(input);
           const controls={
@@ -128,7 +147,10 @@ jobs:
             stackedHead:copy=>{copy.parents.push(base);},
             wrongCICheckpoint:copy=>{copy.parents=[candidate];},
             wrongCIParent:copy=>{copy.initialCIParents=[base];},
+            wrongAuditCheckpoint:copy=>{copy.auditedCIParents=[base];},
             mixedCIFix:copy=>{copy.headDelta.push({...copy.headDelta[0],file:'core/app.js'});},
+            wrongReceiptBlob:copy=>{copy.headDelta.find(row=>row.file===receipt).blob='0'.repeat(40);},
+            wrongVerifierBlob:copy=>{copy.workflowDelta.find(row=>row.file===verifier).blob='0'.repeat(40);},
             wrongTree:copy=>{copy.productTree='0'.repeat(40);},
             extraProduct:copy=>{copy.productDelta.push({...copy.productDelta[0],file:'core/app.js'});},
             missingProduct:copy=>{copy.productDelta.pop();},
@@ -145,8 +167,9 @@ jobs:
             assert.throws(()=>verify(mutated),{code:'ERR_ASSERTION'},label);
           }
           console.log(JSON.stringify({status:'PASS',scope:'PR68_CI_ONLY',candidate,productTree,base,head,
-            productFiles:input.productDelta,workflowFile:input.workflowDelta[0],negativeControls:Object.keys(controls)}));
+            productFiles:input.productDelta,ciFiles:input.headDelta,negativeControls:Object.keys(controls)}));
           NODE
+          node --test tests/c17-editorial-presentation-pin.test.mjs | tee "$NEXUS_ACADEMY_EVIDENCE/EDITORIAL-PINS.txt"
           git switch --detach "$NEXUS_PRODUCT_SHA"
           node --test tests/academy-expansion-regression.test.mjs tests/academy-m2-scope.test.mjs tests/academy-m3-scope.test.mjs tests/academy-m4-scope.test.mjs tests/academy-m5-scope.test.mjs tests/academy-m6-scope.test.mjs tests/academy-m7-scope.test.mjs tests/academy-m8-scope.test.mjs tests/onec-historical-routing.test.mjs tests/onec-platform-ci-route.test.mjs tests/content-publication-route.test.mjs | tee "$NEXUS_ACADEMY_EVIDENCE/CONTROLS.txt"
       - uses: actions/upload-artifact@v4
@@ -217,7 +240,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.NEXUS_PRODUCT_SHA }}
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
