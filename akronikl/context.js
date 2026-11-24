@@ -1,5 +1,4 @@
 import { loadPrefs } from '../core/storage.js';
-import {createPresenceLauncher} from './presence.js';
 
 const context = {
   schemaVersion: 1,
@@ -40,7 +39,16 @@ export function createLazyAssistantBridge(options) {
   let bridge=null,pending=null,generation=0,disposed=false,welcome=null,welcomePending=null,welcomeSuppressed=false,welcomeControl=null;
   const control=new AbortController();
   const ready=()=>{try{return options.readReady?options.readReady()===true:true}catch{return false}};
-  const presence=createPresenceLauncher({documentRef,windowRef,readIdentity:options.readIdentity,locale:options.readLocale,onOpen:trigger=>void open(trigger)});
+  let presence, presencePending, presencePrefs;
+  const refreshPresence=()=>{
+    if(presence){presence.refresh();return;}
+    if(disposed||presencePending||!options.readIdentity?.()?.accountId)return;
+    presencePending=import('./presence.js').then(({createPresenceLauncher})=>{
+      if(disposed||!root.isConnected||!options.readIdentity?.()?.accountId)return;
+      presence=createPresenceLauncher({documentRef,windowRef,readIdentity:options.readIdentity,locale:options.readLocale,onOpen:open});
+      if(presencePrefs)presence.configure(presencePrefs);
+    }).catch(()=>{}).finally(()=>{presencePending=null});
+  };
   const invalidate=()=>{generation++;welcomeControl?.abort();welcome?.dispose();bridge?.invalidate()};
   const open=async trigger=>{
     if(disposed||!root.isConnected||!ready())return;
@@ -70,7 +78,7 @@ export function createLazyAssistantBridge(options) {
   documentRef.addEventListener('visibilitychange',()=>{if(documentRef.hidden)invalidate()},{signal:control.signal});
   // Добавление кнопки не загружает UI/Core и не читает содержимое workspace.
   const bindEditor=()=>{
-    presence.refresh();queueMicrotask(()=>{if(disposed||welcomeSuppressed||welcomePending||!ready()||!options.readIdentity()?.accountId||options.publicMode)return;welcomeControl=new AbortController();const signal=welcomeControl.signal;welcomePending=import('./experience/startup-greeting.js').then(m=>m.prepareStartupGreeting({...options,signal,onPreferences:prefs=>presence.configure(prefs)})).then(value=>{welcome=value;if(disposed||welcomeSuppressed)welcome?.dispose();}).catch(()=>{});});
+    refreshPresence();queueMicrotask(()=>{if(disposed||welcomeSuppressed||welcomePending||!ready()||!options.readIdentity()?.accountId||options.publicMode)return;welcomeControl=new AbortController();const signal=welcomeControl.signal;welcomePending=import('./experience/startup-greeting.js').then(m=>m.prepareStartupGreeting({...options,signal,onPreferences:prefs=>{presencePrefs=prefs;presence?.configure(prefs)}})).then(value=>{welcome=value;if(disposed||welcomeSuppressed)welcome?.dispose();}).catch(()=>{});});
     const editor=options.readEditor?.(),studio=editor?.closest?.('[data-nexus-code-studio]');
     if(disposed||!studio||!root.contains(studio)||studio.previousElementSibling?.hasAttribute('data-akronikl-editor'))return;
     const button=documentRef.createElement('button');button.type='button';button.className='btn';
@@ -78,5 +86,5 @@ export function createLazyAssistantBridge(options) {
     button.textContent=options.readLocale()==='en'?'Akronikl · context':'Akronikl · контекст';
     studio.before(button);
   };
-  return Object.freeze({open,invalidate,bindEditor,dispose(){disposed=true;welcomeSuppressed=true;welcome?.dispose();presence.dispose();invalidate();control.abort();bridge?.dispose()}});
+  return Object.freeze({open,invalidate,bindEditor,dispose(){disposed=true;welcomeSuppressed=true;welcome?.dispose();presence?.dispose();invalidate();control.abort();bridge?.dispose()}});
 }
