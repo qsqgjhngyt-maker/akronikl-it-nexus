@@ -53,7 +53,7 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
   if(location.origin!==ENTRY_ORIGIN)return Promise.reject(Error('FIRST_PARTY_REQUIRED'));
   accessPromise??=loadPasskeyClient().catch(error=>{accessPromise=null;throw error});return accessPromise;
  };
- if(location.origin!==ENTRY_ORIGIN){clearAccount();setStatus('Вход откроется на защищённом серверном адресе Nexus.');return}
+ if(location.origin!==ENTRY_ORIGIN){clearAccount();setBusy(false);setStatus('Вход откроется на защищённом серверном адресе Nexus.');return}
  const providerContainer=document.querySelector('[data-provider-buttons]');
  const lockProviders=locked=>{for(const button of providerContainer?.querySelectorAll?.('button')||[])button.disabled=locked};
  bindProviderButtons(providerContainer,{onStatus:setStatus,acquire:()=>{if(busy)return false;++version;setBusy(true);return true},release:()=>setBusy(false)});
@@ -128,6 +128,8 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
  addEventListener('pagehide',()=>{pageHidden=true;++version;oauthReturnPending=false;if(activeAttempt){activeAttempt.controller.abort();clearInterval(activeAttempt.ticker);activeAttempt=null;setBusy(false);lockProviders(false)}scene.destroy()});
  // Reconcile a possibly committed session after Back; never repeat a write.
  addEventListener('pageshow',event=>{if(event.persisted){pageHidden=false;if(!busy)update()}});
+ login.href=ENTRY_URL;
+ setBusy(false);
  return update();
 }
 if(typeof document!=='undefined'){
