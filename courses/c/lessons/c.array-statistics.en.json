@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m4-v1",
+  "id": "c.array-statistics",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m4",
+  "course": "C programming",
+  "module": "Arrays and elementary algorithms",
+  "title": "Search, minimum and counting",
+  "goal": "Find a minimum, the first matching index and the number of matches in one pass.",
+  "prerequisites": [
+    {
+      "text": "Read an array by index and pass its length to a function. Distinguish index zero from length zero."
+    }
+  ],
+  "terms": [
+    {
+      "id": "minimum",
+      "term": "Minimum",
+      "title": "Minimum",
+      "definition": "The smallest value inspected so far. Initialise it from the first reading of a nonempty array."
+    },
+    {
+      "id": "first-hit",
+      "term": "First match",
+      "title": "First match",
+      "definition": "The lowest index where a value equals the target. In this task, index -1 indicates that the target is absent."
+    },
+    {
+      "id": "frequency",
+      "term": "Frequency",
+      "title": "Frequency",
+      "definition": "The number of elements equal to a given value. Each repeat increases the count."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "Workshop sensors report changes in temperature. The person on duty needs the lowest reading, the position of the first reading equal to a target and the number of readings equal to that target. Equal readings can come from different positions.",
+        "Give each answer its own variable before scanning. Use the first reading to initialise the minimum after checking the length. Start the count at 0. Record the index at the first match and keep it for the rest of the scan.",
+        "At length zero, the program prints empty before accessing the first element."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Minimum and repeats in three readings",
+      "paragraphs": [
+        "The readings are 6, -1 and 6, in that order. Find the minimum and count the occurrences of 6. The minimum starts at 6 and the count starts at 0. The loop compares the reading at index 0 with the target on its first iteration so that a match there is included."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    const int readings[] = {6, -1, 6};\n    const int length = (int)(sizeof readings / sizeof readings[0]);\n    const int target = 6;\n\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    int minimum = readings[0];\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            ++count;\n        }\n    }\n    printf(\"%d %d\\n\", minimum, count);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "-1 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "At index 0, the value matches once. The minimum stays at 6.",
+        "At index 1, the minimum becomes -1.",
+        "At index 2, only the count increases. The program prints -1 and 2."
+      ],
+      "trace": [
+        [
+          "i = 0",
+          "6",
+          "min 6",
+          "count 1"
+        ],
+        [
+          "i = 1",
+          "-1",
+          "min -1",
+          "count 1"
+        ],
+        [
+          "i = 2",
+          "6",
+          "min -1",
+          "count 2"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "paragraphs": [
+        "The readings 5 and 9 expose a minimum initialised to 0. Both readings exceed zero, so the erroneous minimum would survive the whole scan. The correct minimum is 5.",
+        "A repeated target tests whether the first index is retained. Assigning first = i on every match leaves the last matching index in first.",
+        "The short diagnostic uses 1.5 in square brackets. Clang rejects a fractional subscript. A traversal uses integer indices from 0 through length minus one."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Apply the idea",
+      "paragraphs": [
+        "The practice task adds the first matching index to the minimum and count. For target 6 in the sequence 6, -1, 6, the first matching index is 0, and the scan also finds a later match.",
+        "Write down the three expected numbers before running the code. This helps you identify which update in the loop caused a mismatch."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.1, 6.5.8, 6.8.5.3",
+      "language": "English",
+      "purpose": "Find a minimum, the first matching index and the number of matches in one pass."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the example print for 6, -1, 6?",
+      "options": [
+        "-1 2",
+        "-1 1",
+        "6 2"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The minimum is -1, and 6 appears twice.",
+        "Indices 0 and 2 both contribute a match.",
+        "The second reading lowers the minimum to -1."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    const int readings[] = {6, -1, 6};\n    const int length = (int)(sizeof readings / sizeof readings[0]);\n    const int target = 6;\n\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    int minimum = readings[0];\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            ++count;\n        }\n    }\n    printf(\"%d %d\\n\", minimum, count);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "first",
+      "kind": "choice",
+      "prompt": "What index and count should target 4 give for 4, 1, 4?",
+      "options": [
+        "0 2",
+        "2 2",
+        "-1 0"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The first hit is at index 0. Both hits contribute to the count.",
+        "Index 2 belongs to the last match.",
+        "-1 and 0 describe the absence of a match."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "empty",
+      "kind": "choice",
+      "prompt": "When can you read readings[0] to initialise the minimum?",
+      "options": [
+        "As soon as the buffer is declared",
+        "After checking the length and reading at least one value",
+        "Only at length 8"
+      ],
+      "correct": 1,
+      "feedback": [
+        "A declaration reserves space. Input has yet to fill the first element.",
+        "After confirming a positive length and reading the input, the first element is available.",
+        "One reading is enough if it fits within the capacity."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "For 5, 9, 5 and target 5, write the answer. Explain why the second match must update count while leaving first alone.",
+      "feedback": "The result is 5 0 2. The first == -1 condition lets the first match record index 0. At index 2, first is already set, so only count goes up.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int readings[] = {6, -1, 6};\n    return readings[1.5];\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "array subscript is not an integer"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Three results for a reading log",
+    "task": "Put the number of readings, from 0 to 8, on the first line. At length 0, print the single line empty. Otherwise put each reading on its own line, followed by the target on another line. Each reading and the target must be from -99 to 99. Print the minimum, the zero-based index of the first match and the match count, separated by spaces on one line. Print -1 as the index if the target is absent. Print invalid for missing or invalid required input. The program ignores any lines after the required inputs. The starter already reads the lines and checks their ranges.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nenum { CAPACITY = 8 };\n\nint main(void)\n{\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    for (int i = 0; i < length; ++i) {\n        if (read_integer(-99, 99, &readings[i]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    int target;\n    if (read_integer(-99, 99, &target) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int minimum = 0; /* TODO: start with an actual reading. */\n    int first = -1;\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            first = i; /* TODO: keep the first matching index. */\n            ++count;\n        }\n    }\n\n    printf(\"%d %d %d\\n\", minimum, first, count);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "4\n-3\n4\n-3\n7\n-3\n",
+    "returnAnchor": "example",
+    "hint": "Test the initial value of minimum with two positive readings. When a value matches, change first only while it holds its initial value of -1. Increment count on every match.",
+    "criteria": [
+      "The input lines 4, -3, 4, -3, 7, -3 give -3 0 2.",
+      "For the positive readings 5 and 9, the minimum is 5. The absent target 8 gives index -1 and count 0.",
+      "Length 0 gives empty without reading an element or target. An invalid length or missing target gives invalid.",
+      "Check length 8 and repeated targets using the cases below."
+    ],
+    "cases": [
+      {
+        "label": "Two matches, first at index 0",
+        "input": "4\n-3\n4\n-3\n7\n-3\n",
+        "output": "-3 0 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "All positive, target absent",
+        "input": "2\n5\n9\n8\n",
+        "output": "5 -1 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty sequence",
+        "input": "0\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "One matching element",
+        "input": "1\n-9\n-9\n",
+        "output": "-9 0 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Eight readings with bounds and a repeat",
+        "input": "8\n9\n5\n3\n3\n8\n0\n-99\n99\n3\n",
+        "output": "-99 2 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Length exceeds capacity",
+        "input": "9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Negative length",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Second reading missing",
+        "input": "2\n5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Target missing",
+        "input": "2\n5\n9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Reading out of range",
+        "input": "1\n100\n8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra character on the target line",
+        "input": "1\n5\n8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nenum { CAPACITY = 8 };\n\nint main(void)\n{\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    for (int i = 0; i < length; ++i) {\n        if (read_integer(-99, 99, &readings[i]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    int target;\n    if (read_integer(-99, 99, &target) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int minimum = readings[0];\n    int first = -1;\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            if (first == -1) {\n                first = i;\n            }\n            ++count;\n        }\n    }\n\n    printf(\"%d %d %d\\n\", minimum, first, count);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with the input already provided.",
+        "why": "A repeated target lets you observe the index left at the end of the scan.",
+        "expected": "The starter prints -3 2 2. The required result for this input is -3 0 2."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Enter 2, 5, 9 and 8 on four separate input lines. Run again.",
+        "why": "Positive readings expose the error in the initial minimum.",
+        "expected": "The starter prints 0 -1 0. The correct minimum for this input is 5."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the initial value of minimum and the condition for recording first. Repeat both runs.",
+        "why": "The first reading supplies the initial minimum. The count includes all matches.",
+        "expected": "The two inputs give -3 0 2 and 5 -1 0, respectively."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Test lengths 0, 1 and 8. Then try the input with a missing target.",
+        "why": "These cases check emptiness, capacity and the required final line.",
+        "expected": "The program prints empty for length 0 and invalid for a missing required line."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Check two repeats with your own trace",
+        "task": "Enter the lines 5, 8, 5, 8, 1, 5, 5. Write the matching indices and the expected line before running.",
+        "criteria": [
+          "Target 5 appears at indices 1 and 4.",
+          "The program prints 1 1 2. Explain why the second hit increases the count and leaves the first index alone."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.array-statistics-traversal",
+    "prerequisites": [
+      "c.array-length-contract"
+    ]
+  }
+}

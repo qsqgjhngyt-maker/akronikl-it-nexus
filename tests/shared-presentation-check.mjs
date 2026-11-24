@@ -105,7 +105,7 @@ for(const locale of ['ru','en']){
  assert.equal(programmingHubMarkup(hub),original());
  const active=programmingHubMarkup({...hub,programming}),legacy=original(),card=(html,id)=>{const matches=[...html.matchAll(new RegExp('<(a|button)\\b[^>]*data-language-id="'+id+'"[^>]*>[\\s\\S]*?<\\/\\1>','g'))];assert.equal(matches.length,1,id+' unique language card');return matches[0][0];};
  const onec=card(active,'onec');assert.match(onec,/^<a\b/);assert.ok(onec.includes('href="#course=onec"'));assert.ok(onec.includes('<strong>'+e(languageLabel('onec',locale))+'</strong>'));
- const c=card(active,'c');assert.match(c,/^<a\b/);assert.ok(c.includes('href="#course=c"'));assert.match(c,locale==='en'?/Modules 1–3/:/Модули 1–3/);
+ const c=card(active,'c');assert.match(c,/^<a\b/);assert.ok(c.includes('href="#course=c"'));assert.match(c,locale==='en'?/Modules 1–4/:/Модули 1–4/);
  for(const track of programming.tracks.filter(x=>!['onec','c'].includes(x.id)))assert.equal(card(active,track.id),card(legacy,track.id),'Unchanged language '+track.id);
  assert.equal((active.match(/class="programming-language-card available"/g)||[]).length,3,'C++, 1С and C are available');
 }

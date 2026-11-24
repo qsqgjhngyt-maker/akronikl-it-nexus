@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m4-v1",
+  "id": "c.array-parameters",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m4",
+  "course": "Программирование на C",
+  "module": "Массивы и базовые алгоритмы",
+  "title": "Массив и длина в параметрах",
+  "goal": "Передать функции массив и число доступных элементов. Объяснить, почему один буфер даёт разные результаты при разной длине.",
+  "prerequisites": [
+    {
+      "text": "Проверять индекс до чтения элемента и прослеживать цикл по шагам."
+    }
+  ],
+  "terms": [
+    {
+      "id": "capacity",
+      "term": "Вместимость",
+      "title": "Вместимость",
+      "definition": "Количество элементов, для которых выделен массив."
+    },
+    {
+      "id": "active-length",
+      "term": "Рабочая длина",
+      "title": "Рабочая длина",
+      "definition": "Число первых элементов, которые должна обработать функция. Может быть равна нулю."
+    },
+    {
+      "id": "array-parameter",
+      "term": "Параметр массива",
+      "title": "Параметр массива",
+      "definition": "Запись вида const int values[] в списке параметров функции. C обрабатывает её как параметр типа const int *."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "В одном буфере может быть разное число рабочих значений",
+      "paragraphs": [
+        "На столе лежат три карточки с показаниями 5, 8 и 2. В одном вызове нужно сложить все три, а в другом прибор пока не передал ни одного рабочего показания. Объект readings в обоих случаях содержит три ячейки. Рабочая длина 0 говорит функции, что ни одну ячейку читать не нужно.",
+        "Договор функции состоит из двух частей. Ей передают начало массива и рабочую длину. Вызывающий код проверяет, что длина лежит от 0 до вместимости включительно. Цикл затем читает только элементы с index < length.",
+        "В главной функции readings обозначает сам массив. В объявлении параметра const int values[] тип корректируется до const int *. Внутри sum выражение sizeof values даёт размер указателя. Число рабочих элементов приходит в length."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Сумма трёх и нуля показаний",
+      "paragraphs": [
+        "Первый вызов передаёт sum рабочую длину 3. В этом вызове она совпадает с вместимостью. Второй передаёт тот же массив и рабочую длину 0. Проследите, когда меняется total и сколько раз выполняется чтение."
+      ],
+      "steps": [
+        "Первый вызов. total начинается с 0.",
+        "После чтения индексов 0, 1 и 2 total равен 5, 13 и 15 соответственно.",
+        "Второй вызов. При length = 0 первое условие цикла ложно. Функция сразу возвращает начальное значение 0."
+      ],
+      "trace": [
+        [
+          "length = 3, index = 0",
+          "Читаем 5",
+          "total = 5"
+        ],
+        [
+          "length = 3, index = 1",
+          "Читаем 8",
+          "total = 13"
+        ],
+        [
+          "length = 3, index = 2",
+          "Читаем 2",
+          "total = 15"
+        ],
+        [
+          "length = 0, index = 0",
+          "0 < 0 ложно",
+          "Чтений нет, total = 0"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int sum(const int values[], int length)\n{\n    int total = 0;\n    for (int index = 0; index < length; ++index) {\n        total += values[index];\n    }\n    return total;\n}\n\nint main(void)\n{\n    const int readings[] = {5, 8, 2};\n    int capacity = (int)(sizeof readings / sizeof readings[0]);\n    printf(\"%d\\n\", sum(readings, capacity));\n    printf(\"%d\\n\", sum(readings, 0));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "15\n0\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Результат показывает, где закончился проход",
+      "paragraphs": [
+        "Цикл с условием index < length − 1 пропускает последнюю позицию. В сумме это заметно, если последний элемент отличен от нуля. В подсчёте по порогу выберите случай, где последний элемент удовлетворяет условию.",
+        "В примере диагностики у first_or_zero объявлены два параметра, а вызов передаёт один аргумент. Перед исправлением найдите пропущенную длину в объявлении и объясните, кто может её вычислить."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Выберите проверку на коротком диапазоне",
+      "paragraphs": [
+        "Для показаний 2, 7 и 9 и порога 7 выпишите число совпадений при длинах 3, 2 и 0. Последнее число 9 входит только в полный проход. Проследите, почему передача того же массива с другой длиной меняет поведение функции."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.3.2.1, 6.5.3.4, 6.7.6.3",
+      "language": "English",
+      "purpose": "Проверить преобразование массива в указатель, особое правило sizeof и тип параметра массива."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Какой результат у sum(readings, 0) из примера?",
+      "options": [
+        "0",
+        "5",
+        "15"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Первое условие цикла ложно. Возвращается исходный total = 0.",
+        "Для 5 нужно прочитать первый элемент.",
+        "15 получается при обработке всех трёх значений."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Что означает sizeof values внутри sum с параметром const int values[]?",
+      "options": [
+        "Вместимость массива в элементах",
+        "Размер указателя в байтах",
+        "Рабочую длину, переданную вызывающим кодом"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Вместимость вычисляется там, где сохранился тип массива.",
+        "Тип параметра скорректирован до указателя.",
+        "Рабочая длина находится в отдельном параметре length."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "У массива четыре ячейки, а функция получает length = 2. Назовите доступные для этого вызова индексы и проверку длины в вызывающем коде.",
+      "feedback": "Вызов обрабатывает индексы 0 и 1. Вызывающий код принимает 0 ≤ length ≤ capacity. При длине 2 тело цикла с index < length выполняется два раза.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int first_or_zero(const int values[], int length)\n{\n    if (length == 0) {\n        return 0;\n    }\n    return values[0];\n}\n\nint main(void)\n{\n    const int values[] = {5, 8, 2};\n    return first_or_zero(values);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments to function call"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Активные показания не ниже порога",
+    "task": "Массив readings содержит 5, 8, 2 и 8. На первой строке рабочая длина от 0 до 4 включительно, на второй целый порог от −99 до 99. Посчитайте, сколько первых length значений больше порога или равны ему. Выведите число совпадений одной строкой. При пропуске строки, ошибке числа или выходе за допустимые границы выведите invalid. Готовая read_integer читает две нужные строки. Всё после второй строки игнорируется. Исправьте границу цикла в count_at_least.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int values[], int length, int threshold)\n{\n    int count = 0;\n    for (int index = 0; index < length - 1; ++index) {\n        if (values[index] >= threshold) {\n            ++count;\n        }\n    }\n    return count;\n}\n\nint main(void)\n{\n    const int readings[] = {5, 8, 2, 8};\n    int capacity = (int)(sizeof readings / sizeof readings[0]);\n    int length;\n    int threshold;\n    if (read_integer(0, capacity, &length) != READ_OK ||\n        read_integer(-99, 99, &threshold) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", count_at_least(readings, length, threshold));\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "4\n8\n",
+    "returnAnchor": "example",
+    "hint": "Сопоставьте последний индекс, который пропускает цикл, с последним индексом рабочего диапазона. Граница зависит от length.",
+    "criteria": [
+      "При вводе 4 и 8 результат равен 2, при 2 и 8 — 1, при 0 и 8 — 0. Числа вводятся на отдельных строках.",
+      "Функция читает только рабочий диапазон и считает совпадение при равенстве порогу.",
+      "Ввод длины больше вместимости или меньше нуля отклоняется до вызова count_at_least."
+    ],
+    "cases": [
+      {
+        "label": "Полный массив и повтор порога",
+        "input": "4\n8\n",
+        "output": "2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Только первые два показания",
+        "input": "2\n8\n",
+        "output": "1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевая рабочая длина",
+        "input": "0\n8\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Все четыре подходят",
+        "input": "4\n2\n",
+        "output": "4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Один элемент ниже порога",
+        "input": "1\n9\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длина больше вместимости",
+        "input": "5\n8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательная длина",
+        "input": "-1\n8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отсутствует порог",
+        "input": "4\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Порог с лишним символом",
+        "input": "4\n8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int values[], int length, int threshold)\n{\n    int count = 0;\n    for (int index = 0; index < length; ++index) {\n        if (values[index] >= threshold) {\n            ++count;\n        }\n    }\n    return count;\n}\n\nint main(void)\n{\n    const int readings[] = {5, 8, 2, 8};\n    int capacity = (int)(sizeof readings / sizeof readings[0]);\n    int length;\n    int threshold;\n    if (read_integer(0, capacity, &length) != READ_OK ||\n        read_integer(-99, 99, &threshold) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", count_at_least(readings, length, threshold));\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте Практику. В поле ввода проверьте 4 и 8 на отдельных строках. Нажмите «Запустить мою работу».",
+        "why": "Посмотрите, попадает ли в проход последнее значение 8.",
+        "expected": "Заготовка печатает 1. При обработке четырёх показаний ожидается 2."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте границу цикла в count_at_least и повторите запуск. Затем замените первую строку на 2, потом на 0.",
+        "why": "Длина определяет активную часть массива. При длине 0 цикл даже не начнётся.",
+        "expected": "Для 4, 2 и 0 при неизменном пороге 8 получаются 2, 1 и 0 в отдельных запусках."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте длину 5 с порогом 8. Оставьте проверку ввода в main перед вызовом функции.",
+        "why": "Длина больше вместимости запрещена договором.",
+        "expected": "Вывод invalid, функция подсчёта не вызывается."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните исходник в локальный файл. В редакторе урока замените readings на значения 6, 4, 6, 9, 6. Оставьте порог 6 и проверьте полную длину 5, часть длиной 2 и ноль. Затем верните сохранённый код.",
+        "criteria": [
+          "При одинаковом пороге соответствующие результаты — 4, 1 и 0.",
+          "Вместимость определяется там, где объявлен массив. Цикл использует length."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.array-length-contract",
+    "prerequisites": [
+      "c.array-index-range"
+    ]
+  }
+}

@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m4-v1",
+  "id": "c.array-bounds",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m4",
+  "course": "Программирование на C",
+  "module": "Массивы и базовые алгоритмы",
+  "title": "Массив и границы индекса",
+  "goal": "Связать индекс с длиной массива и проверить обе границы до чтения элемента.",
+  "prerequisites": [
+    {
+      "text": "Знать, как условие с || выбирает ветвь, а return завершает вызов функции."
+    }
+  ],
+  "terms": [
+    {
+      "id": "array",
+      "term": "Массив",
+      "title": "Массив",
+      "definition": "Последовательность элементов одного типа. Объявление задаёт длину явно или через список начальных значений."
+    },
+    {
+      "id": "index",
+      "term": "Индекс",
+      "title": "Индекс",
+      "definition": "Целый номер позиции элемента. У первого элемента индекс 0."
+    },
+    {
+      "id": "length",
+      "term": "Длина",
+      "title": "Длина",
+      "definition": "Количество элементов. У массива длины n последний допустимый индекс равен n − 1, если n больше 0."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Позиция и значение",
+      "paragraphs": [
+        "На панели три зоны с номерами 0, 1, 2. Для каждой зоны записан свой уровень. Массив levels хранит числа 8, 4 и 9 в том же порядке. Запрос зоны 2 означает третью позицию, где лежит 9.",
+        "Список значений в фигурных скобках задаёт одновременно начальные значения и длину массива levels. Деление sizeof levels на sizeof levels[0] даёт число элементов, пока levels обозначает сам массив.",
+        "До выражения levels[index] программа должна доказать, что index попадает в промежуток от 0 до length − 1. Сравните обе границы, пока index имеет знаковый тип int."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Чтение уровня по номеру зоны",
+      "paragraphs": [
+        "Программа вызывает show_level трижды. Сначала предскажите, на каких вызовах управление дойдёт до чтения массива. Затем проверьте вывод под листингом."
+      ],
+      "steps": [
+        "Вызов с 2 проходит обе проверки. Читается levels[2], печатается 9.",
+        "Вызов с −1 отклоняется первой проверкой. Функция печатает invalid и возвращается.",
+        "Вызов с 3 отклоняется второй проверкой. Индекс равен длине, поэтому функция возвращается до чтения массива."
+      ],
+      "trace": [
+        [
+          "Ввод 2",
+          "0 ≤ 2 < 3",
+          "Читаем levels[2]",
+          "9"
+        ],
+        [
+          "Ввод −1",
+          "−1 < 0",
+          "Возврат до чтения",
+          "invalid"
+        ],
+        [
+          "Ввод 3",
+          "3 ≥ 3",
+          "Возврат до чтения",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic void show_level(int index)\n{\n    const int levels[] = {8, 4, 9};\n    int length = (int)(sizeof levels / sizeof levels[0]);\n    if (index < 0 || index >= length) {\n        puts(\"invalid\");\n        return;\n    }\n    printf(\"%d\\n\", levels[index]);\n}\n\nint main(void)\n{\n    show_level(2);\n    show_level(-1);\n    show_level(3);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "9\ninvalid\ninvalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Почему полезен ровно граничный вход",
+      "paragraphs": [
+        "Если разрешить index <= length, ошибка обнаружится на index, равном length. Рассуждайте по условию. Доступ за пределами массива даёт неопределённое поведение и может пройти без сообщения компилятора.",
+        "В отдельном примере диагностики компилятор отклоняет 1.5 в квадратных скобках. Дробное число не задаёт целый индекс."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Пересчитайте границу для другой панели",
+      "paragraphs": [
+        "Представьте панель из двух зон с уровнями 6 и 10. Запишите допустимые индексы. Подберите проверки последней зоны и первого номера справа от неё, пока выражение чтения ещё не вычислялось."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.3.2.1, 6.5.2.1, 6.5.3.4",
+      "language": "English",
+      "purpose": "Сверить правила индексирования и вычисления числа элементов настоящего массива."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Что печатает show_level(2) для levels из трёх элементов 8, 4 и 9?",
+      "options": [
+        "4",
+        "9",
+        "invalid"
+      ],
+      "correct": 1,
+      "feedback": [
+        "У значения 4 индекс 1.",
+        "У третьего элемента индекс 2.",
+        "Индекс 2 меньше длины 3."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Какой первый индекс справа от массива длины 4 должен дать invalid?",
+      "options": [
+        "3",
+        "4",
+        "5"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Индекс 3 обозначает последний элемент.",
+        "При length, равной 4, допустимы индексы 0, 1, 2 и 3.",
+        "Индекс 5 тоже недопустим. Первый недопустимый справа равен 4."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Предложите две проверки, которые гарантируют безопасный доступ при length = 4. Что произойдёт на −1 и 4?",
+      "feedback": "Нужно отклонить index < 0 и index >= length. На −1 сработает первая проверка, на 4 вторая. В обоих случаях программа завершит обработку до обращения к элементу.",
+      "recall": "idea"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    const int values[] = {8, 4, 9};\n    return values[1.5];\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "array subscript is not an integer"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Мощность установки по номеру",
+    "task": "Четыре установки имеют мощности 12, 9, 15 и 4 в порядке индексов от 0 до 3. Первая строка содержит целый индекс. Напечатайте мощность соответствующей установки одной строкой. Для отсутствующего, неверного или недопустимого индекса напечатайте invalid. Ввод проверяет готовая read_integer, остальные строки не обрабатываются. Исправьте проверку границ в main.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    const int power[] = {12, 9, 15, 4};\n    int length = (int)(sizeof power / sizeof power[0]);\n    int index;\n    if (read_integer(-99, 99, &index) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (index < 0 || index >= length - 1) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", power[index]);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "3\n",
+    "returnAnchor": "example",
+    "hint": "Сначала проверьте, какой индекс последний допустимый у массива из четырёх элементов. Сопоставьте его с началом области, которую отклоняет условие.",
+    "criteria": [
+      "Для индексов 0 и 3 выводятся 12 и 4 соответственно.",
+      "При -1 и 4 печатается invalid до обращения к массиву.",
+      "Для неполного или ошибочного ввода выводится только invalid."
+    ],
+    "cases": [
+      {
+        "label": "Первый элемент",
+        "input": "0\n",
+        "output": "12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последний элемент",
+        "input": "3\n",
+        "output": "4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательный индекс",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Индекс равен длине",
+        "input": "4\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последняя запись без перевода строки",
+        "input": "2",
+        "output": "15\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Посторонний символ после числа",
+        "input": "2x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой ввод",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    const int power[] = {12, 9, 15, 4};\n    int length = (int)(sizeof power / sizeof power[0]);\n    int index;\n    if (read_integer(-99, 99, &index) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (index < 0 || index >= length) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", power[index]);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте Практику и в поле ввода оставьте 3. Нажмите «Запустить мою работу».",
+        "why": "Сравните результат заготовки с диапазоном допустимых индексов.",
+        "expected": "Заготовка печатает invalid. Для действующей установки с индексом 3 ожидается 4."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте верхнюю границу в main и снова запустите с 3.",
+        "why": "Индекс 3 выбирает последнюю из четырёх установок.",
+        "expected": "В выводе появляется 4."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте по очереди -1, 4 и 0. Перед каждым запуском запишите ожидание.",
+        "why": "Разделите отказы слева и справа и проверьте, что первый элемент по-прежнему работает.",
+        "expected": "Получатся invalid, invalid и 12 в трёх отдельных запусках."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сделайте локальную копию кода в текстовом файле. В редакторе урока замените массив мощностей измерениями 20, 14, 6, 22, 9. Подберите последний допустимый и первый недопустимый индекс справа. После проверки верните исходный код задания.",
+        "criteria": [
+          "Длина получается из массива, допустимый последний индекс равен 4.",
+          "Ввод 4 даёт 9, ввод 5 даёт invalid."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.array-index-range",
+    "prerequisites": [
+      "c.function-boundary-driver"
+    ]
+  }
+}

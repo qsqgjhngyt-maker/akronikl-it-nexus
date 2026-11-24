@@ -156,6 +156,20 @@ try {
   await page.locator('[data-c-stdin]').fill('3\n2\n');
   await runPractice('invalid\n', 0);
 
+  await openPractice('c.array-sort', 'Simple sorting and checking the result');
+  const sortingEditor = page.locator('#editor');
+  const sortingStarter = await sortingEditor.inputValue();
+  const selectsLargest = 'sorted[i] > sorted[least]';
+  assert.ok(sortingStarter.includes(selectsLargest));
+  await page.locator('[data-c-stdin]').fill('4\n3\n-1\n3\n2\n');
+  await runPractice('3 -1 3 2\n3 3 2 -1\n', 0);
+  await sortingEditor.fill(sortingStarter.replace(selectsLargest, 'sorted[i] < sorted[least]'));
+  await runPractice('3 -1 3 2\n-1 2 3 3\n', 0);
+  await page.screenshot({path:path.join(out, 'm4-sorted-copy.png')});
+  await page.locator('[data-c-stdin]').fill('0\n');
+  await runPractice('empty\n', 0);
+  console.log('C17_M4_SORT_PASS source unchanged, duplicates preserved, empty set handled');
+
   assert.deepEqual(fixture.errors, []);
   console.log('C17_DRAFT_RESTORE_PASS editor/stdin preserved after reload and locale switch; starter confirmation rejected; synthetic verified account storage');
   await writeFile(path.join(out, 'c17-workspace.json'), JSON.stringify({
@@ -163,6 +177,7 @@ try {
     buildManifestSha256: createHash('sha256').update(manifestBytes).digest('hex'),
     result, diagnostic, accountScoped, editorRestored: true, stdinRestored: true, starterDismissalPreservedDraft: true,
     module3: {bonusBeforeExit:1, bonusAfterExit:0, directCalls:'120 3000', unknownUnit:'invalid'},
+    module4: {original:'3 -1 3 2', starter:'3 3 2 -1', sorted:'-1 2 3 3', empty:'empty'},
   }, null, 2) + '\n');
 } finally {
   await fixture.close();

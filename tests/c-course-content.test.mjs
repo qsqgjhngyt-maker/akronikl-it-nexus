@@ -8,12 +8,12 @@ const curriculum = read('courses/c/curriculum.json');
 const locales = ['ru', 'en'];
 const text = value => typeof value === 'string' && value.trim().length > 0;
 
-test('Три модуля C доступны, остальные помечены как запланированные', () => {
+test('Четыре модуля C доступны, остальные помечены как запланированные', () => {
   assert.equal(manifest.id, 'c');
   assert.equal(manifest.languageId, 'c');
   assert.equal(manifest.standard, 'C17');
   assert.deepEqual(manifest.availableLocales, locales);
-  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3']);
+  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4']);
   const modules = curriculum.modules;
   assert.ok(modules.length > 1);
   assert.equal(new Set(modules.map(module => module.id)).size, modules.length);
@@ -32,14 +32,17 @@ test('Три модуля C доступны, остальные помечен�
       assert.ok(text(module.completion[locale]), module.id);
     }
   }
-  assert.equal(manifest.availableTopicIds.length, 19);
-  assert.equal(curriculum.availableModuleCount, 3);
-  assert.equal(curriculum.availableTopicCount, 19);
+  assert.equal(manifest.availableTopicIds.length, 23);
+  assert.equal(curriculum.availableModuleCount, 4);
+  assert.equal(curriculum.availableTopicCount, 23);
   assert.deepEqual(manifest.availableTopicIds.slice(9, 14), [
     'c.read-input', 'c.conditions', 'c.counted-loops', 'c.sentinel-loops', 'c.guard-boundaries',
   ]);
-  assert.deepEqual(manifest.availableTopicIds.slice(14), [
+  assert.deepEqual(manifest.availableTopicIds.slice(14, 19), [
     'c.functions', 'c.parameters', 'c.scope', 'c.function-test-cases', 'c.function-project',
+  ]);
+  assert.deepEqual(manifest.availableTopicIds.slice(19), [
+    'c.array-bounds', 'c.array-parameters', 'c.array-statistics', 'c.array-sort',
   ]);
   assert.equal(modules.find(module => module.id === 'c.m3').project.status, 'implemented');
   assert.deepEqual(topics.filter(topic => topic.status === 'implemented').map(topic => topic.id), manifest.availableTopicIds);
