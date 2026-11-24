@@ -5,7 +5,7 @@ import {textFor} from './i18n.js';
 import {glossaryItems,richText,benchmarkMarkup} from './lesson-presentation.js';
 import {codeStudioMarkup} from '../sandbox/code-studio.js';
 import {languageLabel} from '../sandbox/languages.js';
-import {continuationNote,continuationCard,recentProjectsMarkup,orderedCppLessons,learningLaboratory} from './nexus-learning-discovery.js';
+import {continuationNote,continuationCard,recentProjectsMarkup,orderedCppLessons,learningLaboratory} from './nexus-learning-resume.js';
 import {graphicsPromoMarkup} from '../effects/nexus-graphics-lab.js';
 import {learnerAcademyEntries} from './academy-presentation.js';
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));

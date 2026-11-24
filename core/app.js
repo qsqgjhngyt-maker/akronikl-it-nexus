@@ -22,9 +22,9 @@ import {configureNexusAppearance,bindNexusAppearance} from '../effects/nexus-app
 import {bindGlassSelects} from './glass-select.js';
 import {bindNexusShell} from './nexus-shell.js';
 import {bindNexusLearningUi,bindGlossaryDrawer} from './nexus-learning-ui.js';
-import {createLearningResume,continuationNote,continuationCard,recentProjectsMarkup,bindRecentProjects,discoveryPageMarkup,bindLearningDiscovery,focusLearningSection} from './nexus-learning-discovery.js';
+import {createLearningResume,bindRecentProjects,focusLearningSection} from './nexus-learning-resume.js';
 import {languageJourney,languageJourneyDialogMarkup,bindLanguageJourneys} from './nexus-language-journey.js';
-import {ensurePracticeWorkingCopy} from './nexus-practices.js';
+import {academyCatalogMarkup,bindAcademyCatalog} from './academy-catalog.js';
 import {learnerAcademyEntries} from './academy-presentation.js';
 import {bindNexusStudioUi} from './nexus-studio-ui.js';
 import {bindNexusAccountAccess} from './nexus-account-access.js';
@@ -44,8 +44,7 @@ const loadSandboxRuntime=async()=>sandboxRuntimeModule??=await import('../sandbo
 const loadGraphicsWorkshop=async()=>graphicsWorkshopModule??=await import('../effects/nexus-graphics-workshop.js');
 const loadAdministration=async()=>administrationModule??=await import('./administration.js');
 const loadFinal=async()=>{finalModule??=await import('../course-final/view.js');await finalModule.ensureFinalStyles();return finalModule};
-let academyModule,codeStudioHomeModule,codeHubModule;
-const loadAcademy=async()=>academyModule??=await import('./academy-catalog.js');
+let discoveryModule,codeStudioHomeModule,codeHubModule;
 const loadCodeStudioHome=async()=>codeStudioHomeModule??=await import('../project-studio/code-studio-home.js');
 const loadCodeHub=async()=>codeHubModule??=await import('./code-hub-presentation.js');
 const viewResume=createViewResume(),learningResume=createLearningResume();
@@ -98,8 +97,8 @@ async function home(){
  }catch{/* The existing C++ start/continue action remains available. */}
  return sharedViews(onecResume).home();
 }
-function academy(){return visualShell(academyModule.academyCatalogMarkup({catalog,cpp:cpp||cppLanding,prefs,t,academyViewFilter,visualIcon}),'academy')}
-function bindAcademyView(){academyModule?.bindAcademyCatalog({prefs,t,academyViewFilter})}
+function academy(){return visualShell(academyCatalogMarkup({catalog,cpp:cpp||cppLanding,prefs,t,academyViewFilter,visualIcon}),'academy')}
+function bindAcademyView(){bindAcademyCatalog({prefs,t,academyViewFilter})}
 
 function programmingHub(...args){return sharedViews().programmingHub(...args)}
 function practicumData(...args){return sharedViews().practicumData(...args)}
@@ -173,7 +172,7 @@ async function bind(){
   document.querySelectorAll('[data-practicum][data-task]').forEach(x=>x.onchange=async()=>{const id=x.dataset.practicum,idx=Number(x.dataset.task),checked=x.checked;try{await withCourseStateWriter(()=>{const set=new Set(loadState().courses?.cpp?.practicums?.[id]?.tasks||[]);checked?set.add(idx):set.delete(idx);patchPracticum(id,{tasks:[...set].sort((a,b)=>a-b)});});}catch{x.checked=!checked;alert(prefs.uiLocale==='en'?'The mark was not saved.':'Отметка не сохранена.');}})
 
   bindNexusLearningUi(t);
-  bindLearningDiscovery(t);
+  discoveryModule?.bindLearningDiscovery(t);
   bindRecentProjects({loadProjects:async()=>(await loadProjectStudio()).listProjects(),t,locale:prefs.uiLocale});
   bindNexusStudioUi(prefs.uiLocale);
   bindNexusAccountAccess(prefs.uiLocale);
@@ -207,6 +206,8 @@ const [loadedCourse]=await Promise.all([courseReady,runtimeReady,r.lesson&&!pilo
    const [kind,id]=String(r.template).split(':');
    const def=kind==='cpp'?courseProjectById(id):null;
    if(def){
+    const {ensurePracticeWorkingCopy}=await import('./nexus-practices.js');
+    if(!isCurrent())return;
     const project=await withProjectWriter(()=>isCurrent()?ensurePracticeWorkingCopy(ps,def):null);
     if(!project||!isCurrent())return;
     history.replaceState(null,'',location.pathname+location.search+'#view=project-studio&project='+encodeURIComponent(project.id));
@@ -216,10 +217,10 @@ const [loadedCourse]=await Promise.all([courseReady,runtimeReady,r.lesson&&!pilo
   page=r.project?projectStudioProject(r.project):projectStudioDashboard();
  }
 }else if(r.view==='academy'){
- const [,outline]=await Promise.all([loadAcademy(),cpp||cppLanding||getCppOutline()]);
+ const outline=cpp||cppLanding||await getCppOutline();
  if(!isCurrent())return;
  if(!cpp)cppLanding??=outline;page=academy();
-}else if(r.view==='home'){if(!cpp)cppLanding??=await getCppOutline();page=await home()}else if(r.view==='labs'||r.view==='practices'){cpp??=await getCppCourse();page=visualShell(discoveryPageMarkup({kind:r.view,course:cpp,contentFor:lessonData,projects:r.view==='practices'?(await loadProjectStudio()).listProjects():[],state:loadState().courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:prefs.courseLocale}),r.view)}else if(r.view==='admin'){page=visualShell((await loadAdministration()).administrationMarkup(r.tab),'admin')}else if(r.view==='blog'){page=visualShell(blogMarkup(),'blog')}else if(r.view==='feedback'){page=visualShell(feedbackPageMarkup(prefs.uiLocale),'home')}else if(r.view==='reviews'){page=visualShell(reviewsPageMarkup(prefs.uiLocale),'home')}else if(r.view==='feedback-admin'){page=visualShell(moderationPageMarkup(prefs.uiLocale),'home')}else if(r.view==='skills'){if(!cpp)cppLanding??=await getCppOutline();const {skillMapMarkup}=await import('./nexus-learning-skills.mjs');page=visualShell(skillMapMarkup({cpp:cpp||cppLanding,lessonStates:loadState().courses?.cpp?.lessons??{},locale:prefs.uiLocale}),'skills')}else page=r.view==='account'?shell(accountPageMarkup(prefs.uiLocale,r.tab),'home'):placeholder(r.view);if(sequence!==renderSequence||renderHash!==location.hash)return;replaceRoute(page);if(cModule){const active=()=>sequence===renderSequence&&renderHash===location.hash;const mounted=await cModule.mountCCourse(root.querySelector('[data-c-course]'),{lessonId:r.lesson,stage:r.stage,locale:r.locale||prefs.courseLocale,isCurrent:active});if(!active()){mounted?.dispose();return;}learningController=mounted;setAkroniklContext({courseId:'c',lessonId:r.lesson,sectionId:null,taskId:null,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});}if(onecModule){onecController=onecModule.mountOnecIntegration(root.querySelector('[data-onec-platform-mount]'),{locale:prefs.courseLocale,isCurrent:()=>sequence===renderSequence,onViewChange:view=>{if(sequence!==renderSequence)return;learningResume.rememberOnec(view);assistantBridge.invalidate();setAkroniklContext({...view,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});root.dataset.akroniklRoute=view.hash;},openAssistant:(button,context)=>{setAkroniklContext({...context,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});void assistantBridge.open(button);}});await onecController.ready;if(sequence!==renderSequence||renderHash!==location.hash)return;}globalThis.__NEXUS_BOOT_OK__?.();document.querySelector('#boot-status')?.remove();await bind();if(sequence!==renderSequence)return;assistantBridge.bindEditor();
+}else if(r.view==='home'){if(!cpp)cppLanding??=await getCppOutline();page=await home()}else if(r.view==='labs'||r.view==='practices'){const [mod,course]=await Promise.all([import('./nexus-learning-discovery.js'),cpp||getCppCourse()]);if(!isCurrent())return;discoveryModule=mod;cpp??=course;page=visualShell(discoveryModule.discoveryPageMarkup({kind:r.view,course:cpp,contentFor:lessonData,projects:r.view==='practices'?(await loadProjectStudio()).listProjects():[],state:loadState().courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:prefs.courseLocale}),r.view)}else if(r.view==='admin'){page=visualShell((await loadAdministration()).administrationMarkup(r.tab),'admin')}else if(r.view==='blog'){page=visualShell(blogMarkup(),'blog')}else if(r.view==='feedback'){page=visualShell(feedbackPageMarkup(prefs.uiLocale),'home')}else if(r.view==='reviews'){page=visualShell(reviewsPageMarkup(prefs.uiLocale),'home')}else if(r.view==='feedback-admin'){page=visualShell(moderationPageMarkup(prefs.uiLocale),'home')}else if(r.view==='skills'){if(!cpp)cppLanding??=await getCppOutline();const {skillMapMarkup}=await import('./nexus-learning-skills.mjs');page=visualShell(skillMapMarkup({cpp:cpp||cppLanding,lessonStates:loadState().courses?.cpp?.lessons??{},locale:prefs.uiLocale}),'skills')}else page=r.view==='account'?shell(accountPageMarkup(prefs.uiLocale,r.tab),'home'):placeholder(r.view);if(sequence!==renderSequence||renderHash!==location.hash)return;replaceRoute(page);if(cModule){const active=()=>sequence===renderSequence&&renderHash===location.hash;const mounted=await cModule.mountCCourse(root.querySelector('[data-c-course]'),{lessonId:r.lesson,stage:r.stage,locale:r.locale||prefs.courseLocale,isCurrent:active});if(!active()){mounted?.dispose();return;}learningController=mounted;setAkroniklContext({courseId:'c',lessonId:r.lesson,sectionId:null,taskId:null,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});}if(onecModule){onecController=onecModule.mountOnecIntegration(root.querySelector('[data-onec-platform-mount]'),{locale:prefs.courseLocale,isCurrent:()=>sequence===renderSequence,onViewChange:view=>{if(sequence!==renderSequence)return;learningResume.rememberOnec(view);assistantBridge.invalidate();setAkroniklContext({...view,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});root.dataset.akroniklRoute=view.hash;},openAssistant:(button,context)=>{setAkroniklContext({...context,code:null,stdin:null,stdout:null,stderr:null,attempts:[]});void assistantBridge.open(button);}});await onecController.ready;if(sequence!==renderSequence||renderHash!==location.hash)return;}globalThis.__NEXUS_BOOT_OK__?.();document.querySelector('#boot-status')?.remove();await bind();if(sequence!==renderSequence)return;assistantBridge.bindEditor();
   const header=root.querySelector('.nexus-footer-actions');if(header&&!header.querySelector('[data-akronikl-open]')){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.akroniklOpen='';b.textContent='Akronikl';header.append(b);}if(renderHash===location.hash)root.dataset.akroniklRoute=renderHash;if(r.course==='cpp'&&r.lesson)learningResume.remember(cpp,r.lesson,r.focus);const resumed=viewResume.restore();if(!resumed)focusLearningSection(r.focus);if(!resumed&&(r.view==='computer-graphics'||r.course==='computer-graphics'))scrollTo(0,0)}
 function renderFailure(err){console.error(err);const detail=e(err?.stack||err?.message||err);if(t){const body=`<section class="placeholder nexus-route-message" role="alert"><span class="eyebrow">NEXUS</span><h1>${e(t('shell.error.title'))}</h1><p>${e(t('shell.error.text'))}</p><div class="hero-actions"><a class="btn primary" href="#view=home">${e(t('shell.error.home'))}</a><button class="btn" id="retryRoute">${e(t('shell.error.retry'))}</button></div><details><summary>${e(t('shell.error.details'))}</summary><pre class="route-error-detail">${detail}</pre></details></section>`;replaceRoute(shell(body,route().view==='project-studio'?'projects':'home'));document.querySelector('#boot-status')?.remove();bind();document.querySelector('#retryRoute')?.addEventListener('click',()=>safeRender())}else{const b=document.querySelector('#boot-status');if(b){b.className='boot-error';b.innerHTML=`<strong>Nexus не запустился / Nexus could not start</strong><pre>${detail}</pre>`}}}
 async function prepareLearningNavigation(){return (!learningController||await learningController.prepareNavigation())&&(!onecController?.prepareNavigation||await onecController.prepareNavigation());}

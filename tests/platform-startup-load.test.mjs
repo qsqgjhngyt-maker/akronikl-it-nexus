@@ -97,11 +97,13 @@ test('Simultaneous Home / Code Hub entry deduplicates all in-flight C++ resource
 test('APP route wiring uses lazy course path without weakening C++ full routes',async()=>{
  const app=await fs.readFile(fileURLToPath(new URL('../core/app.js',import.meta.url)),'utf8');
  assert.match(app,/r\.view==='home'\)\{if\(!cpp\)cppLanding\?\?=await getCppOutline\(\)/);
- assert.match(app,/r\.view==='academy'\)\{\s*const \[,outline\]=await Promise\.all\(\[loadAcademy\(\),cpp\|\|cppLanding\|\|getCppOutline\(\)\]\)/);
+ assert.match(app,/r\.view==='academy'\)\{\s*const outline=cpp\|\|cppLanding\|\|await getCppOutline\(\);\s*if\(!isCurrent\(\)\)return;/);
+ assert.match(app,/r\.view==='labs'\|\|r\.view==='practices'\)\{const \[mod,course\]=await Promise\.all\(\[import\('\.\/nexus-learning-discovery\.js'\),cpp\|\|getCppCourse\(\)\]\);if\(!isCurrent\(\)\)return;/);
+ assert.match(app,/const \{ensurePracticeWorkingCopy\}=await import\('\.\/nexus-practices\.js'\);\s*if\(!isCurrent\(\)\)return;\s*const project=await withProjectWriter\(\(\)=>isCurrent\(\)\?ensurePracticeWorkingCopy/);
  assert.match(app,/cppContinuation\(\)\{return learningResume\.continuation\(cpp\|\|cppLanding,/);
  assert.match(app,/r\.course==='cpp'\)\{const courseReady=cpp\|\|getCppCourse\(\)/);
  assert.match(app,/r\.view==='programming'\)\{\s*const \[,languages,course\]=await Promise\.all\(\[loadCodeHub\(\),programming\|\|getProgrammingLanguages\(\),cpp\|\|getCppCourse\(\)\]\)/);
  // Static Academy rendering uses the public catalog, not lesson body content.
  const outlineRoutes=app.slice(app.indexOf("}else if(r.view==='academy'){"),app.indexOf("else if(r.view==='labs'||r.view==='practices')"));
- assert.doesNotMatch(outlineRoutes,/getCppCourse\(/);
+ assert.doesNotMatch(outlineRoutes,/getCppCourse\(|import\(/);
 });

@@ -47,6 +47,14 @@ if(existsSync(performanceFile)){
   activePins.set(pin.path,pin);
  }
 }
+const hybridFile='docs/ru/03-content/cp-next-01/PERF01_HYBRID_BYTES.json';
+if(existsSync(hybridFile)){
+ for(const pin of JSON.parse(readFileSync(hybridFile)).files){
+  const previous=activePins.get(pin.path);
+  assert.equal(pin.beforeSha256,previous?.newSha256??null,'Previous PERF-01-R3 presentation pin: '+pin.path);
+  activePins.set(pin.path,pin);
+ }
+}
 export const rolloutPins=[...activePins.values()];
 const digests=new Map(rolloutPins.map(p=>[p.path,p.newSha256]));
 export const rolloutDigest=(file,previous)=>digests.get(file)||previous;
