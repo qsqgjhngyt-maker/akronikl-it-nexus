@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.counted-loops",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "Программирование на C",
+  "module": "Ввод, условия и циклы",
+  "locale": "ru",
+  "title": "Цикл с известным числом повторов",
+  "goal": "Написать конечный цикл по известному количеству элементов и объяснить обновление суммы.",
+  "prerequisites": [
+    {
+      "text": "Понимать int, += и сравнения."
+    },
+    {
+      "text": "Уметь обработать статус проверенного чтения."
+    }
+  ],
+  "terms": [
+    {
+      "id": "counter",
+      "term": "Счётчик",
+      "title": "Счётчик",
+      "definition": "Переменная, которая показывает номер текущего шага."
+    },
+    {
+      "id": "accumulator",
+      "term": "Накопитель",
+      "title": "Накопитель",
+      "definition": "Значение, которое запоминает итог обработанной части данных."
+    },
+    {
+      "id": "iteration",
+      "term": "Итерация",
+      "title": "Итерация",
+      "definition": "Одно выполнение тела цикла. Условие проверяется до тела."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "Склад заранее знает размер партии. Начните с нулевого счётчика и обработайте ровно столько записей, сколько указано. После этого программа не должна прочитывать первый вес следующей партии.",
+        "В for сначала выполняется инициализация, затем проверка условия, тело и шаг. Начиная с i = 0 при i < n, тело посещает индексы от 0 до n − 1.",
+        "Перед очередной итерацией total равен сумме уже обработанных значений. После прибавления текущего веса это свойство сохраняется для следующего шага."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Места на четырёх рядах",
+      "paragraphs": [
+        "В ряду с номером row доступно 3 * row мест. Запишите промежуточные суммы перед запуском.",
+        "В примере номера начинаются с 1, а последний ряд имеет номер 4. В практике можно отдельно считать уже обработанные записи с нуля."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int total = 0;\n    for (int row = 1; row <= 4; ++row) {\n        total += 3 * row;\n    }\n    printf(\"%d\\n\", total);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "30\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Задайте total один раз до цикла.",
+        "Сравните row с 4 до выполнения тела.",
+        "Прибавьте 3 * row и выполните ++row.",
+        "Когда проверка становится ложной, напечатайте итог."
+      ],
+      "trace": [
+        [
+          "row = 1",
+          "total 0",
+          "total 3",
+          "Добавили 3"
+        ],
+        [
+          "row = 2",
+          "total 3",
+          "total 9",
+          "Добавили 6"
+        ],
+        [
+          "row = 3",
+          "total 9",
+          "total 18",
+          "Добавили 9"
+        ],
+        [
+          "row = 4",
+          "total 18",
+          "total 30",
+          "Добавили 12"
+        ],
+        [
+          "row = 5",
+          "проверяем 5 <= 4",
+          "ложь",
+          "Тело больше не выполняется"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Одна лишняя или одна потерянная итерация",
+      "paragraphs": [
+        "При нумерации с нуля условие i <= n захватывает лишнюю запись. Для n = 0 тело неожиданно выполняется один раз.",
+        "Инициализация total внутри тела стирает прежнюю сумму. Если цикл не прочитал ожидаемый вес, не печатайте частичный итог как полный.",
+        "В заголовке for нужны две точки с запятой. Пропуск первой мешает компилятору отделить инициализацию от условия."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Крайние размеры партии",
+      "paragraphs": [
+        "Проверьте n = 0 и n = 1, чтобы видеть начало и конец диапазона. При 10 весах по 200 сумма не превышает 2000. Это входит в минимальный диапазон int по C17.",
+        "При ошибке после первого успешного чтения накопитель содержит частичную сумму. Договор партии требует только invalid, поскольку партии целиком ещё нет."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.8.5, 6.8.5.3, 5.2.4.2.1",
+      "language": "English",
+      "purpose": "Сверить семантику for и гарантированный минимальный диапазон int."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Чему равен total после ряда 3?",
+      "options": [
+        "9",
+        "12",
+        "18"
+      ],
+      "correct": 2,
+      "feedback": [
+        "9 равно произведению для одного ряда.",
+        "12 добавит ряд 4.",
+        "Прибавили 3 + 6 + 9."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int total = 0;\n    for (int row = 1; row <= 4; ++row) {\n        total += 3 * row;\n    }\n    printf(\"%d\\n\", total);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "При for (int i = 0; i < 0; ++i) сколько раз выполняется тело?",
+      "options": [
+        "0",
+        "1",
+        "Неизвестно"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Условие проверяется до тела.",
+        "При входе проверка уже ложна.",
+        "Количество определено проверкой."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему n = 3 и только две строки веса должны дать invalid даже при допустимой частичной сумме?",
+      "feedback": "Третья попытка чтения возвращает READ_END. Договор требует все веса. Частичная сумма не даёт веса заказанной партии.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    for (int i = 0 i < 2; ++i) {\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected",
+        ";"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Вес партии посылок",
+    "task": "На первой строке размер партии от 0 до 10. Прочитайте ровно столько следующих строк с весом от 0 до 200. Напечатайте weight и сумму. Недостающую или ошибочную запись отклоните как invalid без частичного результата. После полной партии остальной ввод игнорируется.",
+    "hint": "После успешного чтения weight прибавьте его к total внутри тела. Накопитель инициализируется перед циклом.",
+    "criteria": [
+      "Перед первой записью сумма равна 0.",
+      "Каждый допустимый вес входит ровно один раз.",
+      "Недостающий вес даёт только invalid. Размер 0 даёт weight 0."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите 3, 12, 25, 9 на отдельных строках.",
+        "why": "Есть три наблюдаемых шага.",
+        "expected": "Правильный итог 46."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте накопление и проверьте размер 0.",
+        "why": "Пустой цикл сохраняет начальное значение.",
+        "expected": "Выводится weight 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Удалите последнюю строку у партии из трёх.",
+        "why": "Сигнал конца до лимита означает незавершённый ввод.",
+        "expected": "Выводится invalid без частичного веса."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Локализуйте лишнее чтение",
+        "task": "Предскажите результат для размера 1, веса 4 и лишней строки 999. Объясните, как обнаружить ошибочное условие i <= boxes.",
+        "criteria": [
+          "Правильный результат weight 4.",
+          "Лишняя итерация прочитает 999 и неожиданно вернёт invalid."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int boxes;\n    if (read_integer(0, 10, &boxes) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int total = 0;\n    for (int i = 0; i < boxes; ++i) {\n        int weight;\n        if (read_integer(0, 200, &weight) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        /* TODO: accumulate this weight exactly once. */\n        total += 0;\n    }\n    printf(\"weight %d\\n\", total);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "3\n12\n25\n9\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Три посылки",
+        "input": "3\n12\n25\n9\n",
+        "output": "weight 46\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая партия",
+        "input": "0\n",
+        "output": "weight 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Граница веса одной посылки",
+        "input": "1\n200\n",
+        "output": "weight 200\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Максимальная партия",
+        "input": "10\n200\n200\n200\n200\n200\n200\n200\n200\n200\n200\n",
+        "output": "weight 2000\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недостающая посылка",
+        "input": "3\n10\n20\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ошибка после допустимого веса",
+        "input": "2\n10\n201\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишняя запись после партии",
+        "input": "1\n4\n999\n",
+        "output": "weight 4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недопустимый размер",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int boxes;\n    if (read_integer(0, 10, &boxes) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int total = 0;\n    for (int i = 0; i < boxes; ++i) {\n        int weight;\n        if (read_integer(0, 200, &weight) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        total += weight;\n    }\n    printf(\"weight %d\\n\", total);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.counted-accumulation",
+    "prerequisites": [
+      "c.ordered-conditions"
+    ]
+  }
+}

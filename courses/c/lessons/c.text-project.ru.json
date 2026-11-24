@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.text-project",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "Программирование на C",
+  "module": "Строки и текст",
+  "title": "Проект: фильтр строк",
+  "goal": "Отбирать полные строки по префиксу и отдельно считать каждую отклонённую запись.",
+  "prerequisites": [
+    {
+      "text": "Уметь обрабатывать статусы чтения и сравнивать целую строку и её начало."
+    }
+  ],
+  "terms": [
+    {
+      "id": "prefix",
+      "term": "Префикс",
+      "title": "Префикс",
+      "definition": "Байты с позиции 0. Проверка префикса отвечает только за начало строки."
+    },
+    {
+      "id": "rejected",
+      "term": "Отклонённая запись",
+      "title": "Отклонённая запись",
+      "definition": "Запись, которая превышает допустимую длину или содержит нулевой байт."
+    },
+    {
+      "id": "filter",
+      "term": "Фильтр",
+      "title": "Фильтр",
+      "definition": "Правило, которое принимает или пропускает целую запись."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Несколько записей из журнала",
+      "paragraphs": [
+        "В журнал поступают сообщения. Сначала читатель решает, пригодна ли запись по длине и завершению. Затем фильтр сравнивает начало принятой строки. Эти решения удобно проверить разными входами.",
+        "Запись CORRUPT может быть корректной строкой, которую фильтр пропустит. Запись, превысившая лимит, увеличит счётчик rejected независимо от её текста.",
+        "После пропуска слишком длинной записи дочитайте её до конца. Следующий вызов read_line тогда начнёт с первого байта нового сообщения."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Как фильтр выбирает строки с ID:",
+      "paragraphs": [
+        "Сначала отработаем выбор по префиксу на трёх известных строках. Программа использует первые три байта каждой из них, а выводит всю совпавшую строку."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <string.h>\n\nint main(void)\n{\n    const char *const records[] = {\"ID:7\", \"XID:7\", \"ID:\"};\n    for (size_t i = 0; i < sizeof records / sizeof records[0]; ++i) {\n        if (strncmp(records[i], \"ID:\", 3) == 0) {\n            puts(records[i]);\n        }\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "ID:7\nID:\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "У ID:7 совпадают I, D и двоеточие. В вывод попадает ID:7.",
+        "Строка XID:7 начинается с X. Она пропускается.",
+        "Строка ID: заканчивается сразу после совпавшего префикса. Она тоже печатается."
+      ],
+      "trace": [
+        [
+          "ID:7",
+          "Первые три байта ID:",
+          "Совпадение",
+          "Печатать ID:7"
+        ],
+        [
+          "XID:7",
+          "Начало XID",
+          "Различие",
+          "Продолжать"
+        ],
+        [
+          "ID:",
+          "Первые три байта ID:",
+          "Совпадение",
+          "Печатать ID:"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Сломайте каждое правило своим входом",
+      "paragraphs": [
+        "Строка ERR fan выявляет случай, когда сравнение целиком пропускает нужный префикс. Строка XERR показывает, что префикс привязан к позиции 0.",
+        "Длинная запись и короткая строка после неё проверяют границу буфера и синхронизацию чтения. Нулевой байт ведёт к отклонению целой записи до сравнения.",
+        "Третий аргумент strncmp задаёт количество байтов. В отдельной диагностике передана строка \"3\". Clang сообщает, что здесь нужен целочисленный аргумент."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Спроектируйте фильтр для другого журнала",
+      "paragraphs": [
+        "Представьте журнал с префиксом WARN и лимитом восемь байтов. Подберите обычное совпадение, запись с WARN в середине и слишком длинную строку. Запишите полный ожидаемый stdout и счётчик."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.21.7.6, 7.24.4.2, 7.24.4.4",
+      "language": "English",
+      "purpose": "Сверить, как getchar заканчивает чтение и чем strcmp отличается от strncmp."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Почему XID:7 отсутствует в выводе примера?",
+      "options": [
+        "Она начинается с X",
+        "Она превышает длину буфера",
+        "ID: должно быть всей строкой"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Сравнение идёт от позиции 0.",
+        "Пример работает с известными строками из массива.",
+        "Строка ID:7 тоже содержит текст после префикса и проходит."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Что произойдёт с пустой записью в проекте?",
+      "options": [
+        "Увеличит rejected",
+        "Её прочитают как корректную, вывод и счётчик не изменятся",
+        "Программа завершит ввод"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Пустая запись укладывается в предел и содержит свой терминатор в буфере.",
+        "Префикс ERR отсутствует, поэтому эта запись пропускается.",
+        "Чтение продолжается после пустой записи."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Как проверить, что отклонённую строку дочитали целиком, и почему rejected увеличивается только один раз при длинной записи с NUL?",
+      "feedback": "Подайте слишком длинную строку, затем ERR ok. Вторая строка должна сохраниться, а счётчик вырасти на 1. Читатель возвращает один итоговый статус для всей записи и поэтому комбинация двух причин даёт одно отклонение.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <string.h>\n\nint main(void)\n{\n    const char line[] = \"ERR fan\";\n    return strncmp(line, \"ERR\", \"3\");\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible pointer to integer conversion"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Проект: отфильтруйте журнал",
+    "task": "Читайте записи до EOF. Лимит одной записи составляет 12 текстовых байтов. Печатайте каждую корректную запись, которая начинается с точных байтов ERR, без изменения её текста. Окончания LF и CRLF считаются границей, а запись с данными перед EOF тоже обрабатывается. Длинная запись или запись с нулевым байтом увеличивает rejected один раз после дочитывания. Корректная строка без префикса пропускается. В конце печатайте rejected, пробел и число отклонённых записей. Исправьте условие выбора, оставив готовый читатель и счётчик.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[13];\n    size_t rejected = 0;\n    for (;;) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            fputs(\"input error\\n\", stderr);\n            return 1;\n        }\n        if (status != LINE_OK) {\n            ++rejected;\n            continue;\n        }\n\n        /* TODO: match the prefix at the start of the line. */\n        if (strcmp(line, \"ERR\") == 0) {\n            puts(line);\n        }\n    }\n    printf(\"rejected %zu\\n\", rejected);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "OK\nERR fan\nERR\n ERR\nERR verylongdata\n",
+    "returnAnchor": "example",
+    "hint": "Сначала проверьте итог чтения записи. Затем спросите, совпадают ли первые три байта, а не вся строка.",
+    "criteria": [
+      "ERR fan и ERR печатаются полностью, строка с пробелом перед ERR пропускается.",
+      "Двенадцать байтов допускаются, тринадцать дают отклонение и не нарушают чтение следующей строки.",
+      "Запись с нулевым байтом увеличивает rejected даже при совпадающем начале.",
+      "Итоговая строка rejected N следует после всех совпадений.",
+      "Случаи с пометкой «автоматическая проверка WASI» используют точные байты. Сверьте их по подписи и ожидаемому выводу. Остальные входы можно проверить вручную в редакторе урока."
+    ],
+    "cases": [
+      {
+        "label": "Отбор с отклонённой длинной записью",
+        "input": "OK\nERR fan\nERR\n ERR\nERR verylongdata\n",
+        "output": "ERR fan\nERR\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой поток",
+        "input": "",
+        "output": "rejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Короткий вход, пустая строка и смещённые префиксы",
+        "input": "ER\n\n ERR\nXERR\nOK\n",
+        "output": "rejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Точная длина 12 с LF",
+        "input": "ERR 12345678\n",
+        "output": "ERR 12345678\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Точная длина 12 с CRLF · CRLF (0D 0A) · автоматическая проверка WASI",
+        "input": "ERR 12345678\r\nOK\r\nERR\r\n",
+        "output": "ERR 12345678\nERR\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Слишком длинная запись, затем короткая",
+        "input": "ERR 123456789\nERR x\n",
+        "output": "ERR x\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевой байт после ERR, затем корректная строка · NUL (00) · автоматическая проверка WASI",
+        "input": "ERR\u0000x\nERR done\n",
+        "output": "ERR done\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длинная без префикса и запись с NUL · NUL (00) · автоматическая проверка WASI",
+        "input": "abcdefghijklmn\nOK\u0000\nERR\n",
+        "output": "ERR\nrejected 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длинная запись с NUL учитывается один раз · NUL (00) · автоматическая проверка WASI",
+        "input": "ERR 123456789\u0000\nERR\n",
+        "output": "ERR\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Корректная строка завершилась сразу при EOF · EOF без перевода строки",
+        "input": "ERR fan",
+        "output": "ERR fan\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длинная строка завершилась сразу при EOF · EOF без перевода строки",
+        "input": "ERR 123456789",
+        "output": "rejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "ERR без пробела перед продолжением",
+        "input": "ERROR\n",
+        "output": "ERROR\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "12 и 14 байтов UTF-8",
+        "input": "ERR éééé\nERR ééééé\n",
+        "output": "ERR éééé\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с предложенным журналом.",
+        "why": "В нём есть точное совпадение ERR, длинная строка и совпавший префикс с продолжением.",
+        "expected": "В заготовке появляются только ERR и rejected 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте выбор начала строки и повторите запуск.",
+        "why": "Одинаковые первые три байта ERR достаточны для выбора корректной строки.",
+        "expected": "Теперь появляются ERR fan, ERR и rejected 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Подайте длинную строку перед ERR done и отдельно введите ERR fan без LF.",
+        "why": "Проверьте начало следующей записи и обработку данных при EOF.",
+        "expected": "В первом запуске ERR done сохраняется и rejected равно 1. Во втором печатается ERR fan и rejected 0."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. В редакторе урока установите префикс WARN, число сравниваемых байтов 4 и предел 8. Подайте WARN ok, XWARN и WARN too long. Затем добавьте корректную строку с тем же префиксом после длинной. Разберите отмеченные случаи WASI по подписи и ожидаемому выводу. В конце восстановите сохранённый main.c.",
+        "criteria": [
+          "В первых трёх записях печатается только WARN ok, затем rejected 1.",
+          "Дополнительное совпадение следует вывести целиком перед итогом."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[13];\n    size_t rejected = 0;\n    for (;;) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            fputs(\"input error\\n\", stderr);\n            return 1;\n        }\n        if (status != LINE_OK) {\n            ++rejected;\n            continue;\n        }\n\n        if (strncmp(line, \"ERR\", 3) == 0) {\n            puts(line);\n        }\n    }\n    printf(\"rejected %zu\\n\", rejected);\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.filter-records-by-prefix",
+    "prerequisites": [
+      "c.complete-line-input",
+      "c.compare-bounded-strings"
+    ]
+  }
+}

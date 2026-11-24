@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m4-v1",
+  "id": "c.array-bounds",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m4",
+  "course": "C programming",
+  "module": "Arrays and elementary algorithms",
+  "title": "Arrays and index bounds",
+  "goal": "Relate an index to the array length and check both bounds before reading an element.",
+  "prerequisites": [
+    {
+      "text": "Know how an || condition selects a branch and how return ends a function call."
+    }
+  ],
+  "terms": [
+    {
+      "id": "array",
+      "term": "Array",
+      "title": "Array",
+      "definition": "A sequence of elements of one type. Its declaration gives the length explicitly or through a list of initial values."
+    },
+    {
+      "id": "index",
+      "term": "Index",
+      "title": "Index",
+      "definition": "The integer position of an element. The first element has index 0."
+    },
+    {
+      "id": "length",
+      "term": "Length",
+      "title": "Length",
+      "definition": "The number of elements. For an array of positive length n, the last valid index is n − 1."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Position and value",
+      "paragraphs": [
+        "A control panel has three zones numbered 0, 1 and 2. The levels array stores the setting for each zone in that order: 8, 4 and 9. A request for zone 2 selects the third position, which holds 9.",
+        "The list in braces supplies the initial values and fixes the length of levels. Dividing sizeof levels by sizeof levels[0] gives the element count while levels names the array itself.",
+        "Before evaluating levels[index], the program must establish that index is between 0 and length − 1. Check both bounds while index has the signed int type."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Read a setting by zone number",
+      "paragraphs": [
+        "The program calls show_level three times. Predict which calls reach the array read, then compare with the output below the listing."
+      ],
+      "steps": [
+        "The call with 2 passes both checks. It reads levels[2] and prints 9.",
+        "The call with −1 fails the first check. The function prints invalid and returns.",
+        "The call with 3 fails the second check. The index equals the length, so the function returns before the array read."
+      ],
+      "trace": [
+        [
+          "Input 2",
+          "0 ≤ 2 < 3",
+          "Read levels[2]",
+          "9"
+        ],
+        [
+          "Input −1",
+          "−1 < 0",
+          "Return before reading",
+          "invalid"
+        ],
+        [
+          "Input 3",
+          "3 ≥ 3",
+          "Return before reading",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic void show_level(int index)\n{\n    const int levels[] = {8, 4, 9};\n    int length = (int)(sizeof levels / sizeof levels[0]);\n    if (index < 0 || index >= length) {\n        puts(\"invalid\");\n        return;\n    }\n    printf(\"%d\\n\", levels[index]);\n}\n\nint main(void)\n{\n    show_level(2);\n    show_level(-1);\n    show_level(3);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "9\ninvalid\ninvalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Why test the exact boundary?",
+      "paragraphs": [
+        "If a test allows index <= length, supplying index equal to length exposes the error. Trace that condition on paper. Access outside the array has undefined behavior and can compile without a diagnostic.",
+        "The separate compiler example uses 1.5 in brackets. The compiler rejects that subscript because an index has integer type."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Recalculate the boundary for a different panel",
+      "paragraphs": [
+        "Imagine two zones with settings 6 and 10. Write down the valid indices. Choose tests for the last zone and the first position to its right, before evaluating any array access."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.3.2.1, 6.5.2.1, 6.5.3.4",
+      "language": "English",
+      "purpose": "Check the rules for subscripting and counting the elements of an array."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does show_level(2) print for levels containing 8, 4 and 9?",
+      "options": [
+        "4",
+        "9",
+        "invalid"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The value 4 has index 1.",
+        "The third element has index 2.",
+        "Index 2 lies below the length 3."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What is the first index to the right of an array of length 4 that must give invalid?",
+      "options": [
+        "3",
+        "4",
+        "5"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Index 3 selects the last element.",
+        "Length 4 means indices 0, 1, 2 and 3 are valid.",
+        "Index 5 is invalid too. The first invalid index to the right is 4."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Which two checks guarantee safe access when length is 4? What happens for −1 and 4?",
+      "feedback": "Reject index < 0 and index >= length. Input −1 triggers the first guard and input 4 triggers the second. In both cases the program returns before reading an element.",
+      "recall": "idea"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    const int values[] = {8, 4, 9};\n    return values[1.5];\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "array subscript is not an integer"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Machine power by index",
+    "task": "Four machines have power ratings 12, 9, 15 and 4 at indices 0 through 3. Read a single integer index from the first line. Print the selected machine’s power on one line. Print invalid for a missing, malformed or out-of-range index. The supplied read_integer handles input, and any later lines are ignored. Fix the bounds check in main.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    const int power[] = {12, 9, 15, 4};\n    int length = (int)(sizeof power / sizeof power[0]);\n    int index;\n    if (read_integer(-99, 99, &index) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (index < 0 || index >= length - 1) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", power[index]);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "3\n",
+    "returnAnchor": "example",
+    "hint": "Find the last valid index for a four-element array. Compare it with the first index rejected by the condition.",
+    "criteria": [
+      "Indices 0 and 3 print 12 and 4 respectively.",
+      "Inputs -1 and 4 print invalid before any array access.",
+      "Missing or malformed input prints only invalid."
+    ],
+    "cases": [
+      {
+        "label": "First element",
+        "input": "0\n",
+        "output": "12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Last element",
+        "input": "3\n",
+        "output": "4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Negative index",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Index equals the length",
+        "input": "4\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Final record without a newline",
+        "input": "2",
+        "output": "15\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Additional character after the number",
+        "input": "2x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty input",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    const int power[] = {12, 9, 15, 4};\n    int length = (int)(sizeof power / sizeof power[0]);\n    int index;\n    if (read_integer(-99, 99, &index) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (index < 0 || index >= length) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", power[index]);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open Practice, leave 3 in the input box and select Run my code.",
+        "why": "Compare the starter’s output with the valid index range.",
+        "expected": "The starter prints invalid. The machine at index 3 should give 4."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the upper bound in main and run again with 3.",
+        "why": "Index 3 selects the last of four machines.",
+        "expected": "The output is 4."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Try -1, 4 and 0 in separate runs. Predict each result before running it.",
+        "why": "Check rejection on both sides and confirm that the first element still works.",
+        "expected": "The three outputs are invalid, invalid and 12."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Save a local copy of your code in a text file. In the lesson editor, replace the power array with readings 20, 14, 6, 22 and 9. Find the last valid index and the first invalid one to its right. Restore your saved code after testing.",
+        "criteria": [
+          "The length comes from the array, and 4 is the last valid index.",
+          "An input of 4 gives 9. An input of 5 gives invalid."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.array-index-range",
+    "prerequisites": [
+      "c.function-boundary-driver"
+    ]
+  }
+}

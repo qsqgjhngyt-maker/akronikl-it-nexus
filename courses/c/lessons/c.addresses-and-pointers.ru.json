@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.addresses-and-pointers",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "Программирование на C",
+  "module": "Указатели, адреса и границы памяти",
+  "title": "Адрес и разыменование",
+  "goal": "Выбрать живой объект по адресу и изменить его через указатель, оставив второй объект прежним.",
+  "prerequisites": [
+    {
+      "text": "Понадобятся переменная типа int, условие if и понятие времени жизни локальной переменной."
+    }
+  ],
+  "terms": [
+    {
+      "id": "object",
+      "term": "Объект",
+      "title": "Объект",
+      "definition": "Область памяти, в которой хранится значение. В примере объект value начинается с числа 8."
+    },
+    {
+      "id": "pointer",
+      "term": "Указатель",
+      "title": "Указатель",
+      "definition": "Объект, значение которого может указывать на другой объект. Указатель p и число value занимают разные места."
+    },
+    {
+      "id": "indirection",
+      "term": "Разыменование",
+      "title": "Разыменование",
+      "definition": "Выражение *p обозначает объект, на который указывает p, когда указатель действителен для такого доступа."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "От выбора счётчика к его изменению",
+      "paragraphs": [
+        "Есть два счётчика, но операция прибавления у них одна. Через указатель можно сначала выбрать счётчик, затем выполнить одну общую запись.",
+        "В объявлении int *p звёздочка указывает тип p. В выражении *p та же звёздочка означает переход к объекту. &value вычисляет адрес живой переменной value, а p после присваивания хранит этот адрес.",
+        "Перед доступом установите, к какому живому объекту относится указатель. В примере это видно из инициализации. В практике выбор проверяется до разыменования."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Одна запись, два способа прочитать результат",
+      "paragraphs": [
+        "Предскажите оба числа вывода. Изменится значение value, а p продолжит указывать на него."
+      ],
+      "steps": [
+        "Объявление value создаёт объект с числом 8.",
+        "&value вычисляет его адрес, а p сохраняет адрес.",
+        "*p += 3 читает число из value и записывает туда 11."
+      ],
+      "trace": [
+        [
+          "value = 8",
+          "value хранит 8",
+          "p ещё не объявлен"
+        ],
+        [
+          "p = &value",
+          "p указывает на value",
+          "*p даёт 8"
+        ],
+        [
+          "*p += 3",
+          "Тот же объект хранит 11",
+          "value и *p дают 11"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int value = 8;\n    int *p = &value;\n\n    *p += 3;\n    printf(\"%d %d\\n\", value, *p);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "11 11\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Нужен адрес выбранного объекта",
+      "paragraphs": [
+        "Clang отклоняет инициализацию int *p = value в отдельном примере. Здесь value имеет целочисленный тип int. Для адреса этой переменной используется &value.",
+        "Если выбор счётчика отсутствует, практика возвращается до чтения или записи через selected. По печатаемым числам можно проверить, что изменился ровно один счётчик."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Проверьте модель на другой паре",
+      "paragraphs": [
+        "Пусть левый счётчик равен 20, правый равен −1, а шаг равен 5. Для выбора 2 сначала запишите, куда указывает selected, затем предскажите оба значения."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.3.2.3, 6.5.3.2",
+      "language": "English",
+      "purpose": "Сверьте время жизни объектов и правила операторов & и *."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Какое выражение читает число 11 через p после записи?",
+      "options": [
+        "p",
+        "*p",
+        "&value"
+      ],
+      "correct": 1,
+      "feedback": [
+        "p хранит адрес.",
+        "Разыменование p читает value.",
+        "&value вычисляет адрес."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Расположение объектов в памяти различается между запусками. Как проверить результат записи?",
+      "options": [
+        "Сверить value и *p с числом 11",
+        "Сверить цифровую запись адреса",
+        "Сравнить p с числом 11"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Оба выражения читают один объект.",
+        "Числовой вид адреса не нужен для проверки.",
+        "Проверяйте число в объекте через *p."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "При выборе 1 и счётчиках 20 и −1 что покажет вывод после прибавления 5? Почему правое число останется прежним?",
+      "feedback": "Вывод 25 -1. В selected хранится адрес левого счётчика, и единственная запись через *selected относится к нему.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#pragma clang diagnostic error \"-Wint-conversion\"\n\nint main(void)\n{\n    int value = 8;\n    int *p = value;\n    (void)p;\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible integer to pointer conversion"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Увеличить выбранный счётчик",
+    "task": "Левый счётчик начинается с 4, правый с 10. Прочитайте целый признак с первой строки. Для 1 выберите левый счётчик, для 2 правый. Прибавьте 3 через указатель и напечатайте оба счётчика в исходном порядке через пробел. При прочем выборе или неверном вводе напечатайте invalid. Используйте готовую read_integer. Последующие строки игнорируются.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int left = 4;\n    int right = 10;\n    int choice;\n    int *selected = NULL;\n\n    if (read_integer(1, 2, &choice) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (choice == 1) {\n        selected = &left;\n    } else if (choice == 2) {\n        selected = &left; /* TODO: select the correct counter. */\n    }\n    if (selected == NULL) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    *selected += 3;\n    printf(\"%d %d\\n\", left, right);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n",
+    "returnAnchor": "example",
+    "hint": "Проследите присваивание selected в ветке выбора 2. Затем проверьте, какой объект изменяет общая строка *selected += 3.",
+    "criteria": [
+      "Вводы 1 и 2 дают соответственно 7 10 и 4 13.",
+      "При недопустимом выборе программа выдаёт только invalid и завершается до разыменования.",
+      "Изменение выполняется одной общей записью через selected."
+    ],
+    "cases": [
+      {
+        "label": "Выбран левый счётчик",
+        "input": "1\n",
+        "output": "7 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Выбран правый счётчик",
+        "input": "2\n",
+        "output": "4 13\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Правый без перевода строки",
+        "input": "2",
+        "output": "4 13\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Допустимые пробелы и знак",
+        "input": " +2 \n",
+        "output": "4 13\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевой признак",
+        "input": "0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Признак вне пары",
+        "input": "3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний символ после числа",
+        "input": "2x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой ввод",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int left = 4;\n    int right = 10;\n    int choice;\n    int *selected = NULL;\n\n    if (read_integer(1, 2, &choice) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (choice == 1) {\n        selected = &left;\n    } else if (choice == 2) {\n        selected = &right;\n    }\n    if (selected == NULL) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    *selected += 3;\n    printf(\"%d %d\\n\", left, right);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте «Практику» с вводом 2. Нажмите «Запустить мою работу».",
+        "why": "Сверьте выбранный объект и пару чисел на выходе.",
+        "expected": "Заготовка выдаёт 7 10. Для выбора 2 ожидается 4 13."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте адрес в ветке выбора 2 и повторите запуск.",
+        "why": "Одна общая операция должна изменять выбранный объект.",
+        "expected": "На вводе 2 вывод 4 13."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте 1, 0 и 2x в отдельных запусках.",
+        "why": "Проверьте другую ветку и отказ до доступа.",
+        "expected": "Выводы по очереди 7 10, invalid и invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. Задайте счётчики 20 и -1 и шаг 5. Предскажите и проверьте вывод при выборе 2. Затем восстановите исходный вариант практики.",
+        "criteria": [
+          "Вывод 20 4 показывает сохранение левого и изменение правого счётчика."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.read-write-through-pointer",
+    "prerequisites": [
+      "c.array-index-range",
+      "c.local-scope-lived-object"
+    ]
+  }
+}

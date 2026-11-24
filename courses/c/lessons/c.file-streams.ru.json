@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.file-streams",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "Программирование на C",
+  "module": "Файлы и обработка ошибок",
+  "locale": "ru",
+  "title": "Открытие и закрытие потоков",
+  "goal": "Открыть файл журнала внутри проекта, отличить отсутствие файла от пустого содержимого и закрыть только успешно открытый поток.",
+  "prerequisites": [
+    {
+      "text": "Примените проверку указателя на NULL из урока о владении. Здесь ресурсом служит открытый файл."
+    },
+    {
+      "text": "Вспомните, что stdout показывает сообщения программы, а stdin передаёт ввод. Файлы проекта образуют отдельный источник данных."
+    }
+  ],
+  "terms": [
+    {
+      "id": "file-stream",
+      "term": "Файловый поток",
+      "title": "Файловый поток",
+      "definition": "Связь программы с открытым файлом. Стандартная библиотека представляет поток через FILE * из stdio.h."
+    },
+    {
+      "id": "relative-path",
+      "term": "Относительный путь",
+      "title": "Относительный путь",
+      "definition": "Имя внутри файловой области запуска. В input/reading.txt папка input входит в имя, которое ищет программа."
+    },
+    {
+      "id": "open-mode",
+      "term": "Режим rb",
+      "title": "Режим rb",
+      "definition": "Открыть существующий файл для чтения без преобразований текстового режима. Успешное открытие не говорит о содержимом файла."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Сначала убедитесь, что журнал доступен",
+      "paragraphs": [
+        "Датчик оставляет измерение в файле input/reading.txt. Перед обработкой нужно узнать, может ли программа открыть именно этот журнал. Пустой журнал тоже существует. Его отсутствие — другой случай.",
+        "В учебном запуске Nexus использует копию файлов проекта. Вызов fopen получает относительный путь и режим rb. При успехе он возвращает FILE *, при отказе — NULL. Причины отказа могут быть разными. Наше сообщение сообщает сам факт отказа.",
+        "Закройте каждый открытый поток вызовом fclose. Проверяйте его результат: 0 означает успех, EOF означает ошибку закрытия. После попытки закрытия не используйте старый FILE * и не закрывайте его повторно."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Открыть журнал датчика",
+      "paragraphs": [
+        "В файлах запуска есть input/reading.txt с числом 42 и переводом строки. Поле stdin пустое. Предскажите, меняет ли отсутствие текста в stdin исход fopen."
+      ],
+      "steps": [
+        "Передайте fopen точное имя input/reading.txt и режим rb.",
+        "Если fopen дал NULL, выведите open-error и завершитесь до fclose.",
+        "После успешного открытия закройте поток. Напечатайте opened только если fclose вернул 0."
+      ],
+      "trace": [
+        [
+          "fopen",
+          "путь совпал",
+          "FILE *"
+        ],
+        [
+          "fclose",
+          "открытый поток закрыт",
+          "0"
+        ],
+        [
+          "Итог",
+          "opened",
+          "код выхода 0"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/reading.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-error\");\n        return 1;\n    }\n    if (fclose(input) == EOF) {\n        puts(\"close-error\");\n        return 1;\n    }\n    puts(\"opened\");\n    return 0;\n}\n",
+        "files": {
+          "input/reading.txt": "42\n"
+        },
+        "stdin": "",
+        "output": "opened\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {},
+        "cases": [
+          {
+            "input": "",
+            "inputFiles": {
+              "input/reading.txt": ""
+            },
+            "output": "opened\n",
+            "stderr": "",
+            "exitCode": 0,
+            "outputFiles": {}
+          },
+          {
+            "input": "",
+            "inputFiles": {},
+            "output": "open-error\n",
+            "stderr": "",
+            "exitCode": 1,
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Отличить ошибку сборки от отказа открытия",
+      "paragraphs": [
+        "Если Clang сообщает too few arguments для fopen, проверьте два аргумента: путь и режим. Такой фрагмент не запускается.",
+        "Если сборка прошла, но выводится open-error, откройте список файлов проекта. Имя reading.txt в корне отличается от input/reading.txt. Вставка строки 42 в stdin не создаёт файл."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Воспроизвести отказ с учебным путём",
+      "paragraphs": [
+        "В отдельной копии примера замените только путь на input/absent.txt, которого нет в списке, и предскажите вывод. Затем верните исходный путь и запустите с пустым input/reading.txt. Сравните код выхода и объясните различие."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3",
+      "language": "English",
+      "purpose": "Проверьте режим открытия, результат fopen и правила закрытия потока."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "empty-file",
+      "kind": "choice",
+      "prompt": "В проекте есть пустой input/reading.txt. Что выводит пример, если закрытие прошло успешно?",
+      "options": [
+        "opened",
+        "open-error",
+        "close-error"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Проверяется открытие существующего файла. Его содержимое пока не читается.",
+        "Пустой существующий файл может успешно открыться.",
+        "Пустота файла не означает ошибку закрытия."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "stdin-is-not-file",
+      "kind": "choice",
+      "prompt": "input/reading.txt отсутствует, но 42 введено в stdin. Что выведет программа?",
+      "options": [
+        "opened",
+        "open-error",
+        "42 без статуса"
+      ],
+      "correct": 1,
+      "feedback": [
+        "stdin не создаёт файл по указанному пути.",
+        "fopen не нашёл файл. Вызов fclose пропускается.",
+        "Программа не читает stdin."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "close-only-opened",
+      "kind": "free",
+      "prompt": "После переноса файла в корень ученик получает open-error. Что проверите первым и почему нельзя вызывать fclose в этой ветви?",
+      "feedback": "Сверьте относительный путь с фактическим именем. fopen вернул NULL, поэтому у вызова fclose нет открытого потока.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/reading.txt\");\n    return input == NULL;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "",
+    "title": "Журнал начала смены",
+    "task": "Бригада хранит начало смены и температуру в учебном файле input/shift.txt. В поле stdin ничего не вводите. Замените NULL около TODO на вызов fopen с точным путём и режимом rb. Успешное открытие и закрытие дают opened и код 0. При отказе открытия выведите open-error и завершитесь с кодом 1 без закрытия. При ошибке закрытия выведите close-error и завершитесь с кодом 1. Файл не читается и не меняется.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = NULL; /* TODO: open the project file for reading. */\n    if (input == NULL) {\n        puts(\"open-error\");\n        return 1;\n    }\n    if (fclose(input) == EOF) {\n        puts(\"close-error\");\n        return 1;\n    }\n    puts(\"opened\");\n    return 0;\n}\n"
+      },
+      {
+        "path": "input/shift.txt",
+        "content": "07:00 18\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Журнал в подпапке",
+        "input": "",
+        "inputFiles": {
+          "input/shift.txt": "07:00 18\n"
+        },
+        "output": "opened\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      },
+      {
+        "label": "Пустой журнал",
+        "input": "",
+        "inputFiles": {
+          "input/shift.txt": ""
+        },
+        "output": "opened\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      },
+      {
+        "label": "Журнала нет",
+        "input": "",
+        "inputFiles": {},
+        "output": "open-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Одноимённый файл в другой папке",
+        "input": "",
+        "inputFiles": {
+          "shift.txt": "07:00 18\n"
+        },
+        "output": "open-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Та же строка только в stdin",
+        "input": "07:00 18\n",
+        "inputFiles": {},
+        "output": "open-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      }
+    ],
+    "criteria": [
+      "Существующий журнал и существующий пустой журнал дают opened. Отсутствующий журнал даёт open-error. Строка в stdin не заменяет файл.",
+      "Поток закрывается один раз после успешного открытия. Входной файл не меняется, новых файлов нет."
+    ],
+    "hint": "Замените NULL на fopen(\"input/shift.txt\", \"rb\"). Если результат равен NULL, завершитесь до вызова fclose.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/shift.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-error\");\n        return 1;\n    }\n    if (fclose(input) == EOF) {\n        puts(\"close-error\");\n        return 1;\n    }\n    puts(\"opened\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте input/shift.txt в списке файлов. Вернитесь в main.c и запустите заготовку.",
+        "why": "Файл есть. Заготовка пока оставляет указатель равным NULL.",
+        "expected": "open-error"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Замените NULL в строке с TODO и запустите снова.",
+        "why": "Точное имя включает папку input, режим rb открывает только для чтения.",
+        "expected": "opened"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Проверка ошибки без удаления журнала",
+        "task": "В отдельной копии временно укажите input/next-shift.txt, который отсутствует. Запустите с пустым stdin. Затем восстановите путь. В этой копии оставьте input/shift.txt существующим, но без текста, и повторите запуск.",
+        "criteria": [
+          "В первом запуске open-error и код 1. Во втором opened и код 0. Объясните, почему различаются пустой и отсутствующий файлы."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.open-close-file-stream",
+    "prerequisites": [
+      "c.borrowed-pointer-contract",
+      "c.single-owner-cleanup"
+    ]
+  }
+}

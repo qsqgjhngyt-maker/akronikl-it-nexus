@@ -1,0 +1,405 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.validate-file-records",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "C programming",
+  "module": "Files and error handling",
+  "locale": "en",
+  "title": "Validating a record format",
+  "goal": "Validate an entire delivery table against an exact format, identify the first bad row, and compute a total only after validation succeeds.",
+  "prerequisites": [
+    {
+      "text": "Recall reading until EOF and checking ferror before closing the stream."
+    },
+    {
+      "text": "Recall the unique record-ID invariant. Here a duplicate invalidates the summary."
+    }
+  ],
+  "terms": [
+    {
+      "id": "tsv",
+      "term": "TSV",
+      "title": "TSV",
+      "definition": "A table whose fields are separated by the TAB byte. In this exercise each row ends with LF."
+    },
+    {
+      "id": "parse-end",
+      "term": "Parse end",
+      "title": "Parse end",
+      "definition": "The pointer that strtol writes through &end. It points to the first character after the parsed number."
+    },
+    {
+      "id": "format-limit",
+      "term": "Format bound",
+      "title": "Format bound",
+      "definition": "A contract for allowed size and contents. Here the limit is 64 records and 24 bytes per row before LF."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Parsing a number is only one check",
+      "paragraphs": [
+        "A warehouse receives a delivery table. Rows can look almost right, but 26, TAB, 3junk contains only a valid numeric prefix. Publishing a total for that table would be misleading.",
+        "Validate the full row: digits only in each field, exactly one TAB between them, then LF. The identifier is 1 to 9999, the quantity is 0 to 999. Track the IDs of up to 64 rows. After the quantity, the parser must be at the end of the row in the buffer.",
+        "An empty file has zero records. An empty line contains LF without any fields and violates the format. A stream error and a malformed row have different outcomes."
+      ]
+    },
+    {
+      "title": "Two records with a zero quantity",
+      "paragraphs": [
+        "The records.tsv fixture contains 7, TAB, 3, LF and 8, TAB, 0, LF. Leave stdin empty. Predict the record count and total."
+      ],
+      "steps": [
+        "read_line keeps the bytes before LF. read_number parses the ID and leaves end at TAB.",
+        "The second number must end at the end of the row. Zero is a valid quantity.",
+        "The uniqueness check accepts 7 and 8. After EOF the program closes the input and prints the summary."
+      ],
+      "trace": [
+        [
+          "Row 1",
+          "7 / 3",
+          "count = 1, total = 3"
+        ],
+        [
+          "Row 2",
+          "8 / 0",
+          "count = 2, total = 3"
+        ],
+        [
+          "EOF",
+          "stream error flag clear",
+          "records 2 total 3"
+        ]
+      ],
+      "id": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"records.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n    printf(\"records %zu total %ld\\n\", summary.count, summary.total);\n    return 0;\n}\n",
+        "files": {
+          "records.tsv": "7\t3\n8\t0\n"
+        },
+        "stdin": "",
+        "output": "records 2 total 3\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {},
+        "cases": [
+          {
+            "input": "",
+            "inputFiles": {
+              "records.tsv": "7\t3\n8\t0junk\n"
+            },
+            "output": "invalid line 2\n",
+            "stderr": "",
+            "exitCode": 1,
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate the row and its failing boundary",
+      "paragraphs": [
+        "If 26 TAB 3junk produces a normal summary, inspect what end points to. strtol parsed 3 and stopped at j. Check that *end is the terminating null character.",
+        "strtol needs text, the address of an end pointer, and a base. Clang stops the build if an argument is missing. An invalid line N message comes from a running program and names the first rejected row."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Apply the same format to a new delivery",
+      "paragraphs": [
+        "In a separate copy compare the valid record 26 TAB 0 with 26 TAB 0junk. Name the byte that reveals the format error before running both cases."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.7.1, §7.21.10.3, §7.22.1.4",
+      "language": "English",
+      "purpose": "Review the library contracts used by this stream and its checks."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "trailing-text",
+      "kind": "choice",
+      "prompt": "What should happen if the second row is 8 TAB 0junk?",
+      "options": [
+        "records 2 total 3",
+        "invalid line 2",
+        "read-error"
+      ],
+      "correct": 1,
+      "feedback": [
+        "A numeric prefix does not validate the whole row.",
+        "The bytes junk remain after 0, so the row is rejected.",
+        "The bytes can be read successfully even when the format is wrong."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "empty-record",
+      "kind": "choice",
+      "prompt": "How does an empty file differ from a file containing one LF?",
+      "options": [
+        "Both yield records 0 total 0.",
+        "Empty input yields a zero summary. One LF yields invalid line 1.",
+        "One LF means read-error."
+      ],
+      "correct": 1,
+      "feedback": [
+        "The second file has a row with no fields.",
+        "EOF with no bytes ends the input. LF ends a row.",
+        "A malformed row does not mean stream failure."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "duplicate",
+      "kind": "free",
+      "prompt": "Two IDs are equal. Why should you avoid adding the second quantity and printing a warning?",
+      "feedback": "The contract requires IDs to be unique across the file. A duplicate invalidates the row and the summary. Otherwise the same ID could affect the total twice.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdlib.h>\n\nint main(void)\n{\n    char *end;\n    return (int)strtol(\"17\", &end);\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    /* TODO: check what remains after the number. */\n    return 1;\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"input/delivery.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n    printf(\"records %zu total %ld\\n\", summary.count, summary.total);\n    return 0;\n}\n"
+      },
+      {
+        "path": "input/delivery.tsv",
+        "content": "12\t8\n26\t3junk\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Two valid deliveries",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t8\n26\t3\n"
+        },
+        "output": "records 2 total 11\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      },
+      {
+        "label": "Number with a trailing suffix",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t8\n26\t3junk\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Duplicate identifier",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t8\n12\t0\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Empty file",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": ""
+        },
+        "output": "records 0 total 0\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      },
+      {
+        "label": "Empty second line",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t8\n\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Missing final LF",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t8\n26\t3"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "CRLF outside the contract",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t8\r\n"
+        },
+        "output": "invalid line 1\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "NUL in a record",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t8\n26\t3\u0000\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Line longer than 24 bytes",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t0000000000000000000000\n"
+        },
+        "output": "invalid line 1\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "64 valid records",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "1\t1\n2\t1\n3\t1\n4\t1\n5\t1\n6\t1\n7\t1\n8\t1\n9\t1\n10\t1\n11\t1\n12\t1\n13\t1\n14\t1\n15\t1\n16\t1\n17\t1\n18\t1\n19\t1\n20\t1\n21\t1\n22\t1\n23\t1\n24\t1\n25\t1\n26\t1\n27\t1\n28\t1\n29\t1\n30\t1\n31\t1\n32\t1\n33\t1\n34\t1\n35\t1\n36\t1\n37\t1\n38\t1\n39\t1\n40\t1\n41\t1\n42\t1\n43\t1\n44\t1\n45\t1\n46\t1\n47\t1\n48\t1\n49\t1\n50\t1\n51\t1\n52\t1\n53\t1\n54\t1\n55\t1\n56\t1\n57\t1\n58\t1\n59\t1\n60\t1\n61\t1\n62\t1\n63\t1\n64\t1\n"
+        },
+        "output": "records 64 total 64\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      },
+      {
+        "label": "Unexpected 65th record",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "1\t1\n2\t1\n3\t1\n4\t1\n5\t1\n6\t1\n7\t1\n8\t1\n9\t1\n10\t1\n11\t1\n12\t1\n13\t1\n14\t1\n15\t1\n16\t1\n17\t1\n18\t1\n19\t1\n20\t1\n21\t1\n22\t1\n23\t1\n24\t1\n25\t1\n26\t1\n27\t1\n28\t1\n29\t1\n30\t1\n31\t1\n32\t1\n33\t1\n34\t1\n35\t1\n36\t1\n37\t1\n38\t1\n39\t1\n40\t1\n41\t1\n42\t1\n43\t1\n44\t1\n45\t1\n46\t1\n47\t1\n48\t1\n49\t1\n50\t1\n51\t1\n52\t1\n53\t1\n54\t1\n55\t1\n56\t1\n57\t1\n58\t1\n59\t1\n60\t1\n61\t1\n62\t1\n63\t1\n64\t1\n65\t1\n"
+        },
+        "output": "invalid line 65\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Value out of range",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t1000\n"
+        },
+        "output": "invalid line 1\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Missing number",
+        "input": "",
+        "inputFiles": {
+          "input/delivery.tsv": "12\t\n"
+        },
+        "output": "invalid line 1\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "No input file",
+        "input": "",
+        "inputFiles": {},
+        "output": "open-input-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      }
+    ],
+    "title": "Validate a delivery list",
+    "task": "The file input/delivery.tsv contains up to 64 rows. Each row has at most 24 bytes before LF. Its ID (1–9999) and quantity (0–999) consist of ASCII digits separated by TAB. IDs are unique. Every row ends in LF. Reject CRLF, NUL, an empty row, a missing LF, a duplicate ID, or extra text. Fix the TODO in read_record. Success yields records N total S and code 0. The first invalid record yields invalid line N and code 1. An empty file yields records 0 total 0. The program reads no stdin and creates no output file.",
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open input/delivery.tsv and run the starter with empty stdin.",
+        "why": "The second row contains 3junk, but the starter accepts the numeric prefix.",
+        "expected": "records 2 total 11"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the end check in read_record and run again.",
+        "why": "The first row is valid and the second is rejected. No partial total is printed.",
+        "expected": "invalid line 2"
+      }
+    ],
+    "criteria": [
+      "The rows 12 TAB 8 and 26 TAB 3 yield records 2 total 11. With 26 TAB 3junk the result is invalid line 2.",
+      "Duplicates, an empty row, and a missing final LF are rejected. The input stays unchanged and no report is created."
+    ],
+    "hint": "strtol leaves end at the first character after the number. The condition *end == '\\0' confirms there is no suffix.",
+    "exercises": [
+      {
+        "title": "A delivery with zero quantity",
+        "task": "In a separate copy replace the second row with 26 TAB 0 and LF, then with the same row followed by junk before LF. Compare the results.",
+        "criteria": [
+          "The first run yields records 2 total 8. The second yields invalid line 2. Neither run creates a file."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"input/delivery.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n    printf(\"records %zu total %ld\\n\", summary.count, summary.total);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.validate-all-file-records",
+    "prerequisites": [
+      "c.copy-file-check-eof-and-write",
+      "c.record-operation-invariants"
+    ]
+  }
+}

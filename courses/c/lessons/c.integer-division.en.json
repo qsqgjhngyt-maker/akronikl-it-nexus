@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.integer-division",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Integer division and remainder",
+  "goal": "Compute the number of full groups and leftover elements after checking the divisor.",
+  "prerequisites": [
+    {
+      "text": "Know int and the two kinds of division."
+    },
+    {
+      "text": "Read output containing two values."
+    }
+  ],
+  "terms": [
+    {
+      "id": "quotient",
+      "term": "Quotient",
+      "title": "Quotient",
+      "definition": "Here the number of complete groups from / with a nonnegative integer dividend and a positive integer divisor."
+    },
+    {
+      "id": "remainder",
+      "term": "Remainder",
+      "title": "Remainder",
+      "definition": "The result of %. For a nonnegative dividend and a positive divisor, it is smaller than the divisor."
+    },
+    {
+      "id": "divisor",
+      "term": "Divisor",
+      "title": "Divisor",
+      "definition": "The right operand to / or %. Integer division and remainder require a nonzero divisor."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "How many groups fit",
+      "paragraphs": [
+        "A workshop has 95 labels. Each full roll holds 24. To plan the work, find the number of full rolls and the number of loose labels.",
+        "With a positive divisor and a nonnegative dividend, a / b gives the number of complete groups and a % b gives the leftover count. The order matters: divide the item count by the group capacity.",
+        "Some input errors can be spotted before any calculations. In the example, read_numbers already checks the numbers and their ranges. This lesson focuses on the calculation after validation."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Rolls of labels",
+      "paragraphs": [
+        "The input is 95 24. Work out how many groups fit into 95 before reading the code and output.",
+        "Contract for the example: the first line is at most 79 bytes and contains two whitespace-separated integers with ranges 0–1000 and 1–1000. The program prints invalid if this contract is broken."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[2];\n    const int maxima[] = {1000, 1000};\n    if (!read_numbers(values, maxima, 2) || values[1] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int total = values[0];\n    int per_roll = values[1];\n    int rolls = total / per_roll;\n    int left = total % per_roll;\n    printf(\"%d %d\\n\", rolls, left);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+        "stdin": "95 24\n",
+        "output": "3 23\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "The helper reads 95 and 24 from the first line. The condition accepts these values.",
+        "95 / 24 gives 3. Three rolls take 3 * 24 = 72 labels.",
+        "95 % 24 gives 23. The program prints the two numbers in order: 3 23."
+      ],
+      "trace": [
+        [
+          "read_numbers",
+          "95 24",
+          "95 and 24",
+          "Input is valid"
+        ],
+        [
+          "95 / 24",
+          "95 and 24",
+          "3",
+          "Full rolls"
+        ],
+        [
+          "95 % 24",
+          "95 and 24",
+          "23",
+          "Loose labels"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "What to check before dividing",
+      "paragraphs": [
+        "With a zero divisor, / and % on int have undefined behavior. The check for values[1] == 0 runs before either calculation.",
+        "This exercise rejects negative input. In general, C integer division truncates toward zero: -7 / 3 is -2 and -7 % 3 is -1."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Check the remainder",
+      "paragraphs": [
+        "Check the identity a == (a / b) * b + a % b for valid inputs. In the example 3 * 24 + 23 reconstructs 95.",
+        "When a is smaller than b, the quotient is 0 and the remainder is a. When the division is exact, its remainder is 0. Run those cases independently."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.5, §7.22.1.4",
+      "language": "English",
+      "purpose": "Check the exact quotient and remainder rules and how text is converted to long."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the program print for 95 24?",
+      "options": [
+        "3 23",
+        "4 1",
+        "3 24"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Three groups use 72, leaving 23.",
+        "A fourth group needs one more label.",
+        "The remainder is smaller than 24 for this input."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[2];\n    const int maxima[] = {1000, 1000};\n    if (!read_numbers(values, maxima, 2) || values[1] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int total = values[0];\n    int per_roll = values[1];\n    int rolls = total / per_roll;\n    int left = total % per_roll;\n    printf(\"%d %d\\n\", rolls, left);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+        "stdin": "95 24\n",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What should the program do before computing anything for input 20 0?",
+      "options": [
+        "Print invalid and finish",
+        "Evaluate 20 % 0 first",
+        "Print 0 20"
+      ],
+      "correct": 0,
+      "feedback": [
+        "A zero divisor is invalid.",
+        "Remainder with a zero divisor is also undefined.",
+        "0 20 is expected for a positive divisor greater than 20."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "If a = 32 and b = 60, what are the quotient and remainder and how can you reconstruct the input from them?",
+      "feedback": "There are 0 complete groups and 32 left over. Check with 0 * 60 + 32 = 32.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Pulse queue",
+    "task": "A controller handles a fixed number of pulses per cycle. The first line of input (at most 79 bytes) gives a pulse count from 0 to 1000 and pulses per cycle from 1 to 1000. Print the number of complete cycles and pending pulses separated by a space. Keep the provided invalid output for a malformed first line.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[2];\n    const int maxima[] = {1000, 1000};\n    if (!read_numbers(values, maxima, 2) || values[1] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int pulses = values[0];\n    int per_cycle = values[1];\n    int cycles = 0;\n    int pending = pulses;\n    /* TODO: calculate both results using pulses and per_cycle. */\n    printf(\"%d %d\\n\", cycles, pending);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "260 60\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Four cycles with a remainder",
+        "input": "260 60\n",
+        "output": "4 20\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Exactly one cycle",
+        "input": "60 60\n",
+        "output": "1 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty queue",
+        "input": "0 60\n",
+        "output": "0 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Less than one cycle",
+        "input": "32 60\n",
+        "output": "0 32\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper bound",
+        "input": "1000 1\n",
+        "output": "1000 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero cycle size",
+        "input": "20 0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid value",
+        "input": "20 x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Value outside the range",
+        "input": "1001 60\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "260 60 gives 4 20, and 32 60 gives 0 32.",
+      "For 60 60 the remainder is 0, and for 0 60 both results are 0.",
+      "Validation and the zero-divisor check remain before the calculations."
+    ],
+    "hint": "Keep the helper and check. Change only the two calculations after pulses and per_cycle are read.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[2];\n    const int maxima[] = {1000, 1000};\n    if (!read_numbers(values, maxima, 2) || values[1] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int pulses = values[0];\n    int per_cycle = values[1];\n    int cycles = pulses / per_cycle;\n    int pending = pulses % per_cycle;\n    printf(\"%d %d\\n\", cycles, pending);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Write the expressions for cycles and pending.",
+        "why": "Each result needs a different operation.",
+        "expected": "Use / for complete cycles and % for pending pulses."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run the test cases.",
+        "why": "An exact cycle, a queue smaller than a cycle, and a zero cycle size test different behaviors.",
+        "expected": "Observed stdout matches the expected text."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add your own case with a nonzero remainder.",
+        "why": "Reconstruct the input to verify the partition.",
+        "expected": "Complete cycles times cycle size plus pending pulses gives the original count."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Find the smallest positive pulse count for a cycle size of 7 which gives both a nonzero cycle count and a nonzero remainder. Run and explain it.",
+        "criteria": [
+          "Input 8 7 gives 1 1.",
+          "Input 7 7 still gives a zero remainder."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.integer-quotient-remainder",
+    "prerequisites": [
+      "c.arithmetic-conversion"
+    ]
+  }
+}

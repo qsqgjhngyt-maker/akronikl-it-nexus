@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.line-input",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "C programming",
+  "module": "Strings and text",
+  "title": "Line buffers and truncated input",
+  "goal": "Distinguish a line at the capacity limit from a truncated line and consume rejected lines to their boundary.",
+  "prerequisites": [
+    {
+      "text": "Understand the difference between data and the terminating null in a char array."
+    }
+  ],
+  "terms": [
+    {
+      "id": "record",
+      "term": "Record",
+      "title": "Record",
+      "definition": "One line from the input stream, ending at LF, CRLF or EOF after the last data byte."
+    },
+    {
+      "id": "truncation",
+      "term": "Truncation",
+      "title": "Truncation",
+      "definition": "Part of a record exceeds the space available after reserving a cell for '\\0'."
+    },
+    {
+      "id": "drain",
+      "term": "Drain a record",
+      "title": "Drain a record",
+      "definition": "Consume the remaining bytes up to the record boundary so the next record begins with its own first byte."
+    },
+    {
+      "id": "eof",
+      "term": "EOF",
+      "title": "EOF",
+      "definition": "A signal from an input function that the stream ended or a read failed. ferror distinguishes the two cases."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The buffer is full. What comes next?",
+      "paragraphs": [
+        "A scanner sends one label per line. Five cells leave room for four label bytes and '\\0'. Once the fourth cell is filled, check what comes next: the record boundary or one more data byte.",
+        "LF and the CRLF pair end a line. A final line with data can end at EOF. A blank line has a line ending, while an empty stream contains neither a record nor a line ending.",
+        "getchar returns int, which can represent each byte and the separate EOF value. Check that status before converting a byte to char."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Four bytes, five bytes and the next label",
+      "paragraphs": [
+        "The example reads three records with a five-byte buffer. The supplied read_line stores up to four data bytes, consumes the boundary and writes '\\0' inside the buffer. It handles CR as part of the CRLF pair."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[5];\n    for (int record = 0; record < 3; ++record) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            puts(\"invalid\");\n            break;\n        }\n        if (status == LINE_BAD) {\n            puts(\"invalid\");\n        } else if (status == LINE_LONG) {\n            puts(\"long\");\n        } else if (line[0] == '\\0') {\n            puts(\"blank\");\n        } else {\n            printf(\"ok %s\\n\", line);\n        }\n    }\n    return 0;\n}\n",
+        "stdin": "ABCD\nABCDE\nOK\n",
+        "output": "ok ABCD\nlong\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "After D in ABCD comes LF. There is no extra byte, so the status is LINE_OK.",
+        "After D in ABCDE comes E. The reader records LINE_LONG and finishes the line without storing more data.",
+        "The next record starts at O. It fits, so the program prints ok OK."
+      ],
+      "trace": [
+        [
+          "ABCD",
+          "4 bytes",
+          "Next byte is LF",
+          "ok ABCD"
+        ],
+        [
+          "ABCDE",
+          "E is beyond the limit",
+          "Drain through LF",
+          "long"
+        ],
+        [
+          "OK",
+          "2 bytes",
+          "Boundary reached",
+          "ok OK"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Distinguish similar cases with separate tests",
+      "paragraphs": [
+        "Two inputs can fill the same data area. Compare the result for a six-byte line with the result for a seven-byte line. Then add a short line after a long one and check its first character.",
+        "A null byte inside a record makes it invalid. The reader still consumes the record through its boundary. This case gets LINE_BAD status in the reader and invalid in the output, even when the line is also overlong.",
+        "Clang rejects a call that passes an array to getchar. getchar takes no arguments and reports one byte or EOF."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Test a new limit",
+      "paragraphs": [
+        "When the data limit is two bytes, reserve three cells. Plan tests for two data bytes, three data bytes and a short record after a long one. Which outputs would confirm both boundaries?"
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.21.2, 7.21.7.1, 7.21.7.6, 7.21.10.3",
+      "language": "English",
+      "purpose": "Check text streams, getchar and error detection for input."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What do four occupied data cells mean when a null slot is reserved?",
+      "options": [
+        "The record is always truncated",
+        "The reader must inspect the next byte or the stream end",
+        "The stream capacity is known"
+      ],
+      "correct": 1,
+      "feedback": [
+        "A four-byte label might end exactly there.",
+        "A boundary gives a complete record. An extra byte makes it overlong.",
+        "The buffer limits storage for one record and the stream can continue."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "How can you test that the handler drained an overlong line?",
+      "options": [
+        "Supply only one overlong line",
+        "Follow an overlong line with OK",
+        "Remove the array terminator"
+      ],
+      "correct": 1,
+      "feedback": [
+        "That checks long. Checking the next record needs another line.",
+        "The next output should be ok OK.",
+        "The terminator enables safe C string operations."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "How does a blank line differ from an empty stream?",
+      "feedback": "A blank line has an LF or CRLF boundary and gives blank. If EOF arrives before any byte of a new record, the loop stops without new output.",
+      "recall": "idea"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    char line[7];\n    return getchar(line);\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too many arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Read and classify complete records",
+    "task": "Read up to six records. Each record may hold up to six text bytes. For an ordinary line, print ok, a space and its text. Print blank for an empty line, long for one over the limit and invalid for a record with a null byte. A null byte takes the invalid status even in an overlong record. LF and CRLF do not count toward the limit. On EOF after data, handle the final record. On EOF before a new record, stop. Fix the result condition in the supplied read_line. All lengths refer to bytes.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    /* TODO: distinguish a full buffer from a line with extra bytes. */\n    return (overflow || used == capacity - 1) ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[7];\n    for (int record = 0; record < 6; ++record) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            puts(\"invalid\");\n            break;\n        }\n        if (status == LINE_BAD) {\n            puts(\"invalid\");\n        } else if (status == LINE_LONG) {\n            puts(\"long\");\n        } else if (line[0] == '\\0') {\n            puts(\"blank\");\n        } else {\n            printf(\"ok %s\\n\", line);\n        }\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "ABCDEF\nABCDEFG\nOK\n",
+    "returnAnchor": "example",
+    "hint": "used counts saved bytes. Find the flag that is set only when the reader encounters an extra byte.",
+    "criteria": [
+      "Records ABCDEF, ABCDEFG and OK produce ok ABCDEF, long and ok OK.",
+      "After a rejected line, the next record starts at its own first byte.",
+      "A record with NUL gives invalid. A blank line gives blank. An empty stream produces no output.",
+      "Exactly six bytes before LF, CRLF or EOF fit.",
+      "Cases marked “automatic WASI check” use exact bytes. Read their labels and expected output. You can enter the other cases in the lesson editor."
+    ],
+    "cases": [
+      {
+        "label": "Exact length, then one extra byte and a new record",
+        "input": "ABCDEF\nABCDEFG\nOK\n",
+        "output": "ok ABCDEF\nlong\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Blank line before a regular line",
+        "input": "\nOK\n",
+        "output": "blank\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty stream",
+        "input": "",
+        "output": "",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Final line of exactly six bytes without LF · EOF without a final newline",
+        "input": "ABCDEF",
+        "output": "ok ABCDEF\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Final overlong line without LF · EOF without a final newline",
+        "input": "ABCDEFG",
+        "output": "long\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Six-byte line with CRLF · CRLF (0D 0A) · automatic WASI check",
+        "input": "ABCDEF\r\nOK\r\n",
+        "output": "ok ABCDEF\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Blank line with CRLF · CRLF (0D 0A) · automatic WASI check",
+        "input": "\r\n",
+        "output": "blank\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Null byte between A and B, then OK · NUL (00) · automatic WASI check",
+        "input": "A\u0000B\nOK\n",
+        "output": "invalid\nok OK\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "An extra byte and a null byte in one line · NUL (00) · automatic WASI check",
+        "input": "ABCDEFG\u0000\nX\n",
+        "output": "invalid\nok X\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Six records from a stream of seven",
+        "input": "A\nB\nC\nD\nE\nF\nG\n",
+        "output": "ok A\nok B\nok C\nok D\nok E\nok F\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Three and four instances of é in UTF-8",
+        "input": "ééé\néééé\n",
+        "output": "ok ééé\nlong\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "CR without LF adds a seventh byte · CR (0D), EOF · automatic WASI check",
+        "input": "ABCDEF\r",
+        "output": "long\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with the three supplied lines.",
+        "why": "The first two lines distinguish a full buffer from an overlong record.",
+        "expected": "The starter prints long, long, ok OK."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the LINE_LONG choice and run the same input again.",
+        "why": "An extra byte sets the flag when no data slots remain.",
+        "expected": "You get ok ABCDEF, long, ok OK."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Follow a long line with a short line and test a blank record separately.",
+        "why": "Exercise the next boundary as well as consecutive boundaries.",
+        "expected": "After long, the short line prints in full. The blank record gives blank."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Try it on your own",
+        "task": "In the lesson editor, after saving a copy of main.c in a separate text file, reduce line to three cells. Test AB, ABC and Z in that order. Check the labelled WASI cases against their expected output. Restore your saved main.c after the experiment.",
+        "criteria": [
+          "The results are ok AB, long, ok Z.",
+          "In UTF-8, byte length determines the limit. Three instances of é occupy exactly six bytes."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <stdio.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[7];\n    for (int record = 0; record < 6; ++record) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            puts(\"invalid\");\n            break;\n        }\n        if (status == LINE_BAD) {\n            puts(\"invalid\");\n        } else if (status == LINE_LONG) {\n            puts(\"long\");\n        } else if (line[0] == '\\0') {\n            puts(\"blank\");\n        } else {\n            printf(\"ok %s\\n\", line);\n        }\n    }\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.complete-line-input",
+    "prerequisites": [
+      "c.string-termination"
+    ]
+  }
+}

@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.structure-arrays",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "Программирование на C",
+  "module": "Структуры, перечисления и модели данных",
+  "locale": "ru",
+  "title": "Массив записей и поиск по полю",
+  "goal": "Найти запись по полю id, отличить неизвестный номер от нулевого количества и не выйти за границы массива.",
+  "prerequisites": [
+    {
+      "text": "Знать поля структуры и индексы массива от 0."
+    },
+    {
+      "text": "Уметь выполнить проверку указателя на NULL перед чтением поля."
+    }
+  ],
+  "terms": [
+    {
+      "id": "lookup-key",
+      "term": "Ключ поиска",
+      "title": "Ключ поиска",
+      "definition": "Значение поля, по которому ищут запись. В журнале поставок это номер, а количество является данными записи."
+    },
+    {
+      "id": "count",
+      "term": "Число записей",
+      "title": "Число записей",
+      "definition": "Число существующих элементов. При count = 3 допустимы индексы 0, 1 и 2."
+    },
+    {
+      "id": "null-result",
+      "term": "Отсутствие результата",
+      "title": "Отсутствие результата",
+      "definition": "Указатель NULL сообщает, что запись не найдена. Нулевое количество у найденной записи остаётся обычным значением."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Поиск знает, где массив заканчивается",
+      "paragraphs": [
+        "В мастерской инструменты записаны под номерами 17, 23 и 42. Число 23 не является индексом: это ключ у записи на позиции 1.",
+        "Поиск сравнивает только id каждой записи. Условие i < count удерживает индекс в границах, если count соответствует числу доступных записей. Вычисляйте длину там, где виден сам массив. Параметр tools[] получает указатель, и sizeof этого параметра не даёт число элементов.",
+        "Функция возвращает адрес совпавшего элемента или NULL. Массив создан в main и остаётся жив до окончания main. const сообщает, что через найденный указатель мы только читаем запись."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Один ключ найден, другого нет",
+      "paragraphs": [
+        "До запуска отметьте, какой элемент проверит find первым и сколько элементов просмотрит для 30."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstruct Tool {\n    int id;\n    int count;\n};\n\nstatic const struct Tool *find(const struct Tool tools[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (tools[i].id == id) {\n            return &tools[i];\n        }\n    }\n    return NULL;\n}\n\nstatic void print_tool(const struct Tool *tool)\n{\n    if (tool == NULL) {\n        puts(\"missing\");\n        return;\n    }\n    printf(\"%d %d\\n\", tool->id, tool->count);\n}\n\nint main(void)\n{\n    const struct Tool tools[] = {{17, 2}, {23, 5}, {42, 1}};\n    const size_t count = sizeof tools / sizeof tools[0];\n    print_tool(find(tools, count, 23));\n    print_tool(find(tools, count, 30));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "23 5\nmissing\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Для ключа 23 сравните 17 и 23. При втором сравнении верните адрес tools[1].",
+        "Проверьте возвращённый указатель. Он не равен NULL, поэтому можно напечатать 23 и 5.",
+        "Для ключа 30 пройдите 17, 23 и 42. После конца цикла верните NULL и напечатайте missing без чтения полей."
+      ],
+      "trace": [
+        [
+          "Ключ 23, i = 0",
+          "17 ≠ 23",
+          "продолжить"
+        ],
+        [
+          "Ключ 23, i = 1",
+          "23 = 23",
+          "вернуть &tools[1]"
+        ],
+        [
+          "Ключ 30, i = 0…2",
+          "совпадений нет",
+          "вернуть NULL"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Локализуйте и проверьте ошибку",
+      "paragraphs": [
+        "Если не находится последний номер, проследите i и count. У четырёх записей допустим индекс 3. В упражнении читайте result->id только после проверки, что поиск вернул адрес записи, а не NULL. Разыменование NULL ведёт к неопределённому поведению. Ищите ошибку по коду, не запускайте этот вариант.",
+        "Диагностика Clang про const-qualified type относится к попытке записи через указатель на const. Для этой функции найдите корректный путь только чтения вместо снятия const."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Измените, предскажите и проверьте",
+      "paragraphs": [
+        "Замените первый ключ примера на 42, затем на 17. Отметьте, сколько сравнений до совпадения и что меняется при перестановке самих записей.",
+        "Если ключи могут повторяться, текущий код возвращает первое совпадение. Задайте контракт уникальности отдельно. На следующей теме вставка дубликата будет отклоняться до изменения массива."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.3.2.1, §6.5.2.1, §6.5.2.3, §6.7.6.3",
+      "language": "English",
+      "purpose": "Сверьте правила языка для конструкций разобранного примера."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Каков результат поиска 23?",
+      "options": [
+        "&tools[1]",
+        "&tools[23]",
+        "NULL"
+      ],
+      "correct": 0,
+      "feedback": [
+        "23 является ключом записи на индексе 1.",
+        "Номер инструмента не преобразуется в индекс.",
+        "В массиве есть элемент с id 23."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Что выводить для найденного ключа 54 с количеством 0?",
+      "options": [
+        "missing",
+        "54 0",
+        "invalid"
+      ],
+      "correct": 1,
+      "feedback": [
+        "missing относится только к отсутствующей записи.",
+        "Нулевое количество — допустимые данные существующей записи.",
+        "54 входит в допустимый диапазон."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Что вернёт find при count = 0 и почему это происходит без чтения первого элемента?",
+      "feedback": "NULL. При i = 0 выражение 0 < 0 ложно, тело цикла не выполняется.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Delivery { int id; int quantity; };\n\nint main(void)\n{\n    const struct Delivery delivery = {12, 8};\n    const struct Delivery *found = &delivery;\n    found->quantity = 3;\n    return 0;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "const-qualified type"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Поиск поставки",
+    "environment": "C17 · Clang/WASI",
+    "task": "В журнале четыре записи: 12 → 8, 31 → 3, 54 → 0, 77 → 26. Первая строка длиной до 63 байт содержит один целый номер от 1 до 9999. Завершите поиск по id. Выведите номер и количество через пробел, если запись найдена. Для допустимого номера без записи напечатайте missing. Для неверного формата или числа вне диапазона напечатайте invalid.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Delivery {\n    int id;\n    int quantity;\n};\n\nstatic const struct Delivery *find(const struct Delivery deliveries[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        /* TODO: compare the lookup key to the identifier. */\n        if (deliveries[i].quantity == id) {\n            return &deliveries[i];\n        }\n    }\n    return NULL;\n}\n\nint main(void)\n{\n    int value[1];\n    const int minimum[] = {1};\n    const int maximum[] = {9999};\n    if (!read_values(value, minimum, maximum, 1)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    const struct Delivery deliveries[] = {{12, 8}, {31, 3}, {54, 0}, {77, 26}};\n    const size_t count = sizeof deliveries / sizeof deliveries[0];\n    const struct Delivery *result = find(deliveries, count, value[0]);\n    if (result != NULL) {\n        printf(\"%d %d\\n\", result->id, result->quantity);\n    } else {\n        puts(\"missing\");\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "77\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Первый элемент",
+        "input": "12\n",
+        "output": "12 8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последний элемент",
+        "input": "77\n",
+        "output": "77 26\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевое количество у найденной записи",
+        "input": "54\n",
+        "output": "54 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Неизвестный номер",
+        "input": "99\n",
+        "output": "missing\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Некорректный идентификатор",
+        "input": "0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Некорректный формат",
+        "input": "77 9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "12 и 77 находятся на разных концах массива. 54 печатается как 54 0. 99 даёт missing, а 0 даёт invalid.",
+      "Переданный count соответствует длине массива. Поиск обращается к элементам только при i < count, а поля читаются через действительный указатель на запись."
+    ],
+    "hint": "Не сравнивайте quantity с ключом. Найденный указатель и число в поле quantity отвечают на разные вопросы.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Delivery {\n    int id;\n    int quantity;\n};\n\nstatic const struct Delivery *find(const struct Delivery deliveries[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (deliveries[i].id == id) {\n            return &deliveries[i];\n        }\n    }\n    return NULL;\n}\n\nint main(void)\n{\n    int value[1];\n    const int minimum[] = {1};\n    const int maximum[] = {9999};\n    if (!read_values(value, minimum, maximum, 1)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    const struct Delivery deliveries[] = {{12, 8}, {31, 3}, {54, 0}, {77, 26}};\n    const size_t count = sizeof deliveries / sizeof deliveries[0];\n    const struct Delivery *result = find(deliveries, count, value[0]);\n    if (result != NULL) {\n        printf(\"%d %d\\n\", result->id, result->quantity);\n    } else {\n        puts(\"missing\");\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Исправьте сравнение в find.",
+        "why": "Поиск индексирует массив, но сопоставляет ключ с именованным полем.",
+        "expected": "Для 77 результат 77 26."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте 54 и 99 вместе.",
+        "why": "Эти случаи различают нулевое количество и отсутствие результата.",
+        "expected": "54 0 и missing."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенос идеи",
+        "task": "Добавьте в свой список поставку {80, 77}. Предскажите результаты поиска 77 и 80 при корректном сравнении и при старой ошибке.",
+        "criteria": [
+          "При поиске 77 остаётся 77 26, а 80 даёт 80 77. Объясните, почему поиск по quantity ошибочно выбрал бы другую запись."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.record-array-lookup",
+    "prerequisites": [
+      "c.record-member-and-copy",
+      "c.array-length-contract",
+      "c.borrowed-pointer-contract"
+    ]
+  }
+}

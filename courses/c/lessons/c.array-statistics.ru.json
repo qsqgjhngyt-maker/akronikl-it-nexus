@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m4-v1",
+  "id": "c.array-statistics",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m4",
+  "course": "Программирование на C",
+  "module": "Массивы и базовые алгоритмы",
+  "title": "Поиск, минимум и подсчёт",
+  "goal": "За один проход найти минимум, индекс первого совпадения и число совпадений.",
+  "prerequisites": [
+    {
+      "text": "Прочитать массив по индексу и передать длину в функцию. Различать индекс 0 и длину 0."
+    }
+  ],
+  "terms": [
+    {
+      "id": "minimum",
+      "term": "Минимум",
+      "title": "Минимум",
+      "definition": "Наименьшее из просмотренных значений. Начальное значение берут из первой записи непустого массива."
+    },
+    {
+      "id": "first-hit",
+      "term": "Первое совпадение",
+      "title": "Первое совпадение",
+      "definition": "Наименьший индекс, по которому значение равно цели. В этой задаче индекс -1 обозначает отсутствие совпадения."
+    },
+    {
+      "id": "frequency",
+      "term": "Частота значения",
+      "title": "Частота значения",
+      "definition": "Число элементов, равных заданному значению. Каждый повтор увеличивает счётчик."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "В мастерской датчики сообщают отклонения температуры. Дежурному нужен самый низкий показатель за смену, номер первой записи с заданным показателем и число таких записей. Одинаковые значения могут стоять на разных местах.",
+        "До прохода разделите три ответа. Минимум начинается со значения первой записи после проверки длины. Счётчик равен 0 до первого совпадения. Индекс первого совпадения меняется только один раз, когда найдено первое равенство.",
+        "При нулевой длине программа выдаёт empty до обращения к первому элементу."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Минимум и повторы в трёх измерениях",
+      "paragraphs": [
+        "Измерения идут в порядке 6, -1, 6. Требуется найти минимум и подсчитать, сколько раз пришло 6. До прохода минимум равен 6, счётчик равен 0. Первая итерация тоже сравнивает запись с целью, чтобы учесть совпадение на индексе 0."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    const int readings[] = {6, -1, 6};\n    const int length = (int)(sizeof readings / sizeof readings[0]);\n    const int target = 6;\n\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    int minimum = readings[0];\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            ++count;\n        }\n    }\n    printf(\"%d %d\\n\", minimum, count);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "-1 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "На индексе 0 найдено одно совпадение. Минимум остаётся равным 6.",
+        "На индексе 1 минимум становится равным -1.",
+        "На индексе 2 увеличивается только счётчик. Программа выводит -1 и 2."
+      ],
+      "trace": [
+        [
+          "i = 0",
+          "6",
+          "минимум 6",
+          "совпадений 1"
+        ],
+        [
+          "i = 1",
+          "-1",
+          "минимум -1",
+          "совпадений 1"
+        ],
+        [
+          "i = 2",
+          "6",
+          "минимум -1",
+          "совпадений 2"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Диагностика",
+      "paragraphs": [
+        "Показания 5 и 9 выявляют ошибочное начальное значение 0. Оба показания больше нуля, поэтому такой минимум сохранился бы до конца прохода. Правильный минимум равен 5.",
+        "Повтор цели проверяет, хранится ли первый индекс. Если при каждом совпадении присваивать first = i, после прохода в first окажется последний индекс.",
+        "В коротком примере диагностики число 1.5 стоит внутри квадратных скобок. Clang отклоняет дробный индекс. Для прохода нужен целочисленный индекс от 0 до длины за вычетом одного."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенос в практику",
+      "paragraphs": [
+        "В рабочей задаче к минимуму и частоте добавляется индекс первого совпадения. Для цели 6 в ряду 6, -1, 6 этот индекс равен 0, хотя проход увидит ещё одно совпадение.",
+        "Перед запуском запишите отдельно три ожидаемых числа. Так легче понять, какое обновление в цикле дало расхождение."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.1, 6.5.8, 6.8.5.3",
+      "language": "English",
+      "purpose": "За один проход найти минимум, индекс первого совпадения и число совпадений."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что выведет пример для ряда 6, -1, 6?",
+      "options": [
+        "-1 2",
+        "-1 1",
+        "6 2"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Минимум -1 и два совпадения с 6.",
+        "Индекс 0 и индекс 2 дают по одному совпадению.",
+        "Вторая запись уменьшает минимум до -1."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    const int readings[] = {6, -1, 6};\n    const int length = (int)(sizeof readings / sizeof readings[0]);\n    const int target = 6;\n\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    int minimum = readings[0];\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            ++count;\n        }\n    }\n    printf(\"%d %d\\n\", minimum, count);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "first",
+      "kind": "choice",
+      "prompt": "Какие индекс и счётчик нужны для цели 4 в ряду 4, 1, 4?",
+      "options": [
+        "0 2",
+        "2 2",
+        "-1 0"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Индекс 0 появляется в ответе первым. Счётчик учитывает оба совпадения.",
+        "Индекс 2 относится к последнему совпадению.",
+        "-1 и 0 подходят для ряда без совпадений."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "empty",
+      "kind": "choice",
+      "prompt": "Когда можно прочитать readings[0], чтобы задать минимум?",
+      "options": [
+        "Сразу после объявления буфера",
+        "После проверки длины и чтения хотя бы одной записи",
+        "Только при длине 8"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Объявление резервирует место. Прочитанной записи в нём пока нет.",
+        "После проверки непустоты и чтения первый логический элемент доступен.",
+        "Достаточно одной записи в пределах вместимости."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Для ряда 5, 9, 5 с целью 5 напишите ответ и объясните, какое обновление пропустит второе совпадение для first, но учтёт его для count.",
+      "feedback": "Ответ 5 0 2. Условие first == -1 разрешает сохранить индекс 0 при первом совпадении. При индексе 2 значение first уже задано, поэтому увеличивается только count.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int readings[] = {6, -1, 6};\n    return readings[1.5];\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "array subscript is not an integer"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Три показателя для журнала измерений",
+    "task": "В первой строке подайте число измерений от 0 до 8. При 0 результатом служит одна строка empty. Иначе подайте каждое измерение на отдельной строке, а затем цель отдельной строкой. Измерения и цель лежат в диапазоне от -99 до 99. Выведите минимум, индекс первого совпадения с нуля и число совпадений через пробелы в одной строке. Если цели нет, индекс равен -1. При пропущенном или неверном обязательном значении выведите invalid. Строки после обязательного ввода программа игнорирует. Чтение и проверка диапазонов уже даны в заготовке.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nenum { CAPACITY = 8 };\n\nint main(void)\n{\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    for (int i = 0; i < length; ++i) {\n        if (read_integer(-99, 99, &readings[i]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    int target;\n    if (read_integer(-99, 99, &target) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int minimum = 0; /* TODO: start with an actual reading. */\n    int first = -1;\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            first = i; /* TODO: keep the first matching index. */\n            ++count;\n        }\n    }\n\n    printf(\"%d %d %d\\n\", minimum, first, count);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "4\n-3\n4\n-3\n7\n-3\n",
+    "returnAnchor": "example",
+    "hint": "Проверьте начальное значение minimum на двух положительных числах. При совпадении обновляйте first только в его исходном состоянии -1. Увеличивайте count при каждом совпадении.",
+    "criteria": [
+      "На 4, -3, 4, -3, 7, -3 по строкам получается -3 0 2.",
+      "У двух положительных значений 5 и 9 минимум равен 5, а отсутствующая цель 8 даёт индекс -1 и счётчик 0.",
+      "Для длины 0 получается empty без чтения элемента или цели. При неверной длине и пропущенной цели получается invalid.",
+      "Граница длины 8 и повтор цели проверены на входах ниже."
+    ],
+    "cases": [
+      {
+        "label": "Два совпадения, первое на позиции 0",
+        "input": "4\n-3\n4\n-3\n7\n-3\n",
+        "output": "-3 0 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Все значения положительные, совпадения нет",
+        "input": "2\n5\n9\n8\n",
+        "output": "5 -1 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая последовательность",
+        "input": "0\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Один элемент совпадает с целью",
+        "input": "1\n-9\n-9\n",
+        "output": "-9 0 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Восемь значений: границы и повтор",
+        "input": "8\n9\n5\n3\n3\n8\n0\n-99\n99\n3\n",
+        "output": "-99 2 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длина больше вместимости",
+        "input": "9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательная длина",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пропущено второе значение",
+        "input": "2\n5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пропущена цель",
+        "input": "2\n5\n9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Значение вне диапазона",
+        "input": "1\n100\n8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний символ в строке цели",
+        "input": "1\n5\n8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nenum { CAPACITY = 8 };\n\nint main(void)\n{\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    for (int i = 0; i < length; ++i) {\n        if (read_integer(-99, 99, &readings[i]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    int target;\n    if (read_integer(-99, 99, &target) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int minimum = readings[0];\n    int first = -1;\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            if (first == -1) {\n                first = i;\n            }\n            ++count;\n        }\n    }\n\n    printf(\"%d %d %d\\n\", minimum, first, count);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с уже заполненным вводом.",
+        "why": "Повтор цели позволяет увидеть, какой индекс остался после прохода.",
+        "expected": "До исправления выйдет -3 2 2. Правильная строка для этого входа выглядит как -3 0 2."
+      },
+      {
+        "where": "Code Studio",
+        "action": "В поле ввода запишите 2, 5, 9 и 8 на четырёх отдельных строках. Запустите ещё раз.",
+        "why": "Положительные измерения выявляют ошибку в начальном минимуме.",
+        "expected": "До исправления выйдет 0 -1 0. Правильный минимум здесь равен 5."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте начальное значение minimum и условие, при котором сохраняется first. Повторите оба запуска.",
+        "why": "Первое значение задаёт исходный минимум. Счётчик должен учесть каждый повтор.",
+        "expected": "Для двух входов по очереди получаются -3 0 2 и 5 -1 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте длины 0, 1 и 8. Затем подайте вход с пропущенной целью.",
+        "why": "Так проверяются непустота, вместимость и обязательная последняя строка.",
+        "expected": "Программа печатает empty для длины 0 и invalid для пропуска обязательной строки."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Собственный контроль на два повтора",
+        "task": "Подайте строки 5, 8, 5, 8, 1, 5, 5. Перед запуском выпишите индексы совпадений и ожидаемую строку.",
+        "criteria": [
+          "Цель 5 встречается по индексам 1 и 4.",
+          "Программа выдаёт 1 1 2. Объясните, почему второе совпадение меняет счётчик, а первый индекс сохраняется."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.array-statistics-traversal",
+    "prerequisites": [
+      "c.array-length-contract"
+    ]
+  }
+}

@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.pointer-lifetime-errors",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "Программирование на C",
+  "module": "Указатели, адреса и границы памяти",
+  "title": "Время жизни и ошибки указателей",
+  "goal": "Скопировать значение, пока временный объект существует, и передать результат в живой объект вызывающего кода.",
+  "prerequisites": [
+    {
+      "text": "Понадобятся локальный блок с фигурными скобками, адрес, разыменование и выходной параметр функции."
+    }
+  ],
+  "terms": [
+    {
+      "id": "lifetime",
+      "term": "Время жизни объекта",
+      "title": "Время жизни объекта",
+      "definition": "Период выполнения, в который объект существует. У локального sensor из внутреннего блока время жизни заканчивается при выходе из блока."
+    },
+    {
+      "id": "dangling-pointer",
+      "term": "Висячий указатель",
+      "title": "Висячий указатель",
+      "definition": "Распространённое название указателя, чей прежний объект прекратил существовать. По такому указателю нельзя обращаться к объекту."
+    },
+    {
+      "id": "output-parameter",
+      "term": "Выходной параметр",
+      "title": "Выходной параметр",
+      "definition": "Указатель на живой объект вызывающего кода, куда функция записывает результат при успехе."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Число нужно после окончания измерения",
+      "paragraphs": [
+        "Внутренний блок получает показание. За его пределами понадобится само число. Скопируйте показание в переменную внешнего блока, пока исходный объект жив.",
+        "Адрес и значение имеют разное время применения. Указатель на локальный объект внутреннего блока пригоден для доступа только в допустимый период. Копия целого в saved живёт столько же, сколько saved.",
+        "По той же модели функция может принять от вызывающего кода int *out. Во время вызова адрес &sample указывает на живой объект. Функция копирует значение туда после успешного чтения."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Число 9 переживает внутренний блок",
+      "paragraphs": [
+        "Слева от присваивания находится объект внешнего блока. Справа код читает sensor, пока его блок ещё выполняется."
+      ],
+      "steps": [
+        "main объявляет saved во внешнем блоке. Во внутреннем блоке создаётся sensor со значением 9.",
+        "current получает адрес sensor, который действителен в этом блоке. saved = *current записывает 9 во внешний объект.",
+        "Внутренний блок завершается. printf читает только saved, время жизни которого продолжается."
+      ],
+      "trace": [
+        [
+          "Внешний блок",
+          "saved объявлен",
+          "sensor ещё не создан"
+        ],
+        [
+          "Внутренний блок",
+          "sensor = 9, current указывает на sensor",
+          "saved получает 9"
+        ],
+        [
+          "После закрывающей скобки",
+          "время жизни sensor и current окончилось",
+          "printf читает живой saved = 9"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int saved;\n    {\n        const int sensor = 9;\n        const int *current = &sensor;\n        saved = *current;\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "9\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Не возвращайте адрес локального объекта",
+      "paragraphs": [
+        "В контрольном фрагменте return &local получает адрес объекта, существующего внутри функции. Время жизни объекта оканчивается при выходе из функции. Clang находит такой возврат. Показанная настройка диагностики превращает предупреждение в ошибку компиляции. Этот фрагмент предназначен только для чтения диагностики.",
+        "Проверку времени жизни выполняют по договору и месту создания объекта. Когда время жизни объекта заканчивается, значение указателя становится неопределённым. Его нельзя использовать даже для сравнения с NULL. В практике проверяются out и результат чтения до записи."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Сохраните прежнее показание при отказе",
+      "paragraphs": [
+        "Представьте, что сохранено -8. Предскажите, что останется после ошибочной записи -9x. Затем предскажите результат корректной записи -9. Укажите, в какой точке функция выполняет единственную запись через out."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.5.3.2, 6.8.2, 6.8.6.4",
+      "language": "English",
+      "purpose": "Сверьте время жизни объектов с автоматической длительностью хранения, составные блоки и возврат из функции."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Что читает printf после внутреннего блока?",
+      "options": [
+        "saved, равный 9",
+        "sensor через current",
+        "Память по адресу закрывшегося блока"
+      ],
+      "correct": 0,
+      "feedback": [
+        "saved живёт во внешнем блоке и хранит копию целого.",
+        "Время жизни sensor и current закончилось.",
+        "После блока нужен живой объект saved."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Что нужно изменить вместо возврата &local?",
+      "options": [
+        "Сравнить результат с NULL после вызова",
+        "Скопировать число в живой объект вызывающего кода до возврата",
+        "Сохранить адрес в ещё одной переменной-указателе"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Проверка NULL не обеспечивает времени жизни.",
+        "Объект вызывающего кода остаётся доступным после возврата.",
+        "Копия адреса не продлевает время жизни объекта."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "read_sample(&sample) получает ввод 27x, а sample начинался с 17. Почему вывод должен быть invalid и какое значение останется в sample?",
+      "feedback": "Читатель сообщает об ошибке. Функция возвращает отказ до записи через out. В sample остаётся 17.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#pragma clang diagnostic error \"-Wreturn-stack-address\"\n\nint *sample_address(void)\n{\n    int local = 9;\n    return &local;\n}\n\nint main(void)\n{\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "address of stack memory associated with local variable"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Передать прочитанное значение вызывающему коду",
+    "task": "Прочитайте с первой строки целое от -99 до 99. Функция read_sample принимает адрес живого int вызывающего кода, проверяет его на NULL, разбирает число в отдельную локальную переменную и копирует значение в *out только при успешном чтении. Возвращайте 1 при записи и 0 при отказе. При успехе напечатайте число. При ошибке проверьте, что прежнее значение осталось 17, и напечатайте invalid. Готовый main показывает invalid changed как сигнал нарушенного договора. Остальные строки игнорируются.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int read_sample(int *out)\n{\n    if (out == NULL) {\n        return 0;\n    }\n    int temporary;\n    if (read_integer(-99, 99, &temporary) != READ_OK) {\n        return 0;\n    }\n    /* TODO: copy the temporary reading into the output object. */\n    return 1;\n}\n\nint main(void)\n{\n    enum { INITIAL_SAMPLE = 17 };\n    int sample = INITIAL_SAMPLE;\n    if (!read_sample(&sample)) {\n        puts(sample == INITIAL_SAMPLE ? \"invalid\" : \"invalid changed\");\n        return 0;\n    }\n    printf(\"%d\\n\", sample);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "27\n",
+    "returnAnchor": "example",
+    "hint": "При успехе добавьте копирование локального temporary в *out до возврата. Ветви отказа должны оставаться выше этой записи.",
+    "criteria": [
+      "Ввод 27 даёт 27, в том числе без завершающего перевода строки.",
+      "Неверный ввод оставляет 17 и даёт invalid.",
+      "При NULL функция возвращает 0 до чтения и записи через указатель."
+    ],
+    "cases": [
+      {
+        "label": "Целое показание",
+        "input": "27\n",
+        "output": "27\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последнее число без перевода строки",
+        "input": "27",
+        "output": "27\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нижняя граница",
+        "input": "-99\n",
+        "output": "-99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Верхняя граница",
+        "input": "99\n",
+        "output": "99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевое показание",
+        "input": "0\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Знак и пробельные символы",
+        "input": " -3 \n",
+        "output": "-3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний символ",
+        "input": "27x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Число вне диапазона",
+        "input": "100\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Строка из пробелов",
+        "input": "   \n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой ввод",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int read_sample(int *out)\n{\n    if (out == NULL) {\n        return 0;\n    }\n    int temporary;\n    if (read_integer(-99, 99, &temporary) != READ_OK) {\n        return 0;\n    }\n    *out = temporary;\n    return 1;\n}\n\nint main(void)\n{\n    enum { INITIAL_SAMPLE = 17 };\n    int sample = INITIAL_SAMPLE;\n    if (!read_sample(&sample)) {\n        puts(sample == INITIAL_SAMPLE ? \"invalid\" : \"invalid changed\");\n        return 0;\n    }\n    printf(\"%d\\n\", sample);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте «Практику» с вводом 27. Нажмите «Запустить мою работу».",
+        "why": "Сверьте фактическое показание и поясните роль local temporary.",
+        "expected": "Заготовка печатает 17. По договору должно быть 27."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Скопируйте temporary в *out только после успешной проверки и повторите ввод.",
+        "why": "Запишите число в живой объект вызывающего кода до окончания функции.",
+        "expected": "Вывод 27."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Запустите отдельно с 27x, затем с пустым вводом.",
+        "why": "Проверьте, что оба отказа оставляют исходное значение.",
+        "expected": "Оба запуска дают invalid. Сигнал invalid changed не появляется."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. Измените INITIAL_SAMPLE на -8, проверьте отдельно -9x и -9. Объясните, почему после отказа проверка сверяет прежнее значение. Затем восстановите сохранённый вариант.",
+        "criteria": [
+          "Первый запуск выдаёт invalid и сохраняет -8. Второй выводит -9.",
+          "Код не хранит адрес temporary и никогда не использует его после возврата."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.copy-before-lifetime-ends",
+    "prerequisites": [
+      "c.borrowed-pointer-contract",
+      "c.local-scope-lived-object"
+    ]
+  }
+}

@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.module-layout",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "Программирование на C",
+  "module": "Препроцессор и многофайловые программы",
+  "locale": "ru",
+  "title": "Модульные интерфейсы и организация сборки",
+  "goal": "Собрать обработчик записи из предусмотренных файлов, оставить в заголовке публичный контракт и проверить, как интерфейс сообщает об ошибке без смешивания расчёта с вводом.",
+  "prerequisites": [
+    {
+      "text": "Знаете, как несколько .c связываются через объявление общего заголовка. Это позволит заново собрать проект из его файлов."
+    },
+    {
+      "text": "Умеете читать структуру и условие. Используйте их, чтобы отличить синтаксис записи от допустимого количества."
+    }
+  ],
+  "terms": [
+    {
+      "id": "public-interface",
+      "term": "Публичный интерфейс",
+      "title": "Публичный интерфейс",
+      "definition": "Общий контракт, который нужен клиенту модуля. Здесь это структура Record и функция record_total с описанным результатом."
+    },
+    {
+      "id": "private-helper",
+      "term": "Внутренняя функция",
+      "title": "Внутренняя функция",
+      "definition": "Функция с файловым static, доступная по имени внутри своей единицы трансляции. Она помогает реализации и остаётся вне публичного заголовка."
+    },
+    {
+      "id": "build-inputs",
+      "term": "Комплект сборки",
+      "title": "Комплект сборки",
+      "definition": "Файлы и настройки, из которых заново можно получить программу. В упражнении участвуют main.c, record.c и подключаемый record.h."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Рабочая модель",
+      "paragraphs": [
+        "У счётчика расхода main показывает остаток. Общий тип и объявление функции живут в meter.h, вычисление — в meter.c. Разделение позволяет менять алгоритм, не заставляя консольный интерфейс знать его детали.",
+        "Функция daily_limit объявлена static на уровне файла meter.c. У её имени внутренняя связь, поэтому другим .c нужен публичный remaining_litres. У заголовка свой маркер защиты.",
+        "В упражнении чтение линии остаётся в main.c, а цены и допустимое количество проверяются в record.c. Верните -1 при недопустимой записи. Для допустимой записи ноль считается обычным итогом, который не следует путать с ошибкой."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Посчитайте остаток воды по записи",
+      "paragraphs": [
+        "Утром измерены 7 литров при лимите 12. До запуска назовите функцию, которую может вызвать main, и предскажите остаток."
+      ],
+      "steps": [
+        "meter.h определяет структуру Reading и объявляет remaining_litres.",
+        "meter.c хранит daily_limit с внутренней связью. remaining_litres получает запись, берёт поле и вычитает его из лимита.",
+        "main.c вызывает публичную функцию и печатает результат. При воспроизведении собираются main.c и meter.c, заголовок поступает через #include."
+      ],
+      "trace": [
+        [
+          "Публичный тип",
+          "Reading{7}",
+          "Аргумент передан по значению"
+        ],
+        [
+          "Внутреннее вычисление",
+          "daily_limit() − reading.litres",
+          "12 − 7 = 5"
+        ],
+        [
+          "Консоль",
+          "printf",
+          "remaining=5 litres"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"meter.h\"\n\nint main(void)\n{\n    struct Reading morning = {7};\n    printf(\"remaining=%d litres\\n\", remaining_litres(morning));\n    return 0;\n}\n",
+        "files": {
+          "meter.h": "#ifndef METER_H\n#define METER_H\nstruct Reading {\n    int litres;\n};\n\nint remaining_litres(struct Reading reading);\n#endif\n",
+          "meter.c": "#include \"meter.h\"\n\nstatic int daily_limit(void)\n{\n    return 12;\n}\n\nint remaining_litres(struct Reading reading)\n{\n    return daily_limit() - reading.litres;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "remaining=5 litres\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Найдите этап сбоя",
+      "paragraphs": [
+        "Если опустить record.c, его публичное имя record_total останется без определения. Убедитесь, что новое окно Code Studio содержит весь комплект. Один record.h не содержит алгоритм.",
+        "Если сборка прошла, но B 4 печатает total=4, найдите, вычисляет ли main цену сам или вызывает обработчик. Для отдельной проверки подайте B 7. Структура распознана, а обработчик должен отклонить количество."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Предскажите, проверьте и объясните",
+      "paragraphs": [
+        "В копии разборного проекта сделайте дневной предел 15 внутри meter.c. Предскажите remaining=8 litres при неизменном main.c и meter.h. Проверьте, что построение исходит из двух .c. Изменение результата не потребовало менять интерфейс."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.1, §6.2.2, §6.9.1",
+      "language": "English",
+      "purpose": "Единицы трансляции, внутренняя и внешняя связь, определение функций."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "price-location",
+      "kind": "choice",
+      "prompt": "Где следует разместить функцию выбора цены, если её вызывает только record_total?",
+      "options": [
+        "В record.c как static",
+        "В публичном заголовке как внешнее определение",
+        "В main.c вместе с выводом"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Внутренняя связь оставляет вспомогательную функцию за границей модуля.",
+        "Внешнее тело из заголовка может появиться в нескольких единицах трансляции.",
+        "Цены поддерживает обработчик, интерфейс использует готовый итог."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "zero-is-value",
+      "kind": "choice",
+      "prompt": "Как обработать результат record_total для A 0?",
+      "options": [
+        "Считать его ошибкой",
+        "Вывести total=0",
+        "Подменить его количеством"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Признак ошибки — отрицательное значение -1.",
+        "Ноль является допустимым итогом.",
+        "Оставьте расчёт внутри модуля и печатайте возвращённый итог."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "build-record-module",
+      "kind": "free",
+      "prompt": "Перечислите файлы для построения программы заново и объясните, зачем record.c также включает record.h.",
+      "feedback": "Компилируйте main.c и record.c с доступным record.h. Оба .c используют одинаковые тип записи и объявление функции, поэтому компилятор проверяет согласованность её определения.",
+      "recall": "example"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "link",
+      "source": "#include <stdio.h>\n#include \"record.h\"\n\nstatic int read_record(struct Record *record)\n{\n    int part = getchar();\n    if ((part != 'A' && part != 'B') || getchar() != ' ') {\n        return 0;\n    }\n    int quantity = getchar();\n    if (quantity < '0' || quantity > '9') {\n        return 0;\n    }\n    int tail = getchar();\n    if (tail != '\\n' && tail != EOF) {\n        return 0;\n    }\n    record->part = (char) part;\n    record->quantity = quantity - '0';\n    return 1;\n}\n\nint main(void)\n{\n    struct Record order;\n    if (!read_record(&order)) {\n        puts(\"invalid\");\n        return 1;\n    }\n    int total = record_total(order);\n    if (total < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"total=%d\\n\", total);\n    return 0;\n}\n",
+      "files": {
+        "record.h": "#ifndef RECORD_H\n#define RECORD_H\nstruct Record {\n    char part;\n    int quantity;\n};\n\nint record_total(struct Record record);\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "record_total"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "B 4\n",
+    "title": "Разделите консоль и подсчёт стоимости",
+    "task": "Первая строка stdin — A или B, один пробел и одна цифра, после неё LF или конец ввода. Для A цена 3, для B цена 5, разрешены количества 0–6. В record.c проверьте поля и вычислите итог с внутренней функцией выбора цены. Там же верните -1 для недопустимой записи. main.c печатает total= и результат либо invalid и завершает процесс с кодом 1 при ошибке формата или контракта.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"record.h\"\n\nstatic int read_record(struct Record *record)\n{\n    int part = getchar();\n    if ((part != 'A' && part != 'B') || getchar() != ' ') {\n        return 0;\n    }\n    int quantity = getchar();\n    if (quantity < '0' || quantity > '9') {\n        return 0;\n    }\n    int tail = getchar();\n    if (tail != '\\n' && tail != EOF) {\n        return 0;\n    }\n    record->part = (char) part;\n    record->quantity = quantity - '0';\n    return 1;\n}\n\nint main(void)\n{\n    struct Record order;\n    if (!read_record(&order)) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"total=%d\\n\", order.quantity); /* TODO: call record_total. */\n    return 0;\n}\n"
+      },
+      {
+        "path": "record.h",
+        "content": "#ifndef RECORD_H\n#define RECORD_H\nstruct Record {\n    char part;\n    int quantity;\n};\n\nint record_total(struct Record record);\n#endif\n"
+      },
+      {
+        "path": "record.c",
+        "content": "#include \"record.h\"\n\nint record_total(struct Record record)\n{\n    return record.quantity; /* TODO: validate and apply the unit price. */\n}\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Деталь B",
+        "input": "B 4\n",
+        "output": "total=20\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Верхняя граница A",
+        "input": "A 6\n",
+        "output": "total=18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Допустимый ноль",
+        "input": "A 0\n",
+        "output": "total=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Количество выше лимита",
+        "input": "B 7\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "Неизвестная деталь",
+        "input": "C 2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "Лишний символ",
+        "input": "B 4x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "Собираются main.c и record.c, общий контракт в защищённом record.h. main читает и печатает, модуль проверяет поля и считает.",
+      "Для A 6 вывод total=18, для B 4 вывод total=20. Для A 0 допустим total=0. Неверная запись даёт invalid и код 1, stderr пуст."
+    ],
+    "hint": "Используйте guarded record.h из заготовки. Сохраните существующий разбор первой строки, но передайте полученную запись в record_total. Проверку диапазона выполняет модуль, который может вызвать и другой клиент.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"record.h\"\n\nstatic int read_record(struct Record *record)\n{\n    int part = getchar();\n    if ((part != 'A' && part != 'B') || getchar() != ' ') {\n        return 0;\n    }\n    int quantity = getchar();\n    if (quantity < '0' || quantity > '9') {\n        return 0;\n    }\n    int tail = getchar();\n    if (tail != '\\n' && tail != EOF) {\n        return 0;\n    }\n    record->part = (char) part;\n    record->quantity = quantity - '0';\n    return 1;\n}\n\nint main(void)\n{\n    struct Record order;\n    if (!read_record(&order)) {\n        puts(\"invalid\");\n        return 1;\n    }\n    int total = record_total(order);\n    if (total < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"total=%d\\n\", total);\n    return 0;\n}\n",
+      "files": {
+        "record.h": "#ifndef RECORD_H\n#define RECORD_H\nstruct Record {\n    char part;\n    int quantity;\n};\n\nint record_total(struct Record record);\n#endif\n",
+        "record.c": "#include \"record.h\"\n\nstatic int unit_price(char part)\n{\n    return part == 'A' ? 3 : 5;\n}\n\nint record_total(struct Record record)\n{\n    if ((record.part != 'A' && record.part != 'B') ||\n        record.quantity < 0 || record.quantity > 6) {\n        return -1;\n    }\n    return record.quantity * unit_price(record.part);\n}\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с B 4.",
+        "why": "Консоль печатает количество, цена ещё не применяется.",
+        "expected": "total=4"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Реализуйте record_total в record.c и передайте ему запись из main.c.",
+        "why": "Модуль проверяет допустимый диапазон и умножает количество на цену.",
+        "expected": "total=20"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте A 0, B 7 и B 4x. Постройте копию проекта с теми же тремя файлами.",
+        "why": "Ноль допустим. Диапазон и формат дают две разные причины общей диагностики.",
+        "expected": "total=0, invalid, invalid. Копия принимает B 4 и снова даёт total=20."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Смените цену без перестройки интерфейса",
+        "task": "В копии измените только цену B на 7 в record.c. Соберите из предусмотренных файлов, проверьте B 4 и A 6, затем исключите record.c из состава копии.",
+        "criteria": [
+          "B 4 теперь даёт total=28, A 6 сохраняет total=18. Копия без record.c выявляет отсутствующее определение record_total."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.design-module-interface",
+    "prerequisites": [
+      "c.link-translation-units",
+      "c.record-member-and-copy"
+    ]
+  }
+}

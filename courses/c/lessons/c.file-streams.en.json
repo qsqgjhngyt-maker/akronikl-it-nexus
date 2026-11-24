@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.file-streams",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "C programming",
+  "module": "Files and error handling",
+  "locale": "en",
+  "title": "Opening and closing file streams",
+  "goal": "Open a log inside the project, distinguish an absent file from an empty one, and close only a successfully opened stream.",
+  "prerequisites": [
+    {
+      "text": "Recall checking for NULL from the ownership lesson. The resource here is an open file."
+    },
+    {
+      "text": "Recall that stdout shows program messages and stdin carries standard input. Project files form a separate source of data."
+    }
+  ],
+  "terms": [
+    {
+      "id": "file-stream",
+      "term": "File stream",
+      "title": "File stream",
+      "definition": "A connection to an open file. The standard library represents it through FILE * from stdio.h."
+    },
+    {
+      "id": "relative-path",
+      "term": "Relative path",
+      "title": "Relative path",
+      "definition": "A name within the file area for this run. In input/reading.txt the folder input is part of the name the program looks up."
+    },
+    {
+      "id": "open-mode",
+      "term": "rb mode",
+      "title": "rb mode",
+      "definition": "Open an existing file for reading without text-mode translation. Opening it successfully says nothing about its content."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "First check that the log is available",
+      "paragraphs": [
+        "A sensor leaves a reading in input/reading.txt. Before processing, check whether the program can open that exact log. An empty log still exists. A missing log is a separate case.",
+        "A Nexus exercise run uses a copy of its project files. Call fopen with a relative path and mode rb. It returns a FILE * on success and NULL on failure. There are several possible reasons to fail. Our message reports the failure itself.",
+        "Close each opened stream using fclose. Check its result: 0 means success, EOF means a close error. After attempting to close it, do not use the old FILE * or close it again."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Open the sensor log",
+      "paragraphs": [
+        "The run files contain input/reading.txt with 42 and a line feed. The stdin field is empty. Predict whether empty stdin changes what fopen returns."
+      ],
+      "steps": [
+        "Pass the exact path input/reading.txt and mode rb to fopen.",
+        "If fopen returns NULL, print open-error and return before fclose.",
+        "After opening succeeds, close the stream. Print opened only if fclose returns 0."
+      ],
+      "trace": [
+        [
+          "fopen",
+          "path matches",
+          "FILE *"
+        ],
+        [
+          "fclose",
+          "open stream is closed",
+          "0"
+        ],
+        [
+          "Result",
+          "opened",
+          "exit code 0"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/reading.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-error\");\n        return 1;\n    }\n    if (fclose(input) == EOF) {\n        puts(\"close-error\");\n        return 1;\n    }\n    puts(\"opened\");\n    return 0;\n}\n",
+        "files": {
+          "input/reading.txt": "42\n"
+        },
+        "stdin": "",
+        "output": "opened\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {},
+        "cases": [
+          {
+            "input": "",
+            "inputFiles": {
+              "input/reading.txt": ""
+            },
+            "output": "opened\n",
+            "stderr": "",
+            "exitCode": 0,
+            "outputFiles": {}
+          },
+          {
+            "input": "",
+            "inputFiles": {},
+            "output": "open-error\n",
+            "stderr": "",
+            "exitCode": 1,
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Distinguish a build error from an open failure",
+      "paragraphs": [
+        "If Clang reports too few arguments for fopen, check for two arguments: path and mode. That fragment does not run.",
+        "If the build succeeds but the program prints open-error, inspect the project file list. A root file named reading.txt differs from input/reading.txt. Pasting 42 into stdin does not create a file."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Reproduce a failure with a fixture path",
+      "paragraphs": [
+        "In a separate copy of the example, change only the path to input/absent.txt, which is absent from the file list, and predict the output. Then restore the original path and run with an empty input/reading.txt. Compare the exit codes and explain the difference."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3",
+      "language": "English",
+      "purpose": "Check the open mode, fopen return value, and stream-close contract."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "empty-file",
+      "kind": "choice",
+      "prompt": "The project contains an empty input/reading.txt. What does the example print if close succeeds?",
+      "options": [
+        "opened",
+        "open-error",
+        "close-error"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The program checks whether an existing file opens. It has not read the contents.",
+        "An existing empty file can open successfully.",
+        "An empty file does not imply a close error."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "stdin-is-not-file",
+      "kind": "choice",
+      "prompt": "input/reading.txt is absent, but 42 was entered in stdin. What does the program print?",
+      "options": [
+        "opened",
+        "open-error",
+        "42 without a status"
+      ],
+      "correct": 1,
+      "feedback": [
+        "stdin does not create a file at the requested path.",
+        "fopen did not find the file. The fclose call is skipped.",
+        "The program does not read stdin."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "close-only-opened",
+      "kind": "free",
+      "prompt": "After moving the file to the root, a learner gets open-error. What do you check first, and why must this branch skip fclose?",
+      "feedback": "Compare the project path with the actual filename. fopen returned NULL, so there is no open stream to pass to fclose.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/reading.txt\");\n    return input == NULL;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "",
+    "title": "Check the shift log",
+    "task": "A crew keeps the shift start and temperature in the fixture input/shift.txt. Leave stdin empty. Replace NULL near TODO with a call to fopen using the exact path and mode rb. Successful open and close yield opened and exit code 0. An open failure yields open-error and exit code 1 without calling fclose. A close error yields close-error and exit code 1. Leave the file contents untouched.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = NULL; /* TODO: open the project file for reading. */\n    if (input == NULL) {\n        puts(\"open-error\");\n        return 1;\n    }\n    if (fclose(input) == EOF) {\n        puts(\"close-error\");\n        return 1;\n    }\n    puts(\"opened\");\n    return 0;\n}\n"
+      },
+      {
+        "path": "input/shift.txt",
+        "content": "07:00 18\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Log in the input folder",
+        "input": "",
+        "inputFiles": {
+          "input/shift.txt": "07:00 18\n"
+        },
+        "output": "opened\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      },
+      {
+        "label": "Empty log",
+        "input": "",
+        "inputFiles": {
+          "input/shift.txt": ""
+        },
+        "output": "opened\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      },
+      {
+        "label": "Missing log",
+        "input": "",
+        "inputFiles": {},
+        "output": "open-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Same filename in a different folder",
+        "input": "",
+        "inputFiles": {
+          "shift.txt": "07:00 18\n"
+        },
+        "output": "open-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Same line in stdin only",
+        "input": "07:00 18\n",
+        "inputFiles": {},
+        "output": "open-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      }
+    ],
+    "criteria": [
+      "An existing log and an existing empty log yield opened. A missing log yields open-error. A line in stdin does not stand in for the file.",
+      "Close the stream once after a successful open. Input stays unchanged and no new file is produced."
+    ],
+    "hint": "Replace NULL with fopen(\"input/shift.txt\", \"rb\"). If it returns NULL, return before calling fclose.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/shift.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-error\");\n        return 1;\n    }\n    if (fclose(input) == EOF) {\n        puts(\"close-error\");\n        return 1;\n    }\n    puts(\"opened\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open input/shift.txt in the file list. Return to main.c and run the starter.",
+        "why": "The file exists. The starter still leaves the pointer set to NULL.",
+        "expected": "open-error"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Replace NULL on the TODO line and run again.",
+        "why": "The exact name includes the input folder, and rb opens for reading.",
+        "expected": "opened"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Test a missing file without deleting the log",
+        "task": "In a separate copy, temporarily request the absent input/next-shift.txt. Run with empty stdin. Restore the original path. Leave input/shift.txt present but empty in this copy, and run again.",
+        "criteria": [
+          "The first run yields open-error and exit code 1. The second yields opened and exit code 0. Explain why an empty file differs from a missing file."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.open-close-file-stream",
+    "prerequisites": [
+      "c.borrowed-pointer-contract",
+      "c.single-owner-cleanup"
+    ]
+  }
+}

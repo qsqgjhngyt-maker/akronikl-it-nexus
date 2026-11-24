@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.module-layout",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "C programming",
+  "module": "The preprocessor and multi-file programs",
+  "locale": "en",
+  "title": "Module interfaces and build layout",
+  "goal": "Rebuild a record processor from its files, keep the public contract in a header, and report calculation errors without mixing the computation with input and output.",
+  "prerequisites": [
+    {
+      "text": "Recall how several .c files share declarations through a header. You will use that to rebuild the project from its files."
+    },
+    {
+      "text": "Recall structures and conditions. They help separate a valid record format from an allowed quantity."
+    }
+  ],
+  "terms": [
+    {
+      "id": "public-interface",
+      "term": "Public interface",
+      "title": "Public interface",
+      "definition": "The common contract used by clients of a module. Here it is the Record structure and record_total with its documented result."
+    },
+    {
+      "id": "private-helper",
+      "term": "Private helper",
+      "title": "Private helper",
+      "definition": "A function declared static at file scope, whose name has internal linkage. It supports the implementation and stays outside the public header."
+    },
+    {
+      "id": "build-inputs",
+      "term": "Build inputs",
+      "title": "Build inputs",
+      "definition": "The files and settings needed to produce the program again. This exercise uses main.c and record.c and includes record.h."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The working model",
+      "paragraphs": [
+        "For the water meter, main displays a remaining amount. The shared type and function declaration live in meter.h and the calculation lives in meter.c. That boundary lets the calculation evolve without exposing its details to the console layer.",
+        "daily_limit is declared static at file scope in meter.c. Its name has internal linkage, so another .c uses the public remaining_litres function. The header has its own include guard.",
+        "In the exercise, main.c reads a record, while record.c manages prices and validates quantities. Return -1 for a rejected record. Zero is an ordinary total for a valid record."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Calculate the remaining water allowance",
+      "paragraphs": [
+        "The morning reading is 7 litres with a limit of 12. Before running, name the operation main can call and predict the remaining amount."
+      ],
+      "steps": [
+        "meter.h defines Reading and declares remaining_litres.",
+        "meter.c keeps daily_limit private. remaining_litres receives the record, takes its field, and subtracts that value from the limit.",
+        "main.c calls the public function and prints the result. Rebuild by compiling main.c and meter.c with the header available to #include."
+      ],
+      "trace": [
+        [
+          "Public type",
+          "Reading{7}",
+          "Argument passed by value"
+        ],
+        [
+          "Private computation",
+          "daily_limit() − reading.litres",
+          "12 − 7 = 5"
+        ],
+        [
+          "Console",
+          "printf",
+          "remaining=5 litres"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"meter.h\"\n\nint main(void)\n{\n    struct Reading morning = {7};\n    printf(\"remaining=%d litres\\n\", remaining_litres(morning));\n    return 0;\n}\n",
+        "files": {
+          "meter.h": "#ifndef METER_H\n#define METER_H\nstruct Reading {\n    int litres;\n};\n\nint remaining_litres(struct Reading reading);\n#endif\n",
+          "meter.c": "#include \"meter.h\"\n\nstatic int daily_limit(void)\n{\n    return 12;\n}\n\nint remaining_litres(struct Reading reading)\n{\n    return daily_limit() - reading.litres;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "remaining=5 litres\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Identify the failed build stage",
+      "paragraphs": [
+        "Leaving out record.c leaves the public symbol record_total without a definition. Check that the new Code Studio workspace contains every build input. record.h provides the public contract.",
+        "If the build succeeds but B 4 prints total=4, inspect whether main calls the processor and prints its result. Then try B 7. Its structure parses successfully, and the processor should reject the quantity."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Predict, verify, and explain",
+      "paragraphs": [
+        "In a copy of the example, change the daily limit to 15 inside meter.c. Predict remaining=8 litres with the same main.c and meter.h. Check that the build takes both .c files. The changed result required no edit to the interface."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.1, §6.2.2, §6.9.1",
+      "language": "English",
+      "purpose": "Translation units, internal and external linkage, and function definitions."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "price-location",
+      "kind": "choice",
+      "prompt": "Where does the price-selection function belong if only record_total calls it?",
+      "options": [
+        "In record.c as static",
+        "In the public header as an external definition",
+        "In main.c beside the output calls"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Internal linkage keeps the helper inside the module.",
+        "A header with an external definition can put that definition in multiple translation units.",
+        "The processor owns price selection. The console uses the resulting total."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "zero-is-value",
+      "kind": "choice",
+      "prompt": "How should main handle the record_total result for A 0?",
+      "options": [
+        "Treat it as an error",
+        "Print total=0",
+        "Replace it with the input quantity"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The error marker is the negative value -1.",
+        "Zero is a valid total.",
+        "Keep the calculation in the processor and print the returned value."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "build-record-module",
+      "kind": "free",
+      "prompt": "Name the files needed to rebuild the program. Why does record.c also include record.h?",
+      "feedback": "Compile main.c and record.c with record.h available. The two .c files share the record type and declaration, so the compiler can check the implementation against the same function type.",
+      "recall": "example"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "link",
+      "source": "#include <stdio.h>\n#include \"record.h\"\n\nstatic int read_record(struct Record *record)\n{\n    int part = getchar();\n    if ((part != 'A' && part != 'B') || getchar() != ' ') {\n        return 0;\n    }\n    int quantity = getchar();\n    if (quantity < '0' || quantity > '9') {\n        return 0;\n    }\n    int tail = getchar();\n    if (tail != '\\n' && tail != EOF) {\n        return 0;\n    }\n    record->part = (char) part;\n    record->quantity = quantity - '0';\n    return 1;\n}\n\nint main(void)\n{\n    struct Record order;\n    if (!read_record(&order)) {\n        puts(\"invalid\");\n        return 1;\n    }\n    int total = record_total(order);\n    if (total < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"total=%d\\n\", total);\n    return 0;\n}\n",
+      "files": {
+        "record.h": "#ifndef RECORD_H\n#define RECORD_H\nstruct Record {\n    char part;\n    int quantity;\n};\n\nint record_total(struct Record record);\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "record_total"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "B 4\n",
+    "title": "Separate the console from the price calculation",
+    "task": "The first stdin line is A or B, a single space, and a digit, followed by LF or end of input. A costs 3, B costs 5, and quantities 0–6 are allowed. Validate the fields in record.c and calculate the total using a private helper for the unit price. Return -1 there for a rejected record. main.c prints total= and the result, or prints invalid and exits 1 for bad syntax or a rejected record.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"record.h\"\n\nstatic int read_record(struct Record *record)\n{\n    int part = getchar();\n    if ((part != 'A' && part != 'B') || getchar() != ' ') {\n        return 0;\n    }\n    int quantity = getchar();\n    if (quantity < '0' || quantity > '9') {\n        return 0;\n    }\n    int tail = getchar();\n    if (tail != '\\n' && tail != EOF) {\n        return 0;\n    }\n    record->part = (char) part;\n    record->quantity = quantity - '0';\n    return 1;\n}\n\nint main(void)\n{\n    struct Record order;\n    if (!read_record(&order)) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"total=%d\\n\", order.quantity); /* TODO: call record_total. */\n    return 0;\n}\n"
+      },
+      {
+        "path": "record.h",
+        "content": "#ifndef RECORD_H\n#define RECORD_H\nstruct Record {\n    char part;\n    int quantity;\n};\n\nint record_total(struct Record record);\n#endif\n"
+      },
+      {
+        "path": "record.c",
+        "content": "#include \"record.h\"\n\nint record_total(struct Record record)\n{\n    return record.quantity; /* TODO: validate and apply the unit price. */\n}\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Part B",
+        "input": "B 4\n",
+        "output": "total=20\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper bound for A",
+        "input": "A 6\n",
+        "output": "total=18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Valid zero",
+        "input": "A 0\n",
+        "output": "total=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Quantity over the limit",
+        "input": "B 7\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "Unknown part",
+        "input": "C 2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "Trailing character",
+        "input": "B 4x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "Build main.c and record.c with a guarded record.h. main reads and prints. The module validates fields and calculates the total.",
+      "A 6 gives total=18 and B 4 gives total=20. A 0 gives a valid total=0. Invalid records print invalid with exit code 1 and empty stderr."
+    ],
+    "hint": "Use the guarded record.h from the starter. Keep the supplied input reader and send its record to record_total. The module checks the range so another caller can use the same contract.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"record.h\"\n\nstatic int read_record(struct Record *record)\n{\n    int part = getchar();\n    if ((part != 'A' && part != 'B') || getchar() != ' ') {\n        return 0;\n    }\n    int quantity = getchar();\n    if (quantity < '0' || quantity > '9') {\n        return 0;\n    }\n    int tail = getchar();\n    if (tail != '\\n' && tail != EOF) {\n        return 0;\n    }\n    record->part = (char) part;\n    record->quantity = quantity - '0';\n    return 1;\n}\n\nint main(void)\n{\n    struct Record order;\n    if (!read_record(&order)) {\n        puts(\"invalid\");\n        return 1;\n    }\n    int total = record_total(order);\n    if (total < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"total=%d\\n\", total);\n    return 0;\n}\n",
+      "files": {
+        "record.h": "#ifndef RECORD_H\n#define RECORD_H\nstruct Record {\n    char part;\n    int quantity;\n};\n\nint record_total(struct Record record);\n#endif\n",
+        "record.c": "#include \"record.h\"\n\nstatic int unit_price(char part)\n{\n    return part == 'A' ? 3 : 5;\n}\n\nint record_total(struct Record record)\n{\n    if ((record.part != 'A' && record.part != 'B') ||\n        record.quantity < 0 || record.quantity > 6) {\n        return -1;\n    }\n    return record.quantity * unit_price(record.part);\n}\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with B 4.",
+        "why": "The console prints the quantity without applying a price.",
+        "expected": "total=4"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Implement record_total in record.c and call it from main.c.",
+        "why": "The module checks the range and multiplies by the right unit price.",
+        "expected": "total=20"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Try A 0, B 7, and B 4x. Rebuild a copy using the same three files.",
+        "why": "Zero works. Range and format failures are two different causes of invalid input.",
+        "expected": "total=0, invalid, invalid. The rebuilt copy gives total=20 for B 4."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Change a price without changing the interface",
+        "task": "In a copy, change only B's price to 7 in record.c. Rebuild from the three files, try B 4 and A 6, then leave record.c out of that copy.",
+        "criteria": [
+          "B 4 now gives total=28 and A 6 still gives total=18. The incomplete build names the missing definition of record_total."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.design-module-interface",
+    "prerequisites": [
+      "c.link-translation-units",
+      "c.record-member-and-copy"
+    ]
+  }
+}

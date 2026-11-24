@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.pointer-arrays",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "Программирование на C",
+  "module": "Указатели, адреса и границы памяти",
+  "title": "Указатель, массив и арифметика адресов",
+  "goal": "Пройти диапазон массива по указателям, проверив логическую длину до вычисления конца.",
+  "prerequisites": [
+    {
+      "text": "Нужно понимать логическую длину массива, разыменование указателя и условие цикла for."
+    }
+  ],
+  "terms": [
+    {
+      "id": "begin",
+      "term": "Начало диапазона",
+      "title": "Начало диапазона",
+      "definition": "Указатель на первую ячейку подготовленного массива. Для пустого диапазона начало совпадает с концом."
+    },
+    {
+      "id": "end",
+      "term": "Исключённый конец",
+      "title": "Исключённый конец",
+      "definition": "Граница сразу после последнего элемента диапазона. Она может находиться внутри вместимости массива или на позиции сразу после всего массива."
+    },
+    {
+      "id": "offset",
+      "term": "Смещение",
+      "title": "Смещение",
+      "definition": "Число элементов от начала массива. При прибавлении целого числа к указателю оно означает число элементов соответствующего типа."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Граница, на которой останавливается обход",
+      "paragraphs": [
+        "Для обхода записей удобно хранить указатель cursor на текущий элемент и end на позицию сразу за рабочими данными. Проверяйте cursor != end до чтения через *cursor.",
+        "В выражении begin = readings имя массива преобразуется в указатель на первый элемент. При +1 указатель сдвигается на один элемент, поскольку его тип задаёт шаг.",
+        "Если рабочая длина равна вместимости, end расположен сразу после всего массива. Такое значение разрешено вычислить и сравнить, но читать через него нельзя. Если длина ноль, begin == end уже перед первой проверкой."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Сумма трёх показаний и пустого диапазона",
+      "paragraphs": [
+        "Представьте смещения 0, 1, 2 и 3. Значения есть в первых трёх позициях. В позиции 3 цикл останавливается перед чтением."
+      ],
+      "steps": [
+        "Присваивания в main задают begin со смещением 0 и end со смещением 3.",
+        "В каждом проходе проверка cursor != end выполняется первой. Затем элемент прибавляется к total и указатель сдвигается на один элемент.",
+        "Во втором вызове оба аргумента равны begin, цикл пропускается и результат равен 0."
+      ],
+      "trace": [
+        [
+          "Смещение 0",
+          "cursor != end",
+          "Читаем 2",
+          "Сумма 2"
+        ],
+        [
+          "Смещение 1",
+          "cursor != end",
+          "Читаем 8",
+          "Сумма 10"
+        ],
+        [
+          "Смещение 2",
+          "cursor != end",
+          "Читаем 5",
+          "Сумма 15"
+        ],
+        [
+          "Смещение 3",
+          "cursor == end",
+          "Остановка до чтения",
+          "Сумма 15"
+        ],
+        [
+          "Начало совпало с концом",
+          "Пустой диапазон",
+          "Нет чтения",
+          "Сумма 0"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int sum(const int *begin, const int *end)\n{\n    int total = 0;\n    for (const int *cursor = begin; cursor != end; ++cursor) {\n        total += *cursor;\n    }\n    return total;\n}\n\nint main(void)\n{\n    const int readings[] = {2, 8, 5};\n    const int *begin = readings;\n    const int *end = begin + 3;\n\n    printf(\"%d\\n\", sum(begin, end));\n    printf(\"%d\\n\", sum(begin, begin));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "15\n0\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Смещение и допустимый диапазон",
+      "paragraphs": [
+        "Clang отклоняет cursor += 0.5. Смещение указателя задаётся целым числом элементов.",
+        "В практике длину проверяют на диапазон от 0 до вместимости до вычисления end. end - 1 указывает на последний элемент рабочего диапазона только при непустом диапазоне. Если диапазон пуст и begin является началом массива, нельзя даже вычислять begin - 1."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Длина меняется, вместимость сохраняется",
+      "paragraphs": [
+        "Пусть буфер имеет вместимость 4 и содержит 4, 8, 7, 9. Запишите смещение end и число подходящих показаний при логических длинах 0, 2 и 4. Используйте порог 8 включительно."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.3.2.1, 6.5.6, 6.5.8, 6.5.9",
+      "language": "English",
+      "purpose": "Сверьте преобразование имени массива, разрешённые смещения и правила сравнения указателей."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "После суммирования трёх элементов cursor совпал с end. Как выполняется следующий шаг?",
+      "options": [
+        "Сначала читается *cursor",
+        "Проверка завершает цикл до чтения",
+        "Указатель сдвигается ещё на один элемент"
+      ],
+      "correct": 1,
+      "feedback": [
+        "В условии проверяется конец прежде, чем код доходит до тела.",
+        "end обозначает позицию остановки.",
+        "После ложного условия нет нового сдвига."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Рабочая длина 0, begin указывает на первый элемент массива. Можно ли вычислить end - 1?",
+      "options": [
+        "Можно, если результат не читать",
+        "Можно после приведения к другому типу указателя",
+        "Нельзя, смещение выйдет за начало массива"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Само вычисление выходит из допустимого диапазона.",
+        "Преобразование типа не создаёт разрешённую позицию.",
+        "end совпадает с begin, поэтому смещение назад недопустимо."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Буфер содержит 4, 8, 7, 9, рабочая длина 2. Какие элементы входят в проход с порогом 8 и какой результат?",
+      "feedback": "Читаются только 4 и 8, засчитывается 8. end имеет смещение 2, поэтому 7 и 9 не читаются.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int readings[] = {2, 8, 5};\n    const int *cursor = readings;\n    cursor += 0.5;\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "invalid operands to binary expression"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Посчитать показания через указатели",
+    "task": "Первая строка задаёт количество показаний от 0 до 4. Затем прочитайте ровно столько целых чисел от -99 до 99 по одному на строку. Более поздние строки игнорируются. Напечатайте число показаний не ниже 8. При отсутствующей записи, неверном числе или длине вне вместимости напечатайте invalid. В функции count_at_least пройдите от начала массива к проверенному исключённому концу.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int *begin, int length)\n{\n    const int *end = begin + length;\n    /* TODO: keep the correct stopping position. */\n    if (begin != end) {\n        --end;\n    }\n    int total = 0;\n    for (const int *cursor = begin; cursor != end; ++cursor) {\n        if (*cursor >= 8) {\n            ++total;\n        }\n    }\n    return total;\n}\n\nint main(void)\n{\n    enum { CAPACITY = 4 };\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    for (int index = 0; index < length; ++index) {\n        if (read_integer(-99, 99, &readings[index]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", count_at_least(readings, length));\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "3\n1\n7\n8\n",
+    "returnAnchor": "example",
+    "hint": "Проверьте, какую позицию обозначает end после begin + length. Сравните её с границей, которую использует заготовка.",
+    "criteria": [
+      "Четыре значения 1, 7, 8, 9 дают 2. Пустая длина даёт 0.",
+      "Если единственное совпадение стоит последним, оно учитывается.",
+      "Перед вычислением end проверена вместимость. Сравнение с end всегда предшествует разыменованию."
+    ],
+    "cases": [
+      {
+        "label": "Два совпадения на полном диапазоне",
+        "input": "4\n1\n7\n8\n9\n",
+        "output": "2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длина ноль",
+        "input": "0\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Единственное совпадение на последней позиции",
+        "input": "3\n1\n7\n8\n",
+        "output": "1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Один элемент на пороге",
+        "input": "1\n8\n",
+        "output": "1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ниже порога",
+        "input": "2\n7\n-99\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Все четыре совпадают",
+        "input": "4\n8\n99\n8\n9\n",
+        "output": "4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длина больше вместимости",
+        "input": "5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательная длина",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Не хватает показания",
+        "input": "2\n9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Неверное показание",
+        "input": "1\n8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int *begin, int length)\n{\n    const int *end = begin + length;\n    int total = 0;\n    for (const int *cursor = begin; cursor != end; ++cursor) {\n        if (*cursor >= 8) {\n            ++total;\n        }\n    }\n    return total;\n}\n\nint main(void)\n{\n    enum { CAPACITY = 4 };\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    for (int index = 0; index < length; ++index) {\n        if (read_integer(-99, 99, &readings[index]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", count_at_least(readings, length));\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте «Практику» с тремя показаниями 1, 7, 8. Нажмите «Запустить мою работу».",
+        "why": "Так видно, проверяется ли последнее показание.",
+        "expected": "Заготовка печатает 0. По условию нужно 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте границу прохода и повторите тот же ввод.",
+        "why": "Разыменовывайте cursor только до первоначального end.",
+        "expected": "Вывод становится 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Отдельно запустите вводы длины 0 и 5.",
+        "why": "Проверьте завершение пустого прохода и отказ по вместимости.",
+        "expected": "Выводы 0 и invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. В редакторе замените порог на 4. Для длины 3 проверьте значения 3, 4, 5 на отдельных строках после длины. Затем восстановите сохранённый вариант.",
+        "criteria": [
+          "Вывод 2 показывает включение обоих значений 4 и 5.",
+          "Сравнение с end выполняется перед доступом."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.walk-pointer-range",
+    "prerequisites": [
+      "c.read-write-through-pointer",
+      "c.array-length-contract"
+    ]
+  }
+}

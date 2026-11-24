@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.structure-contracts",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "Программирование на C",
+  "module": "Структуры, перечисления и модели данных",
+  "locale": "ru",
+  "title": "Инварианты записи и операции",
+  "goal": "Защитить уникальность номера и последовательность состояний, проверяя все условия операции до изменения записи.",
+  "prerequisites": [
+    {
+      "text": "Знать запись, поиск в массиве записей и условные переходы."
+    },
+    {
+      "text": "Уметь передать адрес объекта и проверить условия записи до изменения."
+    }
+  ],
+  "terms": [
+    {
+      "id": "invariant",
+      "term": "Инвариант",
+      "title": "Инвариант",
+      "definition": "Свойство корректного хранилища, которое выполняется до и после каждой команды. Здесь номера уникальны, а count не превосходит capacity. Отвергнутая операция оставляет хранилище без изменений."
+    },
+    {
+      "id": "capacity",
+      "term": "Вместимость",
+      "title": "Вместимость",
+      "definition": "Число выделенных мест. count учитывает только занятые места."
+    },
+    {
+      "id": "precondition",
+      "term": "Предварительное условие",
+      "title": "Предварительное условие",
+      "definition": "Условие, которое проверяют перед изменением состояния. Например, при добавлении номер ещё не занят."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Сначала проверка, затем изменение",
+      "paragraphs": [
+        "На входе к операции существует корректное хранилище. Для заявки важны уникальность номера и допустимые переходы: новая → в работе → закрыта. Ошибка команды должна сохранить прежнюю запись.",
+        "Проверка и запись разделены. Сначала получите ответ, допустимо ли изменение. Присваивание выполняется только в успешной ветке. При добавлении храните count и capacity отдельно.",
+        "Порядок проверок влияет на диагностический результат. Если хранилище заполнено и номер уже есть, этот контракт возвращает duplicate: проверка номера предшествует проверке вместимости. Так тест может однозначно объяснить отказ."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Складская тара меняет состояние по одному шагу",
+      "paragraphs": [
+        "Тара 41 находится в состоянии RECEIVED. Сначала её пытаются сразу поместить на склад. Предскажите, что будет напечатано после каждой попытки."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nenum TrayState { RECEIVED = 1, CHECKED = 2, STORED = 3 };\n\nstruct Tray {\n    int id;\n    enum TrayState state;\n};\n\nstatic int move_tray(struct Tray *tray, enum TrayState next)\n{\n    if (!((tray->state == RECEIVED && next == CHECKED) ||\n          (tray->state == CHECKED && next == STORED))) {\n        return 0;\n    }\n    tray->state = next;\n    return 1;\n}\n\nint main(void)\n{\n    struct Tray tray = {41, RECEIVED};\n    puts(move_tray(&tray, STORED) ? \"ok\" : \"denied\");\n    printf(\"%d:%d\\n\", tray.id, (int)tray.state);\n    puts(move_tray(&tray, CHECKED) ? \"ok\" : \"denied\");\n    printf(\"%d:%d\\n\", tray.id, (int)tray.state);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "denied\n41:1\nok\n41:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Проверьте RECEIVED → STORED. Она запрещена, поэтому move_tray возвращает 0 и не записывает next.",
+        "Напечатайте состояние после отказа. Код 1 остался прежним.",
+        "Следующая попытка RECEIVED → CHECKED разрешена. Только сейчас обновите состояние до 2."
+      ],
+      "trace": [
+        [
+          "Попытка 1",
+          "1 → 3",
+          "denied, 41:1"
+        ],
+        [
+          "Попытка 2",
+          "1 → 2",
+          "ok, 41:2"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Локализуйте и проверьте ошибку",
+      "paragraphs": [
+        "Сообщение Clang is a pointer для current.state означает, что current — указатель. Через указатель к полю обращаются как current->state. В разобранном примере main передаёт move_tray адрес ещё существующего объекта &tray. Допустимость перехода проверяется до записи.",
+        "Если добавление 101 сообщает ok, а в финальной строке номер 101 повторяется, сравните состояние массива до и после операции. Диагноз — отсутствует проверка уже существующего ключа, даже если count остаётся в пределах capacity."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Измените, предскажите и проверьте",
+      "paragraphs": [
+        "В примере переместите успешную попытку первой. Поясните порядок: после RECEIVED → CHECKED следующий переход CHECKED → STORED теперь допустим.",
+        "В практической работе рассмотрите две команды как последовательность. Неверно оформленная строка целиком отклоняется до любой команды. У корректно прочитанной строки первая успешная операция сохраняется, даже если вторая отклонена."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.2.3, §6.5.16.1, §6.5.2.5, §6.7.2",
+      "language": "English",
+      "purpose": "Сверьте правила языка для конструкций разобранного примера."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какое состояние печатается после первой попытки в примере?",
+      "options": [
+        "41:1",
+        "41:2",
+        "41:3"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Запись не меняется при запрете перехода.",
+        "2 появится после второй попытки.",
+        "3 нельзя записывать из начального состояния."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Как ответить на добавление существующего 101 в заполненный массив по нашему контракту?",
+      "options": [
+        "full",
+        "duplicate",
+        "ok"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Заполненность проверяется после номера.",
+        "Сначала отклоняется повтор. Хранилище сохраняется.",
+        "Успех нарушил бы уникальность и вместимость."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Первая команда переводит 101 из 1 в 2. Вторая пытается перевести закрытую 203 из 3 в 2. Какие два результата должны увидеть и почему первая запись сохраняется?",
+      "feedback": "ok и denied. Команды применяются последовательно и проверяются по отдельности. Вторая не откатывает первую.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Request { int id; int state; };\n\nint main(void)\n{\n    struct Request request = {101, 1};\n    struct Request *current = &request;\n    return current.state;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "is a pointer",
+        "->"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Две команды для очереди заявок",
+    "environment": "C17 · Clang/WASI",
+    "task": "Хранилище вместимости 3 изначально содержит 101:1 и 203:2. Первая строка до 63 байт содержит ровно два тройных набора «операция номер состояние». Операция 1 добавляет заявку только в состоянии 1, операция 2 переводит существующую заявку по цепочке 1 → 2 → 3. Номер от 1 до 9999. Неверная форма строки, код операции не 1/2 или числа вне допустимых границ отклоняют весь ввод как invalid. Число состояния для формата строки от 0 до 9, а допустимые состояния операции — 1, 2 и 3. Состояние неизвестно или вставка не в 1 дают invalid для команды. Далее вставка проверяет duplicate перед full, перевод даёт missing для неизвестной записи и denied для запрещённой пары. Успех даёт ok. Для корректно прочитанной строки выведите результаты двух команд и записи в порядке массива как id:state через пробел. Дополните apply проверкой повторного номера перед проверкой вместимости.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum State { NEW = 1, ACTIVE = 2, DONE = 3 };\n\nstruct Request {\n    int id;\n    enum State state;\n};\n\nstatic struct Request *lookup(struct Request requests[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (requests[i].id == id) {\n            return &requests[i];\n        }\n    }\n    return NULL;\n}\n\nstatic const char *apply(struct Request requests[], size_t *count, size_t capacity,\n                         int operation, int id, int state)\n{\n    if (state != NEW && state != ACTIVE && state != DONE) {\n        return \"invalid\";\n    }\n    struct Request *request = lookup(requests, *count, id);\n    if (operation == 1) {\n        if (state != NEW) {\n            return \"invalid\";\n        }\n        /* TODO: reject an existing identifier before making a change. */\n        if (*count == capacity) {\n            return \"full\";\n        }\n        requests[*count] = (struct Request){ .id = id, .state = NEW };\n        ++*count;\n        return \"ok\";\n    }\n    if (request == NULL) {\n        return \"missing\";\n    }\n    if ((request->state == NEW && state == ACTIVE) ||\n        (request->state == ACTIVE && state == DONE)) {\n        request->state = (enum State)state;\n        return \"ok\";\n    }\n    return \"denied\";\n}\n\nint main(void)\n{\n    int value[6];\n    const int minimum[] = {1, 1, 0, 1, 1, 0};\n    const int maximum[] = {2, 9999, 9, 2, 9999, 9};\n    if (!read_values(value, minimum, maximum, 6)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Request requests[3] = {{101, NEW}, {203, ACTIVE}};\n    size_t count = 2;\n    const size_t capacity = sizeof requests / sizeof requests[0];\n    puts(apply(requests, &count, capacity, value[0], value[1], value[2]));\n    puts(apply(requests, &count, capacity, value[3], value[4], value[5]));\n    for (size_t i = 0; i < count; ++i) {\n        printf(\"%s%d:%d\", i == 0 ? \"\" : \" \", requests[i].id, (int)requests[i].state);\n    }\n    putchar('\\n');\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "1 321 1 1 321 1\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Две допустимые смены состояния",
+        "input": "2 101 2 2 203 3\n",
+        "output": "ok\nok\n101:2 203:3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Повтор и неизвестный номер",
+        "input": "1 101 1 2 999 2\n",
+        "output": "duplicate\nmissing\n101:1 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последнее свободное место",
+        "input": "1 321 1 1 700 1\n",
+        "output": "ok\nfull\n101:1 203:2 321:1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пропуск шага и повтор состояния",
+        "input": "2 101 3 2 203 2\n",
+        "output": "denied\ndenied\n101:1 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недопустимое новое состояние",
+        "input": "1 301 2 2 203 9\n",
+        "output": "invalid\ninvalid\n101:1 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Два перехода одной записи",
+        "input": "2 101 2 2 101 3\n",
+        "output": "ok\nok\n101:3 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Некорректный формат всей строки",
+        "input": "2 101 2 x 203 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Дубликат после заполнения",
+        "input": "1 321 1 1 321 1\n",
+        "output": "ok\nduplicate\n101:1 203:2 321:1\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Повтор номера и неизвестная заявка сохраняют исходный снимок. Единственная допустимая вставка заполняет последнее место.",
+      "Переходы 1 → 2 и 2 → 3 допускаются, повтор и пропуск отклоняются. Следующая команда видит результат предыдущей.",
+      "Проверки выполняются до записи. При неверной форме строки обе команды остаются неприменёнными."
+    ],
+    "hint": "В заготовке lookup уже выполняется. В ветке вставки перед проверкой вместимости верните duplicate, если request != NULL. Придумайте обе причины отказа в одной проверке.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum State { NEW = 1, ACTIVE = 2, DONE = 3 };\n\nstruct Request {\n    int id;\n    enum State state;\n};\n\nstatic struct Request *lookup(struct Request requests[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (requests[i].id == id) {\n            return &requests[i];\n        }\n    }\n    return NULL;\n}\n\nstatic const char *apply(struct Request requests[], size_t *count, size_t capacity,\n                         int operation, int id, int state)\n{\n    if (state != NEW && state != ACTIVE && state != DONE) {\n        return \"invalid\";\n    }\n    struct Request *request = lookup(requests, *count, id);\n    if (operation == 1) {\n        if (state != NEW) {\n            return \"invalid\";\n        }\n        if (request != NULL) {\n            return \"duplicate\";\n        }\n        if (*count == capacity) {\n            return \"full\";\n        }\n        requests[*count] = (struct Request){ .id = id, .state = NEW };\n        ++*count;\n        return \"ok\";\n    }\n    if (request == NULL) {\n        return \"missing\";\n    }\n    if ((request->state == NEW && state == ACTIVE) ||\n        (request->state == ACTIVE && state == DONE)) {\n        request->state = (enum State)state;\n        return \"ok\";\n    }\n    return \"denied\";\n}\n\nint main(void)\n{\n    int value[6];\n    const int minimum[] = {1, 1, 0, 1, 1, 0};\n    const int maximum[] = {2, 9999, 9, 2, 9999, 9};\n    if (!read_values(value, minimum, maximum, 6)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Request requests[3] = {{101, NEW}, {203, ACTIVE}};\n    size_t count = 2;\n    const size_t capacity = sizeof requests / sizeof requests[0];\n    puts(apply(requests, &count, capacity, value[0], value[1], value[2]));\n    puts(apply(requests, &count, capacity, value[3], value[4], value[5]));\n    for (size_t i = 0; i < count; ++i) {\n        printf(\"%s%d:%d\", i == 0 ? \"\" : \" \", requests[i].id, (int)requests[i].state);\n    }\n    putchar('\\n');\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Подайте одну строку 1 321 1 1 321 1 и запустите заготовку. Запишите ответы двух команд и итоговые записи.",
+        "why": "Обе команды выполняются за один запуск. Первая заполняет последнее место, а вторая должна распознать тот же номер.",
+        "expected": "Заготовка выводит ok, затем full и строку 101:1 203:2 321:1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте проверку существующего номера. Повторите ввод, затем проверьте 1 101 1 2 999 2.",
+        "why": "Проверьте порядок двух отказов и сохранность записей после обеих отклонённых команд.",
+        "expected": "Первый ввод даёт ok, duplicate и прежний снимок с номером 321. Второй даёт duplicate, missing и строку 101:1 203:2."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенос идеи",
+        "task": "Сформируйте две команды, которые переводят одну запись из 1 сразу в 3 через допустимые шаги. Затем переставьте команды и предскажите, где нарушится контракт.",
+        "criteria": [
+          "Для 2 101 2 2 101 3 получаются ok, ok и 101:3 203:2. Для обратного порядка — denied, ok и 101:2 203:2."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.record-operation-invariants",
+    "prerequisites": [
+      "c.named-state-transition",
+      "c.record-array-lookup"
+    ]
+  }
+}

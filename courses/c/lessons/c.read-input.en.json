@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.read-input",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "C programming",
+  "module": "Input, selection and loops",
+  "locale": "en",
+  "title": "Reading a line and validating it",
+  "goal": "Read one integer safely from a line and explain why the whole record is suitable for calculation.",
+  "prerequisites": [
+    {
+      "text": "Print an int using %d."
+    },
+    {
+      "text": "Recall why M1 checks data before division."
+    }
+  ],
+  "terms": [
+    {
+      "id": "record",
+      "term": "Record",
+      "title": "Record",
+      "definition": "The bytes before a newline. A final non-empty record may end at end of input."
+    },
+    {
+      "id": "eof",
+      "term": "End of file (EOF)",
+      "title": "End of file (EOF)",
+      "definition": "A distinct value returned by getchar when input runs out or reading fails. ferror distinguishes these cases."
+    },
+    {
+      "id": "remainder",
+      "term": "Unparsed tail",
+      "title": "Unparsed tail",
+      "definition": "Characters after the number. This program permits only whitespace there."
+    },
+    {
+      "id": "range",
+      "term": "Range",
+      "title": "Range",
+      "definition": "The values the task accepts. Check it before conversion to int."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "A charging rack accepts between 1 and 48 cells. An operator enters a line and might accidentally append a unit or press Enter without supplying data. Separate reading a record, recognising a number and checking the rule for the rack.",
+        "A 64-byte buffer holds 63 text bytes and a terminating null byte. The newline is consumed but not stored. A line that exceeds capacity is rejected as a whole, even if its prefix would be valid.",
+        "READ_OK, READ_END and READ_BAD mean “value ready”, “no new record” and “record rejected”. The library uses end as a bookmark in the string. The later pointers module explains its representation.",
+        "The read_line and read_integer functions are provided. Follow the result from the line to the number and its remainder, then to the range check and status. In main, decide what to print for each status."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "A valid cell count",
+      "paragraphs": [
+        "The input contains a space and a tab before 18 and a space after it. Trace this input in the listing and predict what will be stored in cells.",
+        "read_line limits and records bytes. strtol reads a decimal integer and marks the position after the digits. Only after all checks does read_integer store the integer and return READ_OK."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int cells;\n    if (read_integer(1, 48, &cells) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"cells %d\\n\", cells);\n    return 0;\n}\n",
+        "stdin": " \t18 \n",
+        "output": "cells 18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Read bytes up to a newline or EOF. ferror distinguishes a stream error from normal end of input.",
+        "Reset errno before strtol. If there are no digits, end stays at the start. An oversized number can cause ERANGE.",
+        "After the range check, skip trailing whitespace. Any remaining character is extra data.",
+        "main reads cells only if read_integer returned READ_OK."
+      ],
+      "trace": [
+        [
+          "Read",
+          "space, tab, 18, space",
+          "one valid record",
+          "Newline consumed"
+        ],
+        [
+          "Parse",
+          "start of record",
+          "18",
+          "Only whitespace remains"
+        ],
+        [
+          "Check contract",
+          "18 in [1, 48]",
+          "READ_OK",
+          "Print cells 18"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "The number parses but the record fails",
+      "paragraphs": [
+        "For 18A, strtol returns 18 and the bookmark points to A. Checking only the number would accept an incorrect record.",
+        "Do not store the result of getchar in char. EOF could become indistinguishable from a data byte. Compare it with an int result.",
+        "strtol expects the address of the variable end. Passing end instead of &end causes an incompatible type diagnostic. The rejected fragment is for reading compiler output."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Separate numeric syntax from the input contract",
+      "paragraphs": [
+        "Trace the listing again with 0 in place of 18. The numeric syntax still parses, but the rack rule rejects zero.",
+        "A blank record differs from an empty stream. Both produce invalid here, but in an empty stream the program has not read a record."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.21.7.6, 7.4.1.10, 7.22.1.4",
+      "language": "English",
+      "purpose": "Check the end-of-stream signals, valid input to isspace and the rules for strtol."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the example print with whitespace around 18?",
+      "options": [
+        "invalid",
+        "cells 18",
+        "cells 0"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Whitespace is allowed.",
+        "18 is within range and the remaining bytes are whitespace.",
+        "strtol skips leading whitespace."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int cells;\n    if (read_integer(1, 48, &cells) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"cells %d\\n\", cells);\n    return 0;\n}\n",
+        "stdin": " \t18 \n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Why reject 18A after successfully parsing 18?",
+      "options": [
+        "An A remains at the bookmark",
+        "18 exceeds the maximum",
+        "errno is always nonzero"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The whole record needs to be valid.",
+        "18 is within range.",
+        "errno is reset before parsing."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How should EOF after the characters 1 and 8 without a newline be handled? How does an empty stream differ?",
+      "feedback": "A final non-empty record can be used as the number 18. With no data, the helper reports READ_END.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdlib.h>\n\nint main(void)\n{\n    char *end;\n    (void)strtol(\"18\", end, 10);\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "An operator-entered thermometer reading",
+    "task": "Complete the tail check in the supplied helper. The program reads the first line with one integer from −40 to 60, allowing surrounding whitespace. Print temperature followed by the valid value. Print invalid for a rejected record.",
+    "hint": "After the isspace loop, end points to the terminating null or the first extra character.",
+    "criteria": [
+      "Accept both bounds. Reject 61.",
+      "Reject the tail in 12C and a second number on the same line.",
+      "Do not print data from a rejected record. Accept surrounding whitespace.",
+      "CRLF and the null byte are checked with exact input fixtures. The browser input box cannot reproduce these cases reliably."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 12C.",
+        "why": "Observe the missing validation.",
+        "expected": "The starter incorrectly accepts its numeric prefix."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check the character after trailing whitespace.",
+        "why": "Accept a whole record.",
+        "expected": "12C prints invalid and 12 still works."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Compare -40, 60 and 61.",
+        "why": "Check both boundaries and one value outside them.",
+        "expected": "Only 61 is rejected."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer a boundary check",
+        "task": "Give a line containing -1 that is rejected because of its tail, then a line with the same number that is accepted. Explain the difference.",
+        "criteria": [
+          "-1x fails and -1 with whitespace passes.",
+          "The explanation distinguishes the value from the record."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    /* TODO: reject any non-whitespace left after the integer. */\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int degrees;\n    if (read_integer(-40, 60, &degrees) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"temperature %d\\n\", degrees);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "-12\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Ordinary negative reading",
+        "input": "-12\n",
+        "output": "temperature -12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Inclusive lower bound",
+        "input": "-40\n",
+        "output": "temperature -40\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Inclusive upper bound",
+        "input": "60\n",
+        "output": "temperature 60\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Space, tab, +5, space, tab, then newline",
+        "input": " \t+5 \t\n",
+        "output": "temperature 5\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "10 with a CRLF ending (two bytes, tested by the fixture)",
+        "input": "10\r\n",
+        "output": "temperature 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "EOF after a complete reading",
+        "input": "5",
+        "output": "temperature 5\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Value below the lower bound",
+        "input": "-41\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Value over the upper bound",
+        "input": "61\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra text after the number",
+        "input": "12C\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Second number on the same line",
+        "input": "12 13\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Three spaces and a newline",
+        "input": "   \n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty stream",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Out of long range",
+        "input": "999999999999999999999999999999999999\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "64 spaces and a newline (over the limit)",
+        "input": "                                                                \n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "61 spaces, then 12 and a newline (exactly 63 bytes before the newline)",
+        "input": "                                                             12\n",
+        "output": "temperature 12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "12, a null byte and a newline (tested by the fixture)",
+        "input": "12\u0000\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int degrees;\n    if (read_integer(-40, 60, &degrees) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"temperature %d\\n\", degrees);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.checked-line-input",
+    "prerequisites": [
+      "c.integer-quotient-remainder"
+    ]
+  }
+}

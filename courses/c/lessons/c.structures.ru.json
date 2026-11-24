@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.structures",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "Программирование на C",
+  "module": "Структуры, перечисления и модели данных",
+  "locale": "ru",
+  "title": "Структура и её поля",
+  "goal": "Объединить номер датчика и показание в одну запись, безопасно обновить рабочую копию и сохранить исходное показание.",
+  "prerequisites": [
+    {
+      "text": "Уметь читать присваивание целых и отличать число от текста."
+    },
+    {
+      "text": "Знать проверку диапазона перед вычислением. Разбор входной строки уже готов в заготовке."
+    }
+  ],
+  "terms": [
+    {
+      "id": "record",
+      "term": "Запись",
+      "title": "Запись",
+      "definition": "Набор полей, представляющих один предмет или событие."
+    },
+    {
+      "id": "member",
+      "term": "Поле",
+      "title": "Поле",
+      "definition": "Именованная часть структуры. Например, у показания есть поля id и millivolts."
+    },
+    {
+      "id": "structure-copy",
+      "term": "Копия структуры",
+      "title": "Копия структуры",
+      "definition": "Присваивание структуры того же типа копирует значения её полей. В примере оба поля — целые."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Поля связывают данные одного измерения",
+      "paragraphs": [
+        "В журнале лаборатории номер датчика 14 и показание 320 мВ образуют одну запись. Если держать номера и показания в отдельных переменных, при копировании строки легко поменять только половину данных.",
+        "Объявление struct Sample задаёт тип. При создании current запись получает свои значения. Оператор точка выбирает нужное поле у конкретной записи.",
+        "Инициализаторы .id и .millivolts связывают значения с именами полей. Компилятор C может оставлять свободные байты между полями и в конце структуры для выравнивания. Внутреннее представление записи поэтому нельзя принимать за формат файла."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Сохраните снимок перед поправкой",
+      "paragraphs": [
+        "Предскажите третье число. В журнале нужно напечатать номер, новое измерение и значение на момент снимка."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstruct Sample {\n    int id;\n    int millivolts;\n};\n\nint main(void)\n{\n    struct Sample current = { .id = 14, .millivolts = 320 };\n    struct Sample archived = current;\n    current.millivolts += 15;\n    printf(\"%d %d %d\\n\", current.id, current.millivolts, archived.millivolts);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "14 335 320\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Создайте current с номером 14 и показанием 320.",
+        "Скопируйте всю запись в archived. Теперь у двух объектов одинаковые значения.",
+        "Прибавьте 15 к current.millivolts. archived сохраняет 320, потому что он уже содержит отдельную копию целых полей."
+      ],
+      "trace": [
+        [
+          "До снимка",
+          "current = {14, 320}",
+          "archived ещё не создана"
+        ],
+        [
+          "После снимка",
+          "current = {14, 320}",
+          "archived = {14, 320}"
+        ],
+        [
+          "После поправки",
+          "current = {14, 335}",
+          "archived = {14, 320}"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Локализуйте и проверьте ошибку",
+      "paragraphs": [
+        "Clang сообщает no member named при опечатке millivolt. Сверьте имя после точки с объявлением struct Sample. Измените только имя поля и попробуйте собрать еще раз.",
+        "Если оба напечатанных показания равны 335, проверьте порядок копирования и поправки. В этом случае программа могла собраться успешно, а ошибка находится в том, когда вы сделали снимок."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Измените, предскажите и проверьте",
+      "paragraphs": [
+        "В примере измените 15 на -20 и до запуска подпишите значения current и archived. Затем перенесите тот же порядок операций на другую запись с входными границами.",
+        "При полях-указателях копируются сами значения указателей. Чтобы гарантировать независимость на этой теме, запись намеренно содержит только целые поля."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.2.3, §6.5.16.1, §6.7.2.1, §6.7.9",
+      "language": "English",
+      "purpose": "Сверьте правила языка для конструкций разобранного примера."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что напечатает пример?",
+      "options": [
+        "14 335 320",
+        "14 335 335",
+        "14 320 335"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Поправка к рабочей записи не меняет сделанный ранее снимок.",
+        "Третье число относится к отдельному объекту archived.",
+        "Сначала печатается рабочее показание, затем снимок."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Где проверять результат поправки?",
+      "options": [
+        "До записи в поле",
+        "После печати",
+        "Вместо проверки входа"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Сначала проверьте итог, затем запишите допустимое значение.",
+        "После печати неверное состояние уже использовано.",
+        "Проверять нужно и входные значения, и результат операции."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Как изменятся три числа, если скопировать запись после поправки? Объясните, какое состояние сохранится.",
+      "feedback": "Получится 14 335 335. Оба объекта отдельные, но снимок сделан после изменения рабочего показания.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Sample { int id; int millivolts; };\n\nint main(void)\n{\n    struct Sample reading = { .id = 14, .millivolts = 320 };\n    return reading.millivolt;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "no member named 'millivolt'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Журнал калибровки",
+    "environment": "C17 · Clang/WASI",
+    "task": "Используйте первую строку длиной до 63 байт. В ней три целых, разделённых пробельными символами. Последующие строки не читаются. Номер датчика от 1 до 9999, исходное показание от 0 до 2000 мВ и поправка от -200 до 200 мВ. Создайте запись, сохраните снимок, прибавьте поправку и проверьте, что результат от 0 до 2000. Напечатайте номер, новое и исходное показания через пробел. При ошибке входа или недопустимом результате напечатайте invalid.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Sensor {\n    int id;\n    int reading;\n};\n\nint main(void)\n{\n    int value[3];\n    const int minimum[] = {1, 0, -200};\n    const int maximum[] = {9999, 2000, 200};\n    if (!read_values(value, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Sensor active = { .id = value[0], .reading = value[1] };\n    const struct Sensor original = active;\n    int adjusted = active.reading; /* TODO: apply the correction. */\n    if (adjusted < 0 || adjusted > 2000) {\n        puts(\"invalid\");\n        return 0;\n    }\n    active.reading = adjusted;\n    printf(\"%d %d %d\\n\", active.id, active.reading, original.reading);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "42 780 15\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Обычное повышение",
+        "input": "42 780 15\n",
+        "output": "42 795 780\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нижняя граница",
+        "input": "1 0 0\n",
+        "output": "1 0 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Поправка вниз от максимума",
+        "input": "9999 2000 -200\n",
+        "output": "9999 1800 2000\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недопустимый итог",
+        "input": "1 0 -1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Выход за допустимый диапазон",
+        "input": "42 2000 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Некорректный вход",
+        "input": "42 780x 15\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Для 42 780 15 выводится 42 795 780. Для 9999 2000 -200 выводится 9999 1800 2000.",
+      "Итог за пределами 0–2000 отклоняется. Снимок и порядок полей сохраняются."
+    ],
+    "hint": "Вычислите adjusted из active.reading и value[2]. Проверка adjusted уже есть. Поле original.reading печатайте из снимка.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Sensor {\n    int id;\n    int reading;\n};\n\nint main(void)\n{\n    int value[3];\n    const int minimum[] = {1, 0, -200};\n    const int maximum[] = {9999, 2000, 200};\n    if (!read_values(value, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Sensor active = { .id = value[0], .reading = value[1] };\n    const struct Sensor original = active;\n    int adjusted = active.reading + value[2];\n    if (adjusted < 0 || adjusted > 2000) {\n        puts(\"invalid\");\n        return 0;\n    }\n    active.reading = adjusted;\n    printf(\"%d %d %d\\n\", active.id, active.reading, original.reading);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Найдите снимок в заготовке и запишите два значения до изменения.",
+        "why": "Прогноз помогает отличить ошибку формулы от ошибки порядка.",
+        "expected": "Для основной проверки снимок содержит 780."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Измените выражение adjusted и пройдите обычный и граничный тесты.",
+        "why": "Поправка допустима по входу, но итог всё равно может выйти из диапазона.",
+        "expected": "1 0 -1 приводит к invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенос идеи",
+        "task": "Предложите допустимый вход с отрицательной поправкой, для которого итог ровно 0. Проверьте, что снимок отличается от итога.",
+        "criteria": [
+          "Для 8 30 -30 получаются 8 0 30. Объясните, почему 8 30 -31 уже недопустимо."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.record-member-and-copy",
+    "prerequisites": [
+      "c.trace-initialised-values",
+      "c.checked-line-input"
+    ]
+  }
+}

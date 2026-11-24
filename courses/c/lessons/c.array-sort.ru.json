@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m4-v1",
+  "id": "c.array-sort",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m4",
+  "course": "Программирование на C",
+  "module": "Массивы и базовые алгоритмы",
+  "title": "Простая сортировка и проверка результата",
+  "goal": "Упорядочить копию массива методом выбора и проверить порядок, количество элементов и повторы.",
+  "prerequisites": [
+    {
+      "text": "Передавать массив с длиной, проходить по допустимым индексам и находить минимум непустого диапазона."
+    }
+  ],
+  "terms": [
+    {
+      "id": "sorted-prefix",
+      "term": "Отсортированный префикс",
+      "title": "Отсортированный префикс",
+      "definition": "Начальная часть массива до индекса next. Она уже упорядочена и содержит наименьшие элементы."
+    },
+    {
+      "id": "swap",
+      "term": "Обмен",
+      "title": "Обмен",
+      "definition": "Перестановка двух значений через временную переменную. Состав массива остаётся прежним."
+    },
+    {
+      "id": "multiplicity",
+      "term": "Кратность значения",
+      "title": "Кратность значения",
+      "definition": "Число вхождений одного значения. Совпадающие значения считаются по отдельности."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "В журнале измерения записаны по времени. Для отчёта удобна отдельная строка по возрастанию. Сохраните исходный журнал и переставьте значения в копии.",
+        "Сортировка выбором ставит очередной минимум в позицию next. Справа от неё остаются значения, которые предстоит упорядочить. До первого прохода отсортированная часть пуста.",
+        "У результата два наблюдаемых свойства. Соседние значения идут по неубыванию. Каждое значение встречается столько же раз, сколько в исходной строке."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Сортировка четырёх измерений",
+      "paragraphs": [
+        "Проследите сортировку ряда 4, 1, 4, 2. В каждом проходе найдите индекс минимума оставшейся части и поменяйте два элемента местами через saved. После прохода левая часть вырастает на один элемент."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic void sort_ascending(int sorted[], int length)\n{\n    for (int next = 0; next + 1 < length; ++next) {\n        int least = next;\n        for (int i = next + 1; i < length; ++i) {\n            if (sorted[i] < sorted[least]) {\n                least = i;\n            }\n        }\n        int saved = sorted[next];\n        sorted[next] = sorted[least];\n        sorted[least] = saved;\n    }\n}\n\nstatic void print_row(const int values[], int length)\n{\n    for (int i = 0; i < length; ++i) {\n        if (i > 0) {\n            putchar(' ');\n        }\n        printf(\"%d\", values[i]);\n    }\n    putchar('\\n');\n}\n\nint main(void)\n{\n    int readings[] = {4, 1, 4, 2};\n    const int length = (int)(sizeof readings / sizeof readings[0]);\n    sort_ascending(readings, length);\n    print_row(readings, length);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "1 2 4 4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "При next = 0 минимум 1 находится на индексе 1. После обмена первый элемент равен 1.",
+        "При next = 1 минимален последний элемент, 2. После обмена он оказывается на индексе 1.",
+        "При next = 2 оставшиеся значения равны. Итоговая строка 1 2 4 4 содержит две четвёрки."
+      ],
+      "trace": [
+        [
+          "До начала",
+          "4 1 4 2",
+          "левая часть пуста"
+        ],
+        [
+          "next = 0",
+          "1 4 4 2",
+          "левая часть 1"
+        ],
+        [
+          "next = 1",
+          "1 2 4 4",
+          "левая часть 1 2"
+        ],
+        [
+          "next = 2",
+          "1 2 4 4",
+          "левая часть 1 2 4"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Диагностика",
+      "paragraphs": [
+        "Условие next + 1 < length оставляет хотя бы один элемент после next для поиска. Для 0 и 1 тело внешнего цикла пропускается. Длина ограничена восемью, поэтому прибавление единицы помещается в int.",
+        "Если длина имеет беззнаковый тип size_t, при нулевой длине выражение length - 1 даёт большое значение. Проверяйте длину до такого вычитания. В показанном цикле вычитание отсутствует.",
+        "В примере диагностики Clang отклоняет sorted = original. Для двух уже объявленных массивов скопируйте элементы по индексам от 0 до length за вычетом одного."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенос в практику",
+      "paragraphs": [
+        "Разобранный пример сортирует показанные данные на месте. В практике исходная строка остаётся отдельным массивом, а функция сортировки получает только её копию.",
+        "Для входного ряда 3, -1, 3, 2 строка -1 2 3 9 уже упорядочена. Сверка количества вхождений выявляет подмену второй тройки девяткой."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.1, 6.5.16, 6.8.5.3",
+      "language": "English",
+      "purpose": "Упорядочить копию массива методом выбора и проверить порядок, количество элементов и повторы."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Каким станет ряд 4, 1, 4, 2 сразу после прохода next = 0?",
+      "options": [
+        "1 4 4 2",
+        "1 2 4 4",
+        "4 4 2 1"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Первый обмен меняет местами только 4 и 1.",
+        "Для этого результата нужен ещё проход, который поставит 2 на индекс 1.",
+        "Нужно выбрать самый маленький элемент и поставить его первым."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic void sort_ascending(int sorted[], int length)\n{\n    for (int next = 0; next + 1 < length; ++next) {\n        int least = next;\n        for (int i = next + 1; i < length; ++i) {\n            if (sorted[i] < sorted[least]) {\n                least = i;\n            }\n        }\n        int saved = sorted[next];\n        sorted[next] = sorted[least];\n        sorted[least] = saved;\n    }\n}\n\nstatic void print_row(const int values[], int length)\n{\n    for (int i = 0; i < length; ++i) {\n        if (i > 0) {\n            putchar(' ');\n        }\n        printf(\"%d\", values[i]);\n    }\n    putchar('\\n');\n}\n\nint main(void)\n{\n    int readings[] = {4, 1, 4, 2};\n    const int length = (int)(sizeof readings / sizeof readings[0]);\n    sort_ascending(readings, length);\n    print_row(readings, length);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "membership",
+      "kind": "choice",
+      "prompt": "Почему строка -1 2 3 9 неверна для исходных 3, -1, 3, 2?",
+      "options": [
+        "В ней нарушен порядок",
+        "Вместо второй тройки появилась девятка",
+        "В ней четыре элемента"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Порядок верен. Сверьте число вхождений каждого значения.",
+        "Состав значений изменился, хотя порядок и длина соблюдены.",
+        "Длина верна, но совпадение длин ещё допускает подмену значений."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "short",
+      "kind": "choice",
+      "prompt": "Сколько раз выполнится внешний цикл для длины 1?",
+      "options": [
+        "0",
+        "1",
+        "2"
+      ],
+      "correct": 0,
+      "feedback": [
+        "При next = 0 условие 1 < 1 ложно. Одиночный элемент уже стоит на своём месте.",
+        "Первое условие проверяется до тела цикла.",
+        "Один элемент не образует пары для обмена."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Для ряда 2, -2, 2, 0, -2 запишите отсортированную строку и назовите две проверки, которые поймают потерю одного повтора или перестановку в неверном порядке.",
+      "feedback": "Ответ -2 -2 0 2 2. Сравните каждую соседнюю пару. Сверьте частоты -2, 0 и 2 с исходной строкой, включая обе двойки и обе минус двойки.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int original[] = {4, 1, 4, 2};\n    int sorted[4];\n    sorted = original;\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "is not assignable"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Отчёт по измерениям с отсортированной копией",
+    "task": "В первой строке подайте длину от 0 до 8. При 0 выведите одну строку empty. Иначе подайте по одному целому значению от -99 до 99 на каждой из следующих строк. Выведите исходные значения через пробелы в первой строке и отсортированную копию во второй. При неверной длине, пропущенном или неверном обязательном значении выведите invalid. Строки после обязательного ввода программа игнорирует. В заготовке уже даны чтение, поэлементное копирование и печать.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic void sort_ascending(int sorted[], int length)\n{\n    for (int next = 0; next + 1 < length; ++next) {\n        int least = next;\n        for (int i = next + 1; i < length; ++i) {\n            if (sorted[i] > sorted[least]) /* TODO: choose the smallest. */ {\n                least = i;\n            }\n        }\n        int saved = sorted[next];\n        sorted[next] = sorted[least];\n        sorted[least] = saved;\n    }\n}\n\nstatic void print_row(const int values[], int length)\n{\n    for (int i = 0; i < length; ++i) {\n        if (i > 0) {\n            putchar(' ');\n        }\n        printf(\"%d\", values[i]);\n    }\n    putchar('\\n');\n}\n\nenum { CAPACITY = 8 };\n\nint main(void)\n{\n    int original[CAPACITY];\n    int sorted[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    for (int i = 0; i < length; ++i) {\n        if (read_integer(-99, 99, &original[i]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    for (int i = 0; i < length; ++i) {\n        sorted[i] = original[i];\n    }\n\n    sort_ascending(sorted, length);\n    print_row(original, length);\n    print_row(sorted, length);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "4\n3\n-1\n3\n2\n",
+    "returnAnchor": "example",
+    "hint": "Внутренний цикл обновляет least. Сравнение должно оставлять в least индекс наименьшего просмотренного элемента оставшейся части.",
+    "criteria": [
+      "Для четырёх записей 3, -1, 3, 2 первая строка остаётся 3 -1 3 2, вторая равна -1 2 3 3.",
+      "По второй строке можно проверить порядок соседей и частоты значений. Они совпадают по составу с первой строкой.",
+      "При длине 1 две строки совпадают. При длине 0 получается только empty.",
+      "Проверьте максимальную длину, уже упорядоченную последовательность и ошибочный ввод."
+    ],
+    "cases": [
+      {
+        "label": "Отрицательное значение и повтор",
+        "input": "4\n3\n-1\n3\n2\n",
+        "output": "3 -1 3 2\n-1 2 3 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая последовательность",
+        "input": "0\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Один элемент",
+        "input": "1\n7\n",
+        "output": "7\n7\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Одна перестановка",
+        "input": "2\n3\n1\n",
+        "output": "3 1\n1 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Максимальная длина и повторы",
+        "input": "8\n9\n-99\n0\n9\n99\n-99\n4\n2\n",
+        "output": "9 -99 0 9 99 -99 4 2\n-99 -99 0 2 4 9 9 99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Данные уже упорядочены",
+        "input": "4\n-1\n2\n2\n5\n",
+        "output": "-1 2 2 5\n-1 2 2 5\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Все значения одинаковы",
+        "input": "3\n2\n2\n2\n",
+        "output": "2 2 2\n2 2 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Длина больше вместимости",
+        "input": "9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательная длина",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пропущено третье значение",
+        "input": "3\n2\n1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Посторонний символ в строке",
+        "input": "1\n7x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic void sort_ascending(int sorted[], int length)\n{\n    for (int next = 0; next + 1 < length; ++next) {\n        int least = next;\n        for (int i = next + 1; i < length; ++i) {\n            if (sorted[i] < sorted[least]) {\n                least = i;\n            }\n        }\n        int saved = sorted[next];\n        sorted[next] = sorted[least];\n        sorted[least] = saved;\n    }\n}\n\nstatic void print_row(const int values[], int length)\n{\n    for (int i = 0; i < length; ++i) {\n        if (i > 0) {\n            putchar(' ');\n        }\n        printf(\"%d\", values[i]);\n    }\n    putchar('\\n');\n}\n\nenum { CAPACITY = 8 };\n\nint main(void)\n{\n    int original[CAPACITY];\n    int sorted[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (length == 0) {\n        puts(\"empty\");\n        return 0;\n    }\n\n    for (int i = 0; i < length; ++i) {\n        if (read_integer(-99, 99, &original[i]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    for (int i = 0; i < length; ++i) {\n        sorted[i] = original[i];\n    }\n\n    sort_ascending(sorted, length);\n    print_row(original, length);\n    print_row(sorted, length);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с заполненным вводом и сравните две строки.",
+        "why": "Порядок второй строки показывает, какой элемент выбирает внутренний цикл.",
+        "expected": "Исходная строка 3 -1 3 2 сохранена. Заготовка выдаёт копию 3 3 2 -1, где сначала стоят крупные значения."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте выбор следующего элемента внутри sort_ascending и повторите запуск.",
+        "why": "От каждого прохода требуется поставить на позицию next самый маленький из оставшихся элементов.",
+        "expected": "Во второй строке получается -1 2 3 3. Первая строка остаётся прежней."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте случаи длины 0, 1, 2 и 8. Сравните число повторов в первой и второй строках.",
+        "why": "Короткие случаи показывают, когда нужны перестановки. Повторы показывают, что перестановка сохраняет состав.",
+        "expected": "Для 0 получается empty, для 1 две одинаковые строки. Для 2 в обратном порядке нужна одна перестановка."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Собственная сверка порядка и состава",
+        "task": "Подайте строки 5, 2, -2, 2, 0, -2. Запишите ожидаемые строки, затем сравните порядок соседей и количество вхождений каждого значения с выводом.",
+        "criteria": [
+          "Первая строка 2 -2 2 0 -2. Вторая строка -2 -2 0 2 2.",
+          "В обеих строках два значения -2, один ноль и два значения 2."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.array-sorted-copy",
+    "prerequisites": [
+      "c.array-statistics-traversal"
+    ]
+  }
+}

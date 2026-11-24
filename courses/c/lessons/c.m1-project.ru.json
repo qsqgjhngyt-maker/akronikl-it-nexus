@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.m1-project",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "Программирование на C",
+  "module": "Первые программы на C",
+  "locale": "ru",
+  "title": "Итог первого модуля: карточка заказа",
+  "goal": "Собрать консольную программу от контракта ввода до проверенной карточки заказа.",
+  "prerequisites": [
+    {
+      "text": "Форматировать вывод printf."
+    },
+    {
+      "text": "Вычислять целое частное, остаток и стоимость."
+    },
+    {
+      "text": "Отдельно проверять сборку и запуск."
+    }
+  ],
+  "terms": [
+    {
+      "id": "contract",
+      "term": "Контракт программы",
+      "title": "Контракт программы",
+      "definition": "Описание допустимого ввода, точного вывода и реакции на ошибку."
+    },
+    {
+      "id": "cent",
+      "term": "Цент",
+      "title": "Цент",
+      "definition": "Сотая часть денежной единицы. В этой задаче цена и сумма хранятся целым числом центов."
+    },
+    {
+      "id": "case",
+      "term": "Контрольный случай",
+      "title": "Контрольный случай",
+      "definition": "Ввод с ожидаемым наблюдаемым результатом, записанным до запуска."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Прежде чем писать код",
+      "paragraphs": [
+        "Склад считает коробки, но платит за каждую деталь. От заказа нужны три числа: количество деталей, цена за штуку в центах и вместимость коробки. На выходе нужны полные коробки, остаток и цена всего заказа.",
+        "Деление и остаток отвечают за упаковку. Умножение количества на цену отвечает за стоимость всех деталей, включая неполную коробку.",
+        "В примере считывание и проверка диапазонов вынесены в read_numbers. Разберите границы задачи и найдите в main место, где программа начинает вычислять ответ."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Краткая запись для кладовщика",
+      "paragraphs": [
+        "Кладовщик ожидает короткую запись. Для 5 деталей по 80 центов и вместимости 2 сначала предскажите оба числа упаковки и сумму.",
+        "Пример читает первую строку до 79 байт. Числа через пробел: количество 0–500, цена 0–1000, вместимость 1–100. При ошибке печатается invalid."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = quantity / capacity;\n    int loose = quantity % capacity;\n    long cents = (long)quantity * unit_cost;\n    printf(\"%d bundles, %d loose\\n\", bundles, loose);\n    printf(\"%ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+        "stdin": "5 80 2\n",
+        "output": "2 bundles, 1 loose\n400 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Количество 5 и вместимость 2 проходят проверку. 5 / 2 даёт 2 коробки, 5 % 2 даёт 1 деталь вне полных коробок.",
+        "Стоимость считается как 5 * 80 = 400 центов. Перед умножением переводим quantity в long, чтобы хранить сумму до 500000 даже на реализации с 16-битным int.",
+        "Первый printf объединяет данные упаковки, второй печатает сумму как long через %ld."
+      ],
+      "trace": [
+        [
+          "Упаковка",
+          "5 и 2",
+          "2 и 1",
+          "Две полные коробки и одна деталь"
+        ],
+        [
+          "Стоимость",
+          "5 и 80",
+          "400",
+          "Стоимость всех пяти деталей"
+        ],
+        [
+          "Строки ответа",
+          "2, 1, 400",
+          "2 bundles, 1 loose / 400 cents",
+          "В таком порядке"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Случаи, которые легко пропустить",
+      "paragraphs": [
+        "Если умножить на цену только число деталей в полных коробках, для примера выйдет 320 вместо 400. Остаток учитывается в стоимости.",
+        "Присваивание long cents = quantity * unit_cost не меняет того, что int умножаются раньше. Перевод одного множителя до умножения и спецификатор %ld составляют проверяемую пару."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "От компактной записи к карточке",
+      "paragraphs": [
+        "У кладовщика две строки, а следующий экран ждёт три с фиксированными подписями. Вычисления и формат ответа проверяются отдельно.",
+        "Запишите ожидания для обычного, граничного и неверного ввода. Вместимость 0 нужно отвергнуть до вычисления, а заказ из 0 деталей поддержать."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.3.1.8, §6.5.5, §7.21.6.1",
+      "language": "English",
+      "purpose": "Сверить, как выбирается общий арифметический тип и как printf печатает long."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какая сумма должна появиться для 5 80 2?",
+      "options": [
+        "400 cents",
+        "320 cents",
+        "80 cents"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Оплачиваются все пять деталей.",
+        "Это стоимость только четырёх деталей в полных коробках.",
+        "Это цена одной детали."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = quantity / capacity;\n    int loose = quantity % capacity;\n    long cents = (long)quantity * unit_cost;\n    printf(\"%d bundles, %d loose\\n\", bundles, loose);\n    printf(\"%ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+        "stdin": "5 80 2\n",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Как обеспечить, чтобы умножение происходило в long?",
+      "options": [
+        "(long)quantity * unit_cost",
+        "(long)(quantity * unit_cost)",
+        "quantity * unit_cost в выражении справа от long cents"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Первый множитель уже имеет тип long.",
+        "Умножение в скобках остаётся операцией над int.",
+        "Объявление результата не меняет тип уже выполненного умножения."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему пустой заказ допустим, а нулевая вместимость нет? Какой ввод проверяет это различие?",
+      "feedback": "Нулевое количество даёт 0 коробок, 0 остатка и 0 центов при положительной вместимости, например 0 350 4. Нулевая вместимость не подходит для деления, например 7 125 0 даёт invalid.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Карточка заказа для выдачи",
+    "task": "Для выдачи заказа составьте карточку из трёх строк. В первой строке ввода до 79 байт идут количество деталей 0–500, цена за штуку 0–1000 центов и вместимость 1–100 через пробельный разделитель. Строки вывода: boxes: и число полных коробок, loose: и остаток, total: и цена всех деталей в центах с суффиксом cents. Для неверной первой строки выведите invalid.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = 0;\n    int loose = 0;\n    long cents = 0;\n    /* TODO: compute the three results. */\n    printf(\"boxes: %d\\n\", bundles);\n    printf(\"loose: %d\\n\", loose);\n    printf(\"total: %ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "7 125 3\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Семь позиций в группах по три",
+        "input": "7 125 3\n",
+        "output": "boxes: 2\nloose: 1\ntotal: 875 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой заказ",
+        "input": "0 350 4\n",
+        "output": "boxes: 0\nloose: 0\ntotal: 0 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Полные коробки, бесплатные детали",
+        "input": "12 0 4\n",
+        "output": "boxes: 3\nloose: 0\ntotal: 0 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Максимальное количество и цена",
+        "input": "500 1000 100\n",
+        "output": "boxes: 5\nloose: 0\ntotal: 500000 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недостаточно полей",
+        "input": "7 125\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевая вместимость",
+        "input": "7 125 0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Недопустимая цена",
+        "input": "7 -125 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Цена выше максимума",
+        "input": "7 1001 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишнее поле",
+        "input": "7 125 3 8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Слишком длинное число",
+        "input": "7 123456789012345678901234 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "По вводу 7 125 3 видны boxes: 2, loose: 1 и total: 875 cents на отдельных строках.",
+      "Проверены пустой заказ, бесплатные детали, верхняя граница и отказ на неверную строку.",
+      "Стоимость считается из всего количества в типе long. Для отказа есть только строка invalid."
+    ],
+    "hint": "Пример использует те же данные трижды разными способами. В карточке заготовка уже содержит нужный формат, проверьте, как вычисляется каждое значение.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = quantity / capacity;\n    int loose = quantity % capacity;\n    long cents = (long)quantity * unit_cost;\n    printf(\"boxes: %d\\n\", bundles);\n    printf(\"loose: %d\\n\", loose);\n    printf(\"total: %ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Прочитайте контракт и до заполнения формул запишите прогноз для 7 125 3.",
+        "why": "Три поля ответа отсылают к разным вычислениям.",
+        "expected": "Зафиксированы 2 коробки, 1 деталь и 875 центов."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте вычисления, затем запустите случаи с остатком, нулём и максимумом.",
+        "why": "При максимуме тип и формат суммы становятся заметны.",
+        "expected": "Для 500 1000 100 записано total: 500000 cents."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте случай с лишним полем и свой новый тест.",
+        "why": "Для некорректной строки прекращаем вычисления.",
+        "expected": "Отказ печатает invalid, а новый тест сопровождается точным прогнозом."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенесите правило",
+        "task": "Подберите две допустимые строки с одинаковым количеством и ценой, но разной вместимостью. Добейтесь разной упаковки и объясните, почему стоимость сохранилась.",
+        "criteria": [
+          "Например, 9 42 4 даёт 2 коробки и остаток 1, а 9 42 6 даёт 1 коробку и остаток 3.",
+          "Сумма в обоих случаях 378 центов.",
+          "Указана связь суммы с количеством и ценой."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.first-console-project",
+    "prerequisites": [
+      "c.integer-quotient-remainder",
+      "c.read-compiler-diagnostics",
+      "c.output-formatting"
+    ]
+  }
+}

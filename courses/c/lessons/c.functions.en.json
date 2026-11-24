@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.functions",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "C programming",
+  "module": "Functions and decomposition",
+  "title": "Declarations, definitions and calls",
+  "goal": "Trace the prototype, call and return of a numerical function.",
+  "prerequisites": [
+    {
+      "text": "Validate two integers and understand return."
+    }
+  ],
+  "terms": [
+    {
+      "id": "declaration",
+      "term": "Declaration",
+      "title": "Declaration",
+      "definition": "Associates the name with the function type. A prototype also specifies the parameter types."
+    },
+    {
+      "id": "definition",
+      "term": "Definition",
+      "title": "Definition",
+      "definition": "Contains the body executed at a call."
+    },
+    {
+      "id": "argument",
+      "term": "Argument",
+      "title": "Argument",
+      "definition": "An expression supplying a value to a parameter."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "Before calculating a floor area, a carpenter specifies the measurements needed. A prototype states a similar contract: name, return type and parameters.",
+        "A prototype ends at its semicolon. A definition contains a body. A prototype makes a later definition callable from main.",
+        "In C17, the prototype int f(void) specifies a function with no parameters. The declaration int f() leaves the parameters unspecified."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Worked example",
+      "paragraphs": [
+        "Predict rect_area(3, 4) and locate the declaration, call and definition in the source."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int rect_area(int width, int height);\n\nint main(void)\n{\n    int floor = rect_area(3, 4);\n    printf(\"%d\\n\", floor);\n    return 0;\n}\n\nstatic int rect_area(int width, int height)\n{\n    return width * height;\n}\n",
+        "stdin": "",
+        "output": "12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Before call → 3, 4 → parameters → Enter the body",
+        "In the body → 3 × 4 → 12 → return sends a value",
+        "main → floor = 12 → 12 → Print the result"
+      ],
+      "trace": [
+        [
+          "Before call",
+          "3, 4",
+          "parameters",
+          "Enter the body"
+        ],
+        [
+          "In the body",
+          "3 × 4",
+          "12",
+          "return sends a value"
+        ],
+        [
+          "main",
+          "floor = 12",
+          "12",
+          "Print the result"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "paragraphs": [
+        "A prototype detects a missing argument at compile time. Count the expressions at the call site and compare them with the parameters.",
+        "A file with a declaration may compile without a definition. Building an executable also needs the definition at link time."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Transfer to practice",
+      "paragraphs": [
+        "Separate calculation from input for shelf cells too. Zero rows give zero capacity even when each row has positive capacity."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.2.2, 6.7.6.3, 6.9.1",
+      "language": "English",
+      "purpose": "Trace the prototype, call and return of a numerical function."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "When does width * height run?",
+      "options": [
+        "In the prototype",
+        "When rect_area is called",
+        "After main"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The prototype only declares types.",
+        "The body runs on a call.",
+        "main already needs the result."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int rect_area(int width, int height);\n\nint main(void)\n{\n    int floor = rect_area(3, 4);\n    printf(\"%d\\n\", floor);\n    return 0;\n}\n\nstatic int rect_area(int width, int height)\n{\n    return width * height;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What can the compiler catch in a call with one number?",
+      "options": [
+        "The second argument is missing",
+        "There are no rows",
+        "The area is negative"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Match the call to the prototype.",
+        "The row count is not checked here.",
+        "The application validates value ranges."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why is the call valid when its body is below main?",
+      "feedback": "The compiler saw the prototype before the call. At runtime the call enters the body and receives an int.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int cells(int rows, int count) { return rows * count; }\nint main(void) { return cells(2); }\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Cells in a shelf section",
+    "task": "Read rows and cells per row on separate lines, from 0 to 50. Keep the slot_count declaration, call and definition. Repair its calculation. Print the cell count or invalid. The supplied read_integer function checks the first two lines. A missing line, an invalid number or an out-of-range value gives invalid. The program ignores any later input.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int slot_count(int rows, int per_row);\n\nint main(void)\n{\n    int rows;\n    int per_row;\n    if (read_integer(0, 50, &rows) != READ_OK ||\n        read_integer(0, 50, &per_row) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", slot_count(rows, per_row));\n    return 0;\n}\n\nstatic int slot_count(int rows, int per_row)\n{\n    return rows + per_row; /* TODO: return capacity. */\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n6\n",
+    "returnAnchor": "example",
+    "hint": "Compare addition and multiplication when there are zero rows.",
+    "criteria": [
+      "2 and 6 give 12; 0 and 6 give 0.",
+      "slot_count calculates while main reads and prints.",
+      "Invalid data is rejected before calculation."
+    ],
+    "cases": [
+      {
+        "label": "Two rows",
+        "input": "2\n6\n",
+        "output": "12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero rows",
+        "input": "0\n6\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Maximum",
+        "input": "50\n50\n",
+        "output": "2500\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing record",
+        "input": "6\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid count",
+        "input": "51\n2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int slot_count(int rows, int per_row);\n\nint main(void)\n{\n    int rows;\n    int per_row;\n    if (read_integer(0, 50, &rows) != READ_OK ||\n        read_integer(0, 50, &per_row) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", slot_count(rows, per_row));\n    return 0;\n}\n\nstatic int slot_count(int rows, int per_row)\n{\n    return rows * per_row;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Enter 2 and 6 on separate lines, then run the starter.",
+        "why": "Trace the prototype, call and return of a numerical function.",
+        "expected": "The starter adds the numbers and prints 8. The requirement calls for 12."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the calculation in slot_count. Compare the results for 2 and 6, then for 0 and 6.",
+        "why": "The change must satisfy the contract.",
+        "expected": "The corrected program prints 12 and 0 respectively."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check a distinct boundary case and explain the result.",
+        "why": "Different cases distinguish the parts of the rule.",
+        "expected": "Invalid data is rejected before calculation."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Move the definition above main in a copy and remove the separate prototype. Explain why the test still prints 12.",
+        "criteria": [
+          "The definition is visible when the call is checked.",
+          "2 and 6 give 12."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.function-declaration-call",
+    "prerequisites": [
+      "c.guard-control-flow"
+    ]
+  }
+}

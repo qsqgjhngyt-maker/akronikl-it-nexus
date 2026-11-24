@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.structure-arrays",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "C programming",
+  "module": "Structures, enumerations and data models",
+  "locale": "en",
+  "title": "Arrays of records and field-based search",
+  "goal": "Find a record by its id field, distinguish an unknown identifier from zero quantity, and stay inside array bounds.",
+  "prerequisites": [
+    {
+      "text": "Know structure members and zero-based array indices."
+    },
+    {
+      "text": "Know how to check a pointer against NULL before reading a member."
+    }
+  ],
+  "terms": [
+    {
+      "id": "lookup-key",
+      "term": "Lookup key",
+      "title": "Lookup key",
+      "definition": "The field value used to find a record. For deliveries this is the identifier; the quantity is record data."
+    },
+    {
+      "id": "count",
+      "term": "Record count",
+      "title": "Record count",
+      "definition": "The number of existing elements. With count = 3, valid indices are 0, 1 and 2."
+    },
+    {
+      "id": "null-result",
+      "term": "No result",
+      "title": "No result",
+      "definition": "A NULL pointer means there was no match. A matching record can still contain a quantity of zero."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Search knows where the array stops",
+      "paragraphs": [
+        "The workshop stores tools under IDs 17, 23 and 42. The number 23 is not an index: it is the key on position 1.",
+        "Search compares only the id of each record. The condition i < count keeps the index in bounds when count matches the number of accessible records. Compute the length where the array itself is visible. A parameter declared as tools[] receives a pointer, and sizeof on that parameter cannot give the element count.",
+        "The function returns the address of a matching element or NULL. The array in main stays alive until main ends. const makes the matching pointer suitable for reading the record."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "One key is found and the other is absent",
+      "paragraphs": [
+        "Before running, mark which element find checks first and how many it examines for 30."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstruct Tool {\n    int id;\n    int count;\n};\n\nstatic const struct Tool *find(const struct Tool tools[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (tools[i].id == id) {\n            return &tools[i];\n        }\n    }\n    return NULL;\n}\n\nstatic void print_tool(const struct Tool *tool)\n{\n    if (tool == NULL) {\n        puts(\"missing\");\n        return;\n    }\n    printf(\"%d %d\\n\", tool->id, tool->count);\n}\n\nint main(void)\n{\n    const struct Tool tools[] = {{17, 2}, {23, 5}, {42, 1}};\n    const size_t count = sizeof tools / sizeof tools[0];\n    print_tool(find(tools, count, 23));\n    print_tool(find(tools, count, 30));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "23 5\nmissing\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "For key 23 compare 17 and 23. At the second comparison, return the address of tools[1].",
+        "Check the returned pointer. It is not NULL, so reading and printing 23 and 5 is valid.",
+        "For key 30 check 17, 23 and 42. After the loop return NULL and print missing without reading members."
+      ],
+      "trace": [
+        [
+          "Key 23, i = 0",
+          "17 ≠ 23",
+          "continue"
+        ],
+        [
+          "Key 23, i = 1",
+          "23 = 23",
+          "return &tools[1]"
+        ],
+        [
+          "Key 30, i = 0…2",
+          "no match",
+          "return NULL"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "If the last identifier is missed, trace i and count. With four records, index 3 is valid. In the exercise, read result->id only after a lookup returns the address of a record. Dereferencing NULL has undefined behavior. Locate the error in the source without running that variant.",
+        "A Clang const-qualified type diagnostic points to an attempt to write through a pointer to const data. Keep this function read-only instead of casting const away."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Change the first example key to 42, then to 17. Count comparisons before a match and consider what changes if the records are reordered.",
+        "If keys repeat, this code returns the first match. Define identifier uniqueness as a separate contract. The next lesson rejects a duplicate before changing the array."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.3.2.1, §6.5.2.1, §6.5.2.3, §6.7.6.3",
+      "language": "English",
+      "purpose": "Review the language constructs used in the worked example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What is the result of looking up 23?",
+      "options": [
+        "&tools[1]",
+        "&tools[23]",
+        "NULL"
+      ],
+      "correct": 0,
+      "feedback": [
+        "23 is a record key at index 1.",
+        "The tool ID is not converted into an index.",
+        "The array contains a record with id 23."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What should be printed for a matching key 54 whose quantity is 0?",
+      "options": [
+        "missing",
+        "54 0",
+        "invalid"
+      ],
+      "correct": 1,
+      "feedback": [
+        "missing applies only when there is no such record.",
+        "Zero quantity is valid data for an existing record.",
+        "54 is in the allowed identifier range."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "What does find return when count = 0, and why does it never read the first element?",
+      "feedback": "NULL. At i = 0, the expression 0 < 0 is false, so the loop body does not run.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Delivery { int id; int quantity; };\n\nint main(void)\n{\n    const struct Delivery delivery = {12, 8};\n    const struct Delivery *found = &delivery;\n    found->quantity = 3;\n    return 0;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "const-qualified type"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Delivery lookup",
+    "environment": "C17 · Clang/WASI",
+    "task": "The log has four records: 12 → 8, 31 → 3, 54 → 0, 77 → 26. The first line, up to 63 bytes, contains one integer ID in 1–9999. Complete the search by id. Print the ID and quantity separated by a space on a match. Print missing for a valid absent ID. Print invalid for malformed input or an out-of-range number.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Delivery {\n    int id;\n    int quantity;\n};\n\nstatic const struct Delivery *find(const struct Delivery deliveries[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        /* TODO: compare the lookup key to the identifier. */\n        if (deliveries[i].quantity == id) {\n            return &deliveries[i];\n        }\n    }\n    return NULL;\n}\n\nint main(void)\n{\n    int value[1];\n    const int minimum[] = {1};\n    const int maximum[] = {9999};\n    if (!read_values(value, minimum, maximum, 1)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    const struct Delivery deliveries[] = {{12, 8}, {31, 3}, {54, 0}, {77, 26}};\n    const size_t count = sizeof deliveries / sizeof deliveries[0];\n    const struct Delivery *result = find(deliveries, count, value[0]);\n    if (result != NULL) {\n        printf(\"%d %d\\n\", result->id, result->quantity);\n    } else {\n        puts(\"missing\");\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "77\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "First element",
+        "input": "12\n",
+        "output": "12 8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Last element",
+        "input": "77\n",
+        "output": "77 26\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero quantity on a matching record",
+        "input": "54\n",
+        "output": "54 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unknown identifier",
+        "input": "99\n",
+        "output": "missing\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Identifier outside allowed range",
+        "input": "0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid format",
+        "input": "77 9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "12 and 77 are found at opposite ends of the array. 54 prints as 54 0. 99 yields missing and 0 yields invalid.",
+      "The caller passes the actual array length. Search indexes only while i < count, and members are read through a valid pointer to a record."
+    ],
+    "hint": "Do not compare quantity with the key. The matching pointer and the quantity member answer different questions.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Delivery {\n    int id;\n    int quantity;\n};\n\nstatic const struct Delivery *find(const struct Delivery deliveries[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (deliveries[i].id == id) {\n            return &deliveries[i];\n        }\n    }\n    return NULL;\n}\n\nint main(void)\n{\n    int value[1];\n    const int minimum[] = {1};\n    const int maximum[] = {9999};\n    if (!read_values(value, minimum, maximum, 1)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    const struct Delivery deliveries[] = {{12, 8}, {31, 3}, {54, 0}, {77, 26}};\n    const size_t count = sizeof deliveries / sizeof deliveries[0];\n    const struct Delivery *result = find(deliveries, count, value[0]);\n    if (result != NULL) {\n        printf(\"%d %d\\n\", result->id, result->quantity);\n    } else {\n        puts(\"missing\");\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Fix the comparison in find.",
+        "why": "The search indexes the array but compares the key with a named member.",
+        "expected": "77 yields 77 26."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check 54 and 99 together.",
+        "why": "These cases distinguish zero quantity from no result.",
+        "expected": "54 0 and missing."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Add delivery {80, 77} to your own list. Predict the results for 77 and 80 with the correct comparison and with the original mistake.",
+        "criteria": [
+          "Correct lookup leaves 77 26 for 77 and yields 80 77 for 80. Explain why looking up quantity would pick a different record."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.record-array-lookup",
+    "prerequisites": [
+      "c.record-member-and-copy",
+      "c.array-length-contract",
+      "c.borrowed-pointer-contract"
+    ]
+  }
+}

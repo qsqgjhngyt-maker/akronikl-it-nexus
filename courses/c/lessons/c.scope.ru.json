@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.scope",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "Программирование на C",
+  "module": "Функции и декомпозиция",
+  "title": "Области видимости и время жизни",
+  "goal": "Различать область имени и время жизни объекта, предсказать независимый вызов.",
+  "prerequisites": [
+    {
+      "text": "Понимать блоки и числовые функции, уметь вести накопитель."
+    }
+  ],
+  "terms": [
+    {
+      "id": "scope",
+      "term": "Область видимости",
+      "title": "Область видимости",
+      "definition": "Часть исходного текста, где имя относится к объявлению."
+    },
+    {
+      "id": "lifetime",
+      "term": "Время жизни",
+      "title": "Время жизни",
+      "definition": "Период выполнения, пока объект существует."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "У каждого рейса собственная сумма. Если она сохраняется между вызовами, новый расчёт ошибочно наследует прежний.",
+        "Область относится к исходнику, время жизни — к выполнению. Локальный static сохраняет значение между вызовами, но не расширяет видимость имени.",
+        "У объявления функции static влияет на связь имени: вызвать эту функцию по имени можно в пределах исходного файла. Локальный static у minutes задаёт время жизни объекта на всё выполнение программы."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Разбор на примере",
+      "paragraphs": [
+        "Найдите две переменные step. Объясните, какая действует во вложенном блоке и какая печатается."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int total = 8;\n    {\n        int step = 2;\n        total += step;\n    }\n    int step = 7;\n    printf(\"%d %d\\n\", total, step);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "10 7\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Начало → total 8 → вход → Внешний объект",
+        "Блок → step 2 → total 10 → Внутренний объект",
+        "После блока → новый step 7 → 10 7 → Другой объект"
+      ],
+      "trace": [
+        [
+          "Начало",
+          "total 8",
+          "вход",
+          "Внешний объект"
+        ],
+        [
+          "Блок",
+          "step 2",
+          "total 10",
+          "Внутренний объект"
+        ],
+        [
+          "После блока",
+          "новый step 7",
+          "10 7",
+          "Другой объект"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Диагностика",
+      "paragraphs": [
+        "Найдите границу блока, если компилятор сообщает о неизвестном имени. Имя внутреннего шага становится недоступным после закрывающей скобки.",
+        "Одинаковые аргументы двух вызовов хорошо выявляют нежелательное накопление в static."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Перенос в практику",
+      "paragraphs": [
+        "Для двух одинаковых рейсов итог одинаков. Обычный локальный накопитель начинает каждый вызов с 0. Возвращённое число можно хранить после выхода из функции."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.1, 6.2.4",
+      "language": "English",
+      "purpose": "Различать область имени и время жизни объекта, предсказать независимый вызов."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что напечатает пример?",
+      "options": [
+        "10 2",
+        "10 7",
+        "17 7"
+      ],
+      "correct": 1,
+      "feedback": [
+        "2 больше недоступно через имя step.",
+        "Прибавили 2, затем печатается новый step.",
+        "7 не прибавляется к total."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int total = 8;\n    {\n        int step = 2;\n        total += step;\n    }\n    int step = 7;\n    printf(\"%d %d\\n\", total, step);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Почему заготовка может вывести 6 12 для двух одинаковых рейсов?",
+      "options": [
+        "Числа введены неправильно",
+        "static сохранил прежний итог",
+        "Ввод всегда один"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Два входа 2 допустимы.",
+        "Второй вызов начинает с 6.",
+        "Читаются две записи."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Почему два вызова после исправления выдают 6 6 для 2 и 2?",
+      "feedback": "У каждого вызова свой minutes, инициализированный нулём. Два прибавления по 3 дают 6 независимо от прошлого результата.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void) {\n    { int inside = 2; (void)inside; }\n    return inside;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Независимые рейсы",
+    "task": "Введите два рейса от 0 до 10 остановок каждый. За остановку добавляется 3 минуты. Исправьте trip_minutes так, чтобы вызовы не делили накопитель. Печатайте два результата или invalid. Готовая функция read_integer проверяет первые две строки. Пропуск, неверное число или выход за диапазон дают invalid. Остальной ввод программа игнорирует.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int trip_minutes(int stops)\n{\n    static int minutes = 0; /* TODO: each trip starts from zero. */\n    for (int visit = 0; visit < stops; ++visit) {\n        minutes += 3;\n    }\n    return minutes;\n}\n\nint main(void)\n{\n    int first;\n    int second;\n    if (read_integer(0, 10, &first) != READ_OK ||\n        read_integer(0, 10, &second) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int day_one = trip_minutes(first);\n    int day_two = trip_minutes(second);\n    printf(\"%d %d\\n\", day_one, day_two);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n2\n",
+    "returnAnchor": "example",
+    "hint": "Проследите начальное значение minutes при первом и втором вызове.",
+    "criteria": [
+      "2 и 2 дают 6 6.",
+      "10 и 0 дают 30 0.",
+      "Следующий вызов не зависит от прошлого."
+    ],
+    "cases": [
+      {
+        "label": "Одинаковые рейсы",
+        "input": "2\n2\n",
+        "output": "6 6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Разные рейсы",
+        "input": "2\n4\n",
+        "output": "6 12\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ноль и максимум",
+        "input": "0\n10\n",
+        "output": "0 30\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ноль после максимума",
+        "input": "10\n0\n",
+        "output": "30 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нет второго рейса",
+        "input": "2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int trip_minutes(int stops)\n{\n    int minutes = 0;\n    for (int visit = 0; visit < stops; ++visit) {\n        minutes += 3;\n    }\n    return minutes;\n}\n\nint main(void)\n{\n    int first;\n    int second;\n    if (read_integer(0, 10, &first) != READ_OK ||\n        read_integer(0, 10, &second) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int day_one = trip_minutes(first);\n    int day_two = trip_minutes(second);\n    printf(\"%d %d\\n\", day_one, day_two);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Введите два значения 2 на отдельных строках и запустите заготовку.",
+        "why": "Различать область имени и время жизни объекта, предсказать независимый вызов.",
+        "expected": "Заготовка печатает 6 12. Два одинаковых рейса должны дать 6 6."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проследите, с какого значения minutes начинается каждый вызов. Исправьте накопитель и проверьте ввод 2 и 2, затем 10 и 0.",
+        "why": "Исправление должно подтвердить договор.",
+        "expected": "Исправленный вывод для двух рейсов по две остановки — 6 6. Для десяти и нуля остановок — 30 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте отличающийся граничный случай и объясните вывод.",
+        "why": "Случаи показывают, какая часть правила работает.",
+        "expected": "Следующий вызов не зависит от прошлого."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Покажите начальную и конечную сумму для рейсов 2 и 4 до и после исправления.",
+        "criteria": [
+          "До исправления второй вызов идёт от 6 к 18.",
+          "После исправления идёт от 0 к 12."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.local-scope-lived-object",
+    "prerequisites": [
+      "c.parameter-value-return"
+    ]
+  }
+}

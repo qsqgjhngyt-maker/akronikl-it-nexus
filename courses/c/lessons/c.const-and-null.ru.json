@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.const-and-null",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "Программирование на C",
+  "module": "Указатели, адреса и границы памяти",
+  "title": "const, NULL и договор владения",
+  "goal": "Разделить аргумент для чтения, аргумент для записи и отсутствие адреса. Сохранять результат при отказе.",
+  "prerequisites": [
+    {
+      "text": "Понадобятся указатель, параметр функции и время жизни локального объекта."
+    }
+  ],
+  "terms": [
+    {
+      "id": "qualified-view",
+      "term": "Указатель на const int",
+      "title": "Указатель на const int",
+      "definition": "Через такое выражение целое значение можно прочитать. Запись через разыменование запрещена типом."
+    },
+    {
+      "id": "null-pointer",
+      "term": "Нулевой указатель",
+      "title": "Нулевой указатель",
+      "definition": "Значение указателя, которое не указывает на объект. Перед доступом необязательный аргумент сравнивают с NULL."
+    },
+    {
+      "id": "borrow",
+      "term": "Заимствование",
+      "title": "Заимствование",
+      "definition": "Временное использование чужого объекта по договору. Вызывающий код обеспечивает допустимый адрес и время жизни, а функция использует его в пределах вызова."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Состояние дисплея зависит от доступного датчика",
+      "paragraphs": [
+        "Дисплею нужно показывать последнее известное значение. Когда датчик не передан, прежнее число остаётся. Когда датчик доступен, функция считывает его значение и записывает его в дисплей.",
+        "Договор даёт два разных доступа: const int * для чтения и int * для записи. У вызывающего кода остаются оба объекта. Функция заимствует указатели на время вызова и не сохраняет их.",
+        "Один доступный для чтения путь не запрещает другой действительный путь записи. В примере sensor остаётся обычным int, поэтому main вправе обновить его прямым присваиванием."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "От отсутствия сигнала к значению 49",
+      "paragraphs": [
+        "На первой строке вывода признак 0 означает отсутствие чтения. На второй признак 1 подтверждает копирование. Второе число каждой строки показывает состояние дисплея."
+      ],
+      "steps": [
+        "Сначала read_display получает NULL и допустимый &display. После проверок возвращает 0 до записи. display равен 17.",
+        "main обновляет sensor с 31 до 49. view по-прежнему указывает на живой sensor.",
+        "Второй вызов проверяет оба аргумента, читает 49 через view и записывает 49 в display."
+      ],
+      "trace": [
+        [
+          "Первый вызов",
+          "view = NULL",
+          "возврат 0 до записи",
+          "display = 17"
+        ],
+        [
+          "sensor = 49",
+          "view хранит адрес sensor",
+          "*view даёт 49",
+          "display = 17"
+        ],
+        [
+          "Второй вызов",
+          "адреса присутствуют",
+          "копируется 49, возврат 1",
+          "display = 49"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int read_display(const int *view, int *display)\n{\n    if (display == NULL) {\n        return -1;\n    }\n    if (view == NULL) {\n        return 0;\n    }\n    *display = *view;\n    return 1;\n}\n\nint main(void)\n{\n    int sensor = 31;\n    const int *view = &sensor;\n    int display = 17;\n\n    int state = read_display(NULL, &display);\n    printf(\"%d %d\\n\", state, display);\n\n    sensor = 49;\n    state = read_display(view, &display);\n    printf(\"%d %d\\n\", state, display);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "0 17\n1 49\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Проверить доступ и ожидаемое состояние",
+      "paragraphs": [
+        "Clang отклоняет отдельный фрагмент, где *view используется слева от присваивания. Вызывающий код может менять исходный sensor, потому что он объявлен как int.",
+        "NULL сообщает об отсутствии адреса. Ненулевой указатель сам по себе не доказывает время жизни или доступность объекта. Их обеспечивает вызывающий код. Сначала проверьте адрес для записи, затем адрес для чтения."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Повторите договор для другого результата",
+      "paragraphs": [
+        "Пусть в дисплее было -4. Предскажите признак и сохранившееся значение при отсутствующем датчике, затем вызов с живым объектом, содержащим 8. Что изменится, если в последнем вызове заменить выходной адрес на NULL?"
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.3.2.3, 6.5.3.2, 6.7.3",
+      "language": "English",
+      "purpose": "Сверьте правила времени жизни, null pointer, разыменования и квалификатора const."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Что выводит первая строка примера?",
+      "options": [
+        "0 17",
+        "0 0",
+        "1 31"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Датчик отсутствует, проверка оставляет 17 без записи.",
+        "Отказ сохраняет прежнее значение.",
+        "Считывание произойдёт только во втором вызове."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Указатель const int *view создан из адреса обычного int sensor. Как можно законно записать 49?",
+      "options": [
+        "Через *view",
+        "Через прямое присваивание sensor",
+        "Через присваивание NULL в view"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Тип разыменования допускает только чтение.",
+        "Исходный int остаётся доступным для записи владельцу.",
+        "Изменение указателя не меняет содержимое sensor."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "Вызов snapshot получает корректный адрес источника и NULL в выходном аргументе. Почему первая проверка должна завершить вызов? Что остаётся неизменным?",
+      "feedback": "Возвращается -1, операция записи невозможна. Функция завершается до разыменования любого аргумента, поэтому исходный объект и прежний ответ остаются прежними.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int reading = 49;\n    const int *view = &reading;\n    *view = 0;\n    return reading;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "read-only"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Снимок необязательного показания",
+    "task": "Прочитайте признак из первой строки. Для 0 источника нет, напечатайте absent 17. Для 1 прочитайте значение от -99 до 99, скопируйте через snapshot и напечатайте present и значение. Для 2 передайте готовый источник со значением 49 и NULL вместо выхода, затем покажите отказ строкой invalid 17. Для неверного ввода напечатайте invalid. Используйте готовый читатель. Последующие строки игнорируются.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int snapshot(const int *requested, int *response)\n{\n    if (response == NULL) {\n        return -1;\n    }\n    if (requested == NULL) {\n        *response = 0; /* TODO: preserve the last response. */\n        return 0;\n    }\n    *response = *requested;\n    return 1;\n}\n\nint main(void)\n{\n    int mode;\n    if (read_integer(0, 2, &mode) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int value = 49;\n    int response = 17;\n    const int *requested = NULL;\n    int *target = &response;\n    if (mode == 1) {\n        if (read_integer(-99, 99, &value) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        requested = &value;\n    } else if (mode == 2) {\n        requested = &value;\n        target = NULL;\n    }\n\n    int state = snapshot(requested, target);\n    if (state == 1) {\n        printf(\"present %d\\n\", response);\n    } else if (state == 0) {\n        printf(\"absent %d\\n\", response);\n    } else {\n        printf(\"invalid %d\\n\", response);\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "0\n",
+    "returnAnchor": "example",
+    "hint": "После проверки response отсутствие requested должно завершать вызов до какой-либо записи в response.",
+    "criteria": [
+      "Признак 0 даёт absent 17. Признак 1 и 49 дают present 49.",
+      "При отсутствующем выходе snapshot возвращает -1 до доступа, а вывод показывает invalid 17.",
+      "Функция использует const int * для источника, не сохраняет указатели и сохраняет прежний ответ при отказе."
+    ],
+    "cases": [
+      {
+        "label": "Источник отсутствует",
+        "input": "0\n",
+        "output": "absent 17\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Источник равен 49",
+        "input": "1\n49\n",
+        "output": "present 49\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Выходной адрес отсутствует",
+        "input": "2\n",
+        "output": "invalid 17\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нижнее допустимое значение",
+        "input": "1\n-99\n",
+        "output": "present -99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Верхнее значение без перевода строки",
+        "input": "1\n99",
+        "output": "present 99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нет второго значения",
+        "input": "1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Второе значение с лишним символом",
+        "input": "1\n49x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Неизвестный признак",
+        "input": "3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой ввод",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишнее показание после признака 0",
+        "input": "0\n49\n",
+        "output": "absent 17\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int snapshot(const int *requested, int *response)\n{\n    if (response == NULL) {\n        return -1;\n    }\n    if (requested == NULL) {\n        return 0;\n    }\n    *response = *requested;\n    return 1;\n}\n\nint main(void)\n{\n    int mode;\n    if (read_integer(0, 2, &mode) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int value = 49;\n    int response = 17;\n    const int *requested = NULL;\n    int *target = &response;\n    if (mode == 1) {\n        if (read_integer(-99, 99, &value) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        requested = &value;\n    } else if (mode == 2) {\n        requested = &value;\n        target = NULL;\n    }\n\n    int state = snapshot(requested, target);\n    if (state == 1) {\n        printf(\"present %d\\n\", response);\n    } else if (state == 0) {\n        printf(\"absent %d\\n\", response);\n    } else {\n        printf(\"invalid %d\\n\", response);\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Откройте «Практику» с признаком 0. Нажмите «Запустить мою работу».",
+        "why": "Проверьте, сохраняется ли 17 без показания.",
+        "expected": "Заготовка выводит absent 0. По договору требуется absent 17."
+      },
+      {
+        "where": "Code Studio",
+        "action": "В snapshot оставьте проверку response первой, затем исправьте ветку отсутствующего источника.",
+        "why": "Отсутствие показания должно возвращать 0 без записи.",
+        "expected": "На вводе 0 вывод absent 17."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте 1 и 49 на отдельных строках, затем отдельным запуском 2.",
+        "why": "Проверьте обе допустимые роли указателей.",
+        "expected": "Появятся present 49 и invalid 17 соответственно."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "Сохраните копию исправленного main.c в отдельный текстовый файл. Измените исходное значение response на -4. Проверьте признаки 0 и 2, затем 1 и 8 на отдельных строках. Восстановите сохранённый вариант.",
+        "criteria": [
+          "Отказы сохраняют -4 и дают absent -4 и invalid -4. Успешное чтение даёт present 8."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.borrowed-pointer-contract",
+    "prerequisites": [
+      "c.update-through-parameter",
+      "c.local-scope-lived-object"
+    ]
+  }
+}

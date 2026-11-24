@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.preprocessor",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "C programming",
+  "module": "The preprocessor and multi-file programs",
+  "locale": "en",
+  "title": "Directives, conditional builds and macros",
+  "goal": "Trace what preprocessing directives do during a build, then switch a packing profile without changing the program's input.",
+  "prerequisites": [
+    {
+      "text": "Recall int, multiplication, and operator precedence. You will use them to predict the result after macro expansion."
+    },
+    {
+      "text": "Recall the roles of main, a header, and a run. This lesson separates a choice made during the build from input read during the run."
+    }
+  ],
+  "terms": [
+    {
+      "id": "directive",
+      "term": "Directive",
+      "title": "Directive",
+      "definition": "An instruction to the preprocessor. For example, #include brings in the contents of the named header."
+    },
+    {
+      "id": "macro",
+      "term": "Macro",
+      "title": "Macro",
+      "definition": "A name or pattern that the preprocessor replaces with a sequence of tokens. The resulting expression may still need to be evaluated."
+    },
+    {
+      "id": "conditional",
+      "term": "Conditional processing",
+      "title": "Conditional processing",
+      "definition": "Directives #if, #elif and #else keep only the selected group for further processing. This happens before main runs."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The working model",
+      "paragraphs": [
+        "A pickup station uses two shelving profiles. The profile determines the capacity, while input determines the number of groups after launch. A build-time setting is appropriate when the deployment configuration is known in advance and stays fixed for the run.",
+        "The #if expression is evaluated by the preprocessor. Its result determines which CAPACITY definition is kept. For an unsupported profile, #error stops the build with the specified diagnostic.",
+        "TOTAL(1 + 2) expands to ((1 + 2) * 8). Keep parentheses around a macro parameter and around the full result. Repeating a parameter in a macro can also repeat side effects in its argument."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Calculate pickup capacity",
+      "paragraphs": [
+        "The header sets DELIVERY_MODE to 1. Predict the capacity of three shelves written as 1 + 2. Leave stdin empty."
+      ],
+      "steps": [
+        "First, #include makes the definitions from delivery_policy.h available to the source.",
+        "Exactly one branch leaves CAPACITY defined as 8. Predict the selected branch before reading main.",
+        "Substitute 1 + 2 into TOTAL without losing the parentheses, then calculate 3 × 8."
+      ],
+      "trace": [
+        [
+          "Process the header",
+          "DELIVERY_MODE == 1",
+          "CAPACITY = 8"
+        ],
+        [
+          "Expand TOTAL",
+          "((1 + 2) * 8)",
+          "24"
+        ],
+        [
+          "Run",
+          "printf",
+          "capacity=8 total=24"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"delivery_policy.h\"\n\nint main(void)\n{\n    printf(\"capacity=%d total=%d\\n\", CAPACITY, TOTAL(1 + 2));\n    return 0;\n}\n",
+        "files": {
+          "delivery_policy.h": "#ifndef DELIVERY_POLICY_H\n#define DELIVERY_POLICY_H\n#define DELIVERY_MODE 1\n\n#if DELIVERY_MODE == 1\n#define CAPACITY 8\n#elif DELIVERY_MODE == 2\n#define CAPACITY 12\n#else\n#error unsupported DELIVERY_MODE\n#endif\n\n#define TOTAL(count) ((count) * CAPACITY)\n#endif\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "capacity=8 total=24\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Identify the failed build stage",
+      "paragraphs": [
+        "Profile 3 in the separate PACK_KIND fixture produces unsupported PACK_KIND before printf can run. Locate #error and restore a supported configuration.",
+        "If the program runs with the wrong arithmetic, write out the expanded expression first. Incorrect precedence is a different symptom from a build that stops."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Predict, verify, and explain",
+      "paragraphs": [
+        "In a copy of the worked example, change only DELIVERY_MODE from 1 to 2. Predict the full line capacity=12 total=36, then build and compare. Restore 1 and mentally expand TOTAL without its inner parentheses. (1 + 2 * 8) would give 17. Explain the different result."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.2, §6.10.1–§6.10.3",
+      "language": "English",
+      "purpose": "The source processing order, conditional directives, and macro replacement."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "same-stdin",
+      "kind": "choice",
+      "prompt": "You set DELIVERY_MODE to 2 in the example. When can the program show the new result?",
+      "options": [
+        "After a rebuild and run",
+        "After entering 2 in stdin of the running program",
+        "Immediately on saving the source without a build"
+      ],
+      "correct": 0,
+      "feedback": [
+        "A new build processes the directives again.",
+        "Input cannot redefine a directive in an already built program.",
+        "Saving source does not change a binary that is already running."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "precedence",
+      "kind": "choice",
+      "prompt": "What does the correct TOTAL(1 + 2) compute with CAPACITY 8?",
+      "options": [
+        "17",
+        "24",
+        "11"
+      ],
+      "correct": 1,
+      "feedback": [
+        "17 would follow if the argument lacked parentheses.",
+        "The parentheses force addition before multiplication.",
+        "The macro multiplies the group size by 8."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "build-vs-run",
+      "kind": "free",
+      "prompt": "A learner sees unsupported PACK_KIND. Why does changing stdin not help, and which file should they examine?",
+      "feedback": "The build diagnosed the problem before running. Check PACK_KIND in packing_config.h against the two supported values, 0 and 1.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include \"packing_config.h\"\n\nint main(void)\n{\n    return 0;\n}\n",
+      "files": {
+        "packing_config.h": "#ifndef PACKING_CONFIG_H\n#define PACKING_CONFIG_H\n#define PACK_KIND 3\n\n#if PACK_KIND == 0\n#define PACK_SIZE 1\n#elif PACK_KIND == 1\n#define PACK_SIZE 6\n#else\n#error unsupported PACK_KIND\n#endif\n\n#define BOX_AMOUNT(count) ((count) * PACK_SIZE)\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "unsupported PACK_KIND"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "3\n",
+    "title": "Convert boxes into items",
+    "task": "Profile 1 means 6 items in each box. Select it in packing_config.h and pass boxes to BOX_AMOUNT in main.c. The first line of stdin is exactly one digit followed by LF or end of input. Print items= followed by the number of items for valid input. Otherwise print invalid and exit with code 1.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"packing_config.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int boxes = read_digit();\n    if (boxes < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"items=%d\\n\", boxes); /* TODO: use BOX_AMOUNT. */\n    return 0;\n}\n"
+      },
+      {
+        "path": "packing_config.h",
+        "content": "#ifndef PACKING_CONFIG_H\n#define PACKING_CONFIG_H\n#define PACK_KIND 0\n\n#if PACK_KIND == 0\n#define PACK_SIZE 1\n#elif PACK_KIND == 1\n#define PACK_SIZE 6\n#else\n#error unsupported PACK_KIND\n#endif\n\n#define BOX_AMOUNT(count) ((count) * PACK_SIZE)\n#endif\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Three boxes",
+        "input": "3\n",
+        "output": "items=18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero boxes",
+        "input": "0\n",
+        "output": "items=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "One digit without LF",
+        "input": "9",
+        "output": "items=54\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Two digits",
+        "input": "10\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "A letter",
+        "input": "x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "For 3, 0 and 9 print 18, 0 and 54 with the items= prefix. stderr stays empty.",
+      "Two digits or x produce invalid and exit code 1. Use the macro instead of a literal multiplier in main."
+    ],
+    "hint": "Check both changes. The directives select the box size, and main must actually use BOX_AMOUNT.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"packing_config.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int boxes = read_digit();\n    if (boxes < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"items=%d\\n\", BOX_AMOUNT(boxes));\n    return 0;\n}\n",
+      "files": {
+        "packing_config.h": "#ifndef PACKING_CONFIG_H\n#define PACKING_CONFIG_H\n#define PACK_KIND 1\n\n#if PACK_KIND == 0\n#define PACK_SIZE 1\n#elif PACK_KIND == 1\n#define PACK_SIZE 6\n#else\n#error unsupported PACK_KIND\n#endif\n\n#define BOX_AMOUNT(count) ((count) * PACK_SIZE)\n#endif\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 3.",
+        "why": "It prints the box count directly.",
+        "expected": "items=3"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Select profile 1 and call BOX_AMOUNT(boxes).",
+        "why": "The multiplication now follows the build setting.",
+        "expected": "items=18"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Try 9 with no LF and 10 with LF.",
+        "why": "One digit is valid. Two digits break the input contract.",
+        "expected": "items=54 and invalid respectively"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Check the earlier profile",
+        "task": "In a copy of your solution set PACK_KIND to 0 and run with 3 again. Restore profile 1 afterward.",
+        "criteria": [
+          "Profile 0 prints items=3, while profile 1 prints items=18. Identify the line that selects the value and the line that uses it."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.configure-preprocessor",
+    "prerequisites": [
+      "c.read-compiler-diagnostics"
+    ]
+  }
+}

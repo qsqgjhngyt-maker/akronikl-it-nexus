@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m8-v1",
+  "id": "c.ownership-and-release",
+  "courseId": "c",
+  "moduleId": "c.m8",
+  "course": "C programming",
+  "module": "Dynamic memory and ownership",
+  "locale": "en",
+  "title": "Ownership and free",
+  "goal": "Identify one owner of an allocation and release it exactly once on both use and rejection paths.",
+  "prerequisites": [
+    {
+      "text": "Check malloc before accessing the result."
+    },
+    {
+      "text": "Understand passing the address of a variable to a function."
+    }
+  ],
+  "terms": [
+    {
+      "id": "owner",
+      "term": "Owner",
+      "title": "Owner",
+      "definition": "The variable the program makes responsible for releasing the allocation. This is a program convention."
+    },
+    {
+      "id": "borrow",
+      "term": "Borrow",
+      "title": "Borrow",
+      "definition": "Temporary access without taking responsibility for release."
+    },
+    {
+      "id": "cleanup",
+      "term": "Cleanup",
+      "title": "Cleanup",
+      "definition": "Ending use of the resource. Pointers to the old block are not used after free."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "An allocation's lifetime and its owner",
+      "paragraphs": [
+        "In the teaching program owner is responsible for the allocation. view_total gets temporary access for reading, with no responsibility or permission to release the block.",
+        "The call release_values(&owner, &releases) passes the addresses of two live variables. Inside the function, the parameter owner has type int **, and *owner is the pointer value held by main. If *owner is NULL, there is no block to release. Otherwise the function calls free, sets the variable in main to NULL, and counts one release.",
+        "After free, do not evaluate old pointer copies. Storing NULL updates only the owner variable. In this example, temporary access ends when view_total returns."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Check the cleanup twice safely",
+      "paragraphs": [
+        "Predict when free is called and what view_total reads."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int view_total(const int values[], size_t count)\n{\n    int total = 0;\n    for (size_t i = 0; i < count; ++i) {\n        total += values[i];\n    }\n    return total;\n}\n\nstatic void release_values(int **owner, unsigned *releases)\n{\n    if (*owner != NULL) {\n        free(*owner);\n        *owner = NULL;\n        ++*releases;\n    }\n}\n\nint main(void)\n{\n    const size_t count = 2;\n    if (count > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        return 0;\n    }\n    int *owner = malloc(count * sizeof *owner);\n    if (owner == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    owner[0] = 4;\n    owner[1] = 5;\n    printf(\"total %d\\n\", view_total(owner, count));\n\n    unsigned releases = 0;\n    release_values(&owner, &releases);\n    release_values(&owner, &releases);\n    printf(\"releases %u\\n\", releases);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "total 9\nreleases 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "owner stores [4, 5] and lends temporary access to view_total.",
+        "The first release_values frees the block, writes NULL, and increments the counter.",
+        "The second call never reads the old block. The program prints releases 1."
+      ],
+      "trace": [
+        [
+          "view_total",
+          "output total 9"
+        ],
+        [
+          "release #1",
+          "owner = NULL, releases = 1"
+        ],
+        [
+          "release #2",
+          "releases remains 1"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "If Clang reports too few arguments, compare the call with the release_values declaration. It requires both the address of the owner variable &owner and the address of the actual-release counter.",
+        "Increment the counter after free, inside the *owner != NULL branch. The second call sees the NULL already stored in the owner variable."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Explain what happens if main returns before cleanup on rejection. Use a state diagram rather than running a version that loses its owner.",
+        "Add a second way to reject the computation while preserving one cleanup path."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.2.4, §6.5.3.2, §7.22.3.3",
+      "language": "English",
+      "purpose": "Review the language and library contracts used in this example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the final printf in the example print?",
+      "options": [
+        "releases 0",
+        "releases 1",
+        "releases 2"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The first call sees a non-null owner.",
+        "The second call skips release after the NULL assignment.",
+        "The call count differs from the release count."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Who releases the array in the example?",
+      "options": [
+        "Any function that sees its values.",
+        "The function that receives temporary read access.",
+        "The designated owner through the cleanup operation."
+      ],
+      "correct": 2,
+      "feedback": [
+        "Seeing the data and owning the allocation are different contracts.",
+        "view_total only reads.",
+        "One release point makes the lifetime checkable."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why should released still be 1 in mode 0 when no sum is printed?",
+      "feedback": "The buffer has already been allocated and initialized. Rejecting a calculation does not remove the need to release it.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdlib.h>\n\nstatic void release_values(int **owner, unsigned *released)\n{\n    if (*owner != NULL) {\n        free(*owner);\n        *owner = NULL;\n        ++*released;\n    }\n}\n\nint main(void)\n{\n    int *owner = NULL;\n    release_values(&owner);\n    return 0;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Two paths, one release",
+    "environment": "C17 · Clang/WASI",
+    "task": "The first line of up to 63 bytes contains count from 1 to 16 and a mode of 0 or 1. The array is allocated and filled with 1 through count before the mode is checked. Mode 1 prints sum N. Mode 0 rejects the calculation and prints rejected. Both branches must free the allocated block. Complete the counter in release_values. Two cleanup calls should yield released 1. Invalid input prints invalid and released 0. If the initial malloc returns NULL, the program prints allocation-failed and released 0.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstatic void release_values(int **owner, unsigned *released)\n{\n    if (*owner != NULL) {\n        free(*owner);\n        *owner = NULL;\n        /* TODO: count the release that actually happened. */\n        *released += 0;\n    }\n}\n\nstatic int sum_values(const int values[], size_t count)\n{\n    int sum = 0;\n    for (size_t i = 0; i < count; ++i) {\n        sum += values[i];\n    }\n    return sum;\n}\n\nint main(void)\n{\n    unsigned released = 0;\n    int input[2];\n    const int minimum[] = {1, 0};\n    const int maximum[] = {16, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        printf(\"released %u\\n\", released);\n        return 0;\n    }\n    size_t count = (size_t)input[0];\n    if (count > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        printf(\"released %u\\n\", released);\n        return 0;\n    }\n    int *owner = malloc(count * sizeof *owner);\n    if (owner == NULL) {\n        puts(\"allocation-failed\");\n        printf(\"released %u\\n\", released);\n        return 0;\n    }\n    for (size_t i = 0; i < count; ++i) {\n        owner[i] = (int)i + 1;\n    }\n    if (input[1] == 0) {\n        puts(\"rejected\");\n    } else {\n        printf(\"sum %d\\n\", sum_values(owner, count));\n    }\n    release_values(&owner, &released);\n    release_values(&owner, &released);\n    printf(\"released %u\\n\", released);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "3 1\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Acceptance and release",
+        "input": "3 1\n",
+        "output": "sum 6\nreleased 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Rejecting the calculation",
+        "input": "3 0\n",
+        "output": "rejected\nreleased 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "One element",
+        "input": "1 1\n",
+        "output": "sum 1\nreleased 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper bound",
+        "input": "16 1\n",
+        "output": "sum 136\nreleased 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero before allocation",
+        "input": "0 1\n",
+        "output": "invalid\nreleased 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid mode",
+        "input": "3 3\n",
+        "output": "invalid\nreleased 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra input",
+        "input": "3 0 1\n",
+        "output": "invalid\nreleased 0\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "3 1 and 3 0 finish with released 1. 0 1 finishes with released 0.",
+      "The borrower does not free the block. Cleanup stores NULL before a possible repeated call."
+    ],
+    "hint": "Increment the counter after free inside the non-null owner branch only.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstatic void release_values(int **owner, unsigned *released)\n{\n    if (*owner != NULL) {\n        free(*owner);\n        *owner = NULL;\n        ++*released;\n    }\n}\n\nstatic int sum_values(const int values[], size_t count)\n{\n    int sum = 0;\n    for (size_t i = 0; i < count; ++i) {\n        sum += values[i];\n    }\n    return sum;\n}\n\nint main(void)\n{\n    unsigned released = 0;\n    int input[2];\n    const int minimum[] = {1, 0};\n    const int maximum[] = {16, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        printf(\"released %u\\n\", released);\n        return 0;\n    }\n    size_t count = (size_t)input[0];\n    if (count > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        printf(\"released %u\\n\", released);\n        return 0;\n    }\n    int *owner = malloc(count * sizeof *owner);\n    if (owner == NULL) {\n        puts(\"allocation-failed\");\n        printf(\"released %u\\n\", released);\n        return 0;\n    }\n    for (size_t i = 0; i < count; ++i) {\n        owner[i] = (int)i + 1;\n    }\n    if (input[1] == 0) {\n        puts(\"rejected\");\n    } else {\n        printf(\"sum %d\\n\", sum_values(owner, count));\n    }\n    release_values(&owner, &released);\n    release_values(&owner, &released);\n    printf(\"released %u\\n\", released);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 3 1 and find the TODO in release_values.",
+        "why": "The block is freed without incrementing the counter.",
+        "expected": "Two lines: sum 6 and released 0."
+      },
+      {
+        "where": "Code Studio",
+        "action": "After the fix, run 3 1, 3 0, and 0 1 separately.",
+        "why": "Mode 0 rejects the calculation after allocation. A count of 0 is rejected before allocation.",
+        "expected": "The line pairs are sum 6 and released 1, rejected and released 1, and invalid and released 0."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "In a separate copy, also reject the calculation when count is even. Keep the shared release path.",
+        "criteria": [
+          "With 4 1 the new branch rejects the computation, while released 1 remains. Name the single owner."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.single-owner-cleanup",
+    "prerequisites": [
+      "c.checked-allocation"
+    ]
+  }
+}

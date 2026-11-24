@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.result-artifacts",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "C programming",
+  "module": "Files and error handling",
+  "locale": "en",
+  "title": "Input files and result artifacts",
+  "goal": "Verify a report by its path and exact contents, distinguish a run output from an editor file, and save the result explicitly.",
+  "prerequisites": [
+    {
+      "text": "Recall validating the entire table before using its summary. Here the program writes a report only after validation."
+    },
+    {
+      "text": "Apply the write and close checks from the previous lessons. Print ok only after both succeed."
+    }
+  ],
+  "terms": [
+    {
+      "id": "input-file",
+      "term": "Source file",
+      "title": "Source file",
+      "definition": "A project file supplied in a temporary run copy. The example opens the file only with rb."
+    },
+    {
+      "id": "delta",
+      "term": "Run output",
+      "title": "Run output",
+      "definition": "A new or changed file after execution. A file identical to the input snapshot can be absent from the result list."
+    },
+    {
+      "id": "explicit-save",
+      "term": "Explicit save",
+      "title": "Explicit save",
+      "definition": "An action that applies the chosen run result to the lesson workspace. An ok message alone does not change editor files."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "A report has a path, contents, and a lifetime",
+      "paragraphs": [
+        "A shift hands off a measurements summary. The next shift needs a file containing a header and values, beyond an ok message. Keep the source table, run output, and explicit editor save separate.",
+        "After validating every row and closing the input, open the output for writing. Check fprintf and fclose. A malformed row exits before output fopen. The workspace offers file actions only for a current successful run.",
+        "Downloading checks the actual run result. The editor requires a separate save action. If the result bytes match a file already supplied for this run, the result list can omit it."
+      ]
+    },
+    {
+      "title": "A summary for two readings",
+      "paragraphs": [
+        "The fixture reading.tsv has two rows: 7, TAB, 3, LF and 8, TAB, 0, LF. The report needs a header and one data row. Predict the count and total."
+      ],
+      "steps": [
+        "Validate both rows. Obtain count 2 and total 3. Close the source.",
+        "Open totals.tsv in wb. Write records and total separated by TAB, then 2, TAB, 3. Both lines end in LF.",
+        "Print ok only after fclose succeeds. Check the path and 18 file bytes separately from stdout."
+      ],
+      "trace": [
+        [
+          "reading.tsv",
+          "two records",
+          "2 / 3"
+        ],
+        [
+          "totals.tsv",
+          "records<TAB>total<LF>",
+          "2<TAB>3<LF>"
+        ],
+        [
+          "stdout",
+          "ok",
+          "separate output file"
+        ]
+      ],
+      "id": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"reading.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n\n    FILE *report = fopen(\"totals.tsv\", \"wb\");\n    if (report == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    int failed = fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total) < 0;\n    int report_close = fclose(report);\n    if (failed || report_close == EOF) {\n        puts(failed ? \"write-error\" : \"close-output-error\");\n        return 1;\n    }\n    puts(\"ok\");\n    return 0;\n}\n",
+        "files": {
+          "reading.tsv": "7\t3\n8\t0\n"
+        },
+        "stdin": "",
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "totals.tsv": "records\ttotal\n2\t3\n"
+        },
+        "cases": [
+          {
+            "input": "",
+            "inputFiles": {
+              "reading.tsv": "7\t3\n8\tx\n"
+            },
+            "output": "invalid line 2\n",
+            "stderr": "",
+            "exitCode": 1,
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Verify that ok corresponds to a file",
+      "paragraphs": [
+        "If stdout says ok but the report is empty, check for fprintf before fclose. If no report is listed, check path, exit code, and whether anything changed. Identical bytes in a supplied file do not produce a new result.",
+        "A too few arguments diagnostic for fprintf indicates a missing format argument. Pass the FILE * and the format string. Check the write return value separately."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Compare reports from two independent runs",
+      "paragraphs": [
+        "Do not save the first report into the editor until the comparison is finished. In a separate copy replace the second quantity with malformed text and run again. Explain why the new run must not offer the old report, even if you downloaded it already."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3, §7.21.6.1",
+      "language": "English",
+      "purpose": "Review the library contracts used by this stream and its checks."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "evidence",
+      "kind": "choice",
+      "prompt": "Stdout contains ok. Which check confirms that the report is correct?",
+      "options": [
+        "Check the path and exact bytes of the downloaded file.",
+        "See ok twice.",
+        "Inspect the source file and treat it as the report."
+      ],
+      "correct": 0,
+      "feedback": [
+        "This checks filename, header, and data independently of stdout.",
+        "Repeating the message does not reveal the report.",
+        "Source and report use different formats."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "no-result",
+      "kind": "choice",
+      "prompt": "The second row fails validation. What should this run show?",
+      "options": [
+        "A report for the first row only.",
+        "invalid line 2, exit code 1, and no new file.",
+        "The old report as the new result."
+      ],
+      "correct": 1,
+      "feedback": [
+        "The whole table is checked before opening the report.",
+        "The destination was never opened.",
+        "Each run has a separate result."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "save",
+      "kind": "free",
+      "prompt": "You saved a report to the editor earlier. Today's run failed. Why can the old file still be listed without being today's run result?",
+      "feedback": "The earlier explicit save added the old report to the workspace. Today's run produced no new file and does not change the editor automatically.",
+      "recall": "idea"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    return fprintf(stdout);\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"input/stock.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n\n    FILE *report = fopen(\"stock-totals.tsv\", \"wb\");\n    if (report == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    int failed = 0; /* TODO: write the table before closing report. */\n    int report_close = fclose(report);\n    if (failed || report_close == EOF) {\n        puts(failed ? \"write-error\" : \"close-output-error\");\n        return 1;\n    }\n    puts(\"ok\");\n    return 0;\n}\n"
+      },
+      {
+        "path": "input/stock.tsv",
+        "content": "12\t8\n26\t3\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Two stock records",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3\n"
+        },
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "stock-totals.tsv": "records\ttotal\n2\t11\n"
+        }
+      },
+      {
+        "label": "Malformed second record",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3junk\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Missing input file",
+        "input": "",
+        "inputFiles": {},
+        "output": "open-input-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Empty input, zero-count report",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": ""
+        },
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "stock-totals.tsv": "records\ttotal\n0\t0\n"
+        }
+      },
+      {
+        "label": "Refusal leaves an existing report intact",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3junk\n",
+          "stock-totals.tsv": "previous\n"
+        },
+        "output": "invalid line 2\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "An identical report already exists",
+        "input": "",
+        "inputFiles": {
+          "input/stock.tsv": "12\t8\n26\t3\n",
+          "stock-totals.tsv": "records\ttotal\n2\t11\n"
+        },
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {}
+      }
+    ],
+    "title": "A warehouse summary file",
+    "task": "Read input/stock.tsv using the previous lesson's rules: unique ID 1 to 9999, TAB, quantity 0 to 999, LF. Leave stdin empty. Once all rows are accepted, write the header records TAB total LF and a row N TAB S LF to stock-totals.tsv. Complete the line near TODO. Check write and close before printing ok. A malformed row yields invalid line N and exit code 1 without opening the report. Download and compare the successful result by path and bytes, then explicitly save it in the editor.",
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "In a fresh lesson copy run the starter with empty stdin. Check the run files list.",
+        "why": "The output was opened and closed, but the starter did not write the table.",
+        "expected": "Stdout says ok while stock-totals.tsv contains 0 bytes."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add fprintf for the header and data. Keep the fclose check. Run again and download the report.",
+        "why": "The count, total, and delimiters belong in the report. It enters the editor only after the explicit save action.",
+        "expected": "Stdout says ok. The 19-byte stock-totals.tsv contains records TAB total LF 2 TAB 11 LF."
+      }
+    ],
+    "criteria": [
+      "Two valid rows yield stock-totals.tsv with exact text records TAB total LF 2 TAB 11 LF. The input/stock.tsv source stays unchanged.",
+      "A malformed second row gives invalid line 2, code 1, an empty run delta, and no actions for old results.",
+      "The new report is absent from a fresh workspace before you explicitly save it. Once the save is confirmed, verify that both lines open in the workspace."
+    ],
+    "hint": "Use fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total). A negative result means a write error.",
+    "exercises": [
+      {
+        "title": "Failure after a successful report",
+        "task": "Download the successful result, save it in the lesson project, and check the file in the editor. Then replace the second quantity with 3junk and run again. Compare this run's result list with the file previously saved to the editor.",
+        "criteria": [
+          "The new run yields invalid line 2 and exit code 1. There is no new result. The saved report still contains 2 TAB 11 LF until you change it."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_RECORDS = 64, MAX_LINE = 24 };\nenum LineStatus { LINE_OK, LINE_END, LINE_INVALID, LINE_IO_ERROR };\nenum SummaryStatus { SUMMARY_OK, SUMMARY_INVALID, SUMMARY_IO_ERROR };\n\nstruct Summary {\n    size_t count;\n    long total;\n};\n\nstatic enum LineStatus read_line(FILE *stream, char line[MAX_LINE + 1])\n{\n    size_t length = 0;\n    for (;;) {\n        int ch = fgetc(stream);\n        if (ch == EOF) {\n            if (ferror(stream)) {\n                return LINE_IO_ERROR;\n            }\n            return length == 0 ? LINE_END : LINE_INVALID;\n        }\n        if (ch == '\\n') {\n            line[length] = '\\0';\n            return LINE_OK;\n        }\n        if (ch == '\\0' || ch > 127 || length == MAX_LINE) {\n            return LINE_INVALID;\n        }\n        line[length++] = (char)ch;\n    }\n}\n\nstatic int read_number(const char *text, char **end, int maximum)\n{\n    if (*text < '0' || *text > '9') {\n        return -1;\n    }\n    errno = 0;\n    long value = strtol(text, end, 10);\n    if (errno == ERANGE || value > maximum) {\n        return -1;\n    }\n    return (int)value;\n}\n\nstatic int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}\n\nstatic enum SummaryStatus summarize(FILE *stream, struct Summary *summary)\n{\n    int ids[MAX_RECORDS];\n    char line[MAX_LINE + 1];\n    for (;;) {\n        enum LineStatus status = read_line(stream, line);\n        if (status == LINE_END) {\n            return SUMMARY_OK;\n        }\n        if (status == LINE_IO_ERROR) {\n            return SUMMARY_IO_ERROR;\n        }\n        int id;\n        int value;\n        if (status == LINE_INVALID || summary->count == MAX_RECORDS ||\n            !read_record(line, &id, &value)) {\n            return SUMMARY_INVALID;\n        }\n        for (size_t i = 0; i < summary->count; ++i) {\n            if (ids[i] == id) {\n                return SUMMARY_INVALID;\n            }\n        }\n        ids[summary->count++] = id;\n        summary->total += value;\n    }\n}\n\nint main(void)\n{\n    FILE *input = fopen(\"input/stock.tsv\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    struct Summary summary = {0, 0};\n    enum SummaryStatus status = summarize(input, &summary);\n    int close_status = fclose(input);\n    if (status == SUMMARY_INVALID) {\n        printf(\"invalid line %zu\\n\", summary.count + 1);\n        return 1;\n    }\n    if (status == SUMMARY_IO_ERROR) {\n        puts(\"read-error\");\n        return 1;\n    }\n    if (close_status == EOF) {\n        puts(\"close-input-error\");\n        return 1;\n    }\n\n\n    FILE *report = fopen(\"stock-totals.tsv\", \"wb\");\n    if (report == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    int failed = fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total) < 0;\n    int report_close = fclose(report);\n    if (failed || report_close == EOF) {\n        puts(failed ? \"write-error\" : \"close-output-error\");\n        return 1;\n    }\n    puts(\"ok\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.verify-run-artifact-before-save",
+    "prerequisites": [
+      "c.validate-all-file-records",
+      "c.preserve-first-error-clean-up-streams"
+    ]
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.variables-and-types",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Variables, types and initialisation",
+  "goal": "Set initial values, trace one update and explain why the other variables keep their values.",
+  "prerequisites": [
+    {
+      "text": "You can match %d, %c and the floating-point format to their arguments."
+    }
+  ],
+  "terms": [
+    {
+      "id": "variable",
+      "term": "Variable",
+      "title": "Variable",
+      "definition": "A named object with a type and a value."
+    },
+    {
+      "id": "initialization",
+      "term": "Initialisation",
+      "title": "Initialisation",
+      "definition": "Giving a variable its first value when it is created."
+    },
+    {
+      "id": "assignment",
+      "term": "Assignment",
+      "title": "Assignment",
+      "definition": "Storing a new value in an existing object. The expression is on the right and the destination is on the left."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Data live separately from the format",
+      "paragraphs": [
+        "A seat count is an integer, time has a fractional part, and a zone is a character. Use int seats, double time and char zone. Names distinguish their purpose and types determine operations and representation.",
+        "int seats = 6 defines a variable and supplies its first value. In seats = seats + 2, the right side reads the old 6 and computes 8. Then 8 is stored in the same variable.",
+        "C guarantees minimum type ranges, not one int size for every environment. The small values in these examples fit the minimum guaranteed range. double is useful for time measurements, but it cannot represent every decimal fraction exactly."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Before and after a change",
+      "paragraphs": [
+        "Trace the three values before the first print. After the assignment, identify which name and value pair changed."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int seats = 6;\n    char zone = 'A';\n    double time = 1.5;\n    printf(\"%c: %d / %.1f h\\n\", zone, seats, time);\n    seats = seats + 2;\n    printf(\"%c: %d / %.1f h\\n\", zone, seats, time);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "A: 6 / 1.5 h\nA: 8 / 1.5 h\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "The declarations create and initialise values 6, A and 1.5.",
+        "The first printf prints the zone, the number of seats and time. Argument order follows the format.",
+        "seats = seats + 2 changes only seats. The second printf receives 8 and the unchanged values of the other variables."
+      ],
+      "trace": [
+        [
+          "After declarations",
+          "No data",
+          "seats=6, zone=A, time=1.5",
+          "All values are initialised"
+        ],
+        [
+          "seats = seats + 2",
+          "seats=6",
+          "seats=8",
+          "Read the old value and store the new one"
+        ],
+        [
+          "Second print",
+          "zone=A, time=1.5",
+          "zone=A, time=1.5",
+          "These objects were not assigned to"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Obtain a value before reading it",
+      "paragraphs": [
+        "A local int seats; with no value cannot yet be passed safely to printf. A local object is not automatically set to zero here. Initialise it or assign it a value before its first read.",
+        "Do not confuse assignment with a mathematical equality. seats = seats + 2 means update the object. It does not claim that the old and new values are equal."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Trace the inventory",
+      "paragraphs": [
+        "A loading line starts with a known number of boxes. Three are shipped, while the period and the line label stay the same. Use one output format and update the variable rather than typing a fixed second result.",
+        "Draw a small before-and-after table. It shows what stays constant even if you accidentally swap two printf arguments."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.2.4.2.1, §6.2.5, §6.5.16, §6.7.9",
+      "language": "English",
+      "purpose": "Defines types, minimum ranges, initialisation and assignment."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What changes in the second line of the example?",
+      "options": [
+        "Seats become 8 with the same zone and time",
+        "Time becomes 3.5",
+        "Zone becomes C"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct. The assignment changes only seats.",
+        "Nothing was added to time.",
+        "zone retains its value."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int seats = 6;\n    char zone = 'A';\n    double time = 1.5;\n    printf(\"%c: %d / %.1f h\\n\", zone, seats, time);\n    seats = seats + 2;\n    printf(\"%c: %d / %.1f h\\n\", zone, seats, time);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What fixes reading int seats; before it has a value?",
+      "options": [
+        "Give seats a value before its first use",
+        "Declare time as char",
+        "Add more conversions to printf"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct. Define the value before reading it.",
+        "Changing another variable does not set seats.",
+        "A format does not initialise arguments."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why do the two uses of seats in seats = seats + 2 refer to one variable?",
+      "feedback": "The right side reads the previous value of the same object. The left side names where to store the result after evaluating the right side.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Track boxes on a loading line",
+    "task": "Line B starts with 12 boxes and a period of 0.5 hours. Print B: 12 / 0.5 h. Reduce the count by three and print the second line using the same format.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    int boxes = 12;\n    char lane = 'B';\n    double period = 0.5;\n    /* Print the starting inventory and update boxes once. */\n    printf(\"%c: %d\\n\", lane, boxes);\n    (void)period;\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Inventory before and after",
+        "input": "",
+        "output": "B: 12 / 0.5 h\nB: 9 / 0.5 h\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "The new count is 9 and is computed from the previous count.",
+      "The line and period stay unchanged.",
+      "All objects receive values before they are read."
+    ],
+    "hint": "Use the seats update as a guide. Here you subtract from boxes instead of adding.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    int boxes = 12;\n    char lane = 'B';\n    double period = 0.5;\n    printf(\"%c: %d / %.1f h\\n\", lane, boxes, period);\n    boxes = boxes - 3;\n    printf(\"%c: %d / %.1f h\\n\", lane, boxes, period);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Record the before and after values.",
+        "why": "This shows which column changes.",
+        "expected": "B and 0.5 appear twice, while 12 changes to 9."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add both prints with the update between them.",
+        "why": "Execution goes from top to bottom.",
+        "expected": "The first print still receives the initial value."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check a starting count of 15.",
+        "why": "This distinguishes calculation from a fixed answer.",
+        "expected": "After shipping, 12 remain and the line and period are unchanged."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Change only the period to 1.0, then change the line separately. Predict which parts of both lines change in each test.",
+        "criteria": [
+          "Changing one initial value affects its own field in both prints."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.trace-initialised-values",
+    "prerequisites": [
+      "c.match-format-arguments"
+    ]
+  }
+}

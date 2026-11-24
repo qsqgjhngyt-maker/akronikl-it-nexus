@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.const-and-null",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "C programming",
+  "module": "Pointers, addresses and memory bounds",
+  "title": "const, NULL and ownership contracts",
+  "goal": "Distinguish reading, writing and the absence of an address. Preserve the result on failure.",
+  "prerequisites": [
+    {
+      "text": "You need a pointer, a function parameter and the lifetime of a local object."
+    }
+  ],
+  "terms": [
+    {
+      "id": "qualified-view",
+      "term": "Pointer to const int",
+      "title": "Pointer to const int",
+      "definition": "Such an expression can read the integer. Its type prevents a write through the dereference."
+    },
+    {
+      "id": "null-pointer",
+      "term": "Null pointer",
+      "title": "Null pointer",
+      "definition": "A pointer value that points to no object. Compare an optional pointer argument with NULL before access."
+    },
+    {
+      "id": "borrow",
+      "term": "Borrow",
+      "title": "Borrow",
+      "definition": "Temporary use of an object under a contract. The caller supplies a valid address and keeps the object alive while the function uses it."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Display state depends on the available sensor",
+      "paragraphs": [
+        "The display should keep the most recent known value. If no sensor is passed, keep the old number. If one is available, read its value and copy it to the display.",
+        "The contract gives two kinds of access: const int * for reading and int * for writing. The caller retains both objects. The function borrows their pointers for the call and keeps no pointer afterward.",
+        "A read-only path does not prevent a different, valid path from writing. The sensor in the example remains an ordinary int, so main can assign to it directly."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "From missing input to the value 49",
+      "paragraphs": [
+        "The first line prints status 0 for a missing read. The second prints status 1 for a copy. The second number in each line is the display value."
+      ],
+      "steps": [
+        "First read_display gets NULL and a valid &display. Its checks return 0 before writing. display remains 17.",
+        "main updates sensor from 31 to 49. view still points to the live sensor object.",
+        "The second call checks both arguments, reads 49 through view and writes 49 to display."
+      ],
+      "trace": [
+        [
+          "First call",
+          "view = NULL",
+          "return 0 before writing",
+          "display = 17"
+        ],
+        [
+          "sensor = 49",
+          "view stores the address of sensor",
+          "*view gives 49",
+          "display = 17"
+        ],
+        [
+          "Second call",
+          "both addresses present",
+          "copy 49 and return 1",
+          "display = 49"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int read_display(const int *view, int *display)\n{\n    if (display == NULL) {\n        return -1;\n    }\n    if (view == NULL) {\n        return 0;\n    }\n    *display = *view;\n    return 1;\n}\n\nint main(void)\n{\n    int sensor = 31;\n    const int *view = &sensor;\n    int display = 17;\n\n    int state = read_display(NULL, &display);\n    printf(\"%d %d\\n\", state, display);\n\n    sensor = 49;\n    state = read_display(view, &display);\n    printf(\"%d %d\\n\", state, display);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "0 17\n1 49\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check access and the expected state",
+      "paragraphs": [
+        "Clang rejects the separate example with *view on the left of an assignment. The caller can still update the original sensor because it is declared int.",
+        "NULL indicates a missing address. A non-null pointer alone does not prove that the object is alive and accessible. The caller provides those guarantees. Check the writable target first and the readable source second."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Apply the contract to another result",
+      "paragraphs": [
+        "Suppose the display starts at -4. Predict the status and retained value with a missing sensor, then with a live object holding 8. What happens if the last call receives NULL for the output?"
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.3.2.3, 6.5.3.2, 6.7.3",
+      "language": "English",
+      "purpose": "Check the rules for lifetime, null pointers, dereferencing and the const qualifier."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What is printed on the first line?",
+      "options": [
+        "0 17",
+        "0 0",
+        "1 31"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The source is missing, so the check leaves 17 unwritten.",
+        "The failure preserves the previous value.",
+        "The read only happens in the second call."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "A const int *view holds the address of an ordinary int sensor. How can 49 be written legally?",
+      "options": [
+        "Write through *view",
+        "Assign to sensor directly",
+        "Assign NULL to view"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Dereferencing this type gives read-only access.",
+        "The owner can still write to the original int.",
+        "Changing a pointer does not change the reading."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "snapshot receives a valid source and NULL for the output. Why must the first guard end the call? What remains unchanged?",
+      "feedback": "The call returns -1 without dereferencing either argument. It cannot write a response, so the source and the previous response stay unchanged.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int reading = 49;\n    const int *view = &reading;\n    *view = 0;\n    return reading;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "read-only"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Take a snapshot of an optional reading",
+    "task": "Read the mode from the first line. For 0, the source is missing, so print absent 17. For 1, read a value from -99 to 99, copy it through snapshot and print present and the value. For 2, use a prepared source holding 49 and pass NULL for the output, then report the rejection as invalid 17. For malformed input print invalid. Use the supplied reader. Ignore subsequent lines.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int snapshot(const int *requested, int *response)\n{\n    if (response == NULL) {\n        return -1;\n    }\n    if (requested == NULL) {\n        *response = 0; /* TODO: preserve the last response. */\n        return 0;\n    }\n    *response = *requested;\n    return 1;\n}\n\nint main(void)\n{\n    int mode;\n    if (read_integer(0, 2, &mode) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int value = 49;\n    int response = 17;\n    const int *requested = NULL;\n    int *target = &response;\n    if (mode == 1) {\n        if (read_integer(-99, 99, &value) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        requested = &value;\n    } else if (mode == 2) {\n        requested = &value;\n        target = NULL;\n    }\n\n    int state = snapshot(requested, target);\n    if (state == 1) {\n        printf(\"present %d\\n\", response);\n    } else if (state == 0) {\n        printf(\"absent %d\\n\", response);\n    } else {\n        printf(\"invalid %d\\n\", response);\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "0\n",
+    "returnAnchor": "example",
+    "hint": "Once response has been validated, a missing requested value should return without writing to response.",
+    "criteria": [
+      "Mode 0 gives absent 17. Mode 1 and 49 give present 49.",
+      "A missing output gives -1 before access, and the console displays invalid 17.",
+      "The input uses const int *, the function stores no pointer, and failures leave the previous response unchanged."
+    ],
+    "cases": [
+      {
+        "label": "Missing source",
+        "input": "0\n",
+        "output": "absent 17\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Source value 49",
+        "input": "1\n49\n",
+        "output": "present 49\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing output address",
+        "input": "2\n",
+        "output": "invalid 17\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Lower accepted reading",
+        "input": "1\n-99\n",
+        "output": "present -99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper reading without final newline",
+        "input": "1\n99",
+        "output": "present 99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing second value",
+        "input": "1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra character in the second value",
+        "input": "1\n49x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unknown mode",
+        "input": "3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty input",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra reading after mode 0",
+        "input": "0\n49\n",
+        "output": "absent 17\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int snapshot(const int *requested, int *response)\n{\n    if (response == NULL) {\n        return -1;\n    }\n    if (requested == NULL) {\n        return 0;\n    }\n    *response = *requested;\n    return 1;\n}\n\nint main(void)\n{\n    int mode;\n    if (read_integer(0, 2, &mode) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int value = 49;\n    int response = 17;\n    const int *requested = NULL;\n    int *target = &response;\n    if (mode == 1) {\n        if (read_integer(-99, 99, &value) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        requested = &value;\n    } else if (mode == 2) {\n        requested = &value;\n        target = NULL;\n    }\n\n    int state = snapshot(requested, target);\n    if (state == 1) {\n        printf(\"present %d\\n\", response);\n    } else if (state == 0) {\n        printf(\"absent %d\\n\", response);\n    } else {\n        printf(\"invalid %d\\n\", response);\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open Practice with mode 0. Select Run my code.",
+        "why": "Check whether 17 is kept in the absence of a reading.",
+        "expected": "The starter outputs absent 0. The contract requires absent 17."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Keep the response check first in snapshot, then repair the missing-source branch.",
+        "why": "A missing reading returns 0 without writing.",
+        "expected": "Input 0 now gives absent 17."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Try 1 and 49 on separate lines, then run 2 on its own.",
+        "why": "Check both pointer roles.",
+        "expected": "The results are present 49 and invalid 17 respectively."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Save a copy of your corrected main.c in a separate text file. Change the starting response to -4. Try modes 0 and 2, then 1 and 8 on separate lines. Restore your saved version.",
+        "criteria": [
+          "Failures retain -4 and print absent -4 and invalid -4. A successful read prints present 8."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.borrowed-pointer-contract",
+    "prerequisites": [
+      "c.update-through-parameter",
+      "c.local-scope-lived-object"
+    ]
+  }
+}

@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.test-boundaries",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "C programming",
+  "module": "Debugging, testing and memory safety",
+  "title": "Contracts, negative tests and boundaries",
+  "goal": "Choose tests by input class and distinguish a parsing fault from a range-check fault.",
+  "prerequisites": [
+    {
+      "text": "Inclusive bounds, parsing one line, and observing the result before and after a change."
+    }
+  ],
+  "terms": [
+    {
+      "id": "partition",
+      "term": "Input class",
+      "title": "Input class",
+      "definition": "A set of inputs for which the same rule applies for the same reason."
+    },
+    {
+      "id": "boundary-neighbor",
+      "term": "Boundary neighbour",
+      "title": "Boundary neighbour",
+      "definition": "The nearest value on one side of a boundary. Compare it with the boundary itself and the nearest value on the other side."
+    },
+    {
+      "id": "negative-case",
+      "term": "Negative test",
+      "title": "Negative test",
+      "definition": "A check that a specific condition, such as extra text or an out-of-range number, is rejected as specified."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "One result can hide several reasons",
+      "paragraphs": [
+        "A terminal accepts a daily limit from 1 through 24. The line 25 contains an integer outside the limits. The line 12x begins with an in-range number, but the full line is malformed. Both return invalid, so test both reasons separately.",
+        "Build a table with both boundaries, their nearest neighbours, an ordinary case and malformed inputs. Label the reason for each expected result so that each check covers a particular part of the contract."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Checking a daily limit",
+      "paragraphs": [
+        "strtol writes the address of the first unread character into end. read_value permits surrounding whitespace and rejects other suffixes. The comparisons against 1 and 24 happen only after parsing."
+      ],
+      "steps": [
+        "Enter 24. Parsing yields 24, value > 24 is false and the program prints valid.",
+        "Enter 25. Parsing still succeeds, but the upper check is now true. The program prints invalid.",
+        "Enter 12x. After strtol, end points to x. read_value rejects the line."
+      ],
+      "trace": [
+        [
+          "0",
+          "number",
+          "below 1",
+          "invalid"
+        ],
+        [
+          "1",
+          "number",
+          "in range",
+          "valid"
+        ],
+        [
+          "24",
+          "number",
+          "in range",
+          "valid"
+        ],
+        [
+          "25",
+          "number",
+          "above 24",
+          "invalid"
+        ],
+        [
+          "abc",
+          "no conversion",
+          "—",
+          "invalid"
+        ],
+        [
+          "12x",
+          "extra x",
+          "—",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 1 || value > 24) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n",
+        "stdin": "24\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0,
+        "cases": [
+          {
+            "input": "0\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "1\n",
+            "output": "valid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "25\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "12x\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "abc\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Identify the fault by its input",
+      "paragraphs": [
+        "If 24 gives invalid, inspect the upper-bound operator. If 12x gives valid, inspect what remains after strtol. Different inputs expose the two defects.",
+        "The separate diagnostic snippet omits an argument, so compilation is rejected. The program has not checked any input at that point."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Try a different pair of thresholds",
+      "paragraphs": [
+        "Practice accepts 10–18. List 9, 10, 17, 18, 19 and a valid-looking prefix with a suffix. Record the expected results before comparing them with the output."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.5.8, 6.5.14, 7.22.1.4",
+      "language": "English",
+      "purpose": "Choose tests by input class and distinguish a parsing fault from a range-check fault."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which test exposes a check of value >= 24 rather than value > 24?",
+      "options": [
+        "17",
+        "24",
+        "25"
+      ],
+      "correct": 1,
+      "feedback": [
+        "17 is in range with either check.",
+        "Only 24 distinguishes the inclusive boundary from the exclusive one.",
+        "Both checks reject 25."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 1 || value > 24) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n",
+        "stdin": "24\n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What does input 12x check?",
+      "options": [
+        "The upper threshold",
+        "Overflow of long",
+        "Characters after the number"
+      ],
+      "correct": 2,
+      "feedback": [
+        "The numeric prefix 12 is in range.",
+        "12 fits in long.",
+        "end points at x, so reject the complete line."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why record the expected reason when 25 and 12x print the same result?",
+      "feedback": "The first case checks the range after parsing. The second checks input syntax. Each result covers a different condition.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int is_valid(long value)\n{\n    return value >= 1 && value <= 24;\n}\n\nint main(void)\n{\n    return is_valid();\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "A booking window from 10 to 18",
+    "environment": "Clang / WASI · C17",
+    "task": "Accept numbers from 10 through 18. Parse the first line as a decimal integer with an optional sign and surrounding whitespace. Print valid for valid input or invalid otherwise. Fill in a table of input classes first, then fix suffix parsing and the upper boundary. Reject lines longer than 63 bytes before the newline.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        /* TODO: reject the suffix before publishing the value. */\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 10 || value >= 18) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "18\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Below the lower boundary",
+        "input": "9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Lower boundary",
+        "input": "10\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Inside the range",
+        "input": "17\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper boundary",
+        "input": "18\n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Above the upper boundary",
+        "input": "19\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Whitespace and sign",
+        "input": "  +15 \n",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unexpected suffix",
+        "input": "12x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "No number",
+        "input": "abc\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Overflow",
+        "input": "99999999999999999999999999999999999\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "No final newline",
+        "input": "18",
+        "output": "valid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "10, 18 and a number with surrounding whitespace are accepted. 9 and 19 give invalid.",
+      "12x, abc and an overflowing number give invalid. Label each distinct cause."
+    ],
+    "hint": "18 and 12x expose two different faults. Find the *end check in the parser and the comparison with 18 in main.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 10 || value > 18) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Record the class and expected result for 18 and 12x, then run both on the starter.",
+        "why": "The inputs isolate the parsing and comparison faults.",
+        "expected": "18 incorrectly gives invalid, and 12x incorrectly gives valid."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the suffix check and the threshold, then rerun the boundary and negative cases.",
+        "why": "Each cause needs its own passing check.",
+        "expected": "18 gives valid, 12x gives invalid, 9 and 19 give invalid, and 10 gives valid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "In a separate copy, use 5–9 and choose six inputs before running: two boundaries, their two outer neighbours, one ordinary value and one with a suffix.",
+        "criteria": [
+          "4 and 10 give invalid; 5 and 9 give valid. 7 and 7x check distinct classes."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.choose-boundary-test-partitions",
+    "prerequisites": [
+      "c.locate-first-observed-difference"
+    ]
+  }
+}

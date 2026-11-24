@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m1-v1",
+  "id": "c.m1-project",
+  "courseId": "c",
+  "moduleId": "c.m1",
+  "course": "C programming",
+  "module": "First programs in C",
+  "locale": "en",
+  "title": "Module 1 project: an order receipt",
+  "goal": "Build a console program from an input contract to a checked order receipt.",
+  "prerequisites": [
+    {
+      "text": "Format output with printf."
+    },
+    {
+      "text": "Calculate integer quotient, remainder, and price."
+    },
+    {
+      "text": "Check compilation and execution separately."
+    }
+  ],
+  "terms": [
+    {
+      "id": "contract",
+      "term": "Program contract",
+      "title": "Program contract",
+      "definition": "A description of accepted input, exact output, and how the program reports invalid input."
+    },
+    {
+      "id": "cent",
+      "term": "Cent",
+      "title": "Cent",
+      "definition": "One hundredth of a currency unit. Prices and totals here are stored as whole cents."
+    },
+    {
+      "id": "case",
+      "term": "Test case",
+      "title": "Test case",
+      "definition": "An input with an expected observable result recorded before running."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Before writing any code",
+      "paragraphs": [
+        "A warehouse counts full boxes but pays for every part. An order supplies three numbers: the quantity, the price of one part in cents, and the box capacity. It needs the full-box count, loose parts, and overall price.",
+        "Division and remainder describe the packaging. Multiplying quantity by unit price gives the price of every part, including loose ones.",
+        "In the example, read_numbers handles input and range validation. Read the bounds, then find where main starts computing the result."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "A compact report for the warehouse",
+      "paragraphs": [
+        "The warehouse operator expects a compact report. For 5 parts at 80 cents with capacity 2, predict both packaging numbers and the total.",
+        "The example reads the first line, up to 79 bytes. Its three whitespace-separated values are quantity 0–500, unit price 0–1000, and capacity 1–100. Invalid input gives invalid."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = quantity / capacity;\n    int loose = quantity % capacity;\n    long cents = (long)quantity * unit_cost;\n    printf(\"%d bundles, %d loose\\n\", bundles, loose);\n    printf(\"%ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+        "stdin": "5 80 2\n",
+        "output": "2 bundles, 1 loose\n400 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Quantity 5 and capacity 2 pass validation. 5 / 2 gives 2 boxes and 5 % 2 gives 1 loose part.",
+        "The total is 5 * 80 = 400 cents. Convert quantity to long before multiplying to accommodate totals up to 500000, even on an implementation with a 16-bit int.",
+        "The first printf combines packaging information, and the second prints the long total with %ld."
+      ],
+      "trace": [
+        [
+          "Packaging",
+          "5 and 2",
+          "2 and 1",
+          "Two full boxes and one loose part"
+        ],
+        [
+          "Price",
+          "5 and 80",
+          "400",
+          "The price of all five parts"
+        ],
+        [
+          "Output lines",
+          "2, 1, 400",
+          "2 bundles, 1 loose / 400 cents",
+          "In that order"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Cases that are easy to miss",
+      "paragraphs": [
+        "Charging only for parts in full boxes would give 320 instead of 400 in the example. The price includes the loose part.",
+        "In long cents = quantity * unit_cost, the multiplication of ints is still performed first. Convert an operand before multiplying and print the resulting long with %ld."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "From a compact report to a receipt",
+      "paragraphs": [
+        "The warehouse report uses two lines and the next screen expects three with exact labels. Check the calculations and the output format separately.",
+        "Write down expectations for normal, boundary, and invalid input. Reject zero capacity before calculating and accept an order containing zero parts."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.3.1.8, §6.5.5, §7.21.6.1",
+      "language": "English",
+      "purpose": "Check how the common arithmetic type is selected and how printf formats long."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which total should appear for 5 80 2?",
+      "options": [
+        "400 cents",
+        "320 cents",
+        "80 cents"
+      ],
+      "correct": 0,
+      "feedback": [
+        "All five parts are charged.",
+        "That charges only the four parts in full boxes.",
+        "That is the unit price."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = quantity / capacity;\n    int loose = quantity % capacity;\n    long cents = (long)quantity * unit_cost;\n    printf(\"%d bundles, %d loose\\n\", bundles, loose);\n    printf(\"%ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+        "stdin": "5 80 2\n",
+        "output": ""
+      },
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "How do you ensure that the multiplication is performed with long operands?",
+      "options": [
+        "(long)quantity * unit_cost",
+        "(long)(quantity * unit_cost)",
+        "quantity * unit_cost on the right side of long cents"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The first operand already has type long.",
+        "Inside the parentheses the multiplication still takes place as int.",
+        "The type of the result variable cannot change a completed multiplication."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why is an empty order allowed while zero capacity is invalid? Which inputs test this difference?",
+      "feedback": "Zero quantity gives zero boxes, loose parts, and cents with positive capacity, as in 0 350 4. Zero capacity prevents division, so an input such as 7 125 0 gives invalid.",
+      "recall": "transfer"
+    }
+  ],
+  "practice": {
+    "title": "Collection receipt",
+    "task": "Create a three-line order receipt. The first input line (up to 79 bytes) provides quantity 0–500, unit price 0–1000 cents, and capacity 1–100 separated by whitespace. Print boxes: and the number of full boxes, loose: and the remainder, then total: and the price of all items followed by cents. Print invalid for an invalid first line.",
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = 0;\n    int loose = 0;\n    long cents = 0;\n    /* TODO: compute the three results. */\n    printf(\"boxes: %d\\n\", bundles);\n    printf(\"loose: %d\\n\", loose);\n    printf(\"total: %ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "7 125 3\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Seven items in groups of three",
+        "input": "7 125 3\n",
+        "output": "boxes: 2\nloose: 1\ntotal: 875 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty order",
+        "input": "0 350 4\n",
+        "output": "boxes: 0\nloose: 0\ntotal: 0 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Exact boxes, free items",
+        "input": "12 0 4\n",
+        "output": "boxes: 3\nloose: 0\ntotal: 0 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Maximum quantity and price",
+        "input": "500 1000 100\n",
+        "output": "boxes: 5\nloose: 0\ntotal: 500000 cents\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing field",
+        "input": "7 125\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero capacity",
+        "input": "7 125 0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid unit price",
+        "input": "7 -125 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Price above the maximum",
+        "input": "7 1001 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra field",
+        "input": "7 125 3 8\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unrepresentable integer",
+        "input": "7 123456789012345678901234 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Input 7 125 3 produces boxes: 2, loose: 1, and total: 875 cents on separate lines.",
+      "An empty order, free items, maximum values, and invalid input were tested.",
+      "The total uses the entire quantity and long arithmetic. An invalid case produces only invalid."
+    ],
+    "hint": "The example uses the input in three different calculations. The starter shows the receipt layout. Work out the expression that produces each number.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdlib.h>\n\nstatic int read_numbers(int values[], const int maxima[], int count);\n\nint main(void)\n{\n    int values[3];\n    const int maxima[] = {500, 1000, 100};\n    if (!read_numbers(values, maxima, 3) || values[2] == 0) {\n        puts(\"invalid\");\n        return 0;\n    }\n    int quantity = values[0];\n    int unit_cost = values[1];\n    int capacity = values[2];\n    int bundles = quantity / capacity;\n    int loose = quantity % capacity;\n    long cents = (long)quantity * unit_cost;\n    printf(\"boxes: %d\\n\", bundles);\n    printf(\"loose: %d\\n\", loose);\n    printf(\"total: %ld cents\\n\", cents);\n    return 0;\n}\n\nstatic int read_numbers(int values[], const int maxima[], int count)\n{\n    char line[80];\n    int length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == (int)sizeof line - 1) { return 0; }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) { return 0; }\n    line[length] = '\\0';\n    char *cursor = line;\n    for (int i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < 0 || value > maxima[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) { return 0; }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) { ++cursor; }\n    return *cursor == '\\0';\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Read the contract and predict the result for 7 125 3 before adding formulas.",
+        "why": "Each of the three output fields comes from a different calculation.",
+        "expected": "Record 2 boxes, 1 loose item, and 875 cents."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add the calculations and run cases with a remainder, with zeros, and at maximum values.",
+        "why": "The maximum shows why the total type and format matter.",
+        "expected": "For 500 1000 100 record total: 500000 cents."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Test the input with an extra field and a new input of your own.",
+        "why": "Invalid input stops before the calculation.",
+        "expected": "The rejected input prints invalid and the additional test has an exact prediction."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Choose two valid inputs with the same quantity and price but different box capacities. Find two different packaging results and explain why the total remains the same.",
+        "criteria": [
+          "For example 9 42 4 gives 2 boxes and 1 loose part, while 9 42 6 gives 1 box and 3 loose parts.",
+          "Both totals are 378 cents.",
+          "Explain the dependence on quantity and price."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.first-console-project",
+    "prerequisites": [
+      "c.integer-quotient-remainder",
+      "c.read-compiler-diagnostics",
+      "c.output-formatting"
+    ]
+  }
+}

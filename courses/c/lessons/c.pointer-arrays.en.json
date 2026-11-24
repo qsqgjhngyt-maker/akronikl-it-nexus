@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.pointer-arrays",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "C programming",
+  "module": "Pointers, addresses and memory bounds",
+  "title": "Pointers, arrays and address arithmetic",
+  "goal": "Traverse an array range through pointers after validating the logical length used to compute its end.",
+  "prerequisites": [
+    {
+      "text": "You need logical array length, pointer dereferencing and the condition in a for loop."
+    }
+  ],
+  "terms": [
+    {
+      "id": "begin",
+      "term": "Range beginning",
+      "title": "Range beginning",
+      "definition": "A pointer to the first cell of the prepared array. For an empty range it equals the end."
+    },
+    {
+      "id": "end",
+      "term": "Exclusive end",
+      "title": "Exclusive end",
+      "definition": "The boundary just after the range’s last element. It can be within the array capacity or one position beyond the full array."
+    },
+    {
+      "id": "offset",
+      "term": "Offset",
+      "title": "Offset",
+      "definition": "The number of elements from the start of the array. Adding an integer to a pointer advances it by that many elements of the pointed-to type."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The boundary where traversal stops",
+      "paragraphs": [
+        "To walk through readings, keep a pointer cursor to the current item and end at the position after the used items. Check cursor != end before reading through *cursor.",
+        "In begin = readings the array name converts to a pointer to its first element. Adding 1 advances one element because the pointer type determines the stride.",
+        "When the working length equals capacity, end points one past the full array. Use this position as a boundary when comparing pointers within the same array. End the loop before reading through end. When length is zero, begin already equals end on the first check."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Sum three readings and an empty range",
+      "paragraphs": [
+        "Picture offsets 0, 1, 2 and 3. Only the first three positions hold values. At position 3 the loop stops before reading."
+      ],
+      "steps": [
+        "The assignments in main give begin offset 0 and end offset 3.",
+        "Each iteration checks cursor != end first. It then adds the value to total and advances the pointer by one element.",
+        "The second call passes begin twice. The body is skipped and the result is 0."
+      ],
+      "trace": [
+        [
+          "Offset 0",
+          "cursor != end",
+          "Read 2",
+          "Sum 2"
+        ],
+        [
+          "Offset 1",
+          "cursor != end",
+          "Read 8",
+          "Sum 10"
+        ],
+        [
+          "Offset 2",
+          "cursor != end",
+          "Read 5",
+          "Sum 15"
+        ],
+        [
+          "Offset 3",
+          "cursor == end",
+          "Stop before reading",
+          "Sum 15"
+        ],
+        [
+          "Begin equals end",
+          "Empty range",
+          "No read",
+          "Sum 0"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int sum(const int *begin, const int *end)\n{\n    int total = 0;\n    for (const int *cursor = begin; cursor != end; ++cursor) {\n        total += *cursor;\n    }\n    return total;\n}\n\nint main(void)\n{\n    const int readings[] = {2, 8, 5};\n    const int *begin = readings;\n    const int *end = begin + 3;\n\n    printf(\"%d\\n\", sum(begin, end));\n    printf(\"%d\\n\", sum(begin, begin));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "15\n0\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Offsets and the valid range",
+      "paragraphs": [
+        "Clang rejects cursor += 0.5. A pointer offset must be an integer number of elements.",
+        "The exercise validates length from 0 through capacity before computing end. The expression end - 1 points at the last used element only for a nonempty range. If the range is empty and begin is the array start, even computing begin - 1 is outside the allowed range."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Vary the length while keeping capacity",
+      "paragraphs": [
+        "Imagine a four-cell buffer holding 4, 8, 7 and 9. Write the end offset and the number of matching readings with working lengths 0, 2 and 4. Use an inclusive threshold of 8."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.3.2.1, 6.5.6, 6.5.8, 6.5.9",
+      "language": "English",
+      "purpose": "Check array conversion, permitted offsets and pointer comparison rules."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "After summing three elements, cursor equals end. What happens next?",
+      "options": [
+        "Read *cursor first",
+        "The condition ends the loop before any read",
+        "Move the pointer one more element"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The condition checks for the end before the body can run.",
+        "end marks the stopping position.",
+        "A false condition skips any further advance."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "The working length is 0 and begin points at the first array element. Can you compute end - 1?",
+      "options": [
+        "Yes, if you do not read through it",
+        "Yes, after casting the pointer",
+        "No, it would be before the array"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Even computing the result goes outside the allowed range.",
+        "Casting does not create a valid array position.",
+        "end equals begin, so a step backward is outside the array."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "The buffer holds 4, 8, 7 and 9 with working length 2. Which elements do you read with threshold 8, and what count do you get?",
+      "feedback": "You read only 4 and 8 and count 8. end has offset 2, so 7 and 9 are never read.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int readings[] = {2, 8, 5};\n    const int *cursor = readings;\n    cursor += 0.5;\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "invalid operands to binary expression"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Count readings through pointers",
+    "task": "The first line gives a reading count from 0 to 4. Read exactly that many integers from -99 to 99, one per line. Ignore later lines. Print the number of readings at least 8. Print invalid for a missing record, malformed number or length outside 0 through 4. In count_at_least, walk from the array beginning to its validated exclusive end.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int *begin, int length)\n{\n    const int *end = begin + length;\n    /* TODO: keep the correct stopping position. */\n    if (begin != end) {\n        --end;\n    }\n    int total = 0;\n    for (const int *cursor = begin; cursor != end; ++cursor) {\n        if (*cursor >= 8) {\n            ++total;\n        }\n    }\n    return total;\n}\n\nint main(void)\n{\n    enum { CAPACITY = 4 };\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    for (int index = 0; index < length; ++index) {\n        if (read_integer(-99, 99, &readings[index]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", count_at_least(readings, length));\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "3\n1\n7\n8\n",
+    "returnAnchor": "example",
+    "hint": "Find which position end denotes after begin + length. Compare it with the boundary used by the starter.",
+    "criteria": [
+      "The four values 1, 7, 8 and 9 give 2. A zero length gives 0.",
+      "A match at the last position is counted.",
+      "Capacity is validated before computing end, and the loop compares to end before dereferencing."
+    ],
+    "cases": [
+      {
+        "label": "Two matches in the full range",
+        "input": "4\n1\n7\n8\n9\n",
+        "output": "2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero length",
+        "input": "0\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Only the last reading matches",
+        "input": "3\n1\n7\n8\n",
+        "output": "1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "One element at the threshold",
+        "input": "1\n8\n",
+        "output": "1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Below the threshold",
+        "input": "2\n7\n-99\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "All four match",
+        "input": "4\n8\n99\n8\n9\n",
+        "output": "4\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Length exceeds capacity",
+        "input": "5\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Negative length",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing reading",
+        "input": "2\n9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Malformed reading",
+        "input": "1\n8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int count_at_least(const int *begin, int length)\n{\n    const int *end = begin + length;\n    int total = 0;\n    for (const int *cursor = begin; cursor != end; ++cursor) {\n        if (*cursor >= 8) {\n            ++total;\n        }\n    }\n    return total;\n}\n\nint main(void)\n{\n    enum { CAPACITY = 4 };\n    int readings[CAPACITY];\n    int length;\n    if (read_integer(0, CAPACITY, &length) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    for (int index = 0; index < length; ++index) {\n        if (read_integer(-99, 99, &readings[index]) != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", count_at_least(readings, length));\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open Practice with the three readings 1, 7 and 8. Select Run my code.",
+        "why": "This reveals whether the last reading participates.",
+        "expected": "The starter prints 0. The specification requires 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the traversal boundary and rerun the same input.",
+        "why": "Dereference cursor only before the original end.",
+        "expected": "The output is 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run inputs with lengths 0 and 5 separately.",
+        "why": "Check the empty traversal and the capacity guard.",
+        "expected": "The outputs are 0 and invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Save a copy of your corrected main.c in a separate text file. In the editor, change the threshold to 4. Try length 3 followed by 3, 4 and 5 on separate lines. Restore your saved version afterward.",
+        "criteria": [
+          "Output 2 shows that 4 and 5 both count.",
+          "The loop compares with end before accessing an element."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.walk-pointer-range",
+    "prerequisites": [
+      "c.read-write-through-pointer",
+      "c.array-length-contract"
+    ]
+  }
+}

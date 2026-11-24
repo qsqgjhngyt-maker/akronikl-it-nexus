@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.addresses-and-pointers",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "C programming",
+  "module": "Pointers, addresses and memory bounds",
+  "title": "Addresses and indirection",
+  "goal": "Choose a live object by its address and update it through a pointer while keeping the other object unchanged.",
+  "prerequisites": [
+    {
+      "text": "You will use int variables, an if statement and the lifetime of a local variable."
+    }
+  ],
+  "terms": [
+    {
+      "id": "object",
+      "term": "Object",
+      "title": "Object",
+      "definition": "Storage in which a value is held. The object value in the example starts with the integer 8."
+    },
+    {
+      "id": "pointer",
+      "term": "Pointer",
+      "title": "Pointer",
+      "definition": "An object whose value can point to another object. The pointer p and the integer value have separate storage."
+    },
+    {
+      "id": "indirection",
+      "term": "Indirection",
+      "title": "Indirection",
+      "definition": "The expression *p denotes the object targeted by p when the pointer is valid for that access."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Choose a counter, then update it",
+      "paragraphs": [
+        "Two counters need the same increment. A pointer lets the program select a counter first and then use one shared assignment.",
+        "In the declaration int *p, the asterisk is part of the declaration of a pointer. The expression *p dereferences p and accesses the object it points to. &value computes the address of the live variable value, which p stores after assignment.",
+        "Before access, establish which live object the pointer targets. In the example the initial assignment proves it. In the exercise the selection is checked before dereferencing."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "One write and two ways to read it",
+      "paragraphs": [
+        "Predict both output numbers. The stored integer changes and p continues to point to the same object."
+      ],
+      "steps": [
+        "The declaration of value creates an object holding 8.",
+        "&value computes its address, which p stores.",
+        "*p += 3 reads the integer in value and writes 11 back to that object."
+      ],
+      "trace": [
+        [
+          "value = 8",
+          "value holds 8",
+          "p has yet to be declared"
+        ],
+        [
+          "p = &value",
+          "p points to value",
+          "*p gives 8"
+        ],
+        [
+          "*p += 3",
+          "The same object holds 11",
+          "value and *p give 11"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int value = 8;\n    int *p = &value;\n\n    *p += 3;\n    printf(\"%d %d\\n\", value, *p);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "11 11\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Use the address of the selected object",
+      "paragraphs": [
+        "Clang rejects int *p = value in the separate diagnostic. The expression value has type int. Use &value to obtain its address.",
+        "When there is no selection, the exercise returns before reading or writing through selected. Check the two printed numbers to confirm that exactly one counter changed."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Try the model on a different pair",
+      "paragraphs": [
+        "Suppose the left counter is 20, the right counter is −1 and the increment is 5. For selection 2, write down where selected points, then predict both outputs."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.3.2.3, 6.5.3.2",
+      "language": "English",
+      "purpose": "Check object lifetime and the rules for & and *."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Which expression reads the integer 11 through p after the update?",
+      "options": [
+        "p",
+        "*p",
+        "&value"
+      ],
+      "correct": 1,
+      "feedback": [
+        "p holds an address.",
+        "Dereferencing p reads value.",
+        "&value computes the address."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Memory locations may vary between runs. How can you check the update?",
+      "options": [
+        "Check both value and *p against 11",
+        "Check the numeric spelling of the address",
+        "Compare p with the integer 11"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Both expressions read one object.",
+        "The numeric appearance of an address is unnecessary.",
+        "Use *p to check the integer stored in the object."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "With selection 1 and counters 20 and −1, what is printed after adding 5? Why does the right number stay the same?",
+      "feedback": "The output is 25 -1. selected holds the address of the left counter, so the one write through *selected affects that counter.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#pragma clang diagnostic error \"-Wint-conversion\"\n\nint main(void)\n{\n    int value = 8;\n    int *p = value;\n    (void)p;\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible integer to pointer conversion"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Increment the selected counter",
+    "task": "The left counter starts at 4 and the right at 10. Read a selection integer from the first line. Select the left counter for 1 and the right counter for 2. Add 3 through a pointer and print the two counters in their original order, separated by a space. Print invalid for any other selection or malformed input. Use the supplied read_integer. Ignore subsequent lines.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int left = 4;\n    int right = 10;\n    int choice;\n    int *selected = NULL;\n\n    if (read_integer(1, 2, &choice) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (choice == 1) {\n        selected = &left;\n    } else if (choice == 2) {\n        selected = &left; /* TODO: select the correct counter. */\n    }\n    if (selected == NULL) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    *selected += 3;\n    printf(\"%d %d\\n\", left, right);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n",
+    "returnAnchor": "example",
+    "hint": "Trace the assignment to selected in the branch for 2. Then establish which object the shared *selected += 3 updates.",
+    "criteria": [
+      "Input 1 prints 7 10. Input 2 prints 4 13.",
+      "An invalid selection outputs only invalid and returns before dereferencing.",
+      "The update uses one shared write through selected."
+    ],
+    "cases": [
+      {
+        "label": "Select the left counter",
+        "input": "1\n",
+        "output": "7 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Select the right counter",
+        "input": "2\n",
+        "output": "4 13\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Right counter without final newline",
+        "input": "2",
+        "output": "4 13\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Valid spacing and sign",
+        "input": " +2 \n",
+        "output": "4 13\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero selection",
+        "input": "0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Selection outside the pair",
+        "input": "3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra character after the number",
+        "input": "2x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty input",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int left = 4;\n    int right = 10;\n    int choice;\n    int *selected = NULL;\n\n    if (read_integer(1, 2, &choice) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (choice == 1) {\n        selected = &left;\n    } else if (choice == 2) {\n        selected = &right;\n    }\n    if (selected == NULL) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    *selected += 3;\n    printf(\"%d %d\\n\", left, right);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open Practice with input 2. Select Run my code.",
+        "why": "Compare the selected object with the two output values.",
+        "expected": "The starter prints 7 10. Selection 2 should print 4 13."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the address in the branch for 2 and run again.",
+        "why": "One shared update should affect the selected object.",
+        "expected": "Input 2 gives 4 13."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Try 1, 0 and 2x in separate runs.",
+        "why": "Check the other branch and rejection before access.",
+        "expected": "The outputs are 7 10, invalid and invalid in order."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Save a copy of your corrected main.c in a separate text file. Set the counters to 20 and -1 and the increment to 5. Predict and verify the result for selection 2, then restore your exercise code.",
+        "criteria": [
+          "The output 20 4 preserves the left counter and updates the right counter."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.read-write-through-pointer",
+    "prerequisites": [
+      "c.array-index-range",
+      "c.local-scope-lived-object"
+    ]
+  }
+}

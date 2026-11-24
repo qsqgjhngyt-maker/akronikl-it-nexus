@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m8-v1",
+  "id": "c.allocation",
+  "courseId": "c",
+  "moduleId": "c.m8",
+  "course": "C programming",
+  "module": "Dynamic memory and ownership",
+  "locale": "en",
+  "title": "Allocation and failure checking",
+  "goal": "Allocate a small array from a validated element count, handle NULL before accessing it, and release the allocation after computing a result.",
+  "prerequisites": [
+    {
+      "text": "Know arrays, pointers and bounded object lifetimes."
+    },
+    {
+      "text": "Be able to check an integer before converting it to size_t."
+    }
+  ],
+  "terms": [
+    {
+      "id": "allocation",
+      "term": "Allocation",
+      "title": "Allocation",
+      "definition": "Obtaining a block of a specified byte size. malloc takes a byte count and returns a pointer or NULL."
+    },
+    {
+      "id": "size",
+      "term": "Size",
+      "title": "Size",
+      "definition": "The number of bytes for count elements. sizeof *values expresses one element's size from its type."
+    },
+    {
+      "id": "initialization",
+      "term": "Initialization",
+      "title": "Initialization",
+      "definition": "Writing an initial defined value to each element you use. malloc does not initialize those elements."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why determine the size at runtime",
+      "paragraphs": [
+        "A training program receives a sensor's result count. Runtime allocation can reserve the validated number of integers. The pointer does not carry the length, so retain count separately.",
+        "First verify a positive element count and that count times element size fits. Separate the steps: request bytes, check the result, initialize the elements, compute the sum, and release the block.",
+        "Here sizeof *values uses the element type. It does not read memory through values. Unlike sizeof, values[0] accesses an object and is valid only after obtaining a block."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "An array of three elements",
+      "paragraphs": [
+        "Predict the sum after storing 1, 2 and 3. Identify the single path on which the array may be accessed."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nint main(void)\n{\n    const size_t count = 3;\n    if (count > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        return 0;\n    }\n    int *values = malloc(count * sizeof *values);\n    if (values == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    values[0] = 1;\n    values[1] = 2;\n    values[2] = 3;\n    printf(\"sum %d\\n\", values[0] + values[1] + values[2]);\n    free(values);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "sum 6\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Check the byte-size expression before requesting malloc.",
+        "Ensure the result is not NULL and initialize the three elements.",
+        "Print the sum of 6 and end ownership by calling free."
+      ],
+      "trace": [
+        [
+          "count = 3",
+          "request 3 × the size of int"
+        ],
+        [
+          "values != NULL",
+          "write [1, 2, 3]"
+        ],
+        [
+          "sum 6",
+          "call free once"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "Clang rejects a call to undeclared malloc. Check for stdlib.h. The header supplies the function declaration with the right return type.",
+        "If the starter always prints allocation-failed, check that it actually requests memory when the flag permits it. When disabled, the adapter must return NULL before malloc. This refusal is reproducible without exhausting memory."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Change the example values to 3, 1, 4 and predict the sum. Keep the validation and release sequence.",
+        "In the practice, repeat the experiment with flag 0. Record the last reached step and why no element is read."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.3.4, §7.20.3, §7.22.3.3–4",
+      "language": "English",
+      "purpose": "Review the language and library contracts used in this example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the worked example print after successful allocation?",
+      "options": [
+        "sum 0",
+        "sum 3",
+        "sum 6"
+      ],
+      "correct": 2,
+      "feedback": [
+        "The elements are initialized before summing.",
+        "The element count is not the sum.",
+        "1 + 2 + 3 = 6."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "How does handling flag 0 differ from rejecting malformed input?",
+      "options": [
+        "Both branches allocate memory.",
+        "Flag 0 is valid input and prevents the request. Malformed input is rejected earlier.",
+        "Flag 0 permits reading the array."
+      ],
+      "correct": 1,
+      "feedback": [
+        "Neither branch performs the actual allocation.",
+        "Different checks give different outcomes.",
+        "NULL is checked before any read."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Why can neither element access nor a free-memory estimate help in the values == NULL branch?",
+      "feedback": "There is no block to read. The call has already signaled failure, so report the defined result and finish.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    void *p = malloc(4);\n    return p == 0;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared",
+        "malloc"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "A bounded array",
+    "environment": "C17 · Clang/WASI",
+    "task": "Enter two whitespace-separated integers on the first line of up to 63 bytes: count from 1 to 16 and a flag of 0 or 1. Later lines are ignored. Complete allocate_values: a denied request or invalid size yields NULL, and an allowed size requests space for count int elements. The supplied main handles NULL. On success it stores 1 through count, prints sum N, and frees the block. Invalid input yields invalid. Flag 0 returns NULL before calling malloc.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstatic int *allocate_values(size_t count, int allowed)\n{\n    if (!allowed || count == 0 || count > SIZE_MAX / sizeof(int)) {\n        return NULL;\n    }\n    /* TODO: make a positive, checked allocation. */\n    return NULL;\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {1, 0};\n    const int maximum[] = {16, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    const size_t count = (size_t)input[0];\n    int *values = allocate_values(count, input[1]);\n    if (values == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    int sum = 0;\n    for (size_t i = 0; i < count; ++i) {\n        values[i] = (int)i + 1;\n        sum += values[i];\n    }\n    printf(\"sum %d\\n\", sum);\n    free(values);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "4 1\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Ordinary allocation",
+        "input": "4 1\n",
+        "output": "sum 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Controlled refusal",
+        "input": "4 0\n",
+        "output": "allocation-failed\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "One element",
+        "input": "1 1\n",
+        "output": "sum 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero count",
+        "input": "0 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Maximum count",
+        "input": "16 1\n",
+        "output": "sum 136\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Over the limit",
+        "input": "17 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid flag",
+        "input": "4 2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "4 1 gives sum 10, 4 0 gives allocation-failed, and 0 1 gives invalid.",
+      "Flag 0 returns from allocate_values before calling malloc. Check NULL before accessing elements. Free each successfully allocated block once."
+    ],
+    "hint": "Use the already validated count. sizeof(int) gives the bytes per element.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstatic int *allocate_values(size_t count, int allowed)\n{\n    if (!allowed || count == 0 || count > SIZE_MAX / sizeof(int)) {\n        return NULL;\n    }\n    return malloc(count * sizeof(int));\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {1, 0};\n    const int maximum[] = {16, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    const size_t count = (size_t)input[0];\n    int *values = allocate_values(count, input[1]);\n    if (values == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    int sum = 0;\n    for (size_t i = 0; i < count; ++i) {\n        values[i] = (int)i + 1;\n        sum += values[i];\n    }\n    printf(\"sum %d\\n\", sum);\n    free(values);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 4 1. Find the TODO in allocate_values.",
+        "why": "The request passes validation, but the starter immediately returns NULL.",
+        "expected": "The starter prints allocation-failed."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Call malloc after the size check. Run 4 1 and 4 0 separately.",
+        "why": "The same count distinguishes an actual request from a controlled refusal.",
+        "expected": "The corrected code prints sum 10 and allocation-failed respectively."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check 16 1 and 0 1.",
+        "why": "Zero is rejected before calling allocate_values.",
+        "expected": "The results are sum 136 and invalid respectively."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Use the positive even numbers 2..2×count and preserve the allocation guard.",
+        "criteria": [
+          "3 1 gives sum 12, while 3 0 still gives allocation-failed. Explain why the refusal does not depend on the summing formula."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.checked-allocation",
+    "prerequisites": [
+      "c.record-array-lookup"
+    ]
+  }
+}

@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m8-v1",
+  "id": "c.resize-safely",
+  "courseId": "c",
+  "moduleId": "c.m8",
+  "course": "C programming",
+  "module": "Dynamic memory and ownership",
+  "locale": "en",
+  "title": "Changing capacity with realloc",
+  "goal": "Change an array's capacity while preserving its original block, data, and capacity on failure.",
+  "prerequisites": [
+    {
+      "text": "Design storage with a single owner and a release step."
+    },
+    {
+      "text": "Distinguish the number of used elements from capacity."
+    }
+  ],
+  "terms": [
+    {
+      "id": "resize",
+      "term": "Resize",
+      "title": "Resize",
+      "definition": "Obtaining a differently sized allocation while keeping its preserved portion on successful realloc."
+    },
+    {
+      "id": "temporary-result",
+      "term": "Temporary result",
+      "title": "Temporary result",
+      "definition": "The next pointer stores the return value until it has been checked. Owner fields change only on success."
+    },
+    {
+      "id": "used",
+      "term": "Used count",
+      "title": "Used count",
+      "definition": "The number of already initialized elements. Preserving all values requires capacity ≥ used."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "The two resize paths",
+      "paragraphs": [
+        "A list with two records can have capacity 2 or 6. The resize request sets the new number of slots. Existing records and their values follow a separate contract.",
+        "For a positive request, realloc may return a new pointer or NULL. On NULL, the old allocation remains available. Store the result in a temporary variable and update pointer and metadata only after the check.",
+        "On success the previous allocation's lifetime ends. Use the returned pointer and derive element pointers from it again. Do not evaluate the old pointer, even for comparison. Initialize new slots before reading them."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Grow a list of two values",
+      "paragraphs": [
+        "Predict used count, new capacity and the sum after resizing [8, 13] to four slots."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstruct List {\n    int *items;\n    size_t used;\n    size_t capacity;\n};\n\nstatic int resize(struct List *list, size_t requested, int allowed)\n{\n    if (requested == 0 || requested < list->used ||\n        requested > SIZE_MAX / sizeof *list->items) {\n        return -1;\n    }\n    if (requested == list->capacity) {\n        return 1;\n    }\n    if (!allowed) {\n        return 0;\n    }\n    int *next = realloc(list->items, requested * sizeof *list->items);\n    if (next == NULL) {\n        return 0;\n    }\n    list->items = next;\n    list->capacity = requested;\n    return 1;\n}\n\nint main(void)\n{\n    if (2 > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        return 0;\n    }\n    struct List list = {malloc(2 * sizeof(int)), 2, 2};\n    if (list.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    list.items[0] = 8;\n    list.items[1] = 13;\n    int result = resize(&list, 4, 1);\n    const char *status = result == 1 ? \"ok\" : (result == 0 ? \"allocation-failed\" : \"invalid\");\n    printf(\"%s %zu %d\\n\", status, list.capacity, list.items[0] + list.items[1]);\n    free(list.items);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "ok 4 21\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Check that 4 is positive, at least used, and yields a valid byte product.",
+        "realloc returns next. Check that result before overwriting list.",
+        "On success capacity becomes 4. The two existing values still sum to 21."
+      ],
+      "trace": [
+        [
+          "Before the call",
+          "used = 2, capacity = 2, [8, 13]"
+        ],
+        [
+          "Check next",
+          "success preserves both values"
+        ],
+        [
+          "After success",
+          "used = 2, capacity = 4, sum = 21"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "An indirection requires pointer operand error on sizeof *capacity occurs because capacity is a size. Use sizeof *list->items for element bytes.",
+        "If capacity becomes 6 after a refusal, find the assignment that changed it. Failure preserves the pointer, used, capacity, and data. Requesting the existing capacity succeeds before checking the flag, without calling realloc."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "In the worked example, request 1 and then 2. Predict each call's return status. The sum remains 21 on both paths.",
+        "Use a separate input to force the refusal path in your practice. Describe the resulting block using used, capacity and the sum."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.2.4, §7.22.3.5",
+      "language": "English",
+      "purpose": "Review the language and library contracts used in this example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "How does used change after the example successfully grows to capacity 4?",
+      "options": [
+        "It stays 2",
+        "It becomes 4",
+        "It becomes 0"
+      ],
+      "correct": 0,
+      "feedback": [
+        "New slots have not been initialized.",
+        "4 is the capacity.",
+        "Growth preserves the original two values."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Where should the result of realloc go before the NULL check?",
+      "options": [
+        "Directly into list->items",
+        "Into temporary pointer next",
+        "Into size_t capacity"
+      ],
+      "correct": 1,
+      "feedback": [
+        "On NULL this would lose the owner's previous pointer.",
+        "This keeps the old owner until the result is confirmed.",
+        "Capacity is a number, while the result is a pointer."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "What does the practice print when capacity is 2 and the allow flag is 0? Why?",
+      "feedback": "ok 2 11. After the initial allocation, resize sees the existing capacity and returns success before calling realloc. The values 4 and 7 remain.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stddef.h>\n\nint main(void)\n{\n    size_t capacity = 4;\n    return (int)sizeof *capacity;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "indirection requires pointer operand"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Safe capacity changes",
+    "environment": "C17 · Clang/WASI",
+    "task": "The first line of up to 63 bytes contains a target capacity from 0 to 8 and a flag of 0 or 1. Malformed or out-of-range input prints invalid. The program then creates a block containing 4 and 7, with used = capacity = 2. If the initial malloc returns NULL, it prints only allocation-failed. Zero or a target below used yields invalid 2 11. Requesting the same capacity gives ok 2 11 with either flag. For a capacity change, flag 0 skips realloc and yields allocation-failed 2 11, as does an actual realloc failure. Success prints ok, the new capacity, and 11. Complete the capacity update.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct List {\n    int *items;\n    size_t used;\n    size_t capacity;\n};\n\nstatic int resize(struct List *list, size_t requested, int allowed)\n{\n    if (requested == 0 || requested < list->used ||\n        requested > SIZE_MAX / sizeof *list->items) {\n        return -1;\n    }\n    if (requested == list->capacity) {\n        return 1;\n    }\n    if (!allowed) {\n        return 0;\n    }\n    int *next = realloc(list->items, requested * sizeof *list->items);\n    if (next == NULL) {\n        return 0;\n    }\n    list->items = next;\n    /* TODO: record the new capacity after success. */\n    return 1;\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {0, 0};\n    const int maximum[] = {8, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (2 > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        return 0;\n    }\n    struct List list = {malloc(2 * sizeof(int)), 2, 2};\n    if (list.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    list.items[0] = 4;\n    list.items[1] = 7;\n    int result = resize(&list, (size_t)input[0], input[1]);\n    const char *status = result == 1 ? \"ok\" : (result == 0 ? \"allocation-failed\" : \"invalid\");\n    printf(\"%s %zu %d\\n\", status, list.capacity, list.items[0] + list.items[1]);\n    free(list.items);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "6 1\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Successful resize",
+        "input": "6 1\n",
+        "output": "ok 6 11\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Refusal retaining the old block",
+        "input": "6 0\n",
+        "output": "allocation-failed 2 11\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Less than used count",
+        "input": "1 1\n",
+        "output": "invalid 2 11\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unchanged capacity",
+        "input": "2 0\n",
+        "output": "ok 2 11\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero capacity",
+        "input": "0 1\n",
+        "output": "invalid 2 11\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper bound",
+        "input": "8 1\n",
+        "output": "ok 8 11\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Command exceeds capacity bound",
+        "input": "9 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra input",
+        "input": "6 1 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "6 1 yields ok 6 11; 6 0 preserves 2 and 11. With 1 1 the initial allocation exists, and the resize request is rejected before realloc.",
+      "On both success and failure, release the current sole owner."
+    ],
+    "hint": "Update capacity alongside the owner pointer, only after checking next.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct List {\n    int *items;\n    size_t used;\n    size_t capacity;\n};\n\nstatic int resize(struct List *list, size_t requested, int allowed)\n{\n    if (requested == 0 || requested < list->used ||\n        requested > SIZE_MAX / sizeof *list->items) {\n        return -1;\n    }\n    if (requested == list->capacity) {\n        return 1;\n    }\n    if (!allowed) {\n        return 0;\n    }\n    int *next = realloc(list->items, requested * sizeof *list->items);\n    if (next == NULL) {\n        return 0;\n    }\n    list->items = next;\n    list->capacity = requested;\n    return 1;\n}\n\nint main(void)\n{\n    int input[2];\n    const int minimum[] = {0, 0};\n    const int maximum[] = {8, 1};\n    if (!read_values(input, minimum, maximum, 2)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    if (2 > SIZE_MAX / sizeof(int)) {\n        puts(\"size-error\");\n        return 0;\n    }\n    struct List list = {malloc(2 * sizeof(int)), 2, 2};\n    if (list.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    list.items[0] = 4;\n    list.items[1] = 7;\n    int result = resize(&list, (size_t)input[0], input[1]);\n    const char *status = result == 1 ? \"ok\" : (result == 0 ? \"allocation-failed\" : \"invalid\");\n    printf(\"%s %zu %d\\n\", status, list.capacity, list.items[0] + list.items[1]);\n    free(list.items);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 6 1 and find the TODO in resize.",
+        "why": "On successful realloc, the starter stores the returned pointer and leaves the old capacity.",
+        "expected": "The starter prints ok 2 11."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Update capacity after checking next. Run 6 1 again.",
+        "why": "The number of occupied slots and the sum of the original values stay the same.",
+        "expected": "The corrected output is ok 6 11."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run 6 0, 2 0, and 1 1 separately.",
+        "why": "The initial block already exists. The flag, unchanged capacity, and invalid target each prevent a realloc call.",
+        "expected": "The results are allocation-failed 2 11, ok 2 11, and invalid 2 11 respectively."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "In a separate copy, after resize add 3 only if the result is 1 and list.used < list.capacity. Increment used after storing the value at list.items[list.used]. Before free, print status, used, capacity, and the sum across all occupied slots.",
+        "criteria": [
+          "6 1 yields ok 3 6 14. 6 0 yields allocation-failed 2 2 11. With 2 0 there is no free slot, so the output is ok 2 2 11."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.safe-resize",
+    "prerequisites": [
+      "c.single-owner-cleanup"
+    ]
+  }
+}

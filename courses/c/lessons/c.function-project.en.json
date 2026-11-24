@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m3-draft-v1",
+  "id": "c.function-project",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m3",
+  "course": "C programming",
+  "module": "Functions and decomposition",
+  "title": "Project: unit conversion",
+  "goal": "Build a converter with independent functions and separate computation and interface checks.",
+  "prerequisites": [
+    {
+      "text": "Declare functions and verify a numerical contract independently of input."
+    }
+  ],
+  "terms": [
+    {
+      "id": "conversion",
+      "term": "Unit conversion",
+      "title": "Unit conversion",
+      "definition": "Restating the same quantity in different units."
+    },
+    {
+      "id": "decomposition",
+      "term": "Decomposition",
+      "title": "Decomposition",
+      "definition": "Separating selection, calculation and input/output."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "Hours and minutes measure time; kilograms and grams measure mass. A function owns its factor, while the printed unit belongs to the interface.",
+        "State each numerical contract first. Then let main validate input, dispatch to the right function and print the result."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Worked example",
+      "paragraphs": [
+        "Predict the results for 3 hours and 2 kilograms. Identify both factors and labels."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int hours_to_minutes(int hours)\n{\n    return hours * 60;\n}\n\nstatic int kilograms_to_grams(int kilograms)\n{\n    return kilograms * 1000;\n}\n\nint main(void)\n{\n    printf(\"minutes %d\\n\", hours_to_minutes(3));\n    printf(\"grams %d\\n\", kilograms_to_grams(2));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "minutes 180\ngrams 2000\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Hours → 3 × 60 → 180 → Label minutes",
+        "Kilograms → 2 × 1000 → 2000 → Label grams"
+      ],
+      "trace": [
+        [
+          "Hours",
+          "3 × 60",
+          "180",
+          "Label minutes"
+        ],
+        [
+          "Kilograms",
+          "2 × 1000",
+          "2000",
+          "Label grams"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "paragraphs": [
+        "A correct value with the wrong unit can indicate a dispatch or output error. A direct call checks the formula.",
+        "Clang reports an undeclared function when a call misspells its name. Compare it with the declaration."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Transfer to practice",
+      "paragraphs": [
+        "Choice 1 converts minutes to seconds, and choice 2 converts kilometers to meters. At the maximum 30, 30 × 1000 = 30000 fits the minimum C17 int range."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "5.2.4.2.1, 6.5.5, 6.9.1",
+      "language": "English",
+      "purpose": "Build a converter with independent functions and separate computation and interface checks."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does kilograms_to_grams(2) return?",
+      "options": [
+        "120",
+        "200",
+        "2000"
+      ],
+      "correct": 2,
+      "feedback": [
+        "60 is for the time conversion.",
+        "One kilogram is 1000 grams.",
+        "Multiply 2 by 1000."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstatic int hours_to_minutes(int hours)\n{\n    return hours * 60;\n}\n\nstatic int kilograms_to_grams(int kilograms)\n{\n    return kilograms * 1000;\n}\n\nint main(void)\n{\n    printf(\"minutes %d\\n\", hours_to_minutes(3));\n    printf(\"grams %d\\n\", kilograms_to_grams(2));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What should be checked if a kilometer input gives seconds 3000?",
+      "options": [
+        "Branch and printed label",
+        "Empty input",
+        "Buffer capacity"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The value is already right for three kilometers.",
+        "Input was already parsed.",
+        "The discrepancy appears after calculation."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How can the meter calculation, dispatch and rejection of an unknown unit be checked separately?",
+      "feedback": "Call kilometers_to_meters(3) directly and check 3000. Then check code 2 with 3 km and its meters label. Code 3 must give invalid before any calculation.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "static int meters(int kilometers) { return kilometers * 1000; }\nint main(void) { return metre(3); }\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared function"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Time and distance converter",
+    "task": "The first line contains code 1 or 2 and the second a magnitude from 0 to 30. Code 1 converts minutes to seconds and code 2 kilometers to meters. Fix both functions. Print seconds or meters before the result, or invalid for rejected input. The supplied read_integer function checks the first two lines. A missing line, an invalid number or an out-of-range value gives invalid. The program ignores any later input.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int minutes_to_seconds(int minutes)\n{\n    return minutes; /* TODO: convert to seconds. */\n}\n\nstatic int kilometers_to_meters(int kilometers)\n{\n    return kilometers; /* TODO: convert to meters. */\n}\n\nint main(void)\n{\n    int unit;\n    int magnitude;\n    if (read_integer(1, 2, &unit) != READ_OK ||\n        read_integer(0, 30, &magnitude) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    if (unit == 1) {\n        printf(\"seconds %d\\n\", minutes_to_seconds(magnitude));\n    } else {\n        printf(\"meters %d\\n\", kilometers_to_meters(magnitude));\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n3\n",
+    "returnAnchor": "example",
+    "hint": "Each function has its own factor. Try an ordinary case and the maximum of 30 km.",
+    "criteria": [
+      "1 and 2 give seconds 120; 2 and 3 give meters 3000.",
+      "Unknown code 3 and a missing magnitude are rejected.",
+      "Calculation functions do not read or print.",
+      "Two direct calls with empty input gave 120 3000. A separate run of the main program with code 3 gave invalid."
+    ],
+    "cases": [
+      {
+        "label": "Minutes to seconds",
+        "input": "1\n2\n",
+        "output": "seconds 120\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Kilometers to meters",
+        "input": "2\n3\n",
+        "output": "meters 3000\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper bound",
+        "input": "2\n30\n",
+        "output": "meters 30000\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero magnitude",
+        "input": "1\n0\n",
+        "output": "seconds 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unknown code",
+        "input": "3\n2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Missing magnitude",
+        "input": "2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Over the limit",
+        "input": "2\n31\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int minutes_to_seconds(int minutes)\n{\n    return minutes * 60;\n}\n\nstatic int kilometers_to_meters(int kilometers)\n{\n    return kilometers * 1000;\n}\n\nint main(void)\n{\n    int unit;\n    int magnitude;\n    if (read_integer(1, 2, &unit) != READ_OK ||\n        read_integer(0, 30, &magnitude) != READ_OK) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    if (unit == 1) {\n        printf(\"seconds %d\\n\", minutes_to_seconds(magnitude));\n    } else {\n        printf(\"meters %d\\n\", kilometers_to_meters(magnitude));\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Enter 2 and 3 on separate lines, then run the starter.",
+        "why": "Build a converter with independent functions and separate computation and interface checks.",
+        "expected": "The starter prints meters 3. Converting 3 km to meters should give meters 3000."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the formula in each function. In the working program, try 1 and 2, then 2 and 30.",
+        "why": "The change must satisfy the contract.",
+        "expected": "The working program prints seconds 120 and meters 30000 for those two runs."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Save a copy of the entire corrected main.c in a separate text file. In the lesson editor, temporarily replace only the body of main. Call minutes_to_seconds(2) and kilometers_to_meters(3) from main, print the two results separated by a space and run with empty input.",
+        "why": "Two direct calls check the calculations independently of input parsing and unit dispatch.",
+        "expected": "The driver prints 120 3000."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Restore the saved main.c in the lesson editor. Enter code 3 and magnitude 2 on separate lines, then run the working program.",
+        "why": "This checks rejection at the program interface.",
+        "expected": "The program prints invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Create two direct calls before integration and check an unknown code through the main interface. Label what each test measures.",
+        "criteria": [
+          "The two numerical results can be checked without stdin.",
+          "An invalid choice is rejected before calculation."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.function-decomposition-project",
+    "prerequisites": [
+      "c.function-boundary-driver"
+    ]
+  }
+}

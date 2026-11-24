@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m9-v1",
+  "id": "c.read-write-files",
+  "courseId": "c",
+  "moduleId": "c.m9",
+  "course": "Программирование на C",
+  "module": "Файлы и обработка ошибок",
+  "locale": "ru",
+  "title": "Чтение, запись и конец файла",
+  "goal": "Скопировать небольшой журнал с точным сохранением байтов, отличить нормальный конец чтения от ошибки и удостовериться, что результат записан.",
+  "prerequisites": [
+    {
+      "text": "Уметь открыть и закрыть FILE * из предыдущей темы. Здесь программа владеет двумя потоками по очереди."
+    },
+    {
+      "text": "Помнить различие массива и его длины. В примере используется буфер ровно на 64 байта учебного входа."
+    }
+  ],
+  "terms": [
+    {
+      "id": "end-of-file",
+      "term": "EOF",
+      "title": "EOF",
+      "definition": "Отдельное значение, которое fgetc возвращает при конце потока или ошибке. После этого проверяют ferror у ещё открытого потока."
+    },
+    {
+      "id": "line-feed",
+      "term": "LF",
+      "title": "LF",
+      "definition": "Символ перевода строки. Во входном файле учебной задачи он занимает один байт, как и каждая цифра."
+    },
+    {
+      "id": "byte-copy",
+      "term": "Копия по байтам",
+      "title": "Копия по байтам",
+      "definition": "Выход совпадает со входом по длине и каждому байту. Режимы rb и wb отключают преобразования текстового режима."
+    },
+    {
+      "id": "run-output-file",
+      "term": "Файл результата запуска",
+      "title": "Файл результата запуска",
+      "definition": "Новый или изменённый файл в изолированной области запуска. Он появляется в списке файлов редактора только после явного сохранения результата."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Сохраните обе строки полевого журнала",
+      "paragraphs": [
+        "Дежурный передаёт напарнику копию короткого журнала. Нужно сохранить обе записи, переводы строк и возможность получить пустую копию, когда записей нет. Нельзя считать первый перевод строки концом файла.",
+        "fgetc возвращает int, чтобы различать прочитанный байт и EOF в этой среде. После EOF проверьте ferror до fclose. Ненулевой ferror означает ошибку чтения. Нулевой ferror после EOF означает нормальное окончание потока.",
+        "Сначала дочитайте учебный файл в ограниченный буфер. Только если он полностью прочитан и закрыт, откройте отдельный copy.txt в wb. Проверьте и число записанных байтов от fwrite, и результат fclose: буферизованная запись может завершиться ошибкой при закрытии."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Почему у двух однозначных чисел четыре байта",
+      "paragraphs": [
+        "Файл input.txt содержит 3, LF, 6, LF. Поле stdin оставьте пустым. До запуска перечислите четыре байта, которые должны попасть в copy.txt."
+      ],
+      "steps": [
+        "Сохраните каждый прочитанный байт, включая LF. Если fgetc вернул EOF, проверьте ferror до закрытия входного потока.",
+        "Откройте отдельный выход только после завершения чтения. Передайте в fwrite четыре байта; затем проверьте закрытие.",
+        "Сравните число в stdout и результат: stdout равен written 4, а copy.txt содержит две строки с LF после каждой."
+      ],
+      "trace": [
+        [
+          "Первое чтение",
+          "3 + LF",
+          "2 B"
+        ],
+        [
+          "Второе чтение",
+          "6 + LF",
+          "4 B"
+        ],
+        [
+          "EOF",
+          "ferror = 0, вход закрыт",
+          "4 B"
+        ],
+        [
+          "fwrite / fclose",
+          "copy.txt",
+          "written 4"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    unsigned char bytes[64];\n    size_t length = 0;\n    const char *problem = NULL;\n    int byte;\n    while ((byte = fgetc(input)) != EOF) {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    FILE *output = fopen(\"copy.txt\", \"wb\");\n    if (output == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    if (fwrite(bytes, 1, length, output) != length) {\n        problem = \"write-error\";\n    }\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-output-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    printf(\"written %zu\\n\", length);\n    return 0;\n}\n",
+        "files": {
+          "input.txt": "3\n6\n"
+        },
+        "stdin": "",
+        "output": "written 4\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "3\n6\n"
+        },
+        "cases": [
+          {
+            "input": "",
+            "inputFiles": {
+              "input.txt": ""
+            },
+            "output": "written 0\n",
+            "stderr": "",
+            "exitCode": 0,
+            "outputFiles": {
+              "copy.txt": ""
+            }
+          },
+          {
+            "input": "",
+            "inputFiles": {},
+            "output": "open-input-error\n",
+            "stderr": "",
+            "exitCode": 1,
+            "outputFiles": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Разделить EOF, ошибку и неполную копию",
+      "paragraphs": [
+        "written 2 при двух строках маршрута обычно означает, что цикл завершился на первом LF. Отделите байт перевода строки от сигнала EOF. Если ferror ненулевой, сообщите read-error и не создавайте выход.",
+        "Сообщение too few arguments для ferror означает, что проверке не передали открытый поток. Используйте ferror(input) до fclose(input). Случай реальной ошибки устройства не нужно воспроизводить: ветка проверяется отдельно контролируемой подстановкой."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Проверить последнюю строку без LF",
+      "paragraphs": [
+        "В отдельной копии удалите только последний LF из учебного файла. Предскажите длину. Проверьте, что копия не получила лишний перевод строки, а исходный файл остался доступен по прежнему пути."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§7.21.5.1, §7.21.5.3, §7.21.7.1, §7.21.8.2, §7.21.10.3",
+      "language": "English",
+      "purpose": "Сверьте договоры fgetc, ferror, fwrite и fclose."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "empty",
+      "kind": "choice",
+      "prompt": "Пустой input.txt успешно открыт. Первый fgetc вернул EOF, ferror равен 0. Что должно появиться после записи?",
+      "options": [
+        "Ошибку read-error и ни одного файла",
+        "Пустой copy.txt и written 0",
+        "Файл с переводом строки и written 1"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Нулевой ferror отличает этот путь от ошибки чтения.",
+        "Прочитано ноль байтов. Успешная запись создаёт пустой файл.",
+        "Программа ничего не добавляет к содержимому."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "int-not-char",
+      "kind": "choice",
+      "prompt": "Как сохранить различие между прочитанным байтом и EOF?",
+      "options": [
+        "Сначала записать результат в char",
+        "Остановиться на первом LF",
+        "Сравнить результат fgetc в int с EOF"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Преобразование к char может потерять различие.",
+        "LF — обычный байт внутри файла.",
+        "Преобразование к unsigned char выполняется после проверки EOF."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "write-check",
+      "kind": "free",
+      "prompt": "fwrite вернул ожидаемое число байтов, но fclose выходного потока вернул EOF. Почему нельзя объявлять записанную копию готовой?",
+      "feedback": "Буферизованные данные могли не записаться при закрытии. Нужно сообщить close-output-error, завершиться с кодом 1 и не предлагать файл как успешный результат.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    return ferror();\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "too few arguments"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "",
+    "title": "Копия маршрута для следующей смены",
+    "task": "Номера остановок уже лежат в input/route.txt. Поле stdin не используется. Исправьте условие цикла, чтобы читать до EOF, сохраняя каждый байт, включая LF. Размер учебного файла — от 0 до 64 байтов. Копируйте содержимое в copy.txt только после успешного чтения и закрытия входа. Успех даёт written N, код 0 и новый файл. Копия пустого входа существует и содержит 0 байтов. Нет входа — open-input-error, больше 64 байтов — input-too-long. Ошибки чтения, записи и закрытия выдают соответствующий статус и код 1. Входной файл остаётся прежним.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/route.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    unsigned char bytes[64];\n    size_t length = 0;\n    const char *problem = NULL;\n    int byte;\n    while ((byte = fgetc(input)) != EOF && byte != '\\n') {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    FILE *output = fopen(\"copy.txt\", \"wb\");\n    if (output == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    if (fwrite(bytes, 1, length, output) != length) {\n        problem = \"write-error\";\n    }\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-output-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    printf(\"written %zu\\n\", length);\n    return 0;\n}\n"
+      },
+      {
+        "path": "input/route.txt",
+        "content": "18\n21\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Две остановки с переводами строки",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "18\n21\n"
+        },
+        "output": "written 6\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "18\n21\n"
+        }
+      },
+      {
+        "label": "Пустой маршрут",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": ""
+        },
+        "output": "written 0\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": ""
+        }
+      },
+      {
+        "label": "Последняя строка без LF",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "18\n21"
+        },
+        "output": "written 5\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "18\n21"
+        }
+      },
+      {
+        "label": "Маршрута нет",
+        "input": "",
+        "inputFiles": {},
+        "output": "open-input-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Числа только в stdin",
+        "input": "18\n21\n",
+        "inputFiles": {},
+        "output": "open-input-error\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      },
+      {
+        "label": "Ровно 64 байта",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "777777777777777777777777777777777777777777777777777777777777777\n"
+        },
+        "output": "written 64\n",
+        "stderr": "",
+        "exitCode": 0,
+        "outputFiles": {
+          "copy.txt": "777777777777777777777777777777777777777777777777777777777777777\n"
+        }
+      },
+      {
+        "label": "Слишком длинный файл",
+        "input": "",
+        "inputFiles": {
+          "input/route.txt": "7777777777777777777777777777777777777777777777777777777777777777\n"
+        },
+        "output": "input-too-long\n",
+        "stderr": "",
+        "exitCode": 1,
+        "outputFiles": {}
+      }
+    ],
+    "criteria": [
+      "Две строки 18 и 21 с завершающим LF дают written 6. Новый copy.txt содержит ровно эти шесть байтов.",
+      "Пустой input/route.txt даёт written 0 и пустой copy.txt. Отсутствующий input/route.txt даёт open-input-error, код 1 и ни одного нового файла.",
+      "Результат сравнивается по длине и байтам. Исходный файл остаётся прежним. Файл запуска не попадает в редактор без явного действия."
+    ],
+    "hint": "В while оставьте условие (byte = fgetc(input)) != EOF. LF — байт для копирования. После цикла сохраняйте имеющуюся проверку ferror.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/route.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    unsigned char bytes[64];\n    size_t length = 0;\n    const char *problem = NULL;\n    int byte;\n    while ((byte = fgetc(input)) != EOF) {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    FILE *output = fopen(\"copy.txt\", \"wb\");\n    if (output == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    if (fwrite(bytes, 1, length, output) != length) {\n        problem = \"write-error\";\n    }\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-output-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    printf(\"written %zu\\n\", length);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Посмотрите обе строки в input/route.txt. Вернитесь в main.c, оставьте stdin пустым и запустите заготовку.",
+        "why": "Заготовка завершает цикл на первом LF.",
+        "expected": "written 2. Временный copy.txt содержит только 18 без LF."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте условие цикла и запустите снова. Скачайте copy.txt из результата запуска. Если copy.txt уже сохранён в проект и его байты совпадают с новой копией, начните сравнение в отдельной чистой копии проекта.",
+        "why": "Сравните обе строки с входом и проверьте число байтов в списке результатов. До явного сохранения copy.txt не появляется в списке файлов редактора.",
+        "expected": "written 6. В copy.txt две строки 18 и 21, обе завершаются LF."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Пустой файл и файл без завершающего LF",
+        "task": "В отдельной копии очистите input/route.txt, не удаляя его. Запустите и скачайте copy.txt. Затем в этой копии запишите 18 и 21 на двух строках без LF после 21. Снова запустите и скачайте. Не сохраняйте результаты в проект до окончания сравнения.",
+        "criteria": [
+          "Пустой файл даёт written 0 и copy.txt длиной 0. Без завершающего LF будет written 5 и файл из байтов 31 38 0A 32 31 в шестнадцатеричной записи."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.copy-file-check-eof-and-write",
+    "prerequisites": [
+      "c.open-close-file-stream",
+      "c.complete-line-input"
+    ]
+  }
+}

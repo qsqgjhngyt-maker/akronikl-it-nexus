@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.memory-safe-review",
+  "locale": "ru",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "Программирование на C",
+  "module": "Отладка, тестирование и безопасность памяти",
+  "title": "Ревью границ, времени жизни и целых типов",
+  "goal": "Проверить знак, границу индекса и время жизни массива до доступа к его элементу.",
+  "prerequisites": [
+    {
+      "text": "Длина массива, выходной параметр, время жизни локального блока и проверка полного ввода."
+    }
+  ],
+  "terms": [
+    {
+      "id": "array-bound",
+      "term": "Граница массива",
+      "title": "Граница массива",
+      "definition": "Массив длины count имеет индексы от 0 до count − 1. count подходит для сравнения, а адрес за последним элементом нельзя разыменовывать."
+    },
+    {
+      "id": "wide-unsigned",
+      "term": "Широкий беззнаковый тип",
+      "title": "Широкий беззнаковый тип",
+      "definition": "uintmax_t позволяет сравнить неотрицательное значение с size_t до приведения к индексу. Это сохраняет исходное число при проверке."
+    },
+    {
+      "id": "copy-while-live",
+      "term": "Копия из живого объекта",
+      "title": "Копия из живого объекта",
+      "definition": "Чтение из массива доступно во время его жизни. Скопированное целое хранится в отдельном объекте и остаётся доступно после окончания жизни массива."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Перед чтением ответьте на три вопроса",
+      "paragraphs": [
+        "Таблица показаний содержит 8 и 13. Найдите в коде, в какой точке индекс остаётся подписанным, где его проверяют, и в какой точке массив ещё существует. В списке ревью поставьте все три вопроса перед обращением values[index].",
+        "Отрицательный вход отклоняется явно. Если сначала приводить его к size_t, исходный знак теряется. Кроме того, преобразование слишком большого положительного числа к более узкому size_t может дать маленькое значение. Сравнение в uintmax_t сохраняет величину до проверки."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Безопасно прочитайте 13 по индексу 1",
+      "paragraphs": [
+        "Функция copy_at вызывается пока values и saved существуют. count — число элементов, полученное из размера массива в main. После проверки index < count значение можно представить в size_t и использовать для чтения."
+      ],
+      "steps": [
+        "Подайте 1. Проверка input < 0 пропускает его, uintmax_t хранит 1 без изменения.",
+        "Сравнение 1 >= 2 ложно. copy_at записывает в saved копию values[1], равную 13.",
+        "Подайте 2, затем −1. Оба запуска дают invalid, и ни в одном случае код не читает элемент массива."
+      ],
+      "trace": [
+        [
+          "0",
+          "0 < 2",
+          "values[0]",
+          "8"
+        ],
+        [
+          "1",
+          "1 < 2",
+          "values[1]",
+          "13"
+        ],
+        [
+          "2",
+          "2 >= 2",
+          "—",
+          "invalid"
+        ],
+        [
+          "-1",
+          "есть знак минус",
+          "—",
+          "invalid"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nstatic int copy_at(const int values[], size_t count, long input, int *out)\n{\n    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}\n\nint main(void)\n{\n    long input;\n    if (!read_value(&input)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int saved;\n    const int values[] = {8, 13};\n    size_t count = sizeof values / sizeof values[0];\n    if (!copy_at(values, count, input, &saved)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n",
+        "stdin": "1\n",
+        "output": "13\n",
+        "stderr": "",
+        "exitCode": 0,
+        "cases": [
+          {
+            "input": "0\n",
+            "output": "8\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "2\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          },
+          {
+            "input": "-1\n",
+            "output": "invalid\n",
+            "stderr": "",
+            "exitCode": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Определите безопасный порядок по исходнику",
+      "paragraphs": [
+        "Сначала проверяйте число. Только затем вычисляйте индекс и проверяйте длину. Условие после values[index] не может защитить уже выполненное чтение. Для такого неверного порядка достаточно разбора на бумаге.",
+        "Во фрагменте для диагностики записан value[0], хотя value имеет тип int. Компилятор отклоняет саму форму выражения. В исполняемом примере переменная values является массивом, а правильные значение count и время жизни проверяются отдельно."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Сохраните значение после блока",
+      "paragraphs": [
+        "В практике values объявлен во внутреннем блоке. Объект saved живёт во внешнем блоке. При успехе copy_at переносит целое в saved до закрывающей скобки, после которой остаётся доступно только saved."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.3.1.3, 6.5.2.1, 6.5.6, 7.20.1.5",
+      "language": "English",
+      "purpose": "Проверить знак, границу индекса и время жизни массива до доступа к его элементу."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какой вход должен остановиться до преобразования в uintmax_t?",
+      "options": [
+        "-1",
+        "1",
+        "2"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Сравнение input < 0 обнаруживает отрицательное число.",
+        "1 — допустимый индекс для двух элементов.",
+        "2 не отрицательно. Позже его отвергает index >= count."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Что можно напечатать после закрытия блока с values?",
+      "options": [
+        "Целое saved, скопированное из живого массива",
+        "Значение по сохранённому адресу элемента",
+        "Элемент только после проверки его адреса на NULL"
+      ],
+      "correct": 0,
+      "feedback": [
+        "saved живёт во внешнем блоке.",
+        "Массив закончил существование.",
+        "Проверка на NULL не продлевает жизнь объекта."
+      ],
+      "recall": "transfer"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Перечислите порядок проверки входа, преобразования, обращения к массиву и копирования.",
+      "feedback": "Разберите строку, отклоните знак минус, сравните неотрицательное число с count в uintmax_t, затем прочтите живой элемент по проверенному индексу и скопируйте его в saved.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    int value = 8;\n    return value[0];\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "subscripted value",
+        "is not an array"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Три показания во временном массиве",
+    "environment": "Clang / WASI · C17",
+    "task": "Прочитайте первую строку как десятичный индекс с необязательным знаком и пробелами по краям. Допустимы индексы 0–2. Выведите выбранное значение 21, 34 или 55, иначе invalid. Уберите ветку, которая оставляет доступным только индекс 0. Храните копию числа после внутреннего блока и оставьте все условия безопасности перед обращением.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nstatic int copy_at(const int values[], size_t count, long input, int *out)\n{\n    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count || index != 0) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}\n\nint main(void)\n{\n    long input;\n    if (!read_value(&input)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int saved;\n    {\n        const int values[] = {21, 34, 55};\n        size_t count = sizeof values / sizeof values[0];\n        if (!copy_at(values, count, input, &saved)) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "2\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Первый элемент",
+        "input": "0\n",
+        "output": "21\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Средний элемент",
+        "input": "1\n",
+        "output": "34\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Последний элемент",
+        "input": "2\n",
+        "output": "55\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ровно длина",
+        "input": "3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательный индекс",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Крупное число",
+        "input": "2147483647\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний символ",
+        "input": "1x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "0, 1 и 2 дают 21, 34 и 55. −1, 3 и ввод с хвостом дают invalid.",
+      "Сравнение знака предшествует беззнаковому преобразованию. Длина проверяется до обращения.",
+      "После внутреннего блока читается только скопированное целое saved."
+    ],
+    "hint": "Условие index >= count уже отсекает все верхние отказы. Посмотрите, что добавляет index != 0.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nstatic int copy_at(const int values[], size_t count, long input, int *out)\n{\n    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}\n\nint main(void)\n{\n    long input;\n    if (!read_value(&input)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int saved;\n    {\n        const int values[] = {21, 34, 55};\n        size_t count = sizeof values / sizeof values[0];\n        if (!copy_at(values, count, input, &saved)) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 2 и проверьте, какое условие отбрасывает допустимый индекс.",
+        "why": "Ветка защиты для выхода за count должна остаться. Наблюдаемый дефект воспроизводится на безопасном коде.",
+        "expected": "Заготовка печатает invalid, по договору ожидается 55."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Снимите лишнее ограничение. Проверьте 0, 2, 3 и −1.",
+        "why": "Проверки подтверждают доступ к крайним элементам и предусмотренный отказ.",
+        "expected": "Выводы 21, 55, invalid и invalid, по одному на запуск."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Назовите последнюю строку, где values ещё существует, и первую, где читается результат вне блока.",
+        "why": "Убедитесь, что между блоками передаётся значение.",
+        "expected": "После скобки печатается saved; адрес values там не хранится."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Самостоятельный перенос",
+        "task": "В отдельной копии замените массив на {4, 7, 9, 12}; получите count через sizeof и выберите три теста для новой границы.",
+        "criteria": [
+          "2 даёт 9, 3 даёт 12, 4 даёт invalid. Порядок проверок сохранён."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.review-bounds-lifetime-conversion",
+    "prerequisites": [
+      "c.choose-boundary-test-partitions",
+      "c.copy-before-lifetime-ends",
+      "c.checked-size-product"
+    ]
+  }
+}

@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m10-v1",
+  "id": "c.header-guards",
+  "courseId": "c",
+  "moduleId": "c.m10",
+  "course": "Программирование на C",
+  "module": "Препроцессор и многофайловые программы",
+  "locale": "ru",
+  "title": "Заголовки и защита от повторного включения",
+  "goal": "Проверить два пути к общему заголовку и сохранить оба включения, определив тип только один раз в каждой единице трансляции.",
+  "prerequisites": [
+    {
+      "text": "Знаете структуры и поля. Ошибка возникает потому, что два пути подставляют один и тот же полный текст структуры."
+    },
+    {
+      "text": "Знаете, как #include и #define участвуют в сборке. Это поможет понять, когда начинается и заканчивается область защиты."
+    }
+  ],
+  "terms": [
+    {
+      "id": "direct-include",
+      "term": "Прямое включение",
+      "title": "Прямое включение",
+      "definition": "main.c явным #include запросил нужный заголовок."
+    },
+    {
+      "id": "nested-include",
+      "term": "Вложенное включение",
+      "title": "Вложенное включение",
+      "definition": "Один заголовок сам включает другой. Например, gauge_scale.h использует gauge.h."
+    },
+    {
+      "id": "include-guard",
+      "term": "Защита от повторного включения",
+      "title": "Защита от повторного включения",
+      "definition": "Пара #ifndef и #define с уникальным именем вокруг содержимого заголовка. второй проход видит уже заданный макрос и пропускает блок."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Рабочая модель",
+      "paragraphs": [
+        "В проекте измерителя основной файл использует тип Gauge прямо. Заголовок его шкалы тоже нужен и включает gauge.h. Эти два пути естественны: каждый файл явно объявляет свои зависимости.",
+        "Сначала #ifndef GAUGE_H видит, что GAUGE_H ещё не задан. #define помечает первый вход. Когда шкала подключает gauge.h снова, условие ложно и повторная копия структуры не попадает в C-текст.",
+        "Маркер действует при обработке одного исходного файла. При отдельной компиляции другого .c его препроцессор начнёт заново. Защита заголовка не разрешает размещать в нём обычные внешние определения функций, которые попадут в несколько .c."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Соберите измеритель с двумя путями к gauge.h",
+      "paragraphs": [
+        "main.c включает gauge.h напрямую и получает его ещё из gauge_scale.h. Предскажите число определений struct Gauge, которые остаются в этой единице трансляции."
+      ],
+      "steps": [
+        "Прямое включение устанавливает GAUGE_H и выпускает определение структуры.",
+        "Подключение gauge_scale.h снова достигает gauge.h. Маркер уже установлен, поэтому тело пропускается.",
+        "Из того же заголовка шкалы остаётся DEFAULT_GAUGE_MM = 18. main создаёт одну запись Gauge и печатает поле."
+      ],
+      "trace": [
+        [
+          "main.c → gauge.h",
+          "GAUGE_H ещё нет",
+          "структура включена"
+        ],
+        [
+          "main.c → gauge_scale.h → gauge.h",
+          "GAUGE_H уже есть",
+          "структура пропущена"
+        ],
+        [
+          "Запуск",
+          "sample.millimetres = 18",
+          "gauge=18 mm"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include \"gauge.h\"\n#include \"gauge_scale.h\"\n\nint main(void)\n{\n    struct Gauge sample = {DEFAULT_GAUGE_MM};\n    printf(\"gauge=%d mm\\n\", sample.millimetres);\n    return 0;\n}\n",
+        "files": {
+          "gauge.h": "#ifndef GAUGE_H\n#define GAUGE_H\nstruct Gauge {\n    int millimetres;\n};\n#endif\n",
+          "gauge_scale.h": "#ifndef GAUGE_SCALE_H\n#define GAUGE_SCALE_H\n#include \"gauge.h\"\n#define DEFAULT_GAUGE_MM 18\n#endif\n"
+        },
+        "metadata": {
+          "entryFile": "main.c",
+          "languageId": "c",
+          "standard": "C17"
+        },
+        "stdin": "",
+        "output": "gauge=18 mm\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Найдите этап сбоя",
+      "paragraphs": [
+        "Сообщение redefinition of 'Kit' означает, что описание полной структуры дошло до компилятора дважды. Проследите оба пути от main.c к kit.h и проверьте границы #ifndef, #define и #endif.",
+        "Удаление одного #include иногда скрывает сбой, но оставляет kit.h хрупким. Добавьте собственный маркер KIT_H и сохраните прямую зависимость."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Предскажите, проверьте и объясните",
+      "paragraphs": [
+        "В отдельной копии разборного проекта уберите защиту gauge.h. Предскажите ошибку повторного определения и найдите две ветви включения. Восстановите заголовок и поменяйте порядок двух включений в main.c. Что останется тем же?"
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§5.1.1.2, §6.7.2.3, §6.10.1–§6.10.2",
+      "language": "English",
+      "purpose": "Включение исходников, условия и объявления тегов структуры."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "second-route",
+      "kind": "choice",
+      "prompt": "К моменту обработки gauge_scale.h заголовок gauge.h уже включён. Что остаётся от второго входа в gauge.h?",
+      "options": [
+        "Вторая копия struct Gauge",
+        "Тело заголовка пропускается",
+        "Компоновщик позже объединяет две структуры"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Маркер GAUGE_H не разрешит второй раз обработать тело.",
+        "Условие #ifndef теперь ложно.",
+        "Защита срабатывает при обработке исходника, раньше компоновки."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "different-markers",
+      "kind": "choice",
+      "prompt": "Почему двум разным заголовкам следует дать разные имена защиты?",
+      "options": [
+        "Иначе первый может выключить тело второго",
+        "Имя определяет значение поля структуры",
+        "Имя защиты нужно только компоновщику"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Одинаковый макрос заставит второе условие #ifndef стать ложным.",
+        "Макрос защиты отмечает обработку заголовка и не задаёт данные записи.",
+        "Имена проверяет препроцессор."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "undo-shortcut",
+      "kind": "free",
+      "prompt": "Сборка проходит после удаления прямого #include \"kit.h\". Почему полезнее вернуть его и исправить kit.h?",
+      "feedback": "main.c прямо использует структуру. Своя защита позволяет kit.h безопасно включаться и через main.c, и через kit_label.h. При перестройке связей зависимость сохраняется.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n#include \"kit.h\"\n#include \"kit_label.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int kits = read_digit();\n    if (kits < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    struct Kit order = {kits * PARTS_PER_KIT};\n    printf(\"parts=%d\\n\", order.parts);\n    return 0;\n}\n",
+      "files": {
+        "kit.h": "struct Kit {\n    int parts;\n};\n",
+        "kit_label.h": "#ifndef KIT_LABEL_H\n#define KIT_LABEL_H\n#include \"kit.h\"\n#define PARTS_PER_KIT 4\n#endif\n"
+      },
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "redefinition of 'Kit'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "environment": "C17 · Clang/WASI",
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "returnAnchor": "example",
+    "stdin": "2\n",
+    "title": "Защитите описание набора деталей",
+    "task": "Добавьте в main.c прямое включение kit.h, сохранив kit_label.h. Поместите весь тип struct Kit под защиту KIT_H. Выводите parts= и число деталей при четырёх деталях на набор. Первая строка stdin — одна цифра с LF или концом ввода. Любой другой формат даёт invalid и код 1.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include \"kit_label.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int kits = read_digit();\n    if (kits < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    struct Kit order = {kits * PARTS_PER_KIT};\n    printf(\"%d\\n\", order.parts); /* TODO: label the result. */\n    return 0;\n}\n"
+      },
+      {
+        "path": "kit.h",
+        "content": "struct Kit {\n    int parts;\n};\n"
+      },
+      {
+        "path": "kit_label.h",
+        "content": "#ifndef KIT_LABEL_H\n#define KIT_LABEL_H\n#include \"kit.h\"\n#define PARTS_PER_KIT 4\n#endif\n"
+      }
+    ],
+    "cases": [
+      {
+        "label": "Два набора",
+        "input": "2\n",
+        "output": "parts=8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Ноль наборов",
+        "input": "0\n",
+        "output": "parts=0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Девять без LF",
+        "input": "9",
+        "output": "parts=36\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Две цифры",
+        "input": "12\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      },
+      {
+        "label": "Пустая строка",
+        "input": "\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 1
+      }
+    ],
+    "criteria": [
+      "Оба включения сохраняются, kit.h имеет собственный маркер. Ввод 2, 0 и 9 даёт parts=8, parts=0 и parts=36 соответственно.",
+      "Две цифры или пустая строка дают invalid и код 1. stderr во всех запускных проверках пуст."
+    ],
+    "hint": "KIT_H должен окружать именно тело kit.h. KIT_LABEL_H относится к другому заголовку и не защищает прямой путь в kit.h.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdio.h>\n#include \"kit.h\"\n#include \"kit_label.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int kits = read_digit();\n    if (kits < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    struct Kit order = {kits * PARTS_PER_KIT};\n    printf(\"parts=%d\\n\", order.parts);\n    return 0;\n}\n",
+      "files": {
+        "kit.h": "#ifndef KIT_H\n#define KIT_H\nstruct Kit {\n    int parts;\n};\n#endif\n",
+        "kit_label.h": "#ifndef KIT_LABEL_H\n#define KIT_LABEL_H\n#include \"kit.h\"\n#define PARTS_PER_KIT 4\n#endif\n"
+      },
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 2.",
+        "why": "Пока kit.h достигается только через kit_label.h.",
+        "expected": "8"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Добавьте прямой #include \"kit.h\" и запустите сборку.",
+        "why": "Два пути подставляют struct Kit без защиты.",
+        "expected": "redefinition of 'Kit'"
+      },
+      {
+        "where": "Code Studio",
+        "action": "Защитите kit.h и добавьте префикс parts=.",
+        "why": "Оба пути остаются, определение обрабатывается один раз.",
+        "expected": "parts=8"
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Смените порядок включений",
+        "task": "В копии решения переставьте kit.h и kit_label.h в main.c и повторите ввод 2. Покажите, где теперь впервые устанавливается KIT_H.",
+        "criteria": [
+          "После перестановки компиляция и parts=8 сохраняются. Объясните, почему первое посещение теперь происходит из kit_label.h."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.guard-header-inclusion",
+    "prerequisites": [
+      "c.configure-preprocessor"
+    ]
+  }
+}

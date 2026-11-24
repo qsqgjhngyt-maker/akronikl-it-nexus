@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m8-v1",
+  "id": "c.dynamic-record-project",
+  "courseId": "c",
+  "moduleId": "c.m8",
+  "course": "Программирование на C",
+  "module": "Динамическая память и владение",
+  "locale": "ru",
+  "title": "Проект: изменяемый список записей",
+  "goal": "Собрать маленький растущий список, который сохраняет уже принятые записи при отказе и освобождает память.",
+  "prerequisites": [
+    {
+      "text": "Безопасно менять вместимость и проверять произведение размеров."
+    },
+    {
+      "text": "Уметь сформулировать инвариант used ≤ capacity и работать с записью."
+    }
+  ],
+  "terms": [
+    {
+      "id": "growth",
+      "term": "Рост",
+      "title": "Рост",
+      "definition": "Получение большей вместимости до помещения новой записи. Здесь предел составляет восемь мест."
+    },
+    {
+      "id": "committed-prefix",
+      "term": "Сохранённая часть списка",
+      "title": "Сохранённая часть списка",
+      "definition": "Записи успешно выполненных операций до отказа. Отвергнутая запись не занимает новое место."
+    },
+    {
+      "id": "failure-policy",
+      "term": "Управляемый отказ",
+      "title": "Управляемый отказ",
+      "definition": "Учебный выбор, на какой попытке роста завершить reserve до реального запроса памяти."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Где проходит граница успешной операции",
+      "paragraphs": [
+        "Запись Record связывает порядковый номер id и значение value. Список Queue хранит указатель на массив, число занятых мест и вместимость. Если места нет, append запрашивает рост. При успехе он записывает оба поля новой записи и только тогда увеличивает used.",
+        "reserve проверяет вместимость и число байтов. После проверок счётчик учитывает попытку роста. Управляемый отказ происходит до realloc. При реальном отказе realloc прежний блок тоже остаётся жив. После успеха список использует возвращённый указатель.",
+        "Оператор && пропускает вторую вставку, если первая отказала. Сумма учитывает только поля value занятых записей. Разные записи могут давать одинаковую сумму, поэтому сохранность проверяется по id:value. destroy освобождает текущий блок и сбрасывает поля списка."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Тест намеренного отказа второго роста",
+      "paragraphs": [
+        "Список начинается с записи 1:5. Сначала добавляем значение 8, затем пробуем добавить 13. Учебная политика отклоняет второй рост. Предскажите сводку и каждую пару id:value."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { MAX_CAPACITY = 8 };\n\nstruct Record {\n    size_t id;\n    int value;\n};\n\nstruct Queue {\n    struct Record *items;\n    size_t used;\n    size_t capacity;\n};\n\nstruct GrowthPolicy {\n    unsigned attempts;\n    unsigned fail_at;\n};\n\nstatic int reserve(struct Queue *queue, struct GrowthPolicy *policy)\n{\n    if (queue->capacity == 0 || queue->capacity > MAX_CAPACITY / 2) {\n        return 0;\n    }\n    size_t next_capacity = queue->capacity * 2;\n    if (next_capacity > SIZE_MAX / sizeof *queue->items) {\n        return 0;\n    }\n    ++policy->attempts;\n    if (policy->attempts == policy->fail_at) {\n        return 0;\n    }\n    struct Record *next = realloc(queue->items, next_capacity * sizeof *queue->items);\n    if (next == NULL) {\n        return 0;\n    }\n    queue->items = next;\n    queue->capacity = next_capacity;\n    return 1;\n}\n\nstatic int append(struct Queue *queue, struct GrowthPolicy *policy, int value)\n{\n    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;\n    return 1;\n}\n\nstatic long total(const struct Queue *queue)\n{\n    long sum = 0;\n    for (size_t i = 0; i < queue->used; ++i) {\n        sum += queue->items[i].value;\n    }\n    return sum;\n}\n\nstatic void destroy(struct Queue *queue)\n{\n    free(queue->items);\n    *queue = (struct Queue){0};\n}\n\nint main(void)\n{\n    struct Queue queue = {malloc(sizeof(struct Record)), 1, 1};\n    if (queue.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    queue.items[0] = (struct Record){.id = 1, .value = 5};\n    struct GrowthPolicy policy = {.attempts = 0, .fail_at = 2};\n    int ok = append(&queue, &policy, 8) && append(&queue, &policy, 13);\n    printf(\"%s %zu %zu %ld\\n\", ok ? \"ok\" : \"allocation-failed\",\n           queue.used, queue.capacity, total(&queue));\n    for (size_t i = 0; i < queue.used; ++i) {\n        printf(\"%zu:%d\\n\", queue.items[i].id, queue.items[i].value);\n    }\n    destroy(&queue);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "allocation-failed 2 2 13\n1:5\n2:8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Вставка 8 вызывает рост с одного места до двух. После записи полей второй элемент равен 2:8, used равно 2.",
+        "Вставка 13 требует нового роста. Счётчик доходит до 2, политика возвращает отказ до вызова realloc.",
+        "Сводка показывает allocation-failed 2 2 13. Строки 1:5 и 2:8 показывают, какие записи сохранились."
+      ],
+      "trace": [
+        [
+          "До команд",
+          "used 1, capacity 1, [1:5]"
+        ],
+        [
+          "Добавлена 2:8",
+          "used 2, capacity 2, [1:5, 2:8]"
+        ],
+        [
+          "Отказ для значения 13",
+          "used 2, capacity 2, [1:5, 2:8]"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Локализуйте и проверьте ошибку",
+      "paragraphs": [
+        "Clang сообщает no member named used, если определение типа не содержит поля used. Сверьте объявление записи и роль count перед исправлением.",
+        "Если тест с отказом второй попытки даёт ok, проследите, когда увеличивается attempts. При исправном счётчике вторая вставка отклоняется, поля записей 1:10 и 2:20 остаются прежними."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Измените, предскажите и проверьте",
+      "paragraphs": [
+        "Сравните отказ первой и второй попыток. В каком случае && пропускает вызов append для второго значения, а в каком вызов происходит и возвращает отказ?",
+        "Повторите отдельно с выводом id:value. Сравните каждый номер и значение, даже если суммы совпадают."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.13, §6.5.2.3, §7.20.3, §7.22.3",
+      "language": "English",
+      "purpose": "Сверьте договоры языка и библиотеки, использованные в примере."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что сохраняется после второго отказа в разобранном примере?",
+      "options": [
+        "[1:5]",
+        "[1:5, 2:8]",
+        "[1:5, 2:8, 3:13]"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Первая вставка успела завершиться.",
+        "Вторая вставка остановилась до изменения.",
+        "Для последнего значения роста не произошло."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Когда безопасно увеличить used?",
+      "options": [
+        "Сразу после получения числа",
+        "До запроса места",
+        "После успешной записи в доступное место"
+      ],
+      "correct": 2,
+      "feedback": [
+        "Корректный ввод не обеспечивает место.",
+        "Запрос ещё может завершиться отказом.",
+        "Счётчик включает только существующие элементы."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Для 20 30 1 в каком состоянии заканчивается очередь и какая команда остаётся невыполненной?",
+      "feedback": "Рост перед значением 20 отклоняется. Из-за && вставка 30 не вызывается. Остаются used 1, capacity 1 и запись 1:10.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Queue {\n    int *items;\n};\n\nint main(void)\n{\n    struct Queue queue = {0};\n    return queue.used;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "no member named 'used'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Растущая очередь числовых записей",
+    "environment": "C17 · Clang/WASI",
+    "task": "Первая строка до 63 байт содержит два целых значения от 0 до 9999 и номер попытки роста от 0 до 2. Каждый запуск начинает со списка [1:10], вместимости 1 и счётчика 0. Номер 0 выключает управляемый отказ, 1 и 2 отклоняют соответствующую попытку до realloc. Функция append назначает новой записи следующий номер. При необходимости список растёт вдвое в пределах восьми мест. Вставки прекращаются при первом отказе. Дополните счётчик попыток в reserve. Основной вывод — одна строка: ok или allocation-failed, затем used, capacity и сумма полей value. Для неверного ввода выводится invalid. Если начальный malloc вернёт NULL, выводится только allocation-failed.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum { MAX_CAPACITY = 8 };\n\nstruct Record {\n    size_t id;\n    int value;\n};\n\nstruct Queue {\n    struct Record *items;\n    size_t used;\n    size_t capacity;\n};\n\nstruct GrowthPolicy {\n    unsigned attempts;\n    unsigned fail_at;\n};\n\nstatic int reserve(struct Queue *queue, struct GrowthPolicy *policy)\n{\n    if (queue->capacity == 0 || queue->capacity > MAX_CAPACITY / 2) {\n        return 0;\n    }\n    size_t next_capacity = queue->capacity * 2;\n    if (next_capacity > SIZE_MAX / sizeof *queue->items) {\n        return 0;\n    }\n    /* TODO: advance the counter before comparing to the requested failure. */\n    if (policy->attempts == policy->fail_at) {\n        return 0;\n    }\n    struct Record *next = realloc(queue->items, next_capacity * sizeof *queue->items);\n    if (next == NULL) {\n        return 0;\n    }\n    queue->items = next;\n    queue->capacity = next_capacity;\n    return 1;\n}\n\nstatic int append(struct Queue *queue, struct GrowthPolicy *policy, int value)\n{\n    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;\n    return 1;\n}\n\nstatic long total(const struct Queue *queue)\n{\n    long sum = 0;\n    for (size_t i = 0; i < queue->used; ++i) {\n        sum += queue->items[i].value;\n    }\n    return sum;\n}\n\nstatic void destroy(struct Queue *queue)\n{\n    free(queue->items);\n    *queue = (struct Queue){0};\n}\n\nint main(void)\n{\n    int input[3];\n    const int minimum[] = {0, 0, 0};\n    const int maximum[] = {9999, 9999, 2};\n    if (!read_values(input, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Queue queue = {malloc(sizeof(struct Record)), 1, 1};\n    if (queue.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    queue.items[0] = (struct Record){.id = 1, .value = 10};\n    struct GrowthPolicy policy = {.attempts = 0, .fail_at = (unsigned)input[2]};\n    int ok = append(&queue, &policy, input[0]) && append(&queue, &policy, input[1]);\n    printf(\"%s %zu %zu %ld\\n\", ok ? \"ok\" : \"allocation-failed\",\n           queue.used, queue.capacity, total(&queue));\n    destroy(&queue);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "20 30 2\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Два успешных роста",
+        "input": "20 30 0\n",
+        "output": "ok 3 4 60\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отказ первого роста",
+        "input": "20 30 1\n",
+        "output": "allocation-failed 1 1 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отказ второго роста",
+        "input": "20 30 2\n",
+        "output": "allocation-failed 2 2 30\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Нулевые значения записи",
+        "input": "0 0 0\n",
+        "output": "ok 3 4 10\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Предельные значения записи",
+        "input": "9999 9999 0\n",
+        "output": "ok 3 4 20008\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Неверный номер попытки",
+        "input": "20 30 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Отрицательное значение",
+        "input": "-1 30 0\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "20 30 0 даёт ok 3 4 60. 20 30 1 даёт allocation-failed 1 1 10. 20 30 2 даёт allocation-failed 2 2 30.",
+      "При отказе сохраняются used, capacity и оба поля каждой принятой записи. Основной вывод остаётся однострочным. Проверьте отдельные поля в переносе идеи."
+    ],
+    "hint": "Сначала увеличьте attempts, потом сравните с fail_at. Счётчик изменяется только для попытки reserve, которая прошла проверку размера.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum { MAX_CAPACITY = 8 };\n\nstruct Record {\n    size_t id;\n    int value;\n};\n\nstruct Queue {\n    struct Record *items;\n    size_t used;\n    size_t capacity;\n};\n\nstruct GrowthPolicy {\n    unsigned attempts;\n    unsigned fail_at;\n};\n\nstatic int reserve(struct Queue *queue, struct GrowthPolicy *policy)\n{\n    if (queue->capacity == 0 || queue->capacity > MAX_CAPACITY / 2) {\n        return 0;\n    }\n    size_t next_capacity = queue->capacity * 2;\n    if (next_capacity > SIZE_MAX / sizeof *queue->items) {\n        return 0;\n    }\n    ++policy->attempts;\n    if (policy->attempts == policy->fail_at) {\n        return 0;\n    }\n    struct Record *next = realloc(queue->items, next_capacity * sizeof *queue->items);\n    if (next == NULL) {\n        return 0;\n    }\n    queue->items = next;\n    queue->capacity = next_capacity;\n    return 1;\n}\n\nstatic int append(struct Queue *queue, struct GrowthPolicy *policy, int value)\n{\n    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;\n    return 1;\n}\n\nstatic long total(const struct Queue *queue)\n{\n    long sum = 0;\n    for (size_t i = 0; i < queue->used; ++i) {\n        sum += queue->items[i].value;\n    }\n    return sum;\n}\n\nstatic void destroy(struct Queue *queue)\n{\n    free(queue->items);\n    *queue = (struct Queue){0};\n}\n\nint main(void)\n{\n    int input[3];\n    const int minimum[] = {0, 0, 0};\n    const int maximum[] = {9999, 9999, 2};\n    if (!read_values(input, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Queue queue = {malloc(sizeof(struct Record)), 1, 1};\n    if (queue.items == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    queue.items[0] = (struct Record){.id = 1, .value = 10};\n    struct GrowthPolicy policy = {.attempts = 0, .fail_at = (unsigned)input[2]};\n    int ok = append(&queue, &policy, input[0]) && append(&queue, &policy, input[1]);\n    printf(\"%s %zu %zu %ld\\n\", ok ? \"ok\" : \"allocation-failed\",\n           queue.used, queue.capacity, total(&queue));\n    destroy(&queue);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Запустите заготовку с 20 30 2 и найдите TODO в reserve.",
+        "why": "Счётчик остаётся нулём, поэтому режим 2 не создаёт предусмотренный отказ.",
+        "expected": "Заготовка печатает ok 3 4 60."
+      },
+      {
+        "where": "Code Studio",
+        "action": "После проверок размера увеличивайте attempts перед сравнением с fail_at. Повторите 20 30 2.",
+        "why": "Отказ второй попытки оставляет запись, добавленную до отказа.",
+        "expected": "Исправленный вывод: allocation-failed 2 2 30."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Запустите 20 30 1 и 20 30 0 отдельно. Затем проверьте поля в переносе идеи.",
+        "why": "Каждый запуск заново создаёт исходный список. Два режима различают ранний отказ и полный успех.",
+        "expected": "Соответственно allocation-failed 1 1 10 и ok 3 4 60."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенос идеи",
+        "task": "В отдельной копии исправленной программы вставьте после итогового printf, перед destroy(&queue), цикл for (size_t i = 0; i < queue.used; ++i) { printf(\"%zu:%d\\n\", queue.items[i].id, queue.items[i].value); } Запустите 20 30 2, затем отдельно 20 30 0. Сравните номера и значения записей.",
+        "criteria": [
+          "При 20 30 2 после allocation-failed 2 2 30 идут ровно две отдельные строки: 1:10 и 2:20.",
+          "При 20 30 0 после ok 3 4 60 идут строки 1:10, 2:20 и 3:30. Первые две записи совпадают по обоим полям. Строки 3:30 в запуске с отказом нет."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.resizable-record-invariant",
+    "prerequisites": [
+      "c.safe-resize",
+      "c.checked-size-product",
+      "c.record-operation-invariants"
+    ]
+  }
+}

@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.sentinel-loops",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "Программирование на C",
+  "module": "Ввод, условия и циклы",
+  "locale": "ru",
+  "title": "Цикл до конца данных",
+  "goal": "Обрабатывать поток неизвестной длины и различать маркер, конец ввода и ошибку.",
+  "prerequisites": [
+    {
+      "text": "Понимать статусы проверенного чтения и накопитель."
+    },
+    {
+      "text": "Уметь объяснить остановку цикла по счётчику."
+    }
+  ],
+  "terms": [
+    {
+      "id": "sentinel",
+      "term": "Сторожевое значение",
+      "title": "Сторожевое значение",
+      "definition": "Зарезервированное значение, которое управляет обработкой и не входит в данные."
+    },
+    {
+      "id": "progress",
+      "term": "Прогресс цикла",
+      "title": "Прогресс цикла",
+      "definition": "Изменение, приближающее к остановке. Здесь каждая итерация читает одну запись или завершает обработку."
+    },
+    {
+      "id": "break",
+      "term": "break",
+      "title": "break",
+      "definition": "Завершает ближайший цикл. Код после него в этом теле не выполняется."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "Журнал событий может закончиться по маркеру −1 или просто исчерпаться. Обе ситуации штатные. Некорректная строка означает ошибку, поэтому её нельзя маскировать под пустой журнал.",
+        "Выбор while (1) означает, что выход проверяется внутри тела сразу после чтения. В трассе отметьте три возможных выхода: EOF, маркер и ошибка. Число принятых событий тоже ограничено договором.",
+        "Значение маркера выбирается вне диапазона данных. Прочитать маркер как число всё ещё необходимо, но включать его в подсчёт нельзя."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Короткий журнал событий",
+      "paragraphs": [
+        "При вводе 5, 7, −1 и 9 на разных строках отследите, сколько записей действительно принято. Значения после маркера игнорируются.",
+        "Удалите маркер и следующую запись. Для 5 и 7 результат совпадёт, но причина остановки будет другой."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    while (1) {\n        int event;\n        int state = read_integer(-1, 20, &event);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (event == -1) {\n            break;\n        }\n        if (count == 5) {\n            puts(\"invalid\");\n            return 0;\n        }\n        ++count;\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+        "stdin": "5\n7\n-1\n9\n",
+        "output": "2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Прочитайте очередную строку и сначала проверьте статус.",
+        "Проверьте специально зарезервированное −1 до счёта событий.",
+        "Прежде чем прибавить ещё одно событие, проверьте предел 5.",
+        "После break напечатайте накопленное число событий."
+      ],
+      "trace": [
+        [
+          "Событие 5",
+          "count 0",
+          "count 1",
+          "Обычная запись"
+        ],
+        [
+          "Событие 7",
+          "count 1",
+          "count 2",
+          "Обычная запись"
+        ],
+        [
+          "Маркер −1",
+          "count 2",
+          "break",
+          "Число записей прежнее"
+        ],
+        [
+          "Строка 9",
+          "осталась во вводе",
+          "не обрабатывается",
+          "Цикл завершён"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Остановка отличается от обработки",
+      "paragraphs": [
+        "Если увеличивать count до проверки маркера, сам маркер становится ложным событием. На пустом журнале с маркером первой строкой такая программа насчитает один.",
+        "Не используйте переменную event после READ_BAD или READ_END. Выход раньше чтения её значения защищает вычисления. while () без условия компилятор отклоняет."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Последовательность проверок для нового маркера",
+      "paragraphs": [
+        "Для температур 999 — команда остановки, а 60 — допустимая температура. Сначала при READ_OK проверяется 999, затем диапазон наблюдения.",
+        "В договоре допускается до восьми наблюдений. После восьмой температуры можно получить маркер или EOF. Девятая температура считается ошибкой."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.8.5.1, 6.8.6.3",
+      "language": "English",
+      "purpose": "Сверить цикл while и действие break."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что выдаст пример для 5, 7, −1 и 9?",
+      "options": [
+        "2",
+        "3",
+        "4"
+      ],
+      "correct": 0,
+      "feedback": [
+        "В счёт попали только 5 и 7.",
+        "Маркер и следующие записи исключены.",
+        "Обработка закончилась на −1."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    while (1) {\n        int event;\n        int state = read_integer(-1, 20, &event);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (event == -1) {\n            break;\n        }\n        if (count == 5) {\n            puts(\"invalid\");\n            return 0;\n        }\n        ++count;\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+        "stdin": "5\n7\n-1\n9\n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Какой статус означает, что новых записей больше нет?",
+      "options": [
+        "READ_BAD",
+        "READ_END",
+        "READ_OK"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Это ошибка записи или потока.",
+        "Конец допускается без отдельного маркера.",
+        "Значение готово для последующей проверки."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Как различить пустой поток и поток из одной пустой строки?",
+      "feedback": "Пустой поток возвращает READ_END. Пустая строка содержит границу записи, но ни одного числа, и приводит к READ_BAD.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    while () {\n        break;\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected expression"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Сводка температур до маркера",
+    "task": "Читайте по записи на строку. Температуры допустимы от −40 до 60, 999 завершает сводку, EOF допускается. Допускается до восьми измерений. При ошибке печатайте invalid, при отсутствии измерений empty, иначе количество и сумму через пробел. Данные после 999 игнорируются.",
+    "hint": "Вставьте проверку 999 после статуса READ_OK и до проверки максимальной температуры или количества.",
+    "criteria": [
+      "999 и EOF завершают штатно.",
+      "Маркер не влияет на сумму и количество.",
+      "Пустая строка и девятое измерение отклоняются."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Сравните тест со значениями и 999 и тест с EOF.",
+        "why": "Обе причины остановки допустимы.",
+        "expected": "Сводка совпадает при одинаковых измерениях."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Вставьте break для 999 в правильное место.",
+        "why": "Значение маркера недопустимо как измерение.",
+        "expected": "Маркер не попадает в расчёт."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте восемь и девять измерений.",
+        "why": "Лимит относится к данным.",
+        "expected": "Восемь и маркер проходят, девятая температура отклоняется."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Объясните последнюю итерацию",
+        "task": "Возьмите 999 первой строкой и допустимое число второй. По трассе покажите, что заканчивает работу и какое число из ввода отправляется в сумму.",
+        "criteria": [
+          "Остановка происходит на 999.",
+          "Ни одно число не участвует в сумме. Вывод empty."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    int sum = 0;\n\n    while (1) {\n        int temperature;\n        int state = read_integer(-40, 999, &temperature);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        /* TODO: recognise the sentinel before checking measurements. */\n        if (temperature > 60 || count == 8) {\n            puts(\"invalid\");\n            return 0;\n        }\n\n        sum += temperature;\n        ++count;\n    }\n\n    if (count == 0) {\n        puts(\"empty\");\n    } else {\n        printf(\"%d %d\\n\", count, sum);\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "-12\n30\n999\n77\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Маркер после двух значений",
+        "input": "-12\n30\n999\n77\n",
+        "output": "2 18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Конец ввода после записи",
+        "input": "-40\n60",
+        "output": "2 20\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Маркер первым",
+        "input": "999\n3\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой поток",
+        "input": "",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустая строка",
+        "input": "\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Температура за границей",
+        "input": "61\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Максимум записей и маркер",
+        "input": "1\n1\n1\n1\n1\n1\n1\n1\n999\n",
+        "output": "8 8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Слишком много записей",
+        "input": "1\n1\n1\n1\n1\n1\n1\n1\n1\n999\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    int sum = 0;\n\n    while (1) {\n        int temperature;\n        int state = read_integer(-40, 999, &temperature);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (temperature == 999) {\n            break;\n        }\n        if (temperature > 60 || count == 8) {\n            puts(\"invalid\");\n            return 0;\n        }\n\n        sum += temperature;\n        ++count;\n    }\n\n    if (count == 0) {\n        puts(\"empty\");\n    } else {\n        printf(\"%d %d\\n\", count, sum);\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.sentinel-termination",
+    "prerequisites": [
+      "c.counted-accumulation"
+    ]
+  }
+}

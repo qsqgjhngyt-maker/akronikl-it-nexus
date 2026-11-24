@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m6-v1",
+  "id": "c.pointer-lifetime-errors",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m6",
+  "course": "C programming",
+  "module": "Pointers, addresses and memory bounds",
+  "title": "Lifetime and pointer errors",
+  "goal": "Copy a value while its temporary object is alive and send the result into a live object owned by the caller.",
+  "prerequisites": [
+    {
+      "text": "You need a block in braces, addresses, dereferencing and output parameters."
+    }
+  ],
+  "terms": [
+    {
+      "id": "lifetime",
+      "term": "Object lifetime",
+      "title": "Object lifetime",
+      "definition": "The period during execution when an object exists. The local sensor in the inner block ends its lifetime when execution leaves that block."
+    },
+    {
+      "id": "dangling-pointer",
+      "term": "Dangling pointer",
+      "title": "Dangling pointer",
+      "definition": "A common name for a pointer whose original object no longer exists. Access through such a pointer is invalid."
+    },
+    {
+      "id": "output-parameter",
+      "term": "Output parameter",
+      "title": "Output parameter",
+      "definition": "A pointer to a live caller-owned object where the function writes a result on success."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Keep the number after the reading ends",
+      "paragraphs": [
+        "An inner block gets a reading. Later code needs that number. Copy the reading into an outer variable while the source object is still alive.",
+        "An address and a copied value have different periods of use. A pointer to a local object in the inner block is usable for access only during the object’s lifetime. The copied integer remains usable as long as saved lives.",
+        "A function can use the same model with an int *out from its caller. During the call, &sample points to a live object. The function copies the number there after a successful read."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "The integer 9 outlives the inner block",
+      "paragraphs": [
+        "The object on the left of the assignment belongs to the outer block. On the right, the code reads sensor while execution is still in its block."
+      ],
+      "steps": [
+        "main declares saved in the outer block. The inner block creates sensor holding 9.",
+        "current receives the address of sensor, which is valid in this block. saved = *current writes 9 into the outer object.",
+        "The inner block ends. printf reads only saved, whose lifetime continues."
+      ],
+      "trace": [
+        [
+          "Outer block",
+          "saved is declared",
+          "sensor has yet to be created"
+        ],
+        [
+          "Inner block",
+          "sensor = 9, current points to sensor",
+          "saved receives 9"
+        ],
+        [
+          "After closing brace",
+          "sensor and current have ended their lifetimes",
+          "printf reads live saved = 9"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int saved;\n    {\n        const int sensor = 9;\n        const int *current = &sensor;\n        saved = *current;\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "9\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "The address of a local object expires on return",
+      "paragraphs": [
+        "The diagnostic fragment return &local obtains the address of an object inside the function. Its lifetime ends when the function returns. Clang detects the returned address. The displayed diagnostic setting makes the warning a compilation error. Use this fragment to read the compiler diagnostic only.",
+        "Establish lifetime from the contract and where the object is created. Once the object reaches the end of its lifetime, stop using the old pointer value, including comparisons with NULL. In the exercise, check out and the read result before writing."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Keep the old reading on failure",
+      "paragraphs": [
+        "Suppose the stored reading is -8. Predict what remains after the malformed input -9x, then the result after a valid -9. Point out where the function performs its only write through out."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.2.4, 6.5.3.2, 6.8.2, 6.8.6.4",
+      "language": "English",
+      "purpose": "Check automatic object lifetimes, compound statements and the return statement."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does printf read after the inner block ends?",
+      "options": [
+        "saved, which holds 9",
+        "sensor through current",
+        "Memory at an address in the closed block"
+      ],
+      "correct": 0,
+      "feedback": [
+        "saved belongs to the outer block and holds a copy.",
+        "sensor and current have ended their lifetimes.",
+        "After the block you need the live saved object."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What should replace returning &local?",
+      "options": [
+        "Compare the result with NULL after calling",
+        "Copy the integer into a live caller-owned object before returning",
+        "Keep the address in a second pointer variable"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The NULL comparison does not guarantee lifetime.",
+        "The caller’s object stays available after the function returns.",
+        "Copying the address does not extend the object’s lifetime."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "read_sample(&sample) gets input 27x and sample began at 17. Why should the output be invalid, and what stays in sample?",
+      "feedback": "The reader reports a failure. The function rejects it before writing through out, so sample still holds 17.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#pragma clang diagnostic error \"-Wreturn-stack-address\"\n\nint *sample_address(void)\n{\n    int local = 9;\n    return &local;\n}\n\nint main(void)\n{\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "address of stack memory associated with local variable"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Send a reading to the caller",
+    "task": "Read an integer from -99 to 99 from the first line. read_sample takes the address of a live caller-owned int, checks it for NULL, reads into a separate local integer, and copies the value into *out only after success. Return 1 after writing and 0 on failure. Print the number on success. On failure, check that the previous value is still 17 and print invalid. The supplied main uses invalid changed to flag a broken contract. Ignore subsequent lines.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int read_sample(int *out)\n{\n    if (out == NULL) {\n        return 0;\n    }\n    int temporary;\n    if (read_integer(-99, 99, &temporary) != READ_OK) {\n        return 0;\n    }\n    /* TODO: copy the temporary reading into the output object. */\n    return 1;\n}\n\nint main(void)\n{\n    enum { INITIAL_SAMPLE = 17 };\n    int sample = INITIAL_SAMPLE;\n    if (!read_sample(&sample)) {\n        puts(sample == INITIAL_SAMPLE ? \"invalid\" : \"invalid changed\");\n        return 0;\n    }\n    printf(\"%d\\n\", sample);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "27\n",
+    "returnAnchor": "example",
+    "hint": "On success, copy the local temporary into *out before returning. Keep every failure path ahead of that write.",
+    "criteria": [
+      "Input 27 gives 27, including without a final newline.",
+      "Malformed input leaves 17 and gives invalid.",
+      "NULL returns 0 before reading or writing through the pointer."
+    ],
+    "cases": [
+      {
+        "label": "Integer reading",
+        "input": "27\n",
+        "output": "27\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Final number without newline",
+        "input": "27",
+        "output": "27\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Lower boundary",
+        "input": "-99\n",
+        "output": "-99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper boundary",
+        "input": "99\n",
+        "output": "99\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Zero reading",
+        "input": "0\n",
+        "output": "0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Sign and spacing",
+        "input": " -3 \n",
+        "output": "-3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra character",
+        "input": "27x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Out-of-range number",
+        "input": "100\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Whitespace-only line",
+        "input": "   \n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty input",
+        "input": "",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    if (out == NULL) {\n        return READ_BAD;\n    }\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nstatic int read_sample(int *out)\n{\n    if (out == NULL) {\n        return 0;\n    }\n    int temporary;\n    if (read_integer(-99, 99, &temporary) != READ_OK) {\n        return 0;\n    }\n    *out = temporary;\n    return 1;\n}\n\nint main(void)\n{\n    enum { INITIAL_SAMPLE = 17 };\n    int sample = INITIAL_SAMPLE;\n    if (!read_sample(&sample)) {\n        puts(sample == INITIAL_SAMPLE ? \"invalid\" : \"invalid changed\");\n        return 0;\n    }\n    printf(\"%d\\n\", sample);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Open Practice with input 27. Select Run my code.",
+        "why": "Match the output with the reading and explain the role of temporary.",
+        "expected": "The starter prints 17. The specification requires 27."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Copy temporary into *out after the successful check and rerun the input.",
+        "why": "Write the integer into a live caller-owned object before returning.",
+        "expected": "The output is 27."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run 27x, then empty input, separately.",
+        "why": "Check that both failures preserve the previous value.",
+        "expected": "Both runs give invalid. The invalid changed marker stays absent."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "Save a copy of your corrected main.c in a separate text file. Change INITIAL_SAMPLE to -8, then try -9x and -9 separately. Explain why the failure check compares with the old value. Restore your saved version afterward.",
+        "criteria": [
+          "The first run prints invalid and keeps -8. The second prints -9.",
+          "The code keeps no address of temporary and uses none after the function returns."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.copy-before-lifetime-ends",
+    "prerequisites": [
+      "c.borrowed-pointer-contract",
+      "c.local-scope-lived-object"
+    ]
+  }
+}

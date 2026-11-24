@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m11-v1",
+  "id": "c.warnings-and-sanitizers",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m11",
+  "course": "C programming",
+  "module": "Debugging, testing and memory safety",
+  "title": "Warnings, static checks and sanitizers",
+  "goal": "Check the build, the instrumented run and the result against the contract as separate steps.",
+  "prerequisites": [
+    {
+      "text": "How a translation unit is built, why boundaries matter and where to read stderr."
+    }
+  ],
+  "terms": [
+    {
+      "id": "compiler-warning",
+      "term": "Compiler warning",
+      "title": "Compiler warning",
+      "definition": "A diagnostic emitted while checking the source. With -Werror, enabled warnings stop the build."
+    },
+    {
+      "id": "instrumented-build",
+      "term": "Instrumented build",
+      "title": "Instrumented build",
+      "definition": "An executable with extra checks that run along the paths actually exercised."
+    },
+    {
+      "id": "contract-test",
+      "term": "Contract check",
+      "title": "Contract check",
+      "definition": "A comparison of observed output and status against the expected result for one input."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Three questions for one program",
+      "paragraphs": [
+        "The compiler can spot an unused variable before running the program. With -Wall -Wextra, Clang reports unused variable. With -Werror, that source is rejected. This is a static check of the source.",
+        "In a native build, AddressSanitizer adds checks for memory accesses and UndefinedBehaviorSanitizer checks supported undefined operations. They check the paths that actually run. Boundary tests separately check whether the result matches the contract."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Use the declared count",
+      "paragraphs": [
+        "In the safe example, count starts at 4 and printf uses it with %d. The control source declares skipped but passes a string literal to puts. Both have defined behaviour if compilation succeeds. The warning draws attention to the unused declaration."
+      ],
+      "steps": [
+        "Read the example and run it without input. The output is count 4.",
+        "For the flag experiment, copy the skipped control source without its #pragma line. Clang reports a warning with -Wall -Wextra. Add -Werror to the same flags and compilation is rejected.",
+        "For native verification, try the command for the clean source in the next section. Record a runtime result only if the toolchain is available and the executable builds."
+      ],
+      "trace": [
+        [
+          "Build",
+          "-Wall -Wextra",
+          "unused variable for the skipped control"
+        ],
+        [
+          "Strict build",
+          "-Werror",
+          "control is rejected before execution"
+        ],
+        [
+          "Run clean C17",
+          "stdout",
+          "count 4"
+        ]
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nint main(void)\n{\n    int count = 4;\n    printf(\"count %d\\n\", count);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "count 4\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "diagnostics",
+      "title": "Record each result in the right category",
+      "paragraphs": [
+        "In a native Clang terminal, save the clean example as main.c and build it with clang -std=c17 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=undefined main.c -o count-check. Run the resulting file (./count-check on POSIX, or .\\count-check.exe on Windows if the build used that name). Check for count 4, empty stderr and status 0.",
+        "If the installed compiler or libraries do not support these flags, record environment unavailable and keep the actual build error. Code Studio uses Clang/WASI. Record its compile check separately from the native sanitizer run.",
+        "A program using count > 7 in place of count > 8 can run without a memory error. A contract test at 8 still exposes the wrong result.",
+        "The control uses #pragma clang diagnostic error to enable unused variable as an error for that source. This makes the rejection testable in Code Studio with the existing environment flags."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Keep three separate log entries",
+      "paragraphs": [
+        "In practice, use limit as the actual upper boundary. Predict the output for 8. If a native toolchain is available, rerun 0, 8 and 9 with sanitizers and record those results separately. Keep the program's memory accesses within their valid lifetimes and bounds."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "5.1.1.3, 6.2.4, 6.5, 7.21.6.1",
+      "language": "English",
+      "purpose": "Check the build, the instrumented run and the result against the contract as separate steps."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "When does -Werror stop the skipped source?",
+      "options": [
+        "During compilation",
+        "At the first stdin read",
+        "After checking a boundary"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Compilation rejects the unused variable diagnostic.",
+        "The executable has not run.",
+        "No input values are checked before the build succeeds."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "The program rejects 8 without warnings or memory errors. Which check exposes the issue?",
+      "options": [
+        "Contract test: input 8 must print count 8",
+        "Repeat only the test at 7",
+        "Read only compiler stderr"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The exact boundary exposes the incorrect rule.",
+        "Both versions accept 7.",
+        "A logic fault can have no compiler diagnostic."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "What results would you log if a sanitizer run is unavailable in your environment?",
+      "feedback": "Record the diagnostics build outcome and the exact inputs and results of the contract checks. Mark the instrumented run unavailable and keep the observed reason.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <stdio.h>\n\n#pragma clang diagnostic error \"-Wunused-variable\"\n\nint main(void)\n{\n    int skipped = 4;\n    puts(\"count 4\");\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "unused variable",
+        "skipped"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Seat limit and separate checks",
+    "environment": "Clang / WASI · C17",
+    "task": "Accept integers from 0 through 8. For a well-formed first line in range, print count and the number separated by a space. Print invalid for a rejected entry. Use limit as the sole upper bound, check a strict build if native Clang is available, and compare stdout for 0, 8 and 9.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    const long limit = 8;\n    long count;\n    if (!read_value(&count) || count < 0 || count > 7) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"count %ld\\n\", count);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "8\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Zero",
+        "input": "0\n",
+        "output": "count 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Upper boundary",
+        "input": "8\n",
+        "output": "count 8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Above the boundary",
+        "input": "9\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Negative number",
+        "input": "-1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Malformed suffix",
+        "input": "8x\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Input 0 gives count 0, 8 gives count 8, and 9 gives invalid.",
+      "The condition uses limit as the single upper bound.",
+      "Log compilation, input results and the instrumented run or its unavailability separately."
+    ],
+    "hint": "Use limit where the starter uses 7. The upper allowed value is 8, so it must pass.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    const long limit = 8;\n    long count;\n    if (!read_value(&count) || count < 0 || count > limit) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"count %ld\\n\", count);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with 8 using a regular build. If a strict build stopped earlier, read its diagnostic separately.",
+        "why": "Distinguish the unused declaration from the incorrect threshold.",
+        "expected": "A regular run writes invalid. Strict Clang reports unused variable for limit."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Replace 7 with limit and run 0, 8 and 9.",
+        "why": "Check the inclusive boundary and its neighbours.",
+        "expected": "The separate runs produce count 0, count 8 and invalid."
+      },
+      {
+        "where": "Code Studio",
+        "action": "If native Clang is available, build the safe fixed version with sanitizers and repeat the same inputs.",
+        "why": "Record observed stdout, stderr and exit statuses separately from build diagnostics.",
+        "expected": "On a successful instrumented run, stdout matches, stderr is empty and status is 0. If the toolchain lacks support, record the observed environment failure."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Independent transfer",
+        "task": "In a separate copy, set limit to 12. Choose a boundary value, an outside value and malformed input to distinguish range checking from parsing.",
+        "criteria": [
+          "12 gives count 12; 13 and 12x give invalid for different reasons."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.distinguish-c17-diagnostics",
+    "prerequisites": [
+      "c.choose-boundary-test-partitions"
+    ]
+  }
+}

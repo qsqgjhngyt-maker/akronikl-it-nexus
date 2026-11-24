@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m5-v1",
+  "id": "c.text-project",
+  "locale": "en",
+  "courseId": "c",
+  "moduleId": "c.m5",
+  "course": "C programming",
+  "module": "Strings and text",
+  "title": "Project: line filter",
+  "goal": "Filter complete lines by prefix and count each rejected record separately.",
+  "prerequisites": [
+    {
+      "text": "Be able to handle input statuses and compare a whole string and its beginning."
+    }
+  ],
+  "terms": [
+    {
+      "id": "prefix",
+      "term": "Prefix",
+      "title": "Prefix",
+      "definition": "The bytes starting at position 0. Prefix matching checks the start of a string."
+    },
+    {
+      "id": "rejected",
+      "term": "Rejected record",
+      "title": "Rejected record",
+      "definition": "A record that exceeds the length limit or contains a null byte."
+    },
+    {
+      "id": "filter",
+      "term": "Filter",
+      "title": "Filter",
+      "definition": "A rule that selects or skips a whole record."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Several entries from a log",
+      "paragraphs": [
+        "A log receives messages. The reader checks whether each record is usable based on its length and termination. Then the filter compares the start of each valid line. Test those decisions with separate inputs.",
+        "CORRUPT can be a valid line that the filter skips. An overlong line increments rejected regardless of its text.",
+        "Consume the rest of a rejected line through its boundary. The next read_line call then starts on the first byte of the next message."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Select the lines starting with ID:",
+      "paragraphs": [
+        "First work through prefix selection on three known strings. The program compares the first three bytes of each one, then prints each whole matching line."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n#include <string.h>\n\nint main(void)\n{\n    const char *const records[] = {\"ID:7\", \"XID:7\", \"ID:\"};\n    for (size_t i = 0; i < sizeof records / sizeof records[0]; ++i) {\n        if (strncmp(records[i], \"ID:\", 3) == 0) {\n            puts(records[i]);\n        }\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "ID:7\nID:\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "ID:7 begins with matching I, D and colon bytes. The output includes ID:7.",
+        "XID:7 begins with X. The program skips it.",
+        "ID: ends after the matching prefix. The program prints it too."
+      ],
+      "trace": [
+        [
+          "ID:7",
+          "First three bytes ID:",
+          "Match",
+          "Print ID:7"
+        ],
+        [
+          "XID:7",
+          "Starts XID",
+          "Mismatch",
+          "Continue"
+        ],
+        [
+          "ID:",
+          "First three bytes ID:",
+          "Match",
+          "Print ID:"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Use a separate input for each rule",
+      "paragraphs": [
+        "ERR fan exposes an exact-line comparison when the task requires a prefix. XERR shows why prefix matching starts at position 0.",
+        "A long record followed by a short line checks both the buffer limit and where reading resumes. A null byte rejects the whole record before comparison.",
+        "The third argument to strncmp specifies a byte count. The separate diagnostic passes the string \"3\". Clang reports that this argument needs an integer."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Design a filter for a different log",
+      "paragraphs": [
+        "Imagine a log with prefix WARN and an eight-byte limit. Pick a normal match, a record with WARN in the middle and an overlong record. Write down the complete expected stdout and the count."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "7.21.7.6, 7.24.4.2, 7.24.4.4",
+      "language": "English",
+      "purpose": "Check how getchar reports the end of input and how strcmp and strncmp differ."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Why is XID:7 absent from the example output?",
+      "options": [
+        "It starts with X",
+        "It exceeds the buffer length",
+        "ID: must be the whole line"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The comparison starts at position 0.",
+        "The example uses known strings in an array.",
+        "ID:7 includes more text after the prefix and still matches."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What happens to a blank record in the project?",
+      "options": [
+        "It increments rejected",
+        "The reader accepts it and the filter skips it",
+        "It ends input"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The blank line fits and has a terminator in the buffer.",
+        "It lacks prefix ERR, so the filter skips it.",
+        "Reading continues after a blank line."
+      ],
+      "recall": "idea"
+    },
+    {
+      "id": "check-3",
+      "kind": "free",
+      "prompt": "How can you test that a rejected record was drained, and why does an overlong record containing NUL increment rejected once?",
+      "feedback": "Supply an overlong record followed by ERR ok. The second line should be preserved and the count should rise by 1. The reader returns one result for a whole record, so the two reasons still count as one rejection.",
+      "recall": "diagnostics"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "#include <string.h>\n\nint main(void)\n{\n    const char line[] = \"ERR fan\";\n    return strncmp(line, \"ERR\", \"3\");\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "incompatible pointer to integer conversion"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Project: filter the log",
+    "task": "Read records until EOF. A record can hold at most 12 text bytes. Print each valid record whose first bytes are exactly ERR, preserving its text. LF and CRLF delimit records. Handle a final record with data before EOF. An overlong record or a record containing a null byte increments rejected once after it is consumed. Skip valid lines without the prefix. Finish with rejected, a space and the rejected count. Fix the selection condition and keep the supplied input reader and counter.",
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[13];\n    size_t rejected = 0;\n    for (;;) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            fputs(\"input error\\n\", stderr);\n            return 1;\n        }\n        if (status != LINE_OK) {\n            ++rejected;\n            continue;\n        }\n\n        /* TODO: match the prefix at the start of the line. */\n        if (strcmp(line, \"ERR\") == 0) {\n            puts(line);\n        }\n    }\n    printf(\"rejected %zu\\n\", rejected);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "OK\nERR fan\nERR\n ERR\nERR verylongdata\n",
+    "returnAnchor": "example",
+    "hint": "Check the result of reading a record first. Then ask whether the first three bytes match.",
+    "criteria": [
+      "ERR fan and ERR are printed in full. A leading space before ERR prevents a match.",
+      "Twelve bytes fit. Thirteen cause a rejection and preserve the start of the next line.",
+      "A record containing a null byte increases rejected even if it starts with ERR.",
+      "The final line rejected N follows all matches.",
+      "Cases marked “automatic WASI check” use exact bytes. Read their labels and expected output. You can enter the other cases in the lesson editor."
+    ],
+    "cases": [
+      {
+        "label": "Filter with one rejected overlong record",
+        "input": "OK\nERR fan\nERR\n ERR\nERR verylongdata\n",
+        "output": "ERR fan\nERR\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty stream",
+        "input": "",
+        "output": "rejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Short line, blank record and shifted prefixes",
+        "input": "ER\n\n ERR\nXERR\nOK\n",
+        "output": "rejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Exactly twelve bytes with LF",
+        "input": "ERR 12345678\n",
+        "output": "ERR 12345678\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Exactly twelve bytes with CRLF · CRLF (0D 0A) · automatic WASI check",
+        "input": "ERR 12345678\r\nOK\r\nERR\r\n",
+        "output": "ERR 12345678\nERR\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Overlong record followed by a short one",
+        "input": "ERR 123456789\nERR x\n",
+        "output": "ERR x\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Null byte after ERR, followed by a valid line · NUL (00) · automatic WASI check",
+        "input": "ERR\u0000x\nERR done\n",
+        "output": "ERR done\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Overlong nonmatch and a record with NUL · NUL (00) · automatic WASI check",
+        "input": "abcdefghijklmn\nOK\u0000\nERR\n",
+        "output": "ERR\nrejected 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "An overlong record with NUL counts once · NUL (00) · automatic WASI check",
+        "input": "ERR 123456789\u0000\nERR\n",
+        "output": "ERR\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Valid final record ends at EOF · EOF without a final newline",
+        "input": "ERR fan",
+        "output": "ERR fan\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Overlong final record ends at EOF · EOF without a final newline",
+        "input": "ERR 123456789",
+        "output": "rejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "ERR followed directly by more letters",
+        "input": "ERROR\n",
+        "output": "ERROR\nrejected 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Twelve and fourteen UTF-8 bytes",
+        "input": "ERR éééé\nERR ééééé\n",
+        "output": "ERR éééé\nrejected 1\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Run the starter with the supplied log.",
+        "why": "It contains an exact match, an overlong line and a matching prefix with more text.",
+        "expected": "The starter prints only ERR and rejected 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Fix the comparison of the opening bytes and rerun.",
+        "why": "A valid record qualifies when its first three bytes match ERR.",
+        "expected": "The output now includes ERR fan, ERR and rejected 1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Follow an overlong line with ERR done. In a separate run, enter ERR fan without a final LF.",
+        "why": "Check the next record and data that reaches EOF.",
+        "expected": "The first run preserves ERR done and gives rejected 1. The second gives ERR fan and rejected 0."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Try it on your own",
+        "task": "In the lesson editor, after saving a copy of main.c in a separate text file, use prefix WARN, a comparison count of 4 and a limit of 8. Supply WARN ok, XWARN and WARN too long. Add another valid match after the overlong line. Check the labelled WASI cases against their expected output. Restore your saved main.c after the experiment.",
+        "criteria": [
+          "The first three records produce only WARN ok, then rejected 1.",
+          "The extra match is printed in full before the total."
+        ]
+      }
+    ],
+    "referenceSolution": {
+      "source": "#include <stdio.h>\n#include <string.h>\n\nenum LineStatus { LINE_END, LINE_OK, LINE_LONG, LINE_BAD, LINE_IO };\n\n/* Read one full record. capacity includes a slot for '\\0'. */\nstatic enum LineStatus read_line(char text[], size_t capacity)\n{\n    size_t used = 0;\n    int overflow = 0;\n    int contains_nul = 0;\n    int byte = getchar();\n\n    if (byte == EOF) {\n        return ferror(stdin) ? LINE_IO : LINE_END;\n    }\n\n    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';\n    if (ferror(stdin)) {\n        return LINE_IO;\n    }\n    if (contains_nul) {\n        return LINE_BAD;\n    }\n    return overflow ? LINE_LONG : LINE_OK;\n}\n\nint main(void)\n{\n    char line[13];\n    size_t rejected = 0;\n    for (;;) {\n        enum LineStatus status = read_line(line, sizeof line);\n        if (status == LINE_END) {\n            break;\n        }\n        if (status == LINE_IO) {\n            fputs(\"input error\\n\", stderr);\n            return 1;\n        }\n        if (status != LINE_OK) {\n            ++rejected;\n            continue;\n        }\n\n        if (strncmp(line, \"ERR\", 3) == 0) {\n            puts(line);\n        }\n    }\n    printf(\"rejected %zu\\n\", rejected);\n    return 0;\n}\n"
+    }
+  },
+  "skill": {
+    "id": "c.filter-records-by-prefix",
+    "prerequisites": [
+      "c.complete-line-input",
+      "c.compare-bounded-strings"
+    ]
+  }
+}

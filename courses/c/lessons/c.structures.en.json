@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.structures",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "C programming",
+  "module": "Structures, enumerations and data models",
+  "locale": "en",
+  "title": "Structures and members",
+  "goal": "Group a sensor identifier and its reading in one record, update a working copy safely, and retain the original reading.",
+  "prerequisites": [
+    {
+      "text": "Read integer assignment and distinguish numbers from text."
+    },
+    {
+      "text": "Know how to check a range before applying a calculation. The starter supplies input parsing."
+    }
+  ],
+  "terms": [
+    {
+      "id": "record",
+      "term": "Record",
+      "title": "Record",
+      "definition": "A group of fields describing one object or event."
+    },
+    {
+      "id": "member",
+      "term": "Member",
+      "title": "Member",
+      "definition": "A named part of a structure. For example, the reading has id and millivolts members."
+    },
+    {
+      "id": "structure-copy",
+      "term": "Structure copy",
+      "title": "Structure copy",
+      "definition": "Assignment between structures of the same type copies their member values. Both members in this example are integers."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Fields belong to one measurement",
+      "paragraphs": [
+        "The laboratory log pairs sensor number 14 with its reading of 320 mV. With separate variables, a copy operation might accidentally move only half of the record.",
+        "The declaration struct Sample defines a type. The object current gets its own member values. The dot operator selects a member of that object.",
+        "Designated initializers .id and .millivolts bind values to member names. C permits padding between members and at the end, so the structure's memory representation is not a file format."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Save a snapshot before applying a correction",
+      "paragraphs": [
+        "Predict the third number. The log must show the sensor identifier, the corrected reading and the reading at the time of the snapshot."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nstruct Sample {\n    int id;\n    int millivolts;\n};\n\nint main(void)\n{\n    struct Sample current = { .id = 14, .millivolts = 320 };\n    struct Sample archived = current;\n    current.millivolts += 15;\n    printf(\"%d %d %d\\n\", current.id, current.millivolts, archived.millivolts);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "14 335 320\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Create current with identifier 14 and reading 320.",
+        "Copy the entire record to archived. The two objects now contain identical values.",
+        "Add 15 to current.millivolts. archived retains 320 because it already contains a separate copy of the integer members."
+      ],
+      "trace": [
+        [
+          "Before the snapshot",
+          "current = {14, 320}",
+          "archived does not exist yet"
+        ],
+        [
+          "After the snapshot",
+          "current = {14, 320}",
+          "archived = {14, 320}"
+        ],
+        [
+          "After the correction",
+          "current = {14, 335}",
+          "archived = {14, 320}"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "Clang reports no member named for the typo millivolt. Compare the name after the dot with the declaration of struct Sample. Correct only the member name and rebuild.",
+        "If both printed readings are 335, check the order of the copy and correction. The program can compile successfully even when the snapshot is taken at the wrong time."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Change 15 to -20 in the example and write down the values of current and archived before running it. Then transfer the same order of operations to a different record with input bounds.",
+        "A pointer member would copy the pointer value itself. Here the record deliberately uses integer members only, so the two readings are independent."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.2.3, §6.5.16.1, §6.7.2.1, §6.7.9",
+      "language": "English",
+      "purpose": "Review the language constructs used in the worked example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the example print?",
+      "options": [
+        "14 335 320",
+        "14 335 335",
+        "14 320 335"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The earlier snapshot retains the original value.",
+        "The third number belongs to the separate object archived.",
+        "The current reading is printed before the snapshot."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Where should the corrected value be checked?",
+      "options": [
+        "Before updating the member",
+        "After printing",
+        "Instead of validating input"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Check the result before storing it.",
+        "By then the invalid state has already been used.",
+        "Both the input and the operation's result need validation."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How do the three numbers change if you copy after the correction? Explain what state is preserved.",
+      "feedback": "The output becomes 14 335 335. The objects are separate, but the snapshot was taken after the current reading changed.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Sample { int id; int millivolts; };\n\nint main(void)\n{\n    struct Sample reading = { .id = 14, .millivolts = 320 };\n    return reading.millivolt;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "no member named 'millivolt'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Calibration log",
+    "environment": "C17 · Clang/WASI",
+    "task": "Use the first line, up to 63 bytes. It contains three whitespace-separated integers. Later lines are ignored. The sensor ID is 1–9999, the original reading is 0–2000 mV, and the correction is -200–200 mV. Create one record, preserve a snapshot, add the correction and check that the result is in 0–2000. Print the ID, new reading and original reading separated by spaces. Print invalid for malformed input or an out-of-range result.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Sensor {\n    int id;\n    int reading;\n};\n\nint main(void)\n{\n    int value[3];\n    const int minimum[] = {1, 0, -200};\n    const int maximum[] = {9999, 2000, 200};\n    if (!read_values(value, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Sensor active = { .id = value[0], .reading = value[1] };\n    const struct Sensor original = active;\n    int adjusted = active.reading; /* TODO: apply the correction. */\n    if (adjusted < 0 || adjusted > 2000) {\n        puts(\"invalid\");\n        return 0;\n    }\n    active.reading = adjusted;\n    printf(\"%d %d %d\\n\", active.id, active.reading, original.reading);\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "42 780 15\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "An ordinary increase",
+        "input": "42 780 15\n",
+        "output": "42 795 780\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Lower bound",
+        "input": "1 0 0\n",
+        "output": "1 0 0\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Decreasing from the maximum",
+        "input": "9999 2000 -200\n",
+        "output": "9999 1800 2000\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Result below range",
+        "input": "1 0 -1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Result above range",
+        "input": "42 2000 1\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Malformed input",
+        "input": "42 780x 15\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "42 780 15 gives 42 795 780. 9999 2000 -200 gives 9999 1800 2000.",
+      "Values outside 0–2000 are rejected. Preserve the snapshot and output member order."
+    ],
+    "hint": "Compute adjusted using active.reading and value[2]. The starter already checks adjusted. Read the last output value from original.reading.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nstruct Sensor {\n    int id;\n    int reading;\n};\n\nint main(void)\n{\n    int value[3];\n    const int minimum[] = {1, 0, -200};\n    const int maximum[] = {9999, 2000, 200};\n    if (!read_values(value, minimum, maximum, 3)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Sensor active = { .id = value[0], .reading = value[1] };\n    const struct Sensor original = active;\n    int adjusted = active.reading + value[2];\n    if (adjusted < 0 || adjusted > 2000) {\n        puts(\"invalid\");\n        return 0;\n    }\n    active.reading = adjusted;\n    printf(\"%d %d %d\\n\", active.id, active.reading, original.reading);\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Locate the snapshot in the starter and write both values down before the update.",
+        "why": "A prediction separates a formula error from an ordering error.",
+        "expected": "The snapshot contains 780 in the main case."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Change the expression for adjusted and run an ordinary and a boundary case.",
+        "why": "The correction can be in range while the result is out of range.",
+        "expected": "1 0 -1 yields invalid."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Give valid input with a negative correction and a result of exactly 0. Check that the snapshot differs from the result.",
+        "criteria": [
+          "8 30 -30 gives 8 0 30. Explain why 8 30 -31 is invalid."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.record-member-and-copy",
+    "prerequisites": [
+      "c.trace-initialised-values",
+      "c.checked-line-input"
+    ]
+  }
+}
