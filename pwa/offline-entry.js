@@ -203,12 +203,25 @@ async function renderCurrent(seq){
   if(!active()){mounted?.dispose();return;}
   clarityController=mounted;return;
  }
+ if(!lessonId&&!route.has('assessment')&&['onec','1c-enterprise'].includes(route.get('course'))){
+  const courseId=route.get('course'),language=(route.get('locale')||locale)==='en'?'en':'ru';
+  const [{onecCourseNavigation},response]=await Promise.all([
+   import('../courses/onec-education/candidate.mjs'),
+   fetch(new URL('../courses/'+courseId+'/curriculum.json',import.meta.url),{credentials:'omit'}),
+  ]);
+  if(!response.ok)throw Error('ONEC_CURRICULUM_UNAVAILABLE');
+  const curriculum=await response.json();if(seq!==renderSequence)return;
+  const heading=document.createElement('h1');heading.textContent=curriculum.title[language];
+  const overview=document.createElement('section');overview.lang=language;
+  overview.innerHTML=onecCourseNavigation(curriculum,{locale:language,selectedModule:route.get('module')});
+  overview.prepend(heading);root.replaceChildren(overview);return;
+ }
  // Публичное чтение 1С без подключения её личного хранилища к C++ vault.
  if(lessonId&&['onec','1c-enterprise'].includes(route.get('course'))){
   const [{CLARITY_COURSES},ui]=await Promise.all([import('../core/clarity-course-registry.mjs'),import('../core/cpp-clarity-r3-renderer.mjs')]);if(seq!==renderSequence)return;
   if(CLARITY_COURSES[lessonId]?.courseId===route.get('course')){
    const active=()=>seq===renderSequence;
-   const mounted=await ui.mountClarityLesson(root,{topicId:lessonId,locale:route.get('locale')||locale,adapter:null,isCurrent:active,onViewChange:view=>{if(active())root.dataset.akroniklRoute=view.hash;}});
+   const mounted=await ui.mountClarityLesson(root,{topicId:lessonId,locale:route.get('locale')||locale,offline:true,isCurrent:active,onViewChange:view=>{if(active())root.dataset.akroniklRoute=view.hash;}});
    if(!active()){mounted?.dispose();return;}clarityController=mounted;return;
   }
  }
@@ -216,7 +229,7 @@ async function renderCurrent(seq){
   const [ui,state]=await Promise.all([import('../core/cpp-clarity-r3-renderer.mjs'),import('../core/cpp-clarity-r3-session.mjs')]);if(seq!==renderSequence)return;
   const boundSession=session,active=()=>seq===renderSequence&&session===boundSession&&(!boundSession||!!data);
   const adapter=boundSession?state.createCppVaultAdapter({topicId:lessonId,readData:()=>data,isCurrent:active,commit:async next=>{if(!active())throw Error('LOCAL_COPY_LOCKED');while(pending>0)await queue.catch(()=>{});if(!active())throw Error('LOCAL_COPY_LOCKED');const receipt=await save(next);if(!active())throw Error('LOCAL_COPY_LOCKED');data=next;if(receipt.branched){const p=new URLSearchParams(location.hash.slice(1));p.set('copy',receipt.id);history.replaceState(null,'','#'+p);}return receipt;}}):null;
-  const mountedController=await ui.mountClarityLesson(root,{topicId:lessonId,locale:route.get('locale')||locale,adapter,isCurrent:active,onViewChange:view=>{if(!active())return;assistantBridge.invalidate();root.dataset.akroniklRoute=view.hash;assistantBridge.bindEditor();},openAssistant:button=>{if(active())void assistantBridge.open(button);}});if(!active()){mountedController?.dispose();return;}clarityController=mountedController;return;
+  const mountedController=await ui.mountClarityLesson(root,{topicId:lessonId,locale:route.get('locale')||locale,adapter,offline:true,isCurrent:active,onViewChange:view=>{if(!active())return;assistantBridge.invalidate();root.dataset.akroniklRoute=view.hash;assistantBridge.bindEditor();},openAssistant:button=>{if(active())void assistantBridge.open(button);}});if(!active()){mountedController?.dispose();return;}clarityController=mountedController;return;
  }
 
  if(lessonId){await prepareCppGoldLesson(course,lessonId,locale,async()=>{goldPresentation??=await import('../core/academy-gold-presentation.js');await goldPresentation.ensureGoldStyles()});if(seq!==renderSequence)return;}

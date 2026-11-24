@@ -6,10 +6,12 @@ on:
     paths:
       - '.github/workflows/academy-ui-unification.yml'
       - 'core/academy-course-navigation.mjs'
+      - 'core/academy-lesson-*.mjs'
       - 'styles/academy-*.css'
       - 'core/c-course*'
       - 'core/cpp-clarity-r3-renderer.mjs'
       - 'courses/onec-education/**'
+      - 'courses/academy-library/**'
       - 'akronikl/presence.*'
 
 permissions:
@@ -64,9 +66,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      NEXUS_FRONTEND_DIR: ${{ runner.temp }}/academy-ui-frontend
+      NEXUS_FRONTEND_DIR: /tmp/nexus-academy-ui-frontend
       NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
-      NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/academy-ui-evidence
+      NEXUS_ACADEMY_EVIDENCE: /tmp/nexus-academy-ui-evidence
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,14 +86,21 @@ jobs:
           node tools/build-cpp-clarity-candidate.mjs
       - name: Проверить 302 редакции C++ и 1С
         run: node tests/reference-courses-rollout-browser.mjs . "$NEXUS_FRONTEND_DIR" "$NEXUS_ACADEMY_EVIDENCE/editions"
-      - name: Проверить учебные маршруты 1С и автономное чтение
+      - name: Сверить каталог и проверить единое меню четырёх курсов
         env:
-          ONEC_EVIDENCE: ${{ runner.temp }}/academy-ui-evidence/onec
-        run: node tests/onec-platform-browser.mjs
+          NEXUS_ACADEMY_LIBRARY_EVIDENCE: /tmp/nexus-academy-ui-evidence/library
+        run: |
+          set -euo pipefail
+          node tools/check-academy-library.mjs
+          node tests/academy-lesson-library-browser.mjs
+      - name: Проверить автономную библиотеку и плитки через Service Worker
+        env:
+          NEXUS_NATIVE_EVIDENCE: /tmp/nexus-academy-ui-evidence/offline
+        run: node tests/c-course-offline-browser-check.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: academy-ui-${{ github.event.pull_request.head.sha }}
-          path: ${{ runner.temp }}/academy-ui-evidence/
+          path: /tmp/nexus-academy-ui-evidence/
           retention-days: 30
           if-no-files-found: error

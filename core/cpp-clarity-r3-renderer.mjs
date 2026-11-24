@@ -5,12 +5,13 @@ import {createLearningSession,createClarityRunObserver} from './cpp-clarity-r3-s
 import {emptyClarityDraft,validateClarityDraft,answerIsChecked,CLARITY_CONTENT_REVISION,snapshotDigests,canonicalJson} from './cpp-clarity-r3-state.mjs';
 import {referenceCourseStyles,mountReferenceNavigation} from './reference-course-ui.mjs';
 import {evaluateReferenceRun} from './reference-practice-assessment.mjs';
+import {academyLessonMenuItems,bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
 import {auditStudyPilot,studyReviewMarkup,studyBridgeMarkup,selfAssessmentMarkup,diagnosticMarkup,addSectionGroups,addStudyFeedback,studyFeedbackBody} from './nexus-audit-study.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const R3_TOPICS=Object.freeze(Object.keys(CLARITY_COURSES));
 const stages=['explanation','selfcheck','practice'],cache=new Map();
 export async function clarityResource(path){const id=path.match(/^lessons\/(.+)\.(ru|en)\.json$/)?.[1],folder=path==='courses.json'||(id&&!CLARITY_COURSES[id]?.pilot)?'clarity':'cpp-clarity-r3';const url=new URL('../courses/'+folder+'/'+path,import.meta.url);if(!cache.has(path))cache.set(path,fetch(url,{credentials:'omit'}).then(r=>{if(!r.ok)throw Error('R3_RESOURCE_UNAVAILABLE');return r.json();}).catch(e=>{cache.delete(path);throw e;}));return cache.get(path);}
-export async function mountClarityLesson(root,{topicId,locale='ru',adapter=null,isCurrent=()=>true,onViewChange=()=>{},openAssistant=null}={}){
+export async function mountClarityLesson(root,{topicId,locale='ru',adapter=null,offline=false,isCurrent=()=>true,onViewChange=()=>{},openAssistant=null}={}){
  if(!R3_TOPICS.includes(topicId))throw Error('R3_TOPIC_REJECTED');
  const [lesson,catalog]=await Promise.all([clarityResource('lessons/'+topicId+'.'+locale+'.json'),clarityResource('courses.json')]);
  if(!isCurrent())return null;
@@ -309,18 +310,16 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    <button type="button" class="btn lesson-tools-toggle" data-action="tools"
      aria-label="${say('Навигация по уроку','Lesson navigation')}" aria-controls="r3-tools" aria-expanded="false">${say('Меню','Menu')}</button>
   </div>
+  <p data-academy-library-status role="status"></p>
   <div class="lesson-tools" id="r3-tools" hidden>
-   <p>${esc(topic.title[locale])}</p>
-   <nav class="course-controls" aria-label="${w.program}">
-    <button type="button" class="btn" data-action="outline">${w.program}</button>
-    ${neighbor(course.topics[idx-1],'← '+w.previous)}${neighbor(course.topics[idx+1],w.next+' →')}
-    ${openAssistant?`<button type="button" class="btn" data-r3-assistant>${say('Разобрать с Akronikl','Discuss with Akronikl')}</button>`:''}
-   </nav>
+   ${academyLessonMenuItems({locale,programHref:'#'+new URLSearchParams({course:lesson.courseId,locale,...(lesson.courseId==='cpp'?{path:'topics'}:{})}),assistantEnabled:Boolean(openAssistant)})}
   </div>
   <nav class="stages" aria-label="${say('Раздел урока','Lesson stage')}">
    ${stages.map(stage=>`<a data-stage="${stage}" aria-label="${esc(w[stage])}" href="${url(topicId,stage)}"><span>${stage==='selfcheck'&&locale==='ru'?'Само&shy;проверка':w[stage]}</span><span data-current-marker aria-hidden="true" hidden></span></a>`).join('')}
   </nav>
- </header><p data-r3-save role="status" aria-live="polite">${adapter?say('Ответы и работа сохраняются на этом устройстве.','Answers and work are saved on this device.'):(external?say('Просмотр материалов. Войдите в аккаунт, чтобы сохранять ответы и работу.','Read-only materials. Sign in to save answers and work.'):say('Просмотр материалов. Войдите в аккаунт или откройте личную копию C++, чтобы сохранять работу.','Read-only materials. Sign in or open your C++ local copy to save work.'))}</p><button class="btn" data-r3-retry hidden>${say('Повторить сохранение','Retry saving')}</button><button class="btn" data-r3-export data-r3-emergency-export hidden>${say('Скачать несохранённую работу','Download unsaved work')}</button>${stages.map(s=>`<section data-r3-panel="${s}" class="stage-body" tabindex="-1" ${s===route.stage?'':'hidden'}>${s==='explanation'?explanation():s==='selfcheck'?selfcheck():practice()}</section>`).join('')}<p>${w.notCompleted}</p></div>`;
+ </header><nav class="course-controls academy-lesson-neighbors" aria-label="${say('Уроки','Lessons')}">
+   ${neighbor(course.topics[idx-1],'← '+w.previous)}${neighbor(course.topics[idx+1],w.next+' →')}
+ </nav><p data-r3-save role="status" aria-live="polite">${adapter?say('Ответы и работа сохраняются на этом устройстве.','Answers and work are saved on this device.'):(external?say('Просмотр материалов. Войдите в аккаунт, чтобы сохранять ответы и работу.','Read-only materials. Sign in to save answers and work.'):say('Просмотр материалов. Войдите в аккаунт или откройте личную копию C++, чтобы сохранять работу.','Read-only materials. Sign in or open your C++ local copy to save work.'))}</p><button class="btn" data-r3-retry hidden>${say('Повторить сохранение','Retry saving')}</button><button class="btn" data-r3-export data-r3-emergency-export hidden>${say('Скачать несохранённую работу','Download unsaved work')}</button>${stages.map(s=>`<section data-r3-panel="${s}" class="stage-body" tabindex="-1" ${s===route.stage?'':'hidden'}>${s==='explanation'?explanation():s==='selfcheck'?selfcheck():practice()}</section>`).join('')}<p>${w.notCompleted}</p></div>`;
  // Поля ответа доступны только после подключения session, справки и первого showStage.
  // Иначе ранний fill/ввод может прийти в ещё не принятый приложением экран.
  const answerFieldsets=[...root.querySelectorAll('[data-question] fieldset')];
@@ -340,7 +339,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   contextObserver.observe(contextHeader);
   if(shellHeader)contextObserver.observe(shellHeader);
  }
- if(author){const readingButton=document.createElement('button');readingButton.type='button';readingButton.className='btn';readingButton.dataset.action='reading';readingButton.textContent=say('Что почитать по теме','Topic reading');root.querySelector('.course-controls').append(readingButton);}
+ if(author){const readingButton=document.createElement('button');readingButton.type='button';readingButton.className='btn';readingButton.dataset.action='reading';readingButton.textContent=say('Источники объяснения','Lesson sources');root.querySelector('.course-controls').append(readingButton);}
  const panel=s=>root.querySelector('[data-r3-panel="'+s+'"]');
  const explanationPanel=panel('explanation');
  explanationPanel.insertAdjacentHTML('afterbegin',studyReviewMarkup(topicId,locale));
@@ -488,6 +487,13 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   toolsPanel.hidden=!open;
   toolsToggle.setAttribute('aria-expanded',String(open));
  }
+ const libraryStatus=contextHeader.querySelector('[data-academy-library-status]');
+ bindAcademyLessonMenu(lessonElement,{
+  locale,courseId:lesson.courseId,topicId,title:lesson.title,offline,signal:abort.signal,isCurrent:live,
+  closeMenu:()=>setToolsOpen(false),focusTarget:()=>toolsToggle,
+  openAssistant:openAssistant?button=>{notifyView();openAssistant(button,{courseId:lesson.courseId,lessonId:topicId,sectionId:route.stage,locale});}:null,
+  showError:message=>{libraryStatus.textContent=message;},
+ });
  listen(window,'pointerdown',event=>{
   if(live()&&!toolsPanel.hidden&&!event.composedPath().includes(contextHeader)&&!root.querySelector('dialog[open]'))setToolsOpen(false);
  });
@@ -586,13 +592,11 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
     }catch{button.textContent=say('Выделите код для копирования','Select the code to copy');}
    }
    if(button.dataset.action==='restore-starter')await confirmStarterRestore();
-   if(author&&button.dataset.action==='reading')dialog(say('Что почитать по теме','Topic reading'),author.reading());
+   if(author&&button.dataset.action==='reading')dialog(say('Источники объяснения','Lesson sources'),author.reading());
    if(author&&button.dataset.recall){const content=author.recall(button.dataset.recall);if(content){const owner=button.closest('[data-question]')||button.closest('[data-r3-panel]');const target=lastEditable&&root.contains(lastEditable)&&owner?.contains(lastEditable)&&lastEditable.getClientRects().length?lastEditable:button,x=scrollX,y=scrollY,start=target.selectionStart,end=target.selectionEnd,top=target.scrollTop,left=target.scrollLeft;const node=dialog(content.title,content.body);node.onclose=()=>{node.remove();if(!live())return;target.focus({preventScroll:true});if(typeof start==='number')target.setSelectionRange(start,end);target.scrollTop=top;target.scrollLeft=left;scrollTo(x,y);};}}
    if(button===toolsToggle)setToolsOpen(toolsPanel.hidden);
-   if(button.hasAttribute('data-r3-assistant')&&openAssistant){notifyView();openAssistant(button,{courseId:lesson.courseId,lessonId:topicId,sectionId:route.stage,locale});}
    if(button.hasAttribute('data-r3-export'))download();
    if(button.hasAttribute('data-r3-retry'))await session?.retry();
-   if(button.dataset.action==='outline')dialog(w.program,`<ul>${course.topics.map(t=>`<li><a href="${url(t.id,'explanation')}">${esc(t.title[locale])}</a></li>`).join('')}</ul>`);
    if(button.dataset.action==='setup'&&!CLARITY_COURSES[topicId].pilot){const [{labHelpMarkup},response]=await Promise.all([import('../courses/onec-education/lab-help.mjs'),fetch(new URL('../courses/onec-education/lab-route.v2.json',import.meta.url),{credentials:'omit'})]);if(!response.ok)throw Error('COURSE_SETUP_UNAVAILABLE');const copy=await response.json();if(live())dialog(w.prepTitle,labHelpMarkup(locale,{copy,open:true}));}
    if(button.dataset.action==='setup'&&CLARITY_COURSES[topicId].pilot){const data=await clarityResource('setup.'+locale+'.json');if(live())dialog(w.prepTitle,(data[topicId]||[]).map((s,i)=>`<section><h3>${i+1}. ${esc(s.title)}</h3><p>${esc(s.text)}</p>${(s.links||[]).map(l=>{const href=l.external?l.href:new URL('../courses/cpp-clarity-r3/'+l.href.replace(/^\.\//,''),import.meta.url).href;return `<p><a href="${esc(href)}" ${l.external?'target="_blank" rel="noopener"':'download'}>${esc(l.label)}</a></p>`;}).join('')}${s.code?code(s.code):''}</section>`).join(''));}
    if(button.hasAttribute('data-r3-create')&&session){button.disabled=true;const work=workSeed(),receipt=await adapter.createWork(work,lesson.title);if(!live())return;currentWork=work;session.attachNewWork(work,receipt);button.hidden=true;await ensureEditor();const open=root.querySelector('[data-action=lab-window]');if(open)open.disabled=false;await session.flush();}

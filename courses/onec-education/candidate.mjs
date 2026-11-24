@@ -8,6 +8,20 @@ import {curriculumForClarityProgress} from '../../core/clarity-course-progress.m
 import {finalAssessmentMarkup,bindFinalAssessment} from './final-assessment.mjs';
 import {mountOnecGuide} from './guide.mjs';
 import {createOnecGuide,onecGuideLessonText} from './guide-model.mjs';
+export function onecCourseNavigation(curriculum,{locale,selectedModule,completed=()=>false,includeStyles}={}){
+ const overviewHref='#'+new URLSearchParams({course:curriculum.courseId,locale});
+ let number=0;
+ const modules=curriculum.modules.map(module=>{
+  const available=module.status==='IMPLEMENTED';
+  return {id:module.moduleId,title:module.title[locale],available,
+   description:module.outcomes?.[locale],criterion:module.assessment?.[locale],
+   topics:module.topics.map(topic=>({id:topic.topicId,title:topic.title[locale],number:++number,
+    href:available&&topic.status==='IMPLEMENTED'?overviewHref+'&lesson='+encodeURIComponent(topic.topicId):null,
+    completed:completed(module,topic)}))};
+ });
+ return courseNavigationMarkup({locale,modules,selectedModule,overviewHref,
+  moduleHref:id=>overviewHref+'&module='+encodeURIComponent(id),includeStyles});
+}
 export function mountOnecCourse(options={}){
 const root=options.root||document.querySelector('#app'),localeSelect=options.localeSelect||document.querySelector('#locale'),storage=options.storage||globalThis.localStorage;let disposed=false;const isCurrent=()=>!disposed&&options.isCurrent?.()!==false;
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -30,17 +44,8 @@ function modelMarkup(project,r,w){return `<section class="card" data-request-mod
 function notesMarkup(store,r,w){const state=store.read(),other=r.course==='onec'?'1c-enterprise':'onec';return `<section class="card" id="project-notes"><h2>${e(w.notes)}</h2><p>${e(w.notesInfo)}</p><p class="meta">${e(w.data)}</p><button type="button" id="new-project">${e(w.new)}</button>${state.projects.length?state.projects.map((p,i)=>`<article class="card"><h3>${e(w.draft)} ${i+1}</h3><p class="project-id">ID: ${e(p.id)}${p.origin?` · source: ${e(p.origin.sourceProjectId)} (${e(p.origin.sourceCourseId)}); credit: none`:''}</p><label for="note-${i}">${e(w.draft)}</label><textarea id="note-${i}" maxlength="20000" data-note="${e(p.id)}">${e(p.note)}</textarea><div class="actions"><button type="button" data-save-project="${e(p.id)}">${e(w.save)}</button><button type="button" data-copy-project="${e(p.id)}">${e(w.copy)} ${e(other)}</button></div></article>`).join(''):`<p>${e(w.empty)}</p>`}<div class="actions"><button type="button" id="export-projects">${e(w.download)}</button></div></section>`}
 function overview(c,r,state){
  const courseHref=href(r.course,r.locale);
- let number=0;
- const modules=c.modules.map(module=>{
-  const available=module.status==='IMPLEMENTED';
-  return {id:module.moduleId,title:text(module.title,r.locale),available,
-   description:text(module.outcomes,r.locale),criterion:text(module.assessment,r.locale),
-   topics:module.topics.map(topic=>({id:topic.topicId,title:text(topic.title,r.locale),number:++number,
-    href:available&&topic.status==='IMPLEMENTED'?href(r.course,r.locale,topic.topicId):null,
-    completed:progressFor({modules:[{status:module.status,topics:[topic]}]},state).done===1}))};
- });
- const navigation=courseNavigationMarkup({locale:r.locale,modules,selectedModule:r.module,overviewHref:courseHref,
-  moduleHref:id=>courseHref+'&module='+encodeURIComponent(id),includeStyles:!globalThis.__ONEC_OFFLINE__});
+ const navigation=onecCourseNavigation(c,{locale:r.locale,selectedModule:r.module,includeStyles:!globalThis.__ONEC_OFFLINE__,
+  completed:(module,topic)=>progressFor({modules:[{status:module.status,topics:[topic]}]},state).done===1});
  return `<section class="course-overview" id="curriculum">${navigation}<section class="card"><h2>${r.locale==='ru'?'Итоговая работа':'Final assessment'}</h2><p>${r.locale==='ru'?'Проверьте знания, выполните практические задания и защитите учебный проект. Результаты этого курса сохраняются отдельно.':'Check your knowledge, complete practical tasks and present your training project. Results are stored separately for this course.'}</p><a class="btn primary" data-final-entry href="${courseHref}&assessment=final">${r.locale==='ru'?'Открыть итоговую работу':'Open final assessment'} →</a></section></section>`;
 }
 function courseHeader(c,r,w,p,l){const en=r.locale==='en',topics=c.modules.flatMap(m=>m.topics),pct=Math.round(p.done/p.total*100),start=topics[0];if(l)return `<a class="back-link" href="${href(r.course,r.locale)}">← ${en?'All course topics':'Все темы курса'}</a><header class="lesson-head glass-panel" data-course-id="${r.course}" data-course-locale="${r.locale}"><span class="eyebrow">${en?'TOPIC':'ТЕМА'} ${String(topics.findIndex(t=>t.topicId===l.topicId)+1).padStart(2,'0')}</span><h1>${e(l.title)}</h1><p>${e(l.goal)}</p><div class="lesson-actions"><button class="btn" type="button" data-onec-terms>${en?'Terminology reference':'Справочник терминов'}</button><button class="btn primary" data-onec-scroll="lab">${e(w.lab)}</button><button class="btn" data-onec-scroll="knowledge">${e(w.quiz)}</button><button class="btn" data-onec-scroll="onec-lab-help">${en?'How to do a lab':'Как выполнить лабораторную'}</button></div><div class="progress-row"><span>${e(w.scope)}: <strong data-progress>${p.done}/${p.total}</strong></span><span data-progress-percent>${pct}%</span></div><progress class="progress" max="${p.total}" value="${p.done}" aria-label="${e(w.scope)}"></progress></header>`;return `<header class="hero glass-panel ${l?'lesson-head':'course-head'}" data-course-id="${r.course}" data-course-locale="${r.locale}"><div class="course-symbol" aria-hidden="true">1<span>С</span></div><div class="hero-copy"><span class="eyebrow">${l?e((r.locale==='en'?'TOPIC ':'ТЕМА ')+String(topics.findIndex(t=>t.topicId===l.topicId)+1).padStart(2,'0')):e(w.candidate)}</span>${l?`<a class="course-crumb" href="${href(r.course,r.locale)}">${e(c.title[r.locale])}</a>`:''}<h1>${e(l?l.title:r.final?(en?'Final assessment':'Итоговая работа'):c.title[r.locale])}</h1><p class="meta">${l?l.minutes+' '+e(w.minutes):(c.modules.length+' '+(en?'modules':'модулей')+' · '+p.total+' '+(en?'lessons':'тем')+' · RU / EN')}</p><div class="progress-row"><span>${e(w.scope)}: <strong data-progress>${p.done}/${p.total}</strong></span><span data-progress-percent>${pct}%</span></div><progress class="progress" max="${p.total}" value="${p.done}" aria-label="${e(w.scope)}"></progress></div></header><nav class="lesson-actions" aria-label="${e(w.overview)}"><button class="btn ghost" type="button" data-onec-terms>${en?'Terms and abbreviations':'Термины и сокращения'}</button><button class="btn ghost" type="button" data-onec-scroll="onec-lab-help">${en?'How to do a lab':'Как выполнить лабораторную'}</button>${l?`<a class="btn ghost" href="${href(r.course,r.locale)}">← ${e(w.back)}</a><button class="btn primary" data-onec-scroll="lab">${e(w.lab)}</button><button class="btn ghost" data-onec-scroll="knowledge">${e(w.quiz)}</button>`:r.final?`<a class="btn ghost" href="${href(r.course,r.locale)}">← ${e(w.back)}</a>`:`<a class="btn primary" data-onec-start href="${href(r.course,r.locale,start.topicId)}">${e(w.start)} →</a><a class="btn ghost" href="#course=${r.course}&locale=${r.locale}&assessment=final">${en?'Final assessment':'Итоговая работа'}</a>`}</nav>`}

@@ -34,6 +34,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
   const appearance = readAppearance(win);
   let pointer, suppressClick = false;
   let layoutRoot, layoutEvents, layoutFrame = null;
+  let geometryTargets = [];
 
   function element(tag, className) {
     const node = doc.createElement(tag);
@@ -164,6 +165,9 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
         layoutRoot.addEventListener('focusin', scheduleFit, {signal});
         layoutRoot.addEventListener('focusout', scheduleFit, {signal});
         layoutRoot.addEventListener('scroll', scheduleFit, {capture: true, passive: true, signal});
+        layoutRoot.addEventListener('load', event => {
+          if (event.target?.matches?.('link[rel~="stylesheet"]')) fit();
+        }, {capture: true, signal});
       }
     }
     return cCourse ?? layoutRoot?.querySelector('.r3-lesson[data-r3-topic]');
@@ -249,6 +253,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
 
   function fit() {
     const surface = findAcademySurface();
+    observeAcademyGeometry(surface);
     if (pointer?.dragging) return;
     slot.removeAttribute('data-academy-blocked');
     slot.removeAttribute('data-academy-adjusted');
@@ -256,6 +261,19 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
     const area = bounds();
     renderPosition(area);
     if (surface) avoidAcademyControls(surface, area);
+  }
+
+  function observeAcademyGeometry(surface) {
+    if (!layoutGeometry) return;
+    const targets = [
+      surface,
+      surface?.querySelector('.lesson-floating'),
+      surface?.querySelector('.lesson-context,.c-lesson-header'),
+    ].filter(Boolean);
+    if (targets.length === geometryTargets.length && targets.every((item, index) => item === geometryTargets[index])) return;
+    layoutGeometry.disconnect();
+    geometryTargets = targets;
+    for (const target of targets) layoutGeometry.observe(target);
   }
 
   function scheduleFit() {
@@ -266,6 +284,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
     });
   }
   const layoutObserver = new win.MutationObserver(scheduleFit);
+  const layoutGeometry = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(fit) : null;
   const scheduleAcademyFit = () => { if (layoutRoot) scheduleFit(); };
 
   button.addEventListener('pointerdown', event => {
@@ -384,6 +403,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
     dispose() {
       listeners.abort();
       layoutObserver.disconnect();
+      layoutGeometry?.disconnect();
       layoutEvents?.abort();
       if (layoutFrame !== null) win.cancelAnimationFrame(layoutFrame);
       slot.remove();

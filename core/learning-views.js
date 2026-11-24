@@ -83,7 +83,7 @@ async function overview(selectedModule){
         detail:t(labFor(id)?'learningPath.topicWithLab':'learningPath.topicMaterials')};
     }),
   }));
-  const selectedFilter=sections.some(section=>section.id===selectedModule)?'topics':cppLearningFilter;
+  const selectedFilter=params.get('path')==='topics'||sections.some(section=>section.id===selectedModule)?'topics':cppLearningFilter;
   const navigation=courseNavigationMarkup({locale:moduleLocale,modules:sections,selectedModule,
     overviewHref:'#course=cpp'+localeSuffix,moduleHref:id=>'#course=cpp&module='+encodeURIComponent(id)+localeSuffix});
   const taskGroups=cpp.curriculum.sections.map(sec=>{

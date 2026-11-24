@@ -1,5 +1,6 @@
 import {bindCCourseWorkspace, createCCourseStorage} from './c-course-workspace.mjs';
 import {courseNavigationMarkup} from './academy-course-navigation.mjs';
+import {academyLessonMenuItems, bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
 import {bindGlossaryDrawer, termReferenceMarkup} from './nexus-learning-ui.js';
 import {registerUpdateParticipant} from '../pwa/interface-update.js';
 
@@ -254,7 +255,7 @@ function practice(lesson, t, readonly) {
       '</details>' : '');
 }
 
-function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave, readonly}) {
+function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave, readonly, assistantEnabled}) {
   const index = data.topics.findIndex(topic => topic.id === lesson.id);
   const previous = data.topics[index - 1], next = data.topics[index + 1];
   const module = data.curriculum.modules.find(item => item.id === lesson.moduleId);
@@ -284,9 +285,9 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
     t('Тема ', 'Lesson ') + (index + 1) + '/' + data.topics.length + '</span><h1 tabindex="-1" data-c-heading>' +
     escape(lesson.title) + '</h1><details class="c-lesson-menu"><summary class="btn">' + t('Меню', 'Menu') +
     '</summary><div class="c-lesson-menu-links">' +
-    button(overviewHref, t('Программа курса', 'Course outline')) +
-    (module ? button(moduleHref, t('Темы модуля', 'Module lessons')) : '') + '</div></details></div>' +
+    academyLessonMenuItems({locale, programHref:overviewHref, assistantEnabled}) + '</div></details></div>' +
     '<nav class="c-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
+    '<p data-academy-library-status role="status"></p>' +
     '<nav class="c-neighbors" aria-label="' + t('Уроки', 'Lessons') + '">' +
     (previous ? button(routeLink(locale, previous.id), t('← Предыдущий урок: ', '← Previous lesson: ') + titleOf(previous)) : '') +
     (next ? button(routeLink(locale, next.id), nextLabel) : '') + '</nav>' +
@@ -296,7 +297,8 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
     '</button>' : '') + action + '</footer></div>' + lessonReference(lesson, locale, t);
 }
 
-export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readonly = false, isCurrent = () => true} = {}) {
+export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readonly = false,
+  isCurrent = () => true, openAssistant = null} = {}) {
   if (!host) return null;
   locale = locale === 'en' ? 'en' : 'ru';
   stage = stages.some(([id]) => id === stage) ? stage : 'explanation';
@@ -321,7 +323,8 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   style.rel = 'stylesheet';
   style.href = new URL('./c-course.css', import.meta.url).href;
   host.innerHTML = '<p class="c-route-status" role="status" data-c-status></p>' +
-    (lesson ? lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave:Boolean(storage), readonly}) :
+    (lesson ? lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave:Boolean(storage), readonly,
+      assistantEnabled:Boolean(openAssistant)}) :
       (lessonId ? '<p role="status">' + t('Эта тема пока недоступна.', 'This lesson is not available yet.') + '</p>' : '') +
       overview({data, locale, t, resume, progress, selectedModule:new URLSearchParams(hash.slice(1)).get('module')}));
   host.prepend(style);
@@ -342,6 +345,13 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
       contextObserver.observe(context);
       if (topbar) contextObserver.observe(topbar);
     }
+    const menu = context.querySelector('.c-lesson-menu');
+    const libraryStatus = host.querySelector('[data-academy-library-status]');
+    bindAcademyLessonMenu(host, {
+      locale, courseId:'c', topicId:lesson.id, title:lesson.title, offline:readonly, signal:events.signal, isCurrent,
+      closeMenu:() => { menu.open = false; }, focusTarget:() => menu.querySelector('summary'),
+      openAssistant, showError:message => { libraryStatus.textContent = message; },
+    });
   }
   function store(key, value) {
     if (!storage) return false;

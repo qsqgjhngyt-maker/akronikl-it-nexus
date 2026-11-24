@@ -75,9 +75,43 @@ try {
     assert.ok(await root.locator('pre code').count());
     await capture('cold-first-lesson-ru-390');
   });
+  await check('Публичная библиотека и плитки программ C++ и 1С доступны без сети', async () => {
+    for (const [course,lesson,locale] of [
+      ['cpp','cpp.programming-process','en'],
+      ['onec','onec.p2.topic-1','ru'],
+      ['1c-enterprise','1c-enterprise.a2.topic-1','en'],
+    ]) {
+      await page.goto(fixture.origin + '/offline.html#' + new URLSearchParams({course,lesson,locale}));
+      const current = page.locator('[data-r3-topic="'+lesson+'"]');
+      await current.locator('[data-action="tools"]').click();
+      await current.locator('[data-academy-menu-item="reading"]').click();
+      const library = current.locator('.academy-library-dialog[open]');
+      await library.locator('.academy-library-source a').first().waitFor();
+      assert.match(await library.innerText(), /Opening sources requires an internet connection|Для открытия источников нужен интернет/);
+      await capture('cold-library-'+course+'-'+locale+'-390');
+      await page.keyboard.press('Escape');
+      await current.locator('[data-action="tools"]').click();
+      await current.locator('[data-academy-menu-item="program"]').click();
+      const tiles = page.locator('[data-academy-course-navigation="modules"] [data-academy-module]');
+      await tiles.first().locator('a').click();
+      const firstTopic = page.locator('[data-academy-course-navigation="topics"] [data-academy-topic] a').first();
+      await firstTopic.click();
+      await page.locator('[data-r3-topic]').waitFor();
+      const route = new URLSearchParams(new URL(page.url()).hash.slice(1));
+      assert.equal(route.get('course'),course);
+      assert.equal(route.get('locale'),locale);
+    }
+  });
   await check('RU/EN открываются, справка и эталон читаются, запуска и личной записи нет', async () => {
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=' + firstId + '&locale=en');
     await root.getByRole('heading', { level:1, name:firstEnglish.title, exact:true }).waitFor();
+    await root.locator('.c-lesson-menu summary').click();
+    await root.locator('[data-academy-menu-item="reading"]').click();
+    const library = root.locator('.academy-library-dialog[open]');
+    await library.locator('.academy-library-source a').first().waitFor();
+    assert.match(await library.innerText(), /Opening sources requires an internet connection/);
+    await page.keyboard.press('Escape');
+    await library.waitFor({state:'hidden'});
     await root.getByRole('button', {name:'Reference', exact:true}).click();
     await root.locator('#termDrawer[open] [data-term-card]').first().waitFor();
     await page.keyboard.press('Escape');
