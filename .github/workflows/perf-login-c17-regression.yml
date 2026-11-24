@@ -27,7 +27,6 @@ jobs:
       NEXUS_EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
       NEXUS_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
       NEXUS_PR_NUMBER: ${{ github.event.pull_request.number }}
-      NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/scope-evidence
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,6 +37,8 @@ jobs:
         with:
           node-version: '24'
       - name: Проверить C17, продуктовые пути, режимы файлов и единственный CI-файл
+        env:
+          NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/scope-evidence
         run: |
           set -euo pipefail
           mkdir -p "$NEXUS_ACADEMY_EVIDENCE"
@@ -47,6 +48,7 @@ jobs:
 
           const base='b170c7f64ab70bb6f0499f10704ac38a1d75e97c';
           const candidate='241809418a06c139da028dd0be589f170e3068b0';
+          const initialCI='6f198ddcc7b5ea7bec4b59826f4646505e28b0cd';
           const productTree='b8ad64a7cc15ffdd402dfddd2af1725c6f3f5074';
           const workflow='.github/workflows/perf-login-c17-regression.yml';
           const repository='qsqgjhngyt-maker/akronikl-it-nexus';
@@ -86,7 +88,8 @@ jobs:
             assert.equal(input.base,base);
             assert.match(input.head,/^[a-f0-9]{40}$/);
             assert.equal(input.checkout,input.head);
-            assert.deepEqual(input.parents,[candidate]);
+            assert.deepEqual(input.parents,[initialCI]);
+            assert.deepEqual(input.initialCIParents,[candidate]);
             assert.equal(input.productTree,productTree);
             assert.equal(input.productDelta.length,11);
             const remaining=new Map(Object.entries(product));
@@ -102,6 +105,7 @@ jobs:
             assert.equal(ci.mode,'100644');
             assert.equal(ci.op,'A');
             assert.match(ci.blob,/^[a-f0-9]{40}$/);
+            assert.deepEqual(input.headDelta,[{...ci,op:'M'}]);
           }
           const env=process.env;
           assert.equal(env.NEXUS_EVENT_BASE,base);
@@ -112,6 +116,7 @@ jobs:
             pr:env.NEXUS_PR_NUMBER,branch:env.NEXUS_HEAD_REF,base:env.NEXUS_EVENT_BASE,head,
             checkout:git('rev-parse','HEAD'),parents:git('show','-s','--format=%P',head).split(' '),
             productTree:git('rev-parse',candidate+'^{tree}'),productDelta:delta(base,candidate),workflowDelta:delta(candidate,head),
+            initialCIParents:git('show','-s','--format=%P',initialCI).split(' '),headDelta:delta(initialCI,head),
           };
           verify(input);
           const controls={
@@ -121,6 +126,9 @@ jobs:
             fork:copy=>{copy.headRepository='other/akronikl-it-nexus';},
             wrongCheckout:copy=>{copy.checkout=candidate;},
             stackedHead:copy=>{copy.parents.push(base);},
+            wrongCICheckpoint:copy=>{copy.parents=[candidate];},
+            wrongCIParent:copy=>{copy.initialCIParents=[base];},
+            mixedCIFix:copy=>{copy.headDelta.push({...copy.headDelta[0],file:'core/app.js'});},
             wrongTree:copy=>{copy.productTree='0'.repeat(40);},
             extraProduct:copy=>{copy.productDelta.push({...copy.productDelta[0],file:'core/app.js'});},
             missingProduct:copy=>{copy.productDelta.pop();},
