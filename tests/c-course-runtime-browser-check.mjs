@@ -117,8 +117,9 @@ try {
       'akronikl:it-nexus:account-store:v1:synthetic-runtime-online:'));
   });
   assert.equal(accountScoped, true);
-  async function openPractice(lessonId) {
+  async function openPractice(lessonId, title) {
     await page.goto(origin + '/#course=c&lesson=' + lessonId + '&stage=practice&locale=en');
+    await page.getByRole('heading', {level:1, name:title, exact:true}).waitFor();
     await page.locator('[data-c-workspace] #editor').waitFor();
   }
 
@@ -129,7 +130,7 @@ try {
     assert.match(await page.locator('[data-c-result]').textContent(), new RegExp('C17 · Clang/WASI · exit code ' + exitCode + '$'));
   }
 
-  await openPractice('c.function-test-cases');
+  await openPractice('c.function-test-cases', 'Testing functions separately');
   await page.locator('[data-c-stdin]').fill('');
   await runPractice('49 0\nfail 50 expected 5 got 0\n51 5\npassed 2\n', 1);
   const bonusEditor = page.locator('#editor');
@@ -139,7 +140,7 @@ try {
   await runPractice('49 0\n50 5\n51 5\npassed 3\n', 0);
   await page.screenshot({path:path.join(out, 'm3-bonus-boundary.png')});
 
-  await openPractice('c.function-project');
+  await openPractice('c.function-project', 'Project: unit conversion');
   const project = JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR, manifest.prefix,
     'courses/c/lessons/c.function-project.en.json')));
   const solution = project.practice.referenceSolution.source;
