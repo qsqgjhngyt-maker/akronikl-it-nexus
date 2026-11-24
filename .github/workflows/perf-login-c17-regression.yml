@@ -1,0 +1,318 @@
+name: PERF-LOGIN C17 — регрессия кандидата PR №68
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/perf-login-c17-regression.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-login-c17-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXUS_PRODUCT_SHA: '241809418a06c139da028dd0be589f170e3068b0'
+  NEXUS_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+
+jobs:
+  scope:
+    name: Точный состав PR №68 и отрицательные контроли
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NEXUS_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+      NEXUS_EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+      NEXUS_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+      NEXUS_PR_NUMBER: ${{ github.event.pull_request.number }}
+      NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/scope-evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить C17, продуктовые пути, режимы файлов и единственный CI-файл
+        run: |
+          set -euo pipefail
+          mkdir -p "$NEXUS_ACADEMY_EVIDENCE"
+          node --input-type=module <<'NODE' | tee "$NEXUS_ACADEMY_EVIDENCE/SCOPE.json"
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+
+          const base='b170c7f64ab70bb6f0499f10704ac38a1d75e97c';
+          const candidate='241809418a06c139da028dd0be589f170e3068b0';
+          const productTree='b8ad64a7cc15ffdd402dfddd2af1725c6f3f5074';
+          const workflow='.github/workflows/perf-login-c17-regression.yml';
+          const repository='qsqgjhngyt-maker/akronikl-it-nexus';
+          const prBranch='feature/perf-login-c17-editorial';
+          const product={
+            'assets/blog/c17-course-1536.jpg':['A','b76db3b6132be89c6b44b736a86b2ae3b236b094'],
+            'assets/blog/c17-course-768.jpg':['A','a23d4f2fc0742b624d2207c10ec1181054e5d22c'],
+            'core/blog-editorial-text.js':['A','1072ad651cabeae0ed104717ae4d43dbd0f41bff'],
+            'core/blog-presentation.js':['M','f63fee129eef9501b7a4820e13d4b97172cd7220'],
+            'core/blog-publications-20261109.js':['M','9fa697c2164433f5abb21e6301a1a4b33911aed4'],
+            'core/content-public.js':['M','05053f2d4c515f12d9858372a713300f685ac832'],
+            'core/startup-intro.js':['M','2a47671c1fb6555bc90a7e3ad4b638492936452c'],
+            'pwa/durable-store.js':['M','4219b1f03fc1c16dfb9f5f7ff35d2b61e2be5e9f'],
+            'server-access/public/entry.html':['M','46004933c0e5bda586ee991a355823bfb52a309d'],
+            'server-access/public/entry.js':['M','24205a9b4c5bc4f874cd4352bc16d5f2b71e870d'],
+            'tests/startup-intro-launch-browser-check.mjs':['M','19d4f03281435eedb39067584bc7b7882cfc9ce7'],
+          };
+          const git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{encoding:'utf8'}).trimEnd();
+          function delta(from,to){
+            const tokens=git('diff','--raw','--no-renames','--no-abbrev','-z',from,to).split('\0');
+            assert.equal(tokens.pop(),'');
+            assert.equal(tokens.length%2,0);
+            const output=[];
+            for(let index=0;index<tokens.length;index+=2){
+              const match=/^:[0-7]{6} ([0-7]{6}) [a-f0-9]{40} ([a-f0-9]{40}) ([AMDT])$/.exec(tokens[index]);
+              assert(match,'Неподдерживаемая операция Git');
+              output.push({file:tokens[index+1],mode:match[1],blob:match[2],op:match[3]});
+            }
+            return output;
+          }
+          function verify(input){
+            assert.equal(input.event,'pull_request');
+            assert.equal(input.repository,repository);
+            assert.equal(input.headRepository,repository);
+            assert.equal(input.pr,'68');
+            assert.equal(input.branch,prBranch);
+            assert.equal(input.base,base);
+            assert.match(input.head,/^[a-f0-9]{40}$/);
+            assert.equal(input.checkout,input.head);
+            assert.deepEqual(input.parents,[candidate]);
+            assert.equal(input.productTree,productTree);
+            assert.equal(input.productDelta.length,11);
+            const remaining=new Map(Object.entries(product));
+            for(const {file,op,mode,blob} of input.productDelta){
+              assert.equal(mode,'100644',file);
+              assert.deepEqual([op,blob],remaining.get(file),file);
+              remaining.delete(file);
+            }
+            assert.equal(remaining.size,0);
+            assert.equal(input.workflowDelta.length,1);
+            const [ci]=input.workflowDelta;
+            assert.equal(ci.file,workflow);
+            assert.equal(ci.mode,'100644');
+            assert.equal(ci.op,'A');
+            assert.match(ci.blob,/^[a-f0-9]{40}$/);
+          }
+          const env=process.env;
+          assert.equal(env.NEXUS_EVENT_BASE,base);
+          assert.match(env.NEXUS_EVENT_HEAD??'',/^[a-f0-9]{40}$/);
+          const head=env.NEXUS_EVENT_HEAD;
+          const input={
+            event:env.GITHUB_EVENT_NAME,repository:env.GITHUB_REPOSITORY,headRepository:env.NEXUS_HEAD_REPOSITORY,
+            pr:env.NEXUS_PR_NUMBER,branch:env.NEXUS_HEAD_REF,base:env.NEXUS_EVENT_BASE,head,
+            checkout:git('rev-parse','HEAD'),parents:git('show','-s','--format=%P',head).split(' '),
+            productTree:git('rev-parse',candidate+'^{tree}'),productDelta:delta(base,candidate),workflowDelta:delta(candidate,head),
+          };
+          verify(input);
+          const controls={
+            wrongBase:copy=>{copy.base='0'.repeat(40);},
+            wrongPR:copy=>{copy.pr='67';},
+            wrongBranch:copy=>{copy.branch='feature/other';},
+            fork:copy=>{copy.headRepository='other/akronikl-it-nexus';},
+            wrongCheckout:copy=>{copy.checkout=candidate;},
+            stackedHead:copy=>{copy.parents.push(base);},
+            wrongTree:copy=>{copy.productTree='0'.repeat(40);},
+            extraProduct:copy=>{copy.productDelta.push({...copy.productDelta[0],file:'core/app.js'});},
+            missingProduct:copy=>{copy.productDelta.pop();},
+            wrongProductBlob:copy=>{copy.productDelta[0].blob='0'.repeat(40);},
+            productDeletion:copy=>{copy.productDelta[0].op='D';},
+            productLink:copy=>{copy.productDelta[0].mode='120000';},
+            renamedWorkflow:copy=>{copy.workflowDelta[0].file='.github/workflows/academy-expansion-regression.yml';},
+            secondWorkflowPath:copy=>{copy.workflowDelta.push({...copy.workflowDelta[0],file:'pwa/policy.js'});},
+            executableWorkflow:copy=>{copy.workflowDelta[0].mode='100755';},
+          };
+          for(const [label,change] of Object.entries(controls)){
+            const mutated=structuredClone(input);
+            change(mutated);
+            assert.throws(()=>verify(mutated),{code:'ERR_ASSERTION'},label);
+          }
+          console.log(JSON.stringify({status:'PASS',scope:'PR68_CI_ONLY',candidate,productTree,base,head,
+            productFiles:input.productDelta,workflowFile:input.workflowDelta[0],negativeControls:Object.keys(controls)}));
+          NODE
+          git switch --detach "$NEXUS_PRODUCT_SHA"
+          node --test tests/academy-expansion-regression.test.mjs tests/academy-m2-scope.test.mjs tests/academy-m3-scope.test.mjs tests/academy-m4-scope.test.mjs tests/academy-m5-scope.test.mjs tests/academy-m6-scope.test.mjs tests/academy-m7-scope.test.mjs tests/academy-m8-scope.test.mjs tests/onec-historical-routing.test.mjs tests/onec-platform-ci-route.test.mjs tests/content-publication-route.test.mjs | tee "$NEXUS_ACADEMY_EVIDENCE/CONTROLS.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-login-c17-scope-${{ github.sha }}
+          path: ${{ runner.temp }}/scope-evidence/
+          retention-days: 30
+          if-no-files-found: error
+
+  historical:
+    name: Неизменённые исторические проверки
+    needs: scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NEXUS_CLARITY_EVIDENCE: /tmp/academy-expansion-historical
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.NEXUS_PRODUCT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Повторить Preservation и семь отрицательных проверок на C12
+        run: |
+          set -euo pipefail
+          mkdir -p "$NEXUS_CLARITY_EVIDENCE"
+          git worktree add --detach "$RUNNER_TEMP/nexus-c12" a944f7221f76622a1d6bb41f5159e0f1cfa3a614
+          cd "$RUNNER_TEMP/nexus-c12"
+          git rev-parse HEAD | tee "$NEXUS_CLARITY_EVIDENCE/C12.txt"
+          node tools/check-cpp-clarity-preservation.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/C12.txt"
+          node tests/cpp-clarity-onec-p2-negative-controls.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/C12.txt"
+      - name: Повторить точный допуск на исходнике P4-Q
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/nexus-p4q" 981746eaeb656d7f393257dd00efbcac3e03ddf0
+          cd "$RUNNER_TEMP/nexus-p4q"
+          git rev-parse HEAD | tee "$NEXUS_CLARITY_EVIDENCE/P4Q-EXACT.txt"
+          GITHUB_HEAD_REF=feature/akronikl-p4q-corpus-20261028 node tools/startup-intro-ci-route.mjs | tee -a "$NEXUS_CLARITY_EVIDENCE/P4Q-EXACT.txt"
+      - name: Проверить отказ допуска P4-Q к кандидату
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$NEXUS_CLARITY_EVIDENCE/P4Q-CANDIDATE.txt"
+          if GITHUB_HEAD_REF="$NEXUS_HEAD_REF" node tools/startup-intro-ci-route.mjs > "$NEXUS_CLARITY_EVIDENCE/P4Q-REJECTION.txt" 2>&1; then
+            echo 'Кандидат ошибочно получил допуск P4-Q' >&2
+            exit 1
+          fi
+          grep -F 'P4-Q release branch' "$NEXUS_CLARITY_EVIDENCE/P4Q-REJECTION.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-login-c17-historical-${{ github.sha }}
+          path: /tmp/academy-expansion-historical/
+          retention-days: 30
+          if-no-files-found: error
+
+  contracts:
+    name: Содержание, сохранение, производительность и native C++
+    needs: scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      NEXUS_CLARITY_EVIDENCE: /tmp/academy-expansion-contracts
+      NEXUS_QT_EVIDENCE_DIR: /tmp/academy-expansion-contracts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.NEXUS_PRODUCT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Контракты и материалы действующих курсов
+        run: |
+          set -euo pipefail
+          mkdir -p "$NEXUS_CLARITY_EVIDENCE"
+          node tools/check-content-review.mjs
+          node --test --test-concurrency=1 \
+            tests/reference-courses-content.test.mjs tests/reference-courses-rollout.test.mjs \
+            tests/cpp-clarity-content.test.mjs tests/cpp-clarity-*-content.test.mjs \
+            tests/cpp-clarity-r3-state.test.mjs tests/cpp-clarity-r3-writer.test.mjs \
+            tests/cpp-clarity-r3-session.test.mjs tests/cpp-clarity-r3-onec-writer.test.mjs \
+            tests/cpp-clarity-r3-transfer.test.mjs tests/cpp-clarity-regression.test.mjs \
+            tests/onec-offline-data.test.mjs tests/content-contract.test.mjs \
+            tests/c-course-content.test.mjs tests/runtime-files.test.mjs \
+            tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs \
+            tests/platform-lazy-imports.test.mjs tests/pwa-controller-graph-compatibility.test.mjs \
+            tests/akronikl-context-runtime.test.mjs \
+            | tee "$NEXUS_CLARITY_EVIDENCE/CONTRACTS.txt"
+      - name: Точные прежние лимиты, изоляция и сохранение
+        run: |
+          set -euo pipefail
+          node tools/check-cpp-course-perf.mjs
+          node tests/shared-presentation-check.mjs
+          node tests/code-studio-foundation-check.mjs
+          for check in workspace-persistence-resume offline-learning offline-transfer pwa-policy pwa-controller account-storage-isolation; do
+            node "tests/$check-check.mjs"
+          done
+      - name: Программы C++20 и отрицательные контроли native
+        run: |
+          set -euo pipefail
+          node tools/check-cpp-clarity-host.mjs | tee "$NEXUS_CLARITY_EVIDENCE/CPP-HOST.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-login-c17-contracts-${{ github.sha }}
+          path: /tmp/academy-expansion-contracts/
+          retention-days: 30
+          if-no-files-found: error
+
+  browser:
+    name: Браузерная регрессия · ${{ matrix.suite }}
+    needs: scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [editions, onec, references]
+    env:
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.NEXUS_PRODUCT_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Собрать непубликованный кандидат и подключить Chrome
+        run: |
+          set -euo pipefail
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
+          chrome="$(command -v google-chrome)"
+          "$chrome" --version
+          export NEXUS_FRONTEND_DIR="$RUNNER_TEMP/academy-expansion-frontend"
+          node tools/build-cpp-clarity-candidate.mjs
+          printf 'NEXUS_CHROME_PATH=%s\nNEXUS_FRONTEND_DIR=%s\n' "$chrome" "$NEXUS_FRONTEND_DIR" >> "$GITHUB_ENV"
+      - name: 302 редакции прежних курсов на трёх ширинах
+        if: matrix.suite == 'editions'
+        env:
+          NEXUS_ACADEMY_EVIDENCE: ${{ runner.temp }}/browser-evidence
+        run: node tests/reference-courses-rollout-browser.mjs . "$NEXUS_FRONTEND_DIR" "$NEXUS_ACADEMY_EVIDENCE"
+      - name: 1С P1/P2, ответы, работа и холодное чтение
+        if: matrix.suite == 'onec'
+        env:
+          NEXUS_CLARITY_EVIDENCE: ${{ runner.temp }}/browser-evidence
+        run: |
+          set -euo pipefail
+          node tests/cpp-clarity-reference-visibility-browser.mjs
+          node tests/cpp-clarity-onec-p1-browser.mjs
+          node tests/cpp-clarity-onec-p2-types-browser.mjs
+          node tests/cpp-clarity-onec-p2-conditions-browser.mjs
+          node tests/cpp-clarity-onec-p2-module-browser.mjs
+      - name: Десять эталонов, сохранение, cold offline и реальный Clang/WASI
+        if: matrix.suite == 'references'
+        env:
+          PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
+          NEXUS_PINNED_RUNTIME_DIR: ${{ runner.temp }}/academy-expansion-runtime
+          NEXUS_GOLD_EVIDENCE: ${{ runner.temp }}/browser-evidence/runtime-bytes
+          NEXUS_REFERENCE_EVIDENCE: ${{ runner.temp }}/browser-evidence/references
+        run: |
+          set -euo pipefail
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+          node tests/reference-courses-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-login-c17-browser-${{ matrix.suite }}-${{ github.sha }}
+          path: ${{ runner.temp }}/browser-evidence/
+          retention-days: 30
+          if-no-files-found: error
