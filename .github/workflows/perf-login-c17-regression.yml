@@ -57,13 +57,16 @@ jobs:
           const conditionsCI='ec1dcb71731ef3c2fdef912ee641a4079c4ef3c9';
           const migratedConditionsCI='de149e169e9d648fdf71e24ba7ec644fe97c2e94';
           const finalIntegration='0da3e373f216bfb501132f6e164385f773e73b25';
+          const finalReview='8f1bf6ebf26931ac1db5ae8778fbc1c22a46590d';
           const productTree='c574ab5d1582a97ffc58692752b310129b6e3a39';
           const workflow='.github/workflows/perf-login-c17-regression.yml';
           const repository='qsqgjhngyt-maker/akronikl-it-nexus';
           const prBranch='feature/perf-login-c17-editorial';
           const receipt='docs/ru/03-content/cp-next-01/C17_EDITORIAL_PRESENTATION_BYTES.json';
           const conditionsReceipt='docs/ru/03-content/cp-next-01/C17_CONDITIONS_CI_BYTES.json';
+          const protectedDiffReceipt='docs/ru/03-content/cp-next-01/C17_PROTECTED_DIFF_CI_BYTES.json';
           const verifier='tests/helpers/course-rollout-bytes.mjs';
+          const presentationVerifier='tests/helpers/cpp-clarity-approved-presentation.mjs';
           const editorialTest='tests/c17-editorial-presentation-pin.test.mjs';
           const conditions='tests/cpp-clarity-onec-p2-conditions-content.test.mjs';
           const conditionsPin=['M','8d4d6e133ef88830c8f7f92b7723c7c29a201994'];
@@ -83,9 +86,15 @@ jobs:
             [conditionsReceipt]:['M','c41facede71e9eac8c1ce5c2be18cbf531eda4e7'],
             [verifier]:['M','5f7abe8fe6de7742de4b7fa6363640fd9d9e6b56'],
           };
-          const combinedCI={...editorialCI,...conditionsMigration,...finalPins,
+          const protectedDiffPins={
+            [protectedDiffReceipt]:['A','cce8359f6f1acc7bbcbeaf6e0761a392d7ed47de'],
+            [editorialTest]:['M','77a491ed38732b778156d13bee857611c23ad053'],
+            [verifier]:['M','17cc3fcc8727ac6902be1b969e01edc8230968ec'],
+            [presentationVerifier]:['M','a4d9ad4ebe5857601283237e41bfc6cd4adecfc8'],
+          };
+          const combinedCI={...editorialCI,...conditionsMigration,...finalPins,...protectedDiffPins,
             [conditionsReceipt]:['A',finalPins[conditionsReceipt][1]],
-            [editorialTest]:['A',conditionsMigration[editorialTest][1]]};
+            [editorialTest]:['A',protectedDiffPins[editorialTest][1]]};
           const product={
             'akronikl/context.js':['M','8575598953d7e070fdeccb03e4b5062bbef7437b'],
             'akronikl/presence.css':['M','9187c23df869ed724adedd39b3d8911a5355b7ba'],
@@ -145,7 +154,8 @@ jobs:
             assert.equal(input.base,base);
             assert.match(input.head,/^[a-f0-9]{40}$/);
             assert.equal(input.checkout,input.head);
-            assert.deepEqual(input.parents,[finalIntegration]);
+            assert.deepEqual(input.parents,[finalReview]);
+            assert.deepEqual(input.finalReviewParents,[finalIntegration]);
             assert.deepEqual(input.finalIntegrationParents,[migratedConditionsCI,candidate]);
             assert.deepEqual(input.productParents,[beforeLabelFix]);
             assert.deepEqual(input.migratedConditionsCIParents,[conditionsCI]);
@@ -166,8 +176,9 @@ jobs:
             verifyCI(input.labelFixDelta,[[labelCss,labelFix]]);
             verifyCI(input.finalIntegrationDelta,[[labelCss,labelFix]]);
             verifyCI(input.conditionsMigrationDelta,[...Object.entries(conditionsMigration),[workflow,['M',null]]]);
+            verifyCI(input.finalReviewDelta,[...Object.entries(finalPins),[workflow,['M',null]]]);
             verifyCI(input.workflowDelta,[...Object.entries(combinedCI),[conditions,conditionsPin],[workflow,['A',null]]]);
-            verifyCI(input.headDelta,[...Object.entries(finalPins),[workflow,['M',null]]]);
+            verifyCI(input.headDelta,[...Object.entries(protectedDiffPins),[workflow,['M',null]]]);
           }
           const env=process.env;
           assert.equal(env.NEXUS_EVENT_BASE,base);
@@ -185,9 +196,11 @@ jobs:
             conditionsCIParents:git('show','-s','--format=%P',conditionsCI).split(' '),
             migratedConditionsCIParents:git('show','-s','--format=%P',migratedConditionsCI).split(' '),
             finalIntegrationParents:git('show','-s','--format=%P',finalIntegration).split(' '),
+            finalReviewParents:git('show','-s','--format=%P',finalReview).split(' '),
             productParents:git('show','-s','--format=%P',candidate).split(' '),
             labelFixDelta:delta(beforeLabelFix,candidate),finalIntegrationDelta:delta(migratedConditionsCI,finalIntegration),
-            conditionsMigrationDelta:delta(conditionsCI,migratedConditionsCI),headDelta:delta(finalIntegration,head),
+            conditionsMigrationDelta:delta(conditionsCI,migratedConditionsCI),
+            finalReviewDelta:delta(finalIntegration,finalReview),headDelta:delta(finalReview,head),
           };
           verify(input);
           const controls={
@@ -205,12 +218,15 @@ jobs:
             wrongConditionsCheckpoint:copy=>{copy.conditionsCIParents=[candidate];},
             wrongMigrationCheckpoint:copy=>{copy.migratedConditionsCIParents=[integration];},
             wrongFinalIntegration:copy=>{copy.finalIntegrationParents[1]=beforeLabelFix;},
+            wrongFinalReview:copy=>{copy.finalReviewParents=[beforeLabelFix];},
             wrongProductParent:copy=>{copy.productParents=[previousProduct];},
             wrongLabelFixBlob:copy=>{copy.labelFixDelta[0].blob='0'.repeat(40);},
             extraLabelMergeFile:copy=>{copy.finalIntegrationDelta.push({...copy.finalIntegrationDelta[0],file:'core/app.js'});},
             mixedCIFix:copy=>{copy.headDelta.push({...copy.headDelta[0],file:'core/app.js'});},
             wrongReceiptBlob:copy=>{copy.workflowDelta.find(row=>row.file===receipt).blob='0'.repeat(40);},
             wrongConditionsReceiptBlob:copy=>{copy.workflowDelta.find(row=>row.file===conditionsReceipt).blob='0'.repeat(40);},
+            wrongProtectedDiffReceiptBlob:copy=>{copy.workflowDelta.find(row=>row.file===protectedDiffReceipt).blob='0'.repeat(40);},
+            wrongPresentationVerifierBlob:copy=>{copy.headDelta.find(row=>row.file===presentationVerifier).blob='0'.repeat(40);},
             wrongVerifierBlob:copy=>{copy.workflowDelta.find(row=>row.file===verifier).blob='0'.repeat(40);},
             wrongStylesheetTest:copy=>{copy.workflowDelta.find(row=>row.file===conditions).blob='0'.repeat(40);},
             wrongTree:copy=>{copy.productTree='0'.repeat(40);},
