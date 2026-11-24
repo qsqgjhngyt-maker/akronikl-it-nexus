@@ -43,11 +43,13 @@ jobs:
           node tests/shared-presentation-check.mjs
       - name: Проверить результаты примеров, эталонов и диагностик в Clang C17
         run: node tests/c-course-native-compiler-check.mjs
-      - name: Собрать публичный кандидат и установить Chromium
+      - name: Собрать публичный кандидат и подключить Chrome среды CI
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
-          tools/qa-browser-driver/node_modules/.bin/playwright install --with-deps chromium
+          chrome="$(command -v google-chrome)"
+          "$chrome" --version
+          printf 'NEXUS_CHROME_PATH=%s\n' "$chrome" >> "$GITHUB_ENV"
           node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-cp-next-01-ci --version 0.1.7-alpha.2.4.6-ui1a.10.24.0
       - name: Пройти уроки и проверить сохранение на трёх ширинах
         env:
