@@ -82,7 +82,7 @@ function executable(lesson) {
     examples: lesson.sections.flatMap(section => section.code ? [section.code] : []),
     files: lesson.practice.files,
     input: lesson.practice.stdin,
-    cases: lesson.practice.cases.map(({input, output, stderr, exitCode, inputFiles, outputFiles}) => ({input, output, stderr, exitCode, inputFiles, outputFiles})),
+    cases: lesson.practice.cases.map(({input, output, stderr, nativeStderr, exitCode, inputFiles, outputFiles}) => ({input, output, stderr, nativeStderr, exitCode, inputFiles, outputFiles})),
     solution: lesson.practice.referenceSolution,
     diagnostics: lesson.diagnosticExercises ?? [],
   };

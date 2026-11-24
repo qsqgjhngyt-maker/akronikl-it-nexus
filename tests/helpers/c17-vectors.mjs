@@ -24,7 +24,7 @@ export function c17Vectors(edition) {
   const add = (kind, id, program, vector) => {
     result.push({kind,id,program,fixture:{
       inputFiles:vector.inputFiles, outputFiles:vector.outputFiles, stdin:vector.input ?? vector.stdin ?? '',
-      stdout:vector.output ?? vector.expectedStdout ?? '', stderr:vector.stderr,
+      stdout:vector.output ?? vector.expectedStdout ?? '', stderr:vector.stderr, nativeStderr:vector.nativeStderr,
       exitCode:kind === 'diagnostic' ? vector.expectedExitCode : vector.exitCode ?? 0,
       phase:vector.phase, stderrIncludes:vector.stderrIncludes,
     }});

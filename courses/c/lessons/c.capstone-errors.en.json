@@ -35,7 +35,7 @@
       "paragraphs": [
         "If the file repeats an ID, the quantity update has no unique row. Load and validate the file first. Check format, uniqueness and capacity before appending each record. No command has run yet.",
         "Input file errors go to stderr with status 1. A syntactically valid command for an unknown ID writes missing to stdout and continues. Bad command syntax writes invalid to stdout and stops with status 2. Later stdin lines are skipped.",
-        "A report open, write or close failure exits with status 3 and records the cause in stderr. reported appears only after a successful close. We test opening with a directory named summary.tsv containing keep.txt, a reproducible name conflict. A real failure after opening can leave a partial file."
+        "A directory occupying the report path leaves stdout empty, exits with status 3 and keeps keep.txt. The native fixture rejects fopen with open-report-error. In Clang/WASI the failure is observed when buffered output is closed: close-report-error. Check both stages and print reported only after a successful fclose."
       ]
     },
     {
@@ -108,13 +108,14 @@
           {
             "input": "report\n",
             "output": "",
-            "stderr": "open-report-error\n",
+            "stderr": "close-report-error\n",
             "exitCode": 3,
             "inputFiles": {
               "records.tsv": "10\t5\n20\t0\n",
               "example-summary.tsv/keep.txt": "preserve\n"
             },
-            "outputFiles": {}
+            "outputFiles": {},
+            "nativeStderr": "open-report-error\n"
           }
         ]
       }
@@ -170,13 +171,13 @@
       "options": [
         "invalid in stdout, status 2 and an empty directory.",
         "duplicate-id in stderr and status 1.",
-        "open-report-error in stderr, status 3 and an unchanged keep.txt."
+        "Browser stderr is close-report-error, status is 3 and keep.txt is unchanged."
       ],
       "correct": 2,
       "feedback": [
         "Command parsing already succeeded.",
         "Uniqueness errors are found when loading the input.",
-        "The failure happens while opening the report, before writing or printing reported."
+        "This is an output failure. The native fixture detects it when opening, while the verified Clang/WASI run detects it on close. Both paths return 3 and retain keep.txt."
       ],
       "recall": "idea"
     },
@@ -290,8 +291,9 @@
         },
         "output": "",
         "outputFiles": {},
-        "stderr": "open-report-error\n",
-        "exitCode": 3
+        "stderr": "close-report-error\n",
+        "exitCode": 3,
+        "nativeStderr": "open-report-error\n"
       },
       {
         "label": "An earlier report survives an error",
@@ -320,13 +322,13 @@
         "where": "Code Studio",
         "action": "Add the inventory_find check and rerun this and the other controls.",
         "why": "Status 1 should remain distinct from command errors and the report open failure.",
-        "expected": "On a duplicate, stdout is empty, stderr is duplicate-id and status is 1. The name conflict produces open-report-error and status 3."
+        "expected": "A duplicate leaves stdout empty, prints duplicate-id to stderr and exits 1. A name conflict exits 3 and prints close-report-error in Code Studio. The native Clang fixture detects it on open."
       }
     ],
     "criteria": [
       "A duplicate or a 65th unique row leaves no report. Stderr distinguishes duplicate-id from capacity-error.",
       "An unknown ID yields missing and execution continues. An invalid quantity gives invalid and status 2 before report executes.",
-      "The summary.tsv directory and keep.txt remain unchanged. Open failure gives status 3, empty stdout and open-report-error in stderr."
+      "The summary.tsv directory and keep.txt stay unchanged. A name conflict leaves stdout empty and exits 3. Code Studio reports close-report-error; the verified native run reports open-report-error."
     ],
     "hint": "Detect duplicates after validating a row and before increasing count. Leave before the command loop when the file is invalid.",
     "exercises": [

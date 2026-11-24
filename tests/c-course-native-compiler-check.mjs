@@ -65,7 +65,7 @@ function checkEdition(lesson){
       const run=execute(executable,[],dir,fixture.stdin);
       assert.equal(run.status,fixture.exitCode,label+' / exit status');
       assert.equal(run.stdout,fixture.stdout,label+' / stdout');
-      assert.equal(run.stderr,fixture.stderr,label+' / stderr');
+      assert.equal(run.stderr,fixture.nativeStderr??fixture.stderr,label+' / stderr');
       if(fixture.outputFiles!==undefined){
         const after=readFiles(dir);
         for(const name of Object.keys(files))assert.ok(Object.hasOwn(after,name),label+' / original path lost '+name);
