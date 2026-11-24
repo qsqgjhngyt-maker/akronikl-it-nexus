@@ -194,6 +194,20 @@ try {
   await runPractice('invalid\n', 0);
   console.log('C17_M6_OUT_PASS valid reading copied, malformed value rejected without writing');
 
+  await openPractice('c.structure-contracts', 'Record invariants and operations');
+  const recordEditor = page.locator('#editor');
+  const recordStarter = await recordEditor.inputValue();
+  const missingCheck = '/* TODO: reject an existing identifier before making a change. */';
+  assert.ok(recordStarter.includes(missingCheck));
+  await runPractice('ok\nfull\n101:1 203:2 321:1\n', 0);
+  await recordEditor.fill(recordStarter.replace(missingCheck,
+    'if (request != NULL) { return "duplicate"; }'));
+  await runPractice('ok\nduplicate\n101:1 203:2 321:1\n', 0);
+  await page.screenshot({path:path.join(out, 'm7-record-invariant.png')});
+  await page.locator('[data-c-stdin]').fill('1 101 1 2 999 2\n');
+  await runPractice('duplicate\nmissing\n101:1 203:2\n', 0);
+  console.log('C17_M7_RECORD_PASS duplicate checked before capacity; rejection preserves records');
+
   assert.deepEqual(fixture.errors, []);
   console.log('C17_DRAFT_RESTORE_PASS editor/stdin preserved after reload and locale switch; starter confirmation rejected; synthetic verified account storage');
   await writeFile(path.join(out, 'c17-workspace.json'), JSON.stringify({
@@ -204,6 +218,7 @@ try {
     module4: {original:'3 -1 3 2', starter:'3 3 2 -1', sorted:'-1 2 3 3', empty:'empty'},
     module5: {starter:'ERR\nrejected 1\n', prefix:'ERR fan\nERR\nrejected 1\n'},
     module6: {starter:'17', copied:'27', rejected:'invalid'},
+    module7: {starter:'full', fixed:'duplicate', snapshot:'101:1 203:2 321:1', unchangedOnRejection:true},
   }, null, 2) + '\n');
 } finally {
   await fixture.close();

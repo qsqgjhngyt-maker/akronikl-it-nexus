@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.enumerations",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "C programming",
+  "module": "Structures, enumerations and data models",
+  "locale": "en",
+  "title": "Enumerations and valid states",
+  "goal": "Name states and explicitly check which transitions are valid.",
+  "prerequisites": [
+    {
+      "text": "Know if conditions and logical AND/OR."
+    },
+    {
+      "text": "Map a numeric code to a named value."
+    }
+  ],
+  "terms": [
+    {
+      "id": "enum",
+      "term": "Enumeration",
+      "title": "Enumeration",
+      "definition": "A type with named integer constants. The enumeration does not validate input for the program."
+    },
+    {
+      "id": "enumerator",
+      "term": "Enumerator",
+      "title": "Enumerator",
+      "definition": "The name of an integer constant, such as OPEN in the example."
+    },
+    {
+      "id": "transition",
+      "term": "Transition",
+      "title": "Transition",
+      "definition": "A change from the current state to the next state allowed by the task rules."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Two questions about a state",
+      "paragraphs": [
+        "A gate receives a code from a controller. Before displaying a state, it needs to know whether that code belongs to the protocol. Skipping a step during a transition is a different kind of mistake.",
+        "enum GateState names LOCKED and OPEN. The values 10 and 20 are choices of this protocol. Do not assume that every incoming int automatically becomes a valid state.",
+        "In a library, a requested loan can become issued, and an issued loan can become returned. Both state names can belong to the enumeration while their particular transition is still invalid."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Names for two gate codes",
+      "paragraphs": [
+        "Read the three gate_label calls and name the branch taken by 10, 20 and 0."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nenum GateState { LOCKED = 10, OPEN = 20 };\n\nstatic const char *gate_label(int raw)\n{\n    switch (raw) {\n    case LOCKED: return \"locked\";\n    case OPEN: return \"open\";\n    default: return \"unknown\";\n    }\n}\n\nint main(void)\n{\n    puts(gate_label(10));\n    puts(gate_label(20));\n    puts(gate_label(0));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "locked\nopen\nunknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Compare raw with LOCKED and OPEN in the switch. Here the named constants stand for 10 and 20.",
+        "Return a label immediately for each known value. The default handles other integers.",
+        "The third line unknown is the defined result for an unrecognized code, not a compilation error."
+      ],
+      "trace": [
+        [
+          "raw = 10",
+          "LOCKED",
+          "locked"
+        ],
+        [
+          "raw = 20",
+          "OPEN",
+          "open"
+        ],
+        [
+          "raw = 0",
+          "default",
+          "unknown"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "The typo RETUREND causes an undeclared identifier diagnostic. Compare it with the declared name RETURNED. If the program prints ok for 1 3, inspect the allowed pairs rather than the enum declaration.",
+        "An unknown code and a prohibited transition have distinct output. The pair 0 2 yields invalid, while the recognized pair 1 3 yields denied."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Change the last call to gate_label(30). Predict the output. Then identify what additional rule is needed to decide whether LOCKED can change to OPEN.",
+        "Build a 3×3 table for the library starter. Rows are current states and columns are target states. Mark only the two allowed cells."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.7.2.2, §6.8.4.2",
+      "language": "English",
+      "purpose": "Review the language constructs used in the worked example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which line corresponds to raw = 0?",
+      "options": [
+        "unknown",
+        "locked",
+        "open"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Neither named value equals 0. The default branch runs.",
+        "LOCKED is defined as 10.",
+        "OPEN is defined as 20."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Both codes 1 and 3 are known. What is the result of moving from 1 to 3?",
+      "options": [
+        "invalid",
+        "denied",
+        "ok"
+      ],
+      "correct": 1,
+      "feedback": [
+        "The codes are recognized. A transition rule is violated.",
+        "Returning requires the book to be issued first.",
+        "Transition 1 → 3 skips state 2."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Explain why checking that a state is known is separate from checking a transition. Suggest one input for each error.",
+      "feedback": "0 2 contains an unknown code. 3 2 contains known states but violates a transition rule. The errors call for different remedies.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "enum LoanState { REQUESTED = 1, ISSUED = 2, RETURNED = 3 };\n\nint main(void)\n{\n    return RETUREND;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier 'RETUREND'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Book issuing and return",
+    "environment": "C17 · Clang/WASI",
+    "task": "Read the first line, up to 63 bytes, with two integers for current and target state. Codes 1, 2 and 3 mean requested, issued and returned. Print invalid for malformed input or an unknown code. Print ok for 1 → 2 and 2 → 3, and denied for every other known pair. Input recognition is supplied. Complete can_move.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum LoanState { REQUESTED = 1, ISSUED = 2, RETURNED = 3 };\n\nstatic int known(int raw)\n{\n    return raw == REQUESTED || raw == ISSUED || raw == RETURNED;\n}\n\nstatic int can_move(enum LoanState from, enum LoanState to)\n{\n    /* TODO: name both permitted transitions. */\n    return from == to;\n}\n\nint main(void)\n{\n    int value[2];\n    const int minimum[] = {0, 0};\n    const int maximum[] = {9, 9};\n    if (!read_values(value, minimum, maximum, 2) ||\n        !known(value[0]) || !known(value[1])) {\n        puts(\"invalid\");\n        return 0;\n    }\n    enum LoanState from = (enum LoanState)value[0];\n    enum LoanState to = (enum LoanState)value[1];\n    puts(can_move(from, to) ? \"ok\" : \"denied\");\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "1 2\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Issuing",
+        "input": "1 2\n",
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Returning",
+        "input": "2 3\n",
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Skipping a step",
+        "input": "1 3\n",
+        "output": "denied\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Repeated state",
+        "input": "2 2\n",
+        "output": "denied\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Attempt to re-issue",
+        "input": "3 2\n",
+        "output": "denied\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Unknown state",
+        "input": "0 2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Extra token",
+        "input": "1 2 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Both allowed pairs yield ok. A skipped, reversed or repeated state yields denied.",
+      "Unknown codes and malformed input yield invalid. Validate codes before converting to the enum type."
+    ],
+    "hint": "Use && to check both sides of a pair, then combine the two allowed pairs with ||.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum LoanState { REQUESTED = 1, ISSUED = 2, RETURNED = 3 };\n\nstatic int known(int raw)\n{\n    return raw == REQUESTED || raw == ISSUED || raw == RETURNED;\n}\n\nstatic int can_move(enum LoanState from, enum LoanState to)\n{\n    return (from == REQUESTED && to == ISSUED) ||\n           (from == ISSUED && to == RETURNED);\n}\n\nint main(void)\n{\n    int value[2];\n    const int minimum[] = {0, 0};\n    const int maximum[] = {9, 9};\n    if (!read_values(value, minimum, maximum, 2) ||\n        !known(value[0]) || !known(value[1])) {\n        puts(\"invalid\");\n        return 0;\n    }\n    enum LoanState from = (enum LoanState)value[0];\n    enum LoanState to = (enum LoanState)value[1];\n    puts(can_move(from, to) ? \"ok\" : \"denied\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Mark the allowed cells in the transition table.",
+        "why": "This shows that repeating 2 → 2 has a defined outcome.",
+        "expected": "Exactly two pairs are allowed."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Run one case for each of ok, denied and invalid.",
+        "why": "The two negative results belong to different parts of the contract.",
+        "expected": "1 2, 1 3 and 0 2 distinguish all three outcomes."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Transfer the approach to a turnstile with codes 10 and 20. Specify outcomes for a repeated state and an unknown code before writing the condition.",
+        "criteria": [
+          "Show a recognized transition and an unknown code on separate examples. Explain your choice of repeat behavior."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.named-state-transition",
+    "prerequisites": [
+      "c.ordered-conditions"
+    ]
+  }
+}

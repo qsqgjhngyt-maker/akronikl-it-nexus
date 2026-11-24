@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.structure-contracts",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "C programming",
+  "module": "Structures, enumerations and data models",
+  "locale": "en",
+  "title": "Record invariants and operations",
+  "goal": "Protect identifier uniqueness and the state sequence by checking operation conditions before changing a record.",
+  "prerequisites": [
+    {
+      "text": "Know records, lookups in arrays of records and conditional state changes."
+    },
+    {
+      "text": "Be able to pass an object's address and check preconditions before writing to it."
+    }
+  ],
+  "terms": [
+    {
+      "id": "invariant",
+      "term": "Invariant",
+      "title": "Invariant",
+      "definition": "A property of a valid store that holds before and after each command. Here IDs are unique and count does not exceed capacity. A rejected operation leaves the store unchanged."
+    },
+    {
+      "id": "capacity",
+      "term": "Capacity",
+      "title": "Capacity",
+      "definition": "The number of available slots. count includes only occupied slots."
+    },
+    {
+      "id": "precondition",
+      "term": "Precondition",
+      "title": "Precondition",
+      "definition": "A condition checked before changing state. For example, an added identifier must not already be present."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Validate first, then update",
+      "paragraphs": [
+        "The operation starts with a valid store. A request needs a unique identifier and the sequence new → active → done. An invalid command must preserve the previous record.",
+        "Separate checking from writing. First decide whether the change is valid. Assign only in the success branch. For insertion, store count and capacity separately.",
+        "Check order affects the diagnostic result. If the store is full and the ID already exists, this contract reports duplicate because it checks the ID before capacity. A test can then explain each rejection unambiguously."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "A storage tray advances one state at a time",
+      "paragraphs": [
+        "Tray 41 is in RECEIVED. The first attempt tries to store it immediately. Predict what the program prints after each attempt."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nenum TrayState { RECEIVED = 1, CHECKED = 2, STORED = 3 };\n\nstruct Tray {\n    int id;\n    enum TrayState state;\n};\n\nstatic int move_tray(struct Tray *tray, enum TrayState next)\n{\n    if (!((tray->state == RECEIVED && next == CHECKED) ||\n          (tray->state == CHECKED && next == STORED))) {\n        return 0;\n    }\n    tray->state = next;\n    return 1;\n}\n\nint main(void)\n{\n    struct Tray tray = {41, RECEIVED};\n    puts(move_tray(&tray, STORED) ? \"ok\" : \"denied\");\n    printf(\"%d:%d\\n\", tray.id, (int)tray.state);\n    puts(move_tray(&tray, CHECKED) ? \"ok\" : \"denied\");\n    printf(\"%d:%d\\n\", tray.id, (int)tray.state);\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "denied\n41:1\nok\n41:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Check RECEIVED → STORED. It is disallowed, so move_tray returns 0 without storing next.",
+        "Print the state after rejection. Code 1 remains unchanged.",
+        "The next attempt RECEIVED → CHECKED is allowed. Only then does the state change to 2."
+      ],
+      "trace": [
+        [
+          "Attempt 1",
+          "1 → 3",
+          "denied, 41:1"
+        ],
+        [
+          "Attempt 2",
+          "1 → 2",
+          "ok, 41:2"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Locate and check the defect",
+      "paragraphs": [
+        "The Clang message is a pointer for current.state means that current is a pointer. Use current->state to access a member through it. In the worked example main passes move_tray the address &tray of a live object. The function checks the state transition before writing.",
+        "If adding 101 reports ok and the final line contains ID 101 twice, compare the array before and after that operation. The existing-key check is missing even if count still fits the capacity."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Change, predict and check",
+      "paragraphs": [
+        "Move the allowed attempt to the beginning. Explain the order: after RECEIVED → CHECKED, CHECKED → STORED is now valid.",
+        "In the practice, treat the two commands as a sequence. A malformed line is rejected before either command. With a correctly parsed line, the first successful operation remains applied even if the second is rejected."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.5.2.3, §6.5.16.1, §6.5.2.5, §6.7.2",
+      "language": "English",
+      "purpose": "Review the language constructs used in the worked example."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which state is printed after the first attempt in the example?",
+      "options": [
+        "41:1",
+        "41:2",
+        "41:3"
+      ],
+      "correct": 0,
+      "feedback": [
+        "The record is preserved when the transition is rejected.",
+        "2 appears after the second attempt.",
+        "3 cannot be stored from the initial state."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "What should an attempt to add existing ID 101 to a full array report under this contract?",
+      "options": [
+        "full",
+        "duplicate",
+        "ok"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Capacity is checked after the identifier.",
+        "Reject the duplicate first. The store stays the same.",
+        "Success would violate uniqueness and capacity."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "The first command moves 101 from 1 to 2. The second tries to move closed 203 from 3 back to 2. Which two results should appear, and why is the first update retained?",
+      "feedback": "ok and denied. Commands are checked and applied independently in order. The second command does not roll back the first.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "struct Request { int id; int state; };\n\nint main(void)\n{\n    struct Request request = {101, 1};\n    struct Request *current = &request;\n    return current.state;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "is a pointer",
+        "->"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Two commands for a request queue",
+    "environment": "C17 · Clang/WASI",
+    "task": "A store with capacity 3 initially contains 101:1 and 203:2. The first line, up to 63 bytes, contains exactly two triples of operation, ID and state. Operation 1 inserts a request only in state 1. Operation 2 advances an existing request along 1 → 2 → 3. IDs are 1–9999. A malformed line, an operation code outside 1/2, or values outside input bounds reject the entire line as invalid. The input state field accepts 0–9 syntactically; allowed operation states are 1, 2 and 3. An unknown operation state or insertion outside state 1 yields invalid for that command. Insertion checks duplicate before full. An update yields missing for an absent record and denied for a forbidden transition. Success yields ok. For a correctly parsed line print both command results followed by the records as id:state separated by spaces in array order. Complete apply by checking for an existing identifier before testing capacity.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum State { NEW = 1, ACTIVE = 2, DONE = 3 };\n\nstruct Request {\n    int id;\n    enum State state;\n};\n\nstatic struct Request *lookup(struct Request requests[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (requests[i].id == id) {\n            return &requests[i];\n        }\n    }\n    return NULL;\n}\n\nstatic const char *apply(struct Request requests[], size_t *count, size_t capacity,\n                         int operation, int id, int state)\n{\n    if (state != NEW && state != ACTIVE && state != DONE) {\n        return \"invalid\";\n    }\n    struct Request *request = lookup(requests, *count, id);\n    if (operation == 1) {\n        if (state != NEW) {\n            return \"invalid\";\n        }\n        /* TODO: reject an existing identifier before making a change. */\n        if (*count == capacity) {\n            return \"full\";\n        }\n        requests[*count] = (struct Request){ .id = id, .state = NEW };\n        ++*count;\n        return \"ok\";\n    }\n    if (request == NULL) {\n        return \"missing\";\n    }\n    if ((request->state == NEW && state == ACTIVE) ||\n        (request->state == ACTIVE && state == DONE)) {\n        request->state = (enum State)state;\n        return \"ok\";\n    }\n    return \"denied\";\n}\n\nint main(void)\n{\n    int value[6];\n    const int minimum[] = {1, 1, 0, 1, 1, 0};\n    const int maximum[] = {2, 9999, 9, 2, 9999, 9};\n    if (!read_values(value, minimum, maximum, 6)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Request requests[3] = {{101, NEW}, {203, ACTIVE}};\n    size_t count = 2;\n    const size_t capacity = sizeof requests / sizeof requests[0];\n    puts(apply(requests, &count, capacity, value[0], value[1], value[2]));\n    puts(apply(requests, &count, capacity, value[3], value[4], value[5]));\n    for (size_t i = 0; i < count; ++i) {\n        printf(\"%s%d:%d\", i == 0 ? \"\" : \" \", requests[i].id, (int)requests[i].state);\n    }\n    putchar('\\n');\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "1 321 1 1 321 1\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Two valid transitions",
+        "input": "2 101 2 2 203 3\n",
+        "output": "ok\nok\n101:2 203:3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Duplicate and missing identifier",
+        "input": "1 101 1 2 999 2\n",
+        "output": "duplicate\nmissing\n101:1 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Last available slot",
+        "input": "1 321 1 1 700 1\n",
+        "output": "ok\nfull\n101:1 203:2 321:1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Skipping and repeating states",
+        "input": "2 101 3 2 203 2\n",
+        "output": "denied\ndenied\n101:1 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Invalid requested states",
+        "input": "1 301 2 2 203 9\n",
+        "output": "invalid\ninvalid\n101:1 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Two transitions on the same record",
+        "input": "2 101 2 2 101 3\n",
+        "output": "ok\nok\n101:3 203:2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Malformed command line",
+        "input": "2 101 2 x 203 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Duplicate after filling capacity",
+        "input": "1 321 1 1 321 1\n",
+        "output": "ok\nduplicate\n101:1 203:2 321:1\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "A duplicate identifier and an unknown record preserve the original snapshot. A valid insertion fills the last slot.",
+      "Transitions 1 → 2 and 2 → 3 are allowed; repeating or skipping is rejected. A command sees the result of the preceding one.",
+      "Checks run before a write. On a malformed line neither command is applied."
+    ],
+    "hint": "The starter already calls lookup. In the insert branch return duplicate if request != NULL before testing capacity. Construct a check in which both rejection reasons apply.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum State { NEW = 1, ACTIVE = 2, DONE = 3 };\n\nstruct Request {\n    int id;\n    enum State state;\n};\n\nstatic struct Request *lookup(struct Request requests[], size_t count, int id)\n{\n    for (size_t i = 0; i < count; ++i) {\n        if (requests[i].id == id) {\n            return &requests[i];\n        }\n    }\n    return NULL;\n}\n\nstatic const char *apply(struct Request requests[], size_t *count, size_t capacity,\n                         int operation, int id, int state)\n{\n    if (state != NEW && state != ACTIVE && state != DONE) {\n        return \"invalid\";\n    }\n    struct Request *request = lookup(requests, *count, id);\n    if (operation == 1) {\n        if (state != NEW) {\n            return \"invalid\";\n        }\n        if (request != NULL) {\n            return \"duplicate\";\n        }\n        if (*count == capacity) {\n            return \"full\";\n        }\n        requests[*count] = (struct Request){ .id = id, .state = NEW };\n        ++*count;\n        return \"ok\";\n    }\n    if (request == NULL) {\n        return \"missing\";\n    }\n    if ((request->state == NEW && state == ACTIVE) ||\n        (request->state == ACTIVE && state == DONE)) {\n        request->state = (enum State)state;\n        return \"ok\";\n    }\n    return \"denied\";\n}\n\nint main(void)\n{\n    int value[6];\n    const int minimum[] = {1, 1, 0, 1, 1, 0};\n    const int maximum[] = {2, 9999, 9, 2, 9999, 9};\n    if (!read_values(value, minimum, maximum, 6)) {\n        puts(\"invalid\");\n        return 0;\n    }\n    struct Request requests[3] = {{101, NEW}, {203, ACTIVE}};\n    size_t count = 2;\n    const size_t capacity = sizeof requests / sizeof requests[0];\n    puts(apply(requests, &count, capacity, value[0], value[1], value[2]));\n    puts(apply(requests, &count, capacity, value[3], value[4], value[5]));\n    for (size_t i = 0; i < count; ++i) {\n        printf(\"%s%d:%d\", i == 0 ? \"\" : \" \", requests[i].id, (int)requests[i].state);\n    }\n    putchar('\\n');\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Enter one line, 1 321 1 1 321 1, and run the starter. Record both command results and the final records.",
+        "why": "Both commands run together. The first fills the last slot, and the second must recognize the same ID.",
+        "expected": "The starter prints ok, then full, then 101:1 203:2 321:1."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Add the existing-ID check. Repeat that input, then test 1 101 1 2 999 2.",
+        "why": "Check the order of the two rejection rules and verify the records after both rejected commands.",
+        "expected": "The first input gives ok, duplicate and the same snapshot with ID 321. The second gives duplicate, missing and 101:1 203:2."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Transfer the idea",
+        "task": "Write two commands that move the same record from 1 to 3 through allowed intermediate steps. Reverse the commands and predict where the contract rejects a move.",
+        "criteria": [
+          "2 101 2 2 101 3 yields ok, ok and 101:3 203:2. Reversing order yields denied, ok and 101:2 203:2."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.record-operation-invariants",
+    "prerequisites": [
+      "c.named-state-transition",
+      "c.record-array-lookup"
+    ]
+  }
+}

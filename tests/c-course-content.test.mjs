@@ -8,12 +8,12 @@ const curriculum = read('courses/c/curriculum.json');
 const locales = ['ru', 'en'];
 const text = value => typeof value === 'string' && value.trim().length > 0;
 
-test('Шесть модулей C доступны, остальные помечены как запланированные', () => {
+test('Семь модулей C доступны, остальные помечены как запланированные', () => {
   assert.equal(manifest.id, 'c');
   assert.equal(manifest.languageId, 'c');
   assert.equal(manifest.standard, 'C17');
   assert.deepEqual(manifest.availableLocales, locales);
-  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4', 'c.m5', 'c.m6']);
+  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2', 'c.m3', 'c.m4', 'c.m5', 'c.m6', 'c.m7']);
   const modules = curriculum.modules;
   assert.ok(modules.length > 1);
   assert.equal(new Set(modules.map(module => module.id)).size, modules.length);
@@ -32,9 +32,9 @@ test('Шесть модулей C доступны, остальные поме�
       assert.ok(text(module.completion[locale]), module.id);
     }
   }
-  assert.equal(manifest.availableTopicIds.length, 32);
-  assert.equal(curriculum.availableModuleCount, 6);
-  assert.equal(curriculum.availableTopicCount, 32);
+  assert.equal(manifest.availableTopicIds.length, 36);
+  assert.equal(curriculum.availableModuleCount, 7);
+  assert.equal(curriculum.availableTopicCount, 36);
   assert.deepEqual(manifest.availableTopicIds.slice(9, 14), [
     'c.read-input', 'c.conditions', 'c.counted-loops', 'c.sentinel-loops', 'c.guard-boundaries',
   ]);
@@ -47,8 +47,11 @@ test('Шесть модулей C доступны, остальные поме�
   assert.deepEqual(manifest.availableTopicIds.slice(23, 27), [
     'c.null-terminated-strings', 'c.line-input', 'c.string-library', 'c.text-project',
   ]);
-  assert.deepEqual(manifest.availableTopicIds.slice(27), [
+  assert.deepEqual(manifest.availableTopicIds.slice(27, 32), [
     'c.addresses-and-pointers', 'c.pointer-arrays', 'c.pointer-parameters', 'c.const-and-null', 'c.pointer-lifetime-errors',
+  ]);
+  assert.deepEqual(manifest.availableTopicIds.slice(32), [
+    'c.structures', 'c.enumerations', 'c.structure-arrays', 'c.structure-contracts',
   ]);
   assert.equal(modules.find(module => module.id === 'c.m5').project.status, 'implemented');
   assert.equal(modules.find(module => module.id === 'c.m3').project.status, 'implemented');

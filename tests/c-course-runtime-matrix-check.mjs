@@ -84,18 +84,19 @@ for (const id of course.availableTopicIds) {
     }
   }
 }
-assert.equal(editions.length, 64);
-assert.equal(records.filter(record => record.kind === 'example').length, 64);
-assert.equal(records.filter(record => record.kind === 'reference').length, 458);
-assert.equal(records.filter(record => record.kind === 'diagnostic').length, 58);
-assert.equal(requests.size, 290);
+assert.equal(editions.length, 72);
+assert.equal(records.filter(record => record.kind === 'example').length, 72);
+assert.equal(records.filter(record => record.kind === 'reference').length, 512);
+assert.equal(records.filter(record => record.kind === 'diagnostic').length, 66);
+assert.equal(requests.size, 325);
 const shardIndex = process.env.NEXUS_C_RUNTIME_SHARD;
 assert.ok(shardIndex === undefined || ['0', '1'].includes(shardIndex), 'Invalid C17 runtime shard');
 const shardCount = shardIndex === undefined ? 1 : 2;
 const selectedRequests = new Map([...requests].filter((_, index) => index % shardCount === Number(shardIndex ?? 0)));
 const selectedRecords = records.filter(record => selectedRequests.has(record.digest));
-assert.equal(selectedRequests.size, requests.size / shardCount);
-assert.equal(selectedRecords.length, records.length / shardCount);
+const expectedRequests = Math.ceil((requests.size - Number(shardIndex ?? 0)) / shardCount);
+assert.equal(selectedRequests.size, expectedRequests);
+assert.equal(selectedRecords.length, expectedRequests * 2);
 
 const fixture = await onlineRuntimeFixture();
 const executed = new Map();

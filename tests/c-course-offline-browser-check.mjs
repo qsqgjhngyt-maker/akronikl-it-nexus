@@ -59,7 +59,7 @@ try {
     await page.goto(fixture.origin + '/offline.html#view=academy');
     await page.locator('a[data-academy-course="c"]').click();
     await root.getByRole('heading', { level:1, name:courseManifest.title.ru }).waitFor();
-    assert.equal(await root.locator('.c-outline a').count(), 32);
+    assert.equal(await root.locator('.c-outline a').count(), 36);
     await capture('cold-academy-c-390');
     await root.locator('.c-outline a').first().click();
     await root.locator('.c-stages [aria-current="page"]').filter({ hasText:'Объяснение' }).waitFor();
@@ -137,6 +137,17 @@ try {
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m6-reference-en-390');
   });
+  await check('Последний урок M6 ведёт в M7 без сети, эталон модели читается по-английски', async () => {
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.pointer-lifetime-errors&stage=practice&locale=ru');
+    await root.locator('footer').getByRole('link', {name:/Следующий урок: Структура и её поля/}).click();
+    await root.getByRole('heading', {level:1, name:'Структура и её поля', exact:true}).waitFor();
+    await capture('cold-m7-ru-390');
+    await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.structure-contracts&stage=practice&locale=en');
+    await root.getByRole('heading', {level:1, name:'Record invariants and operations', exact:true}).waitFor();
+    await root.getByText('Reference solution', {exact:true}).click();
+    assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
+    await capture('cold-m7-reference-en-390');
+  });
   await check('Ресурсы C пришли из Service Worker с SHA из сборки', async () => {
     const expected = [
       'offline.html', ...[
@@ -147,6 +158,7 @@ try {
         'courses/c/lessons/c.function-project.ru.json', 'courses/c/lessons/c.array-bounds.ru.json', 'courses/c/lessons/c.array-sort.en.json',
         'courses/c/lessons/c.array-sort.ru.json', 'courses/c/lessons/c.null-terminated-strings.ru.json', 'courses/c/lessons/c.text-project.en.json',
         'courses/c/lessons/c.text-project.ru.json', 'courses/c/lessons/c.addresses-and-pointers.ru.json', 'courses/c/lessons/c.pointer-lifetime-errors.en.json',
+        'courses/c/lessons/c.pointer-lifetime-errors.ru.json', 'courses/c/lessons/c.structures.ru.json', 'courses/c/lessons/c.structure-contracts.en.json',
       ].map(file => build.prefix + file),
     ];
     const manifest = new Map(build.files.map(record => [record.file, record.sha256]));

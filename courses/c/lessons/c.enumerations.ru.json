@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m7-v1",
+  "id": "c.enumerations",
+  "courseId": "c",
+  "moduleId": "c.m7",
+  "course": "Программирование на C",
+  "module": "Структуры, перечисления и модели данных",
+  "locale": "ru",
+  "title": "Перечисление и допустимые состояния",
+  "goal": "Обозначить состояния именами и явно проверить допустимые переходы.",
+  "prerequisites": [
+    {
+      "text": "Знать условие if и логическое И/ИЛИ."
+    },
+    {
+      "text": "Уметь сопоставить код с обозначением."
+    }
+  ],
+  "terms": [
+    {
+      "id": "enum",
+      "term": "Перечисление",
+      "title": "Перечисление",
+      "definition": "Тип с набором именованных целочисленных констант. Перечисление не проверяет входные данные за программу."
+    },
+    {
+      "id": "enumerator",
+      "term": "Элемент перечисления",
+      "title": "Элемент перечисления",
+      "definition": "Имя целочисленной константы, например OPEN в примере."
+    },
+    {
+      "id": "transition",
+      "term": "Переход",
+      "title": "Переход",
+      "definition": "Разрешённое изменение текущего состояния на следующее по правилам задачи."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Два вопроса о состоянии",
+      "paragraphs": [
+        "Система ворот получает код от контроллера. Прежде чем показать состояние, ей нужно узнать, входит ли код в протокол. Пропуск одного шага при смене состояния — уже другое нарушение.",
+        "enum GateState называет LOCKED и OPEN. Числа 10 и 20 — соглашение этого протокола. Не рассчитывайте, что любой полученный int автоматически станет допустимым состоянием.",
+        "В библиотеке статус «запрошена» может перейти к «выдана», а «выдана» к «возвращена». Оба имени из перечисления могут быть допустимы, но конкретная пара — нет."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Имена для двух кодов ворот",
+      "paragraphs": [
+        "Прочитайте три вызова gate_label и выпишите ветку для 10, 20 и 0."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <stdio.h>\n\nenum GateState { LOCKED = 10, OPEN = 20 };\n\nstatic const char *gate_label(int raw)\n{\n    switch (raw) {\n    case LOCKED: return \"locked\";\n    case OPEN: return \"open\";\n    default: return \"unknown\";\n    }\n}\n\nint main(void)\n{\n    puts(gate_label(10));\n    puts(gate_label(20));\n    puts(gate_label(0));\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "locked\nopen\nunknown\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Сравните raw с LOCKED и OPEN в switch. Здесь именованные константы представляют 10 и 20.",
+        "В обоих известных случаях сразу верните метку. Для других чисел сработает default.",
+        "Третья строка unknown — предусмотренный результат для неизвестного кода, а не ошибка компиляции."
+      ],
+      "trace": [
+        [
+          "raw = 10",
+          "LOCKED",
+          "locked"
+        ],
+        [
+          "raw = 20",
+          "OPEN",
+          "open"
+        ],
+        [
+          "raw = 0",
+          "default",
+          "unknown"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Локализуйте и проверьте ошибку",
+      "paragraphs": [
+        "Опечатка RETUREND приводит к сообщению undeclared identifier. Сверьте имя с объявлением RETURNED. Если программа печатает ok для 1 3, проверьте пары состояний, а не объявления enum.",
+        "Неизвестный код и запрещённый переход должны различаться в выводе. В тестах пара 0 2 даёт invalid, а известная пара 1 3 даёт denied."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Измените, предскажите и проверьте",
+      "paragraphs": [
+        "Измените последний вызов примера на gate_label(30). Предскажите вывод. Затем подумайте, какой дополнительный факт нужен, чтобы перейти из LOCKED в OPEN.",
+        "Для заготовки библиотеки составьте таблицу 3×3. Каждая строка — текущее состояние, каждый столбец — целевое. Отметьте только две допустимые клетки."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "§6.7.2.2, §6.8.4.2",
+      "language": "English",
+      "purpose": "Сверьте правила языка для конструкций разобранного примера."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какая строка соответствует raw = 0?",
+      "options": [
+        "unknown",
+        "locked",
+        "open"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Ни одно именованное значение не равно 0. Срабатывает default.",
+        "LOCKED задано числом 10.",
+        "OPEN задано числом 20."
+      ],
+      "recall": "example"
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Оба кода 1 и 3 известны. Какой результат у пары из состояния 1 в состояние 3?",
+      "options": [
+        "invalid",
+        "denied",
+        "ok"
+      ],
+      "correct": 1,
+      "feedback": [
+        "Коды распознаны. Нарушено правило перехода.",
+        "Возврат требует, чтобы книга прежде была выдана.",
+        "Переход 1 → 3 пропускает состояние 2."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Объясните, почему проверка известности состояния должна быть отдельно от проверки перехода. Предложите по одному входу для каждой ошибки.",
+      "feedback": "0 2 содержит неизвестный код. 3 2 содержит известные состояния, но нарушает правило. Разные ошибки требуют разных решений.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "enum LoanState { REQUESTED = 1, ISSUED = 2, RETURNED = 3 };\n\nint main(void)\n{\n    return RETUREND;\n}\n",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "undeclared identifier 'RETUREND'"
+      ]
+    }
+  ],
+  "practice": {
+    "kind": "c-console",
+    "title": "Выдача и возврат книги",
+    "environment": "C17 · Clang/WASI",
+    "task": "Прочитайте первую строку до 63 байт с двумя целыми текущего и целевого состояния. Коды 1, 2 и 3 означают запрошена, выдана и возвращена. Для неверного формата или неизвестного кода выведите invalid. Для 1 → 2 и 2 → 3 выведите ok, а для всех остальных известных пар — denied. Распознавание входа в заготовке уже есть. Дополните can_move.",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum LoanState { REQUESTED = 1, ISSUED = 2, RETURNED = 3 };\n\nstatic int known(int raw)\n{\n    return raw == REQUESTED || raw == ISSUED || raw == RETURNED;\n}\n\nstatic int can_move(enum LoanState from, enum LoanState to)\n{\n    /* TODO: name both permitted transitions. */\n    return from == to;\n}\n\nint main(void)\n{\n    int value[2];\n    const int minimum[] = {0, 0};\n    const int maximum[] = {9, 9};\n    if (!read_values(value, minimum, maximum, 2) ||\n        !known(value[0]) || !known(value[1])) {\n        puts(\"invalid\");\n        return 0;\n    }\n    enum LoanState from = (enum LoanState)value[0];\n    enum LoanState to = (enum LoanState)value[1];\n    puts(can_move(from, to) ? \"ok\" : \"denied\");\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "1 2\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Выдача",
+        "input": "1 2\n",
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Возврат",
+        "input": "2 3\n",
+        "output": "ok\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пропуск шага",
+        "input": "1 3\n",
+        "output": "denied\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Повтор запроса",
+        "input": "2 2\n",
+        "output": "denied\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Попытка повторной выдачи",
+        "input": "3 2\n",
+        "output": "denied\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Неизвестное состояние",
+        "input": "0 2\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Лишний токен",
+        "input": "1 2 3\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "criteria": [
+      "Обе разрешённые пары дают ok. Пропуск, возврат назад и та же пара состояний дают denied.",
+      "Неизвестные коды и неверный формат дают invalid. Проверка кода выполняется до преобразования в enum."
+    ],
+    "hint": "Проверьте обе части пары с &&. Соедините две разрешённые пары с ||.",
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nstatic int read_values(int values[], const int minimum[], const int maximum[], size_t count)\n{\n    char line[64];\n    size_t length = 0;\n    int ch;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || length == sizeof line - 1) {\n            return 0;\n        }\n        line[length++] = (char)ch;\n    }\n    if (ferror(stdin)) {\n        return 0;\n    }\n    line[length] = '\\0';\n\n    char *cursor = line;\n    for (size_t i = 0; i < count; ++i) {\n        char *end;\n        errno = 0;\n        long value = strtol(cursor, &end, 10);\n        if (end == cursor || errno == ERANGE || value < minimum[i] || value > maximum[i]) {\n            return 0;\n        }\n        if (i + 1 < count && !isspace((unsigned char)*end)) {\n            return 0;\n        }\n        values[i] = (int)value;\n        cursor = end;\n    }\n    while (isspace((unsigned char)*cursor)) {\n        ++cursor;\n    }\n    return *cursor == '\\0';\n}\n\nenum LoanState { REQUESTED = 1, ISSUED = 2, RETURNED = 3 };\n\nstatic int known(int raw)\n{\n    return raw == REQUESTED || raw == ISSUED || raw == RETURNED;\n}\n\nstatic int can_move(enum LoanState from, enum LoanState to)\n{\n    return (from == REQUESTED && to == ISSUED) ||\n           (from == ISSUED && to == RETURNED);\n}\n\nint main(void)\n{\n    int value[2];\n    const int minimum[] = {0, 0};\n    const int maximum[] = {9, 9};\n    if (!read_values(value, minimum, maximum, 2) ||\n        !known(value[0]) || !known(value[1])) {\n        puts(\"invalid\");\n        return 0;\n    }\n    enum LoanState from = (enum LoanState)value[0];\n    enum LoanState to = (enum LoanState)value[1];\n    puts(can_move(from, to) ? \"ok\" : \"denied\");\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    },
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Отметьте разрешённые клетки таблицы переходов.",
+        "why": "Так видно, что повтор 2 → 2 имеет свой результат.",
+        "expected": "Разрешены ровно две пары."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Запустите три сценария, по одному для ok, denied и invalid.",
+        "why": "Два отрицательных результата относятся к разным частям контракта.",
+        "expected": "1 2, 1 3 и 0 2 различают все три результата."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Перенос идеи",
+        "task": "Перенесите подход на турникет с кодами 10 и 20. Уточните результат повтора и неизвестного кода до написания условия.",
+        "criteria": [
+          "Покажите отдельными примерами распознанный переход и неизвестный код. Обоснуйте выбранное правило повтора."
+        ]
+      }
+    ]
+  },
+  "skill": {
+    "id": "c.named-state-transition",
+    "prerequisites": [
+      "c.ordered-conditions"
+    ]
+  }
+}
