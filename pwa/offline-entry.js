@@ -222,7 +222,7 @@ async function renderCurrent(seq){
  if(lessonId){await prepareCppGoldLesson(course,lessonId,locale,async()=>{goldPresentation??=await import('../core/academy-gold-presentation.js');await goldPresentation.ensureGoldStyles()});if(seq!==renderSequence)return;}
  const item=route.has('lesson')?views().lessonData(lessonId):route.has('practicum')?course.practicumsRu.practicums.find(p=>p.id===route.get('practicum')):route.has('exercise')?course.projectsRu.projects.find(p=>p.id===route.get('exercise')):null;
  if(seq!==renderSequence)return;
- if(!item){root.innerHTML=lessons();bindNexusLearningUi(t);bindLearningDiscovery(t);bindReadOnlyLearning();return}
+ if(!item){const page=await lessons();if(seq!==renderSequence)return;root.innerHTML=page;bindNexusLearningUi(t);bindLearningDiscovery(t);bindReadOnlyLearning();return}
  if(kind==='exercise'){if(!needLocal())return;const p=exerciseCopy(data,kind,item);await save();return editor(p)}
  const state=data?learningState(data,kind,item.id):{},exercise=data&&item.gold?.runtimeTarget!=='qt-wasm'?exerciseCopy(data,kind,item):null;
  root.innerHTML=kind==='lesson'?views().lessonView(item.id):views().practicumView(item.id);

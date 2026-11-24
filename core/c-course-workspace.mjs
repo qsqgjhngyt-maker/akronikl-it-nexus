@@ -46,6 +46,10 @@ function readDraft(raw) {
   return {files, activeFile, stdin: draft.stdin};
 }
 
+function serializeDraft(draft) {
+  return JSON.stringify({version: 1, ...draft});
+}
+
 export function createCCourseStorage() {
   const account = verifiedAccount();
   if (!account) return null;
@@ -57,6 +61,7 @@ export function createCCourseStorage() {
   return {
     getItem(key) { return local().getItem(prefix + key); },
     setItem(key, value) { local().setItem(prefix + key, value); },
+    removeItem(key) { local().removeItem(prefix + key); },
   };
 }
 
@@ -67,7 +72,9 @@ export function bindCCourseWorkspace({
   if (!host || typeof lessonId !== 'string' || !lessonId) throw Error('C_COURSE_WORKSPACE_REQUIRED');
   const en = locale === 'en';
   const t = (ru, english) => en ? english : ru;
-  const key = 'draft:' + encodeURIComponent(storageScope) + ':' + encodeURIComponent(lessonId);
+  const scopeKey = encodeURIComponent(storageScope) + ':' + encodeURIComponent(lessonId);
+  const key = 'draft:' + scopeKey;
+  const checkpointKey = 'before-starter:' + scopeKey;
   const initial = makeStarter(starter, lesson?.practice);
   let originalRaw = null;
   let draft = null;
@@ -87,6 +94,8 @@ export function bindCCourseWorkspace({
   let saveTimer;
   let running = false;
   let revision = 0;
+  let opening = false;
+  let workWindow;
 
   host.innerHTML = `
     <section class="sandbox-block" aria-label="Code Studio · C17">
@@ -97,7 +106,9 @@ export function bindCCourseWorkspace({
       </label>
       <div class="runrow">
         <button type="button" class="btn primary" data-c-run>${t('Запустить мою работу', 'Run my code')}</button>
-        <button type="button" class="btn" data-c-starter>${t('Восстановить заготовку', 'Restore starter')}</button>
+        <button type="button" class="btn" data-c-starter>${t('Восстановить исходную заготовку', 'Restore original starter')}</button>
+        <button type="button" class="btn" data-c-recover hidden>${t('Вернуть предыдущую работу', 'Recover previous work')}</button>
+        <button type="button" class="btn" data-c-download>${t('Скачать мою работу', 'Download my work')}</button>
       </div>
       <p class="sandbox-status" data-c-save role="status"></p>
       <p class="sandbox-status" data-c-result role="status"></p>
@@ -122,7 +133,10 @@ export function bindCCourseWorkspace({
   const saveStatus = find('[data-c-save]');
   const runStatus = find('[data-c-result]');
   const outputs = find('[data-c-output]');
+  const recoverButton = find('[data-c-recover]');
   const editor = find('#editor');
+  const course = host.closest('[data-c-course]');
+  const openButton = course?.querySelector('[data-c-open-work-window]');
   stdin.value = opened.stdin;
   const studio = bindCodeStudio({
     editor, locale, languageId: 'c', fileName: entryFile, files: opened.files,
@@ -135,6 +149,7 @@ export function bindCCourseWorkspace({
     : draft
       ? t('Код и входные данные восстановлены с этого устройства.', 'Code and input restored from this device.')
       : t('Изменения сохраняются на этом устройстве.', 'Changes are saved on this device.');
+  updateRecovery();
 
   function snapshot() {
     return {
@@ -160,8 +175,8 @@ export function bindCCourseWorkspace({
       languageId: 'c', entryFile, activeFile: before.activeFile, files: before.files,
     });
     const after = candidate.applyRuntimeFiles(files, base);
-    const next = JSON.stringify({
-      version: 1, files: after.files.map(({path, content}) => ({path, content})),
+    const next = serializeDraft({
+      files: after.files.map(({path, content}) => ({path, content})),
       activeFile: after.activeFile, stdin: stdin.value,
     });
     try {
@@ -195,7 +210,7 @@ export function bindCCourseWorkspace({
     try {
       if (!readable) throw Error('C_COURSE_DRAFT_UNAVAILABLE');
       // Keep a newer draft from a different tab intact.
-      const next = JSON.stringify({version: 1, ...snapshot()});
+      const next = serializeDraft(snapshot());
       const current = storage.getItem(key);
       if ((current ?? null) !== originalRaw && current !== next) {
         saveStatus.textContent = t(
@@ -215,16 +230,18 @@ export function bindCCourseWorkspace({
     return true;
   }
 
+  function invalidateRunOutput() {
+    revision++;
+    clearFileResults();
+    studio.clearRuntimeDiagnostics();
+    if (!outputs.hidden) runStatus.textContent = t(
+      'Ниже результат предыдущего запуска. Запустите текущую работу, чтобы проверить изменения.',
+      'The result below is from the previous run. Run the current code to check your changes.');
+  }
+
   function markEdited(programChanged = true) {
     dirty = true;
-    if (programChanged) {
-      revision++;
-      clearFileResults();
-      studio.clearRuntimeDiagnostics();
-      if (!outputs.hidden) runStatus.textContent = t(
-        'Ниже результат предыдущего запуска. Запустите текущую работу, чтобы проверить изменения.',
-        'The result below is from the previous run. Run the current code to check your changes.');
-    }
+    if (programChanged) invalidateRunOutput();
     saveStatus.textContent = t('Есть несохранённые изменения.', 'There are unsaved changes.');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(flush, 300);
@@ -291,20 +308,136 @@ export function bindCCourseWorkspace({
     if (completed) onRun?.(completed);
   }
 
+  function updateRecovery() {
+    let saved;
+    try {
+      saved = readable && readDraft(storage.getItem(checkpointKey));
+    } catch {
+      saved = null;
+    }
+    recoverButton.hidden = !saved;
+  }
+
+  function replaceWithCheckpoint(nextDraft, expectedCheckpoint) {
+    if (!flush()) return false;
+    const previous = serializeDraft(snapshot());
+    const next = serializeDraft(nextDraft);
+    let checkpoint;
+    let checkpointWritten = false;
+    try {
+      if (!readable) throw Error('C_COURSE_DRAFT_UNAVAILABLE');
+      checkpoint = storage.getItem(checkpointKey);
+      if ((expectedCheckpoint !== undefined && checkpoint !== expectedCheckpoint) ||
+          (storage.getItem(key) ?? null) !== originalRaw) throw Error('C_COURSE_DRAFT_CONFLICT');
+      storage.setItem(checkpointKey, previous);
+      checkpointWritten = true;
+      if ((storage.getItem(key) ?? null) !== originalRaw) throw Error('C_COURSE_DRAFT_CONFLICT');
+      storage.setItem(key, next);
+    } catch (error) {
+      if (checkpointWritten) {
+        try {
+          if (storage.getItem(checkpointKey) === previous) {
+            if (checkpoint === null) storage.removeItem?.(checkpointKey);
+            else storage.setItem(checkpointKey, checkpoint);
+          }
+        } catch {
+          // The current draft was already saved by flush before the checkpoint write.
+        }
+      }
+      updateRecovery();
+      saveStatus.textContent = error.message === 'C_COURSE_DRAFT_CONFLICT'
+        ? t('В другой вкладке есть новая версия. Текущая работа оставлена как есть.',
+          'Another tab has a newer version. Your current work is unchanged.')
+        : t('Не удалось сохранить предыдущую работу. Текущая работа оставлена как есть.',
+          'Your previous work could not be saved. Your current work is unchanged.');
+      return false;
+    }
+
+    stdin.value = nextDraft.stdin;
+    studio.setWorkspace(nextDraft.files, nextDraft.activeFile, {emit: false});
+    originalRaw = next;
+    invalidateRunOutput();
+    updateRecovery();
+    onSaved?.({lessonId});
+    return true;
+  }
+
   function restoreStarter() {
     const current = snapshot();
     if (JSON.stringify(current.files) === JSON.stringify(initial.files) && current.stdin === initial.stdin) return;
     const confirmed = globalThis.confirm(t(
-      'Заменить текущие файлы и входные данные заготовкой?',
-      'Replace the current files and input with the starter?'));
-    if (!confirmed) return;
-    stdin.value = initial.stdin;
-    studio.setWorkspace(initial.files, initial.activeFile);
+      'Восстановить исходную заготовку? Перед заменой текущие файлы и stdin будут сохранены как предыдущая работа.',
+      'Restore the original starter? Your current files and stdin will be saved as previous work before replacement.'));
+    if (confirmed && replaceWithCheckpoint(initial)) saveStatus.textContent = t(
+      'Заготовка восстановлена. Предыдущая работа сохранена на этом устройстве.',
+      'The starter was restored. Your previous work is saved on this device.');
+  }
+
+  function recoverWork() {
+    let checkpoint;
+    let previous;
+    try {
+      checkpoint = storage.getItem(checkpointKey);
+      previous = readDraft(checkpoint);
+    } catch {
+      updateRecovery();
+    }
+    if (!previous) return;
+    const confirmed = globalThis.confirm(t(
+      'Вернуть предыдущие файлы и stdin? Текущая работа будет сохранена перед заменой.',
+      'Recover the previous files and stdin? Your current work will be saved before replacement.'));
+    if (confirmed && replaceWithCheckpoint(previous, checkpoint)) saveStatus.textContent = t(
+      'Предыдущая работа восстановлена и сохранена на этом устройстве.',
+      'Your previous work was restored and saved on this device.');
+  }
+
+  function downloadWork() {
+    const body = JSON.stringify({version: 1, lessonId, languageId: 'c', ...snapshot()}, null, 2);
+    const url = URL.createObjectURL(new Blob([body], {type:'application/json;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = lessonId + '-my-work.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function openWorkWindow() {
+    if (disposed || opening || workWindow) return;
+    const task = course.querySelector('[data-c-work-task]');
+    if (!task) return;
+    opening = true;
+    openButton.disabled = true;
+    try {
+      const {ensureGoldStyles, openGoldWorkspace} = await import('./academy-gold-presentation.js');
+      await ensureGoldStyles();
+      if (disposed || !host.isConnected) return;
+      workWindow = openGoldWorkspace(course, openButton, {lessonId, locale}, {
+        workspace: host,
+        task,
+        taskAdditions: [course.querySelector('[data-c-work-cases]')],
+        mobilePanel: 'task',
+        editorTabLabel: t('Редактор', 'Editor'),
+        beforeClose: flush,
+        bindTask: null,
+        onShowEditor: () => studio.recalculateEditorHeight(),
+        onClose: () => { workWindow = null; },
+      });
+    } catch {
+      if (!disposed) saveStatus.textContent = t(
+        'Не удалось открыть рабочее окно. Редактор доступен в уроке.',
+        'The work window could not be opened. The editor is available in the lesson.');
+    } finally {
+      opening = false;
+      if (!disposed) openButton.disabled = false;
+    }
   }
 
   stdin.addEventListener('input', () => markEdited(), {signal});
   runButton.addEventListener('click', run, {signal});
   find('[data-c-starter]').addEventListener('click', restoreStarter, {signal});
+  recoverButton.addEventListener('click', recoverWork, {signal});
+  find('[data-c-download]').addEventListener('click', downloadWork, {signal});
+  openButton?.addEventListener('click', openWorkWindow, {signal});
   globalThis.addEventListener('pagehide', flush, {signal});
   globalThis.addEventListener('beforeunload', event => {
     if (flush()) return;
@@ -319,6 +452,7 @@ export function bindCCourseWorkspace({
       if (!flush()) return false;
       disposed = true;
       events.abort();
+      workWindow?.dispose();
       clearFileResults();
       studio.dispose();
       return true;

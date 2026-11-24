@@ -1,5 +1,14 @@
 const appearanceKey = 'nexus.assistant-launcher.v1';
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+const lessonTargets = [
+  'button', 'a[href]', 'input', 'select', 'textarea', 'summary',
+  '[role="button"]', '[role="tab"]', '[contenteditable]:not([contenteditable="false"])',
+  '.lesson-context', '.c-lesson-header', '.lesson-floating', 'pre', 'figure', '[role="status"]',
+].join(',');
+
+function intersects(a, b) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
 
 function readAppearance(win) {
   try {
@@ -24,6 +33,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
   const {signal} = listeners;
   const appearance = readAppearance(win);
   let pointer, suppressClick = false;
+  let layoutRoot, layoutEvents, layoutFrame = null;
 
   function element(tag, className) {
     const node = doc.createElement(tag);
@@ -137,6 +147,127 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
     fit();
   }
 
+  function findAcademySurface() {
+    const cCourse = doc.querySelector('[data-c-course]');
+    const nextRoot = doc.querySelector('[data-onec-platform-mount]')?.shadowRoot ??
+      cCourse ?? doc.querySelector('[data-r3-mount]');
+    if (nextRoot !== layoutRoot) {
+      layoutObserver.disconnect();
+      layoutEvents?.abort();
+      layoutRoot = nextRoot;
+      if (layoutRoot) {
+        layoutEvents = new AbortController();
+        const {signal} = layoutEvents;
+        layoutObserver.observe(layoutRoot, {
+          childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'hidden'],
+        });
+        layoutRoot.addEventListener('focusin', scheduleFit, {signal});
+        layoutRoot.addEventListener('focusout', scheduleFit, {signal});
+        layoutRoot.addEventListener('scroll', scheduleFit, {capture: true, passive: true, signal});
+      }
+    }
+    return cCourse ?? layoutRoot?.querySelector('.r3-lesson[data-r3-topic]');
+  }
+
+  function editorHasFocus(surface) {
+    let focused = doc.activeElement;
+    while (focused?.shadowRoot?.activeElement) focused = focused.shadowRoot.activeElement;
+    return surface.contains(focused) &&
+      focused.matches('textarea,.cm-editor.cm-focused,[contenteditable]:not([contenteditable="false"])');
+  }
+
+  function avoidAcademyControls(surface, area) {
+    if (settings.open) return;
+    if (surface.querySelector('dialog[open]') || editorHasFocus(surface)) {
+      slot.setAttribute('data-academy-blocked', '');
+      return;
+    }
+
+    const original = slot.getBoundingClientRect();
+    const minX = area.left, maxX = area.left + area.xRange;
+    const minY = area.top, maxY = area.top + area.yRange;
+    const toolsWidth = tools.offsetWidth;
+    const extraHeight = Math.max(0, (tools.offsetHeight - original.height) / 2);
+    const sideAt = x => x < minX + area.xRange / 2 ? 'left' : 'right';
+    const hitArea = (x, y, side) => ({
+      left: x - (side === 'right' ? toolsWidth : 0),
+      right: x + original.width + (side === 'left' ? toolsWidth : 0),
+      top: y - extraHeight,
+      bottom: y + original.height + extraHeight,
+    });
+
+    const targets = [...surface.querySelectorAll(lessonTargets),
+      doc.querySelector('.topbar'), doc.querySelector('.sidebar')];
+    const viewport = {
+      left: minX - 12, right: maxX + original.width + 12,
+      top: minY - 12, bottom: maxY + original.height + 12,
+    };
+    const obstacles = targets.filter(Boolean).map(target => target.getBoundingClientRect())
+      .filter(box => box.width && box.height && intersects(box, viewport));
+    const desired = hitArea(original.left, original.top, slot.dataset.side);
+    const collisions = obstacles.filter(box => intersects(desired, box));
+    if (!collisions.length) return;
+
+    let best, distance = Infinity;
+    function consider(left, top) {
+      const x = clamp(left, minX, maxX), y = clamp(top, minY, maxY);
+      const side = sideAt(x), occupied = hitArea(x, y, side);
+      const offset = Math.hypot(x - original.left, y - original.top);
+      if (offset < distance && !obstacles.some(box => intersects(box, occupied))) {
+        distance = offset;
+        best = {x, y, side};
+      }
+    }
+
+    for (const box of collisions) {
+      consider(original.left, box.top - original.height - extraHeight - 4);
+      consider(original.left, box.bottom + extraHeight + 4);
+      consider(box.left - original.width - toolsWidth - 4, original.top);
+      consider(box.right + toolsWidth + 4, original.top);
+    }
+    const columns = [minX, original.left, minX + area.xRange / 2, maxX];
+    for (const x of columns) {
+      for (const y of [minY, original.top, minY + area.yRange / 2, maxY]) consider(x, y);
+    }
+    if (!best) {
+      for (const box of obstacles) {
+        for (const x of columns) {
+          consider(x, box.top - original.height - extraHeight - 4);
+          consider(x, box.bottom + extraHeight + 4);
+        }
+      }
+    }
+    if (!best) {
+      slot.setAttribute('data-academy-blocked', '');
+      return;
+    }
+    slot.style.setProperty('--ak-x', best.x + 'px');
+    slot.style.setProperty('--ak-y', best.y + 'px');
+    slot.dataset.side = best.side;
+    slot.setAttribute('data-academy-adjusted', '');
+  }
+
+  function fit() {
+    const surface = findAcademySurface();
+    if (pointer?.dragging) return;
+    slot.removeAttribute('data-academy-blocked');
+    slot.removeAttribute('data-academy-adjusted');
+    if (!slot.offsetWidth) return;
+    const area = bounds();
+    renderPosition(area);
+    if (surface) avoidAcademyControls(surface, area);
+  }
+
+  function scheduleFit() {
+    if (layoutFrame !== null) return;
+    layoutFrame = win.requestAnimationFrame(() => {
+      layoutFrame = null;
+      fit();
+    });
+  }
+  const layoutObserver = new win.MutationObserver(scheduleFit);
+  const scheduleAcademyFit = () => { if (layoutRoot) scheduleFit(); };
+
   button.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0) return;
     const rect = slot.getBoundingClientRect();
@@ -171,6 +302,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
     }
     pointer = null;
     delete slot.dataset.dragging;
+    scheduleFit();
   }
 
   const openChat = () => { if (readIdentity()?.accountId) void onOpen(button); };
@@ -199,6 +331,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
     const rect = slot.getBoundingClientRect();
     moveTo(rect.left + delta[0], rect.top + delta[1]);
     saveAppearance();
+    scheduleFit();
   }, {signal});
 
   function openSettings() {
@@ -206,6 +339,7 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
   }
 
   tools.addEventListener('click', openSettings, {signal});
+  settings.addEventListener('close', scheduleFit, {signal});
   button.addEventListener('contextmenu', event => {
     event.preventDefault();
     openSettings();
@@ -215,18 +349,20 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
     slot.toggleAttribute('data-compact', appearance.compact);
     renderPosition();
     saveAppearance();
+    scheduleFit();
   }, {signal});
   reset.addEventListener('click', () => {
     appearance.position = null;
     renderPosition();
     saveAppearance();
+    scheduleFit();
   }, {signal});
 
-  const fit = () => { if (appearance.position && slot.offsetWidth) renderPosition(); };
-  stylesheet.addEventListener('load', fit, {signal});
-  win.addEventListener('resize', fit, {signal});
-  win.visualViewport?.addEventListener('resize', fit, {signal});
-  win.visualViewport?.addEventListener('scroll', fit, {signal});
+  stylesheet.addEventListener('load', scheduleFit, {signal});
+  win.addEventListener('resize', scheduleFit, {signal});
+  win.visualViewport?.addEventListener('resize', scheduleFit, {signal});
+  win.visualViewport?.addEventListener('scroll', scheduleFit, {signal});
+  doc.addEventListener('scroll', scheduleAcademyFit, {capture: true, passive: true, signal});
   win.addEventListener('nexus:assistant-state', event => {
     button.dataset.state = ['loading', 'speaking'].includes(event.detail?.state) ? event.detail.state : 'idle';
   }, {signal});
@@ -242,10 +378,15 @@ export function createPresenceLauncher({documentRef: doc = document, windowRef: 
   compact.checked = appearance.compact;
   slot.toggleAttribute('data-compact', appearance.compact);
   refresh();
-  renderPosition();
   return Object.freeze({
     refresh,
     configure(prefs) { button.dataset.motion = String(prefs.assistantPresenceMotion === true); },
-    dispose() { listeners.abort(); slot.remove(); },
+    dispose() {
+      listeners.abort();
+      layoutObserver.disconnect();
+      layoutEvents?.abort();
+      if (layoutFrame !== null) win.cancelAnimationFrame(layoutFrame);
+      slot.remove();
+    },
   });
 }

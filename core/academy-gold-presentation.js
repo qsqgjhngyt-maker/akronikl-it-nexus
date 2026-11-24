@@ -143,23 +143,50 @@ function goldWorkspaceMarkup(lang,{project=false,title='',multi=false,gui=false}
 export function openGoldWorkspace(root,button,gold,{
  workspace=root.querySelector('#editor')?.closest('.sandbox-block'),
  task=button.closest('[data-gold-laboratory],[data-gold-practicum]'),
+ taskAdditions=[],
+ mobilePanel='editor',
+ editorTabLabel,
+ beforeClose=()=>true,
+ bindTask=panel=>bindAcademyGold(panel,gold),
+ onShowEditor,
+ onClose,
 }={}){
  if(!workspace||!task||root.querySelector('.gold-work-dialog[open]'))return;
  const lang=task.closest('[data-gold-lesson]')?.getAttribute('lang')||gold?.locale||'ru',t=(ru,en)=>label(lang,ru,en);
  const marker=document.createComment('gold-workspace-place'),host=workspace.closest('.lesson')||root.body||root,x=scrollX,y=scrollY;
  const dialog=document.createElement('dialog');dialog.className='gold-work-dialog';dialog.lang=lang;dialog.setAttribute('aria-labelledby','goldWorkTitle');dialog.setAttribute('aria-modal','true');
- dialog.innerHTML='<header class="gold-work-head"><div><span class="eyebrow">'+E(t('РАБОЧЕЕ ОКНО УРОКА','LESSON WORK WINDOW'))+'</span><h2 id="goldWorkTitle">'+E(task.querySelector('h2')?.textContent||t('Практическая работа','Practical work'))+'</h2></div><button type="button" class="btn" data-gold-work-close>'+E(t('Вернуться к заданию','Return to the task'))+'</button></header><div class="gold-work-tabs" role="tablist" aria-label="'+E(t('Задание и редактор','Task and editor'))+'"><button type="button" role="tab" id="goldWorkTaskTab" aria-controls="goldWorkTask" data-gold-work-tab="task">'+E(t('Задание','Task'))+'</button><button type="button" role="tab" id="goldWorkEditorTab" aria-controls="goldWorkEditor" data-gold-work-tab="editor">Code Studio</button></div><div class="gold-work-layout"><div id="goldWorkTask" class="gold-work-task academy-gold" data-gold-work-panel="task" aria-label="'+E(t('Условие и контрольные случаи','Task and reference cases'))+'" lang="'+E(lang)+'" data-gold-lesson="'+E(gold?.lessonId||task.closest('[data-gold-lesson]')?.dataset.goldLesson)+'"></div><div id="goldWorkEditor" class="gold-work-editor" data-gold-work-panel="editor" aria-label="Code Studio"></div></div>';
- const taskPanel=dialog.querySelector('[data-gold-work-panel="task"]'),editorPanel=dialog.querySelector('[data-gold-work-panel="editor"]'),copy=task.cloneNode(true);
- copy.removeAttribute('id');for(const n of copy.querySelectorAll('[id]'))n.removeAttribute('id');
- for(const n of copy.querySelectorAll('.gold-workspace-callout'))n.remove();
+ dialog.innerHTML='<header class="gold-work-head"><div><span class="eyebrow">'+E(t('РАБОЧЕЕ ОКНО УРОКА','LESSON WORK WINDOW'))+'</span><h2 id="goldWorkTitle">'+E(task.querySelector('h2')?.textContent||t('Практическая работа','Practical work'))+'</h2></div><button type="button" class="btn" data-gold-work-close>'+E(t('Вернуться к заданию','Return to the task'))+'</button></header><div class="gold-work-tabs" role="tablist" aria-label="'+E(t('Задание и редактор','Task and editor'))+'"><button type="button" role="tab" id="goldWorkTaskTab" aria-controls="goldWorkTask" data-gold-work-tab="task">'+E(t('Задание','Task'))+'</button><button type="button" role="tab" id="goldWorkEditorTab" aria-controls="goldWorkEditor" data-gold-work-tab="editor">'+E(editorTabLabel||'Code Studio')+'</button></div><div class="gold-work-layout"><div id="goldWorkTask" class="gold-work-task academy-gold" data-gold-work-panel="task" aria-label="'+E(t('Условие и контрольные случаи','Task and reference cases'))+'" lang="'+E(lang)+'" data-gold-lesson="'+E(gold?.lessonId||task.closest('[data-gold-lesson]')?.dataset.goldLesson)+'"></div><div id="goldWorkEditor" class="gold-work-editor" data-gold-work-panel="editor" aria-label="Code Studio"></div></div>';
+ const taskPanel=dialog.querySelector('[data-gold-work-panel="task"]');
+ const editorPanel=dialog.querySelector('[data-gold-work-panel="editor"]');
+ for(const original of [task,...taskAdditions]){
+  if(!original||original!==task&&task.contains(original))continue;
+  const copy=original.cloneNode(true);
+  copy.removeAttribute('id');
+  for(const element of copy.querySelectorAll('[id]'))element.removeAttribute('id');
+  for(const element of copy.querySelectorAll('.gold-workspace-callout,[data-c-open-work-window]'))element.remove();
+  taskPanel.append(copy);
+ }
  editorPanel.lang=workspace.closest('[lang]')?.getAttribute('lang')||document.documentElement.lang||lang;
- taskPanel.append(copy);workspace.before(marker);editorPanel.append(workspace);host.append(dialog);
- bindAcademyGold(taskPanel,gold);
- const media=matchMedia('(max-width:900px)'),tabs=[...dialog.querySelectorAll('[data-gold-work-tab]')],panels=[taskPanel,editorPanel];let active='editor';
+ workspace.before(marker);editorPanel.append(workspace);host.append(dialog);
+ bindTask?.(taskPanel);
+ const media=matchMedia('(max-width:900px)'),tabs=[...dialog.querySelectorAll('[data-gold-work-tab]')],panels=[taskPanel,editorPanel];
+ const panelScroll=new Map();
+ let active=mobilePanel;
  const update=()=>{
   dialog.querySelector('.gold-work-tabs').hidden=!media.matches;
   for(const tab of tabs){const selected=tab.dataset.goldWorkTab===active;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;}
-  for(const panel of panels){panel.hidden=media.matches&&panel.dataset.goldWorkPanel!==active;panel.setAttribute('role',media.matches?'tabpanel':'region');if(media.matches)panel.setAttribute('aria-labelledby',panel===taskPanel?'goldWorkTaskTab':'goldWorkEditorTab');else panel.removeAttribute('aria-labelledby');}
+  for(const panel of panels){
+   const hidden=media.matches&&panel.dataset.goldWorkPanel!==active;
+   if(hidden!==panel.hidden){
+    if(hidden)panelScroll.set(panel,panel.scrollTop);
+    panel.hidden=hidden;
+    if(!hidden)panel.scrollTop=panelScroll.get(panel)??0;
+   }
+   panel.setAttribute('role',media.matches?'tabpanel':'region');
+   if(media.matches)panel.setAttribute('aria-labelledby',panel===taskPanel?'goldWorkTaskTab':'goldWorkEditorTab');
+   else panel.removeAttribute('aria-labelledby');
+  }
+  if(!editorPanel.hidden&&dialog.open)onShowEditor?.();
  };
  for(const tab of tabs){
   tab.addEventListener('click',()=>{active=tab.dataset.goldWorkTab;update();});
@@ -167,9 +194,24 @@ export function openGoldWorkspace(root,button,gold,{
  }
  media.addEventListener('change',update);update();
  let returnToTask=true,closed=false;
- const onRouteChange=()=>{returnToTask=false;dialog.close();};
+ const requestClose=(restoreFocus=true)=>{
+  if(beforeClose()===false){
+   active='editor';
+   update();
+   editorPanel.querySelector('#editor,textarea')?.focus({preventScroll:true});
+   return false;
+  }
+  returnToTask=restoreFocus;
+  dialog.close();
+  return true;
+ };
+ const onRouteChange=()=>{requestClose(false);};
  const observer=new MutationObserver(()=>{if(!dialog.isConnected){returnToTask=false;cleanup();}});
- dialog.addEventListener('click',event=>{if(event.target.closest('[data-gold-work-close]'))dialog.close();else if(event.target.closest('a[href^="#"]')){returnToTask=false;dialog.close();}});
+ dialog.addEventListener('click',event=>{
+  if(event.target.closest('[data-gold-work-close]'))requestClose();
+  else if(event.target.closest('a[href^="#"]')&&!requestClose(false))event.preventDefault();
+ });
+ dialog.addEventListener('cancel',event=>{event.preventDefault();requestClose();});
  const cleanup=()=>{
   if(closed)return;closed=true;
   media.removeEventListener('change',update);
@@ -177,9 +219,16 @@ export function openGoldWorkspace(root,button,gold,{
   if(marker.isConnected){marker.replaceWith(workspace);}
   dialog.remove();
   if(returnToTask&&button.isConnected){button.focus({preventScroll:true});scrollTo({left:x,top:y,behavior:'instant'});}
+  onClose?.();
  };
- dialog.addEventListener('close',cleanup,{once:true});addEventListener('hashchange',onRouteChange,{once:true});observer.observe(document.body,{childList:true,subtree:true});
- dialog.showModal();editorPanel.querySelector('#editor')?.focus({preventScroll:true});
+ dialog.addEventListener('close',cleanup,{once:true});addEventListener('hashchange',onRouteChange);observer.observe(document.body,{childList:true,subtree:true});
+ try{dialog.showModal();}catch(error){returnToTask=false;cleanup();throw error;}
+ if(editorPanel.hidden)tabs.find(tab=>tab.dataset.goldWorkTab===active)?.focus({preventScroll:true});
+ else{
+  onShowEditor?.();
+  editorPanel.querySelector('#editor,textarea')?.focus({preventScroll:true});
+ }
+ return {dispose(){returnToTask=false;cleanup();}};
 }
 function goldDeliveryMarkup(delivery,lang){
  if(!delivery)return '';
