@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.sentinel-loops",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "C programming",
+  "module": "Input, selection and loops",
+  "locale": "en",
+  "title": "Sentinel-controlled loops",
+  "goal": "Process a stream of unknown length and distinguish a sentinel, end of input and an error.",
+  "prerequisites": [
+    {
+      "text": "Understand a validated read status and an accumulator."
+    },
+    {
+      "text": "Explain how a counted loop terminates."
+    }
+  ],
+  "terms": [
+    {
+      "id": "sentinel",
+      "term": "Sentinel",
+      "title": "Sentinel",
+      "definition": "A reserved value that controls processing and does not belong to the data."
+    },
+    {
+      "id": "progress",
+      "term": "Loop progress",
+      "title": "Loop progress",
+      "definition": "A change bringing the loop closer to termination. Here an iteration reads one record or terminates processing."
+    },
+    {
+      "id": "break",
+      "term": "break",
+      "title": "break",
+      "definition": "Exits the nearest loop. The remaining statements in its body are skipped."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Why it matters",
+      "paragraphs": [
+        "An event log may end at a sentinel −1 or simply run out of input. Both endings are valid. An invalid record is an error and should not masquerade as an empty log.",
+        "With while (1), exits are checked in the body just after a read. Mark three exits in a trace: end of input, sentinel and error. The task also limits the number of accepted events.",
+        "Choose a sentinel outside the data range. It still has to parse as a value, but it must not be counted."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "A short event log",
+      "paragraphs": [
+        "With 5, 7, −1 and 9 on separate lines, trace how many events the program actually accepts. Input after the sentinel is ignored.",
+        "Remove the sentinel and the following record. With 5 and 7 the result is the same, but the reason for stopping changes."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    while (1) {\n        int event;\n        int state = read_integer(-1, 20, &event);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (event == -1) {\n            break;\n        }\n        if (count == 5) {\n            puts(\"invalid\");\n            return 0;\n        }\n        ++count;\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+        "stdin": "5\n7\n-1\n9\n",
+        "output": "2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Read the next line and check the status first.",
+        "Check the reserved −1 before incrementing the event count.",
+        "Check the limit of 5 before accepting another event.",
+        "Print the accumulated event count after break."
+      ],
+      "trace": [
+        [
+          "Event 5",
+          "count 0",
+          "count 1",
+          "Ordinary record"
+        ],
+        [
+          "Event 7",
+          "count 1",
+          "count 2",
+          "Ordinary record"
+        ],
+        [
+          "Sentinel −1",
+          "count 2",
+          "break",
+          "The count stays unchanged"
+        ],
+        [
+          "Line 9",
+          "still in input",
+          "not read",
+          "Loop is finished"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "A stop signal does not count as data",
+      "paragraphs": [
+        "Incrementing count before checking the sentinel counts the sentinel as a false event. A log starting with the sentinel would incorrectly report one event.",
+        "Do not use event after READ_BAD or READ_END. Exiting before reading it keeps the calculation safe. The compiler rejects while () without a condition."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Check order for a new sentinel",
+      "paragraphs": [
+        "For temperatures, 999 means stop and 60 is a valid reading. On READ_OK, check for 999 before applying the measurement range.",
+        "The contract allows eight readings. After the eighth temperature, a sentinel or EOF is allowed. A ninth temperature is an error."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.8.5.1, 6.8.6.3",
+      "language": "English",
+      "purpose": "Review the while loop and the effect of break."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the example print for 5, 7, −1 and 9?",
+      "options": [
+        "2",
+        "3",
+        "4"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Only 5 and 7 contribute.",
+        "The sentinel and later lines are excluded.",
+        "Processing stops at −1."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    while (1) {\n        int event;\n        int state = read_integer(-1, 20, &event);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (event == -1) {\n            break;\n        }\n        if (count == 5) {\n            puts(\"invalid\");\n            return 0;\n        }\n        ++count;\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+        "stdin": "5\n7\n-1\n9\n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Which status means there is no new record?",
+      "options": [
+        "READ_BAD",
+        "READ_END",
+        "READ_OK"
+      ],
+      "correct": 1,
+      "feedback": [
+        "This is a line or stream error.",
+        "End of input is valid without a sentinel.",
+        "A value is ready for further checks."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "How can an empty stream and a stream with one blank line be distinguished?",
+      "feedback": "An empty stream returns READ_END. A blank line has a record boundary but no number and leads to READ_BAD.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    while () {\n        break;\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "expected expression"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Summarise temperatures until the sentinel",
+    "task": "Read one record per line. A temperature is from −40 to 60. 999 ends the summary, and EOF is allowed. Accept up to eight measurements. Print invalid for an error, empty for no measurements, or the count and sum separated by a space. Ignore input after 999.",
+    "hint": "Check for 999 after READ_OK, before checking the measurement limit or maximum count.",
+    "criteria": [
+      "999 and EOF stop normally.",
+      "The sentinel does not affect count and sum.",
+      "A blank line and a ninth measurement are rejected."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Compare a stream ending with 999 and one ending at EOF.",
+        "why": "Both reasons for stopping are valid.",
+        "expected": "Equal measurements produce the same summary."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Insert break for 999 in the right place.",
+        "why": "The sentinel is outside the measurement range.",
+        "expected": "The sentinel is excluded from calculation."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Check eight and nine readings.",
+        "why": "The limit applies to data.",
+        "expected": "Eight plus a sentinel work. A ninth temperature is rejected."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Explain the last repetition",
+        "task": "Put 999 on the first line and a valid temperature on the second. Trace why processing ends and which value reaches the sum.",
+        "criteria": [
+          "Processing stops at 999.",
+          "No value contributes to the sum. The output is empty."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    int sum = 0;\n\n    while (1) {\n        int temperature;\n        int state = read_integer(-40, 999, &temperature);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        /* TODO: recognise the sentinel before checking measurements. */\n        if (temperature > 60 || count == 8) {\n            puts(\"invalid\");\n            return 0;\n        }\n\n        sum += temperature;\n        ++count;\n    }\n\n    if (count == 0) {\n        puts(\"empty\");\n    } else {\n        printf(\"%d %d\\n\", count, sum);\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "-12\n30\n999\n77\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Sentinel after two readings",
+        "input": "-12\n30\n999\n77\n",
+        "output": "2 18\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "End after a complete reading",
+        "input": "-40\n60",
+        "output": "2 20\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Sentinel first",
+        "input": "999\n3\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Empty stream",
+        "input": "",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Blank record",
+        "input": "\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Temperature out of measurement range",
+        "input": "61\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Maximum count followed by sentinel",
+        "input": "1\n1\n1\n1\n1\n1\n1\n1\n999\n",
+        "output": "8 8\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Too many readings",
+        "input": "1\n1\n1\n1\n1\n1\n1\n1\n1\n999\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    int sum = 0;\n\n    while (1) {\n        int temperature;\n        int state = read_integer(-40, 999, &temperature);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (temperature == 999) {\n            break;\n        }\n        if (temperature > 60 || count == 8) {\n            puts(\"invalid\");\n            return 0;\n        }\n\n        sum += temperature;\n        ++count;\n    }\n\n    if (count == 0) {\n        puts(\"empty\");\n    } else {\n        printf(\"%d %d\\n\", count, sum);\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.sentinel-termination",
+    "prerequisites": [
+      "c.counted-accumulation"
+    ]
+  }
+}

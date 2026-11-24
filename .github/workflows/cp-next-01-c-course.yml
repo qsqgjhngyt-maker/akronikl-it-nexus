@@ -1,4 +1,4 @@
-name: Академия — первый модуль C17
+name: Академия — модули C17
 
 on:
   pull_request:
@@ -14,6 +14,10 @@ on:
       - 'pwa/**'
       - 'sandbox/**'
       - 'tests/c-course-*'
+      - 'tests/shared-presentation-check.mjs'
+      - 'tests/helpers/course-rollout-bytes.mjs'
+      - 'tools/check-academy-m2.mjs'
+      - 'locales/*/ui.json'
   push:
     branches: [feature/cp-next-01-c-agent-team-20261124]
 
@@ -34,6 +38,9 @@ jobs:
       NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -41,6 +48,7 @@ jobs:
         run: |
           node --test tests/c-course-content.test.mjs tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/pwa-controller-graph-compatibility.test.mjs
           node tests/shared-presentation-check.mjs
+          node tools/check-cpp-course-perf.mjs
       - name: Проверить результаты примеров, эталонов и диагностик в Clang C17
         run: node tests/c-course-native-compiler-check.mjs
       - name: Собрать публичный кандидат и подключить Chrome среды CI
@@ -59,9 +67,18 @@ jobs:
         env:
           NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-c-evidence/offline
         run: node tests/c-course-offline-browser-check.mjs
+      - name: Проверить примеры, эталоны и отказы в Clang/WASI в браузере
+        env:
+          NEXUS_PINNED_RUNTIME_DIR: ${{ runner.temp }}/nexus-c-runtime
+          NEXUS_GOLD_EVIDENCE: ${{ runner.temp }}/nexus-c-evidence/runtime-bytes
+          NEXUS_C_EVIDENCE_DIR: ${{ runner.temp }}/nexus-c-evidence/wasi
+        run: |
+          set -euo pipefail
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+          node tests/c-course-runtime-matrix-check.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cp-next-01-${{ github.sha }}
+          name: cp-next-01-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/nexus-c-evidence
           retention-days: 30

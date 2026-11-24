@@ -27,6 +27,15 @@ if(existsSync(candidateFile)){
   activePins.set(pin.path,pin);
  }
 }
+const m2File='docs/ru/03-content/cp-next-01/M2_PRESENTATION_BYTES.json';
+if(existsSync(m2File)){
+ for(const pin of JSON.parse(readFileSync(m2File)).files){
+  const previous=activePins.get(pin.path);
+  assert.ok(previous,'Existing R1 pin: '+pin.path);
+  assert.equal(pin.beforeSha256,previous.newSha256,'Previous R1 pin: '+pin.path);
+  activePins.set(pin.path,pin);
+ }
+}
 export const rolloutPins=[...activePins.values()];
 const digests=new Map(rolloutPins.map(p=>[p.path,p.newSha256]));
 export const rolloutDigest=(file,previous)=>digests.get(file)||previous;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {mkdir, readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -19,6 +20,10 @@ await mkdir(out, {recursive: true});
 const buildBytes = await readFile(path.join(process.env.NEXUS_FRONTEND_DIR, 'BUILD_MANIFEST.json'));
 const build = JSON.parse(buildBytes);
 const sourceDir = path.join(root, 'courses/c');
+const git = (...args) => execFileSync('git', ['-c','core.longpaths=true', ...args], {cwd:root, encoding:'utf8'}).trim();
+const sourceCommit = git('rev-parse', 'HEAD');
+const sourceTree = git('rev-parse', 'HEAD^{tree}');
+assert.equal(git('status', '--porcelain=v1'), '', 'The runtime matrix requires the exact committed source');
 const builtDir = path.join(process.env.NEXUS_FRONTEND_DIR, build.prefix, 'courses/c');
 const course = await readJSON(path.join(sourceDir, 'manifest.json'));
 const runtimeModule = '/' + build.prefix + 'sandbox/sandbox.js';
@@ -56,11 +61,11 @@ for (const id of course.availableTopicIds) {
     const worked = edition.sections.filter(section => section.code);
     assert.ok(worked.length > 0, `${id} ${locale} example missing`);
     for (const {id: sectionId, code} of worked) {
-      add(edition, 'example', sectionId, code, {stdin: code.stdin ?? '', stdout: code.output, exitCode: code.exitCode ?? 0});
+      add(edition, 'example', sectionId, code, {stdin: code.stdin ?? '', stdout: code.output, stderr: code.stderr, exitCode: code.exitCode ?? 0});
       for (const [index, vector] of (code.cases ?? []).entries()) {
         add(edition, 'example', `${sectionId}:${index + 1}`, code, {
           stdin: vector.input ?? vector.stdin ?? '', stdout: vector.output ?? vector.stdout,
-          exitCode: vector.exitCode ?? 0,
+          stderr: vector.stderr, exitCode: vector.exitCode ?? 0,
         });
       }
     }
@@ -68,7 +73,7 @@ for (const id of course.availableTopicIds) {
     assert.ok(cases.length > 0 && referenceSolution, `${id} ${locale} practice fixtures missing`);
     for (const [index, item] of cases.entries()) {
       add(edition, 'reference', `${index + 1}: ${item.label}`, referenceSolution, {
-        stdin: item.input ?? '', stdout: item.output, exitCode: item.exitCode ?? 0,
+        stdin: item.input ?? '', stdout: item.output, stderr: item.stderr, exitCode: item.exitCode ?? 0,
       });
     }
     for (const [index, item] of (edition.diagnosticExercises ?? []).entries()) {
@@ -79,7 +84,9 @@ for (const id of course.availableTopicIds) {
     }
   }
 }
-assert.equal(editions.length, 18);
+assert.equal(editions.length, 28);
+assert.equal(records.filter(record => record.kind === 'reference').length, 146);
+assert.equal(records.filter(record => record.kind === 'diagnostic').length, 22);
 assert.ok(records.some(record => record.kind === 'diagnostic'));
 
 const fixture = await onlineRuntimeFixture();
@@ -116,11 +123,12 @@ try {
 
 const evidence = records.map(record => {
   const actual = executed.get(record.digest);
-  const {stdout, exitCode, phase, stderrIncludes} = record.expected;
+  const {stdout, stderr, exitCode, phase, stderrIncludes} = record.expected;
   const pass = Boolean(actual) && stdout === actual.stdout &&
     (phase ? phase === actual.phase : actual.phase === 'run' && actual.languageId === 'c' &&
       actual.target === 'wasm32-wasip1' && actual.provider === 'wasm-cpp') &&
     (exitCode === undefined || exitCode === actual.exitCode) &&
+    (stderr === undefined || stderr === actual.stderr) &&
     (stderrIncludes ?? []).every(match => actual.stderr.includes(match)) &&
     (record.kind !== 'diagnostic' || phase === 'run' || /WASM_(COMPILE|LINK)_ERROR/.test(actual.code));
   return {...record, actual, pass};
@@ -129,7 +137,7 @@ const failed = evidence.filter(record => !record.pass);
 const totals = Object.fromEntries(['example', 'reference', 'diagnostic'].map(kind => [kind, records.filter(record => record.kind === kind).length]));
 const status = failed.length || infrastructureError || fixture.errors.length ? 'FAIL' : 'PASS';
 await writeFile(path.join(out, 'c17-runtime-matrix.json'), JSON.stringify({
-  status, generation:build.assetGeneration, version:build.version, buildManifestSha256:hash(buildBytes),
+  status, sourceCommit, sourceTree, generation:build.assetGeneration, version:build.version, buildManifestSha256:hash(buildBytes),
   editions, totals, uniqueRequests: requests.size, realRuns: executed.size, failedCases: failed.length,
   infrastructureError, browserErrors: fixture.errors, cases: evidence,
   transport: 'Chromium · exact local SHA-256-pinned Clang/WASI bytes · verified service worker · synthetic account',

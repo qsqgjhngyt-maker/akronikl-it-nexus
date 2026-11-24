@@ -18,7 +18,7 @@ const build = JSON.parse(buildBytes);
 const prefix = '/' + build.prefix;
 const json = async file => JSON.parse(await readFile(resolveFixtureFile(frontend, build.prefix + file)));
 const manifest = await json('courses/c/manifest.json');
-assert.equal(manifest.availableTopicIds.length, 9);
+assert.equal(manifest.availableTopicIds.length, 14);
 const lessons = {};
 for (const locale of ['ru', 'en']) {
   lessons[locale] = await Promise.all(manifest.availableTopicIds.map(id => json('courses/c/lessons/' + id + '.' + locale + '.json')));
@@ -153,7 +153,7 @@ async function openCourse(page, locale, width) {
   await page.goto(GATEWAY_ORIGIN + '/#view=academy');
   const card = page.locator('a[data-academy-course="c"]');
   await card.waitFor();
-  assert.match(await card.innerText(), /Первый модуль|First module/);
+  assert.match(await card.innerText(), /Модули 1–2|Modules 1–2/);
   assert.equal(requests.filter(request => request.width === width).length, 0, 'Academy should not preload C modules or lessons');
   await card.click();
   await course(page).getByRole('heading', { level:1, name:manifest.title.ru }).waitFor();
@@ -177,7 +177,7 @@ async function rejectWrites(page, keyPart) {
   }, keyPart);
 }
 
-async function checkDraft(page, first, next, words) {
+async function checkDraft(page, first, next, words, {studied = 0, complete = true} = {}) {
   const editor = course(page).locator('#editor');
   const stdin = course(page).locator('[data-c-stdin]');
   const source = '#include <stdio.h>\nint main(void) { puts("UX_SYNTHETIC"); }\n';
@@ -198,7 +198,7 @@ async function checkDraft(page, first, next, words) {
   assert.equal(new URL(page.url()).hash, originalHash);
   assert.equal(await editor.inputValue(), changed);
   assert.equal(await stdin.inputValue(), input);
-  await screenshot(page, 'desktop-save-failure');
+  await screenshot(page, 'desktop-save-failure-' + first.id);
   await page.evaluate(() => window.restoreSyntheticWrite());
   await bottom(page, words[5] + next.title + ' →').click();
   await lessonReady(page, next, words[0]);
@@ -211,7 +211,7 @@ async function checkDraft(page, first, next, words) {
   assert.equal(await editor.inputValue(), changed);
   assert.equal(await stdin.inputValue(), input);
   await selectCourseLocale(page, 'ru');
-  await lessonReady(page, lessons.ru[0], stageText.ru[2]);
+  await lessonReady(page, lessons.ru.find(lesson => lesson.id === first.id), stageText.ru[2]);
   assert.equal(await editor.inputValue(), changed);
   await selectCourseLocale(page, 'en');
   await lessonReady(page, first, words[2]);
@@ -219,12 +219,15 @@ async function checkDraft(page, first, next, words) {
   assert.equal(await stdin.inputValue(), input);
   await course(page).locator('.c-lesson-header .back-link').click();
   await course(page).getByRole('heading', { level:1, name:manifest.title[first.locale] }).waitFor();
-  assert.match(await course(page).locator('header.c-panel').innerText(), /Изучено 0 \/ 9|Studied 0 \/ 9/);
+  assert.match(await course(page).locator('header.c-panel').innerText(), new RegExp('Studied ' + studied + ' / 14'));
   await course(page).getByRole('link', { name:words[10] + first.title, exact:true }).click();
   await lessonReady(page, first, words[2]);
   assert.equal(await editor.inputValue(), changed);
-  await course(page).getByRole('button', { name:words[9], exact:true }).click();
-  assert.equal(await course(page).locator('[data-c-complete]').getAttribute('aria-pressed'), 'true');
+  assert.equal(await course(page).locator('[data-c-complete]').getAttribute('aria-pressed'), 'false');
+  if (complete) {
+    await course(page).getByRole('button', { name:words[9], exact:true }).click();
+    assert.equal(await course(page).locator('[data-c-complete]').getAttribute('aria-pressed'), 'true');
+  }
 }
 
 async function checkSelfcheckWriteFailure(page, first, words) {
@@ -315,14 +318,23 @@ try {
           await lessonReady(page, lessons.en[0], words[2]);
           await checkDraft(page, lessons.en[0], lessons.en[1], words);
           await checkSelfcheckWriteFailure(page, lessons.en[0], words);
+          for (const id of ['c.m1-project', 'c.read-input']) {
+            const index = lessons.en.findIndex(lesson => lesson.id === id);
+            await course(page).locator('.c-lesson-header .back-link').click();
+            await course(page).locator('.c-outline').getByRole('link', {name:lessons.en[index].title, exact:true}).click();
+            await lessonReady(page, lessons.en[index], words[0]);
+            await course(page).locator('.c-stages').getByRole('link', {name:words[2], exact:true}).click();
+            await lessonReady(page, lessons.en[index], words[2]);
+            await checkDraft(page, lessons.en[index], lessons.en[index + 1], words, {studied:1, complete:false});
+          }
         }
         assert.ok(!requests.some(request => request.pathname.startsWith('/api/') && request.method !== 'GET'),
           'C practice and progress must cause no API mutation');
         const observed = [...new Set(requests.filter(request => request.pathname.startsWith(prefix)).map(request => request.pathname.slice(prefix.length)))];
         const lessonFiles = observed.filter(file => file.startsWith('courses/c/lessons/'));
-        assert.equal(lessonFiles.filter(file => file.endsWith('.' + locale + '.json')).length, 9);
-        assert.equal(lessonFiles.length, width === 1366 && locale === 'en' ? 10 : 9);
-        const result = { width, locale, lessons:9, stageViews:27, durationMs:Math.round(performance.now() - started), status:'PASS' };
+        assert.equal(lessonFiles.filter(file => file.endsWith('.' + locale + '.json')).length, 14);
+        assert.equal(lessonFiles.length, width === 1366 && locale === 'en' ? 17 : 14);
+        const result = { width, locale, lessons:14, stageViews:42, durationMs:Math.round(performance.now() - started), status:'PASS' };
         results.push(result);
         console.log(JSON.stringify(result));
       } finally {

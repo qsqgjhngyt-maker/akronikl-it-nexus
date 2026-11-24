@@ -76,7 +76,7 @@ function overview({data, locale, t, resume, progress}) {
         escape(t('В плане', 'Planned')) + '</summary>' + goals + '<ol>' + links + '</ol></details>';
   }).join('');
   return '<a class="back-link" href="#view=academy">← ' + escape(t('Академия', 'Academy')) + '</a>' +
-    '<header class="c-panel"><p>C17 · ' + escape(t('Первый модуль', 'First module')) + '</p><h1>' +
+    '<header class="c-panel"><p>C17 · ' + escape(t('Модули ', 'Modules ') + manifest.availableModuleIds.length + ' / ' + curriculum.moduleCount) + '</p><h1>' +
     escape(localized(manifest.title, locale)) + '</h1><p>' + escape(localized(manifest.description, locale)) +
     '</p><p>' + escape(t('Изучено ', 'Studied ') + progress.size + ' / ' + topics.length) + '</p>' +
     button(routeLink(locale, start?.id, last ? resume.stage : undefined),
@@ -183,7 +183,7 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
     : stage === 'selfcheck'
       ? button(routeLink(locale, lesson.id, 'practice'), t('Перейти к практике →', 'Go to practice →'), true)
       : next ? button(routeLink(locale, next.id), nextLabel, true)
-        : '<p>' + t('Это последний урок первого модуля.', 'This is the last lesson in the first module.') + '</p>' +
+        : '<p>' + t('Вы дошли до конца доступных уроков курса C17.', 'You have reached the end of the available C17 lessons.') + '</p>' +
           button(routeLink(locale), t('Вернуться к программе →', 'Back to the course outline →'), true);
   const terms = '<details class="c-panel c-glossary"><summary>' + t('Справка по теме', 'Lesson reference') + '</summary><dl>' +
     lesson.terms.map(term => '<dt>' + escape(term.term ?? term.title) + '</dt><dd>' + escape(term.definition) + '</dd>').join('') +

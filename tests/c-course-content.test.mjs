@@ -8,19 +8,19 @@ const curriculum = read('courses/c/curriculum.json');
 const locales = ['ru', 'en'];
 const text = value => typeof value === 'string' && value.trim().length > 0;
 
-test('Первый модуль C доступен, остальные помечены как запланированные', () => {
+test('Два модуля C доступны, остальные помечены как запланированные', () => {
   assert.equal(manifest.id, 'c');
   assert.equal(manifest.languageId, 'c');
   assert.equal(manifest.standard, 'C17');
   assert.deepEqual(manifest.availableLocales, locales);
-  assert.deepEqual(manifest.availableModuleIds, ['c.m1']);
+  assert.deepEqual(manifest.availableModuleIds, ['c.m1', 'c.m2']);
   const modules = curriculum.modules;
   assert.ok(modules.length > 1);
   assert.equal(new Set(modules.map(module => module.id)).size, modules.length);
   const topics = modules.flatMap(module => module.topics);
   assert.equal(new Set(topics.map(topic => topic.id)).size, topics.length);
   for (const module of modules) {
-    assert.equal(module.status, module.id === 'c.m1' ? 'implemented' : 'planned');
+    assert.equal(module.status, manifest.availableModuleIds.includes(module.id) ? 'implemented' : 'planned');
     for (const topic of module.topics) {
       assert.equal(topic.status, module.status);
       for (const locale of locales) assert.ok(text(topic.title[locale]), topic.id);
@@ -32,13 +32,18 @@ test('Первый модуль C доступен, остальные поме�
       assert.ok(text(module.completion[locale]), module.id);
     }
   }
-  assert.equal(manifest.availableTopicIds.length, 9);
+  assert.equal(manifest.availableTopicIds.length, 14);
+  assert.equal(curriculum.availableModuleCount, 2);
+  assert.equal(curriculum.availableTopicCount, 14);
+  assert.deepEqual(manifest.availableTopicIds.slice(9), [
+    'c.read-input', 'c.conditions', 'c.counted-loops', 'c.sentinel-loops', 'c.guard-boundaries',
+  ]);
   assert.deepEqual(topics.filter(topic => topic.status === 'implemented').map(topic => topic.id), manifest.availableTopicIds);
   const filenames = manifest.availableTopicIds.flatMap(id => locales.map(locale => id + '.' + locale + '.json'));
   assert.deepEqual(readdirSync(new URL('../courses/c/lessons/', import.meta.url)).sort(), filenames.sort());
 });
 
-test('Академия и Code Hub открывают тот же первый модуль C', () => {
+test('Академия и Code Hub открывают тот же курс C', () => {
   const catalog = read('courses/catalog.json');
   const hub = read('courses/programming/languages.json');
   assert.equal(catalog.count, catalog.courses.length);
@@ -55,7 +60,7 @@ function executable(lesson) {
     examples: lesson.sections.flatMap(section => section.code ? [section.code] : []),
     files: lesson.practice.files,
     input: lesson.practice.stdin,
-    cases: lesson.practice.cases.map(({input, output}) => ({input, output})),
+    cases: lesson.practice.cases.map(({input, output, stderr, exitCode}) => ({input, output, stderr, exitCode})),
     solution: lesson.practice.referenceSolution,
     diagnostics: lesson.diagnosticExercises ?? [],
   };
@@ -67,9 +72,10 @@ for (const id of manifest.availableTopicIds) {
     for (const [index, lesson] of editions.entries()) {
       assert.equal(lesson.id, id);
       assert.equal(lesson.courseId, 'c');
-      assert.equal(lesson.moduleId, 'c.m1');
+      const module = curriculum.modules.find(module => module.topics.some(topic => topic.id === id));
+      assert.equal(lesson.moduleId, module.id);
       assert.equal(lesson.locale, locales[index]);
-      assert.equal(lesson.title, curriculum.modules[0].topics.find(topic => topic.id === id).title[lesson.locale]);
+      assert.equal(lesson.title, module.topics.find(topic => topic.id === id).title[lesson.locale]);
       assert.ok(text(lesson.goal));
       assert.ok(lesson.terms.length >= 2);
       assert.ok(lesson.reading.length > 0);

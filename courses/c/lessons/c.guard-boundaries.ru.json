@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "c-m2-draft-v1",
+  "id": "c.guard-boundaries",
+  "courseId": "c",
+  "moduleId": "c.m2",
+  "course": "Программирование на C",
+  "module": "Ввод, условия и циклы",
+  "locale": "ru",
+  "title": "Границы, пропуски и выход из цикла",
+  "goal": "Объяснить разные пути остановки и пропуска и подтвердить их отдельными граничными тестами.",
+  "prerequisites": [
+    {
+      "text": "Различать известное число повторов, маркер и EOF."
+    },
+    {
+      "text": "Понимать приоритет проверок и независимость счётчиков."
+    }
+  ],
+  "terms": [
+    {
+      "id": "skip",
+      "term": "continue",
+      "title": "continue",
+      "definition": "Заканчивает текущую итерацию. В for после этого выполняется шаг цикла, затем проверяется условие."
+    },
+    {
+      "id": "limit",
+      "term": "Лимит обработанных записей",
+      "title": "Лимит обработанных записей",
+      "definition": "Максимум строк, которые программа рассматривает, включая пропуски."
+    },
+    {
+      "id": "boundary",
+      "term": "Граница",
+      "title": "Граница",
+      "definition": "Значение, при котором поведение меняется. Проверяйте точку смены и её соседей."
+    }
+  ],
+  "sections": [
+    {
+      "id": "idea",
+      "title": "Практический смысл",
+      "paragraphs": [
+        "При чтении очереди некоторые записи нужно пропустить, а по специальной команде завершить всё чтение. При пропуске заявка уже прочитана. Поэтому число просмотренных строк и число принятых элементов — разные счётчики.",
+        "В for с ++seen инструкция continue пропускает остаток тела и доходит до ++seen. Инструкция break пропускает и шаг: управление переходит за цикл. return завершает функцию с ошибкой или готовым результатом.",
+        "Чтобы условия были понятны, сначала разделите конец потока и ошибку чтения, затем команды, диапазоны и обычные вычисления."
+      ]
+    },
+    {
+      "id": "example",
+      "title": "Разметка короткой очереди",
+      "paragraphs": [
+        "Договор примера: за один запуск просматриваем не более пяти строк. 0 означает пустой талон, −1 завершает чтение, номера от 1 до 20 накапливаются.",
+        "На строках 0, 0, 3 и −1 предскажите, сколько итераций пропускает вычисления и когда выполняется ++seen."
+      ],
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int accepted = 0;\n    int sum = 0;\n\n    for (int seen = 0; seen < 5; ++seen) {\n        int ticket;\n        int state = read_integer(-1, 20, &ticket);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (ticket == -1) {\n            break;\n        }\n        if (ticket == 0) {\n            continue;\n        }\n        ++accepted;\n        sum += ticket;\n    }\n    printf(\"%d %d\\n\", accepted, sum);\n    return 0;\n}\n",
+        "stdin": "0\n0\n3\n-1\n",
+        "output": "1 3\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      "steps": [
+        "Установите предел в заголовке for.",
+        "Проверьте статус чтения до использования ticket.",
+        "Команда −1 прекращает обход. При 0 выполняется continue.",
+        "В сумме и accepted меняются только допустимые талоны."
+      ],
+      "trace": [
+        [
+          "Строка 1: 0",
+          "seen 0, accepted 0",
+          "seen 1, accepted 0",
+          "continue"
+        ],
+        [
+          "Строка 2: 0",
+          "seen 1, accepted 0",
+          "seen 2, accepted 0",
+          "continue"
+        ],
+        [
+          "Строка 3: 3",
+          "seen 2, accepted 0",
+          "seen 3, accepted 1",
+          "Сумма 3"
+        ],
+        [
+          "Строка 4: −1",
+          "seen 3, accepted 1",
+          "выход",
+          "break до ++seen"
+        ]
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Не смешивайте границы и смысл счётчика",
+      "paragraphs": [
+        "Лимит по accepted позволил бы читать сколько угодно пустых талонов. Лимит по seen считают в заголовке for, поэтому пропуски не обходят его.",
+        "Нагрев начинается с 30 включительно. Сравнение > 30 отличалось бы уже на одном значении 30, поэтому выпишите граничные тесты 29 и 30 до отладки.",
+        "continue допустим внутри цикла. Компилятор отклоняет его в одиночном теле main."
+      ]
+    },
+    {
+      "id": "transfer",
+      "title": "Какие проверки доказывают разные свойства",
+      "paragraphs": [
+        "Проверка из шести пропусков и седьмой допустимой строки показывает, что лимит относится к просмотру. Сводка одного значения 30 показывает, что порог включается.",
+        "Случай ошибки после допустимого числа важен отдельно. По договору выводится только invalid, а не частичная сводка."
+      ]
+    }
+  ],
+  "reading": [
+    {
+      "id": "c17",
+      "author": "ISO/IEC JTC1/SC22/WG14",
+      "title": "ISO/IEC 9899:2018 — Programming languages — C",
+      "edition": "2018 (C17)",
+      "section": "6.8.5.3, 6.8.6.2, 6.8.6.3",
+      "language": "English",
+      "purpose": "Сопоставить шаг for с continue и выходом break."
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "После двух строк 0 и до строки 3 какие значения у счётчиков seen и accepted?",
+      "options": [
+        "2 и 0",
+        "0 и 0",
+        "2 и 2"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Шаг for выполнен дважды, принятого талона ещё нет.",
+        "continue не пропускает шаг for.",
+        "Пустой талон не принимается."
+      ],
+      "recall": "example",
+      "code": {
+        "language": "c",
+        "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int accepted = 0;\n    int sum = 0;\n\n    for (int seen = 0; seen < 5; ++seen) {\n        int ticket;\n        int state = read_integer(-1, 20, &ticket);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (ticket == -1) {\n            break;\n        }\n        if (ticket == 0) {\n            continue;\n        }\n        ++accepted;\n        sum += ticket;\n    }\n    printf(\"%d %d\\n\", accepted, sum);\n    return 0;\n}\n",
+        "stdin": "0\n0\n3\n-1\n",
+        "output": ""
+      }
+    },
+    {
+      "id": "reason",
+      "kind": "choice",
+      "prompt": "Как различить ошибку порога > 30 и правильное >= 30 одним входом?",
+      "options": [
+        "Ввести 29",
+        "Ввести 30",
+        "Ввести 60"
+      ],
+      "correct": 1,
+      "feedback": [
+        "29 исключается в обоих вариантах.",
+        "Только >= 30 включает границу.",
+        "60 включается в обоих вариантах."
+      ],
+      "recall": "diagnostics"
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Что должно произойти при шести строках −99 и седьмой строке 32? Почему?",
+      "feedback": "Шесть пропусков расходуют шесть шагов, count остаётся нулём. Седьмая строка не читается. Результат empty.",
+      "recall": "transfer"
+    }
+  ],
+  "diagnosticExercises": [
+    {
+      "phase": "compile",
+      "source": "int main(void)\n{\n    continue;\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "",
+      "stderrIncludes": [
+        "'continue' statement not in loop statement"
+      ]
+    }
+  ],
+  "practice": {
+    "title": "Температуры с пропусками и лимитом",
+    "task": "Прочитайте не более шести записей, по одной на строку. Пропустите −99. Остановитесь на 999 или EOF. Обычные значения от −40 до 60 включительно. При ошибке выведите invalid без частичной сводки. Если допустимых измерений нет, выведите empty. Иначе выведите три целых через пробел: число допустимых измерений, их сумму и число значений от 30 включительно. После завершения остальной ввод игнорируется.",
+    "hint": "Расположите continue для −99 до проверки диапазона. Используйте >= 30 и проверьте, что ++seen относится к заголовку for.",
+    "criteria": [
+      "Пропуск расходует строку, но не попадает в итог.",
+      "30 входит в счёт нагрева. 29 не входит.",
+      "Ввод седьмой строки игнорируется, 999 завершает раньше."
+    ],
+    "steps": [
+      {
+        "where": "Code Studio",
+        "action": "Отметьте для каждой записи действие.",
+        "why": "У сигнала остановки, пропуска и показания разные пути.",
+        "expected": "В трассе виден seen отдельно от count."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Исправьте обработку −99 и порог 30.",
+        "why": "Это две независимые причины расхождения.",
+        "expected": "Образец даёт 4 79 2."
+      },
+      {
+        "where": "Code Studio",
+        "action": "Проверьте шесть пропусков и седьмую строку.",
+        "why": "Проверяется лимит именно чтений.",
+        "expected": "Вывод empty, седьмая строка игнорируется."
+      }
+    ],
+    "exercises": [
+      {
+        "title": "Проектная проверка модуля",
+        "task": "Подберите свой набор с командой остановки, пропуском, температурой 29 и температурой 30. Запишите трассу seen, count, sum и hot перед каждым шагом и сверку с наблюдаемым выводом.",
+        "criteria": [
+          "Трасса обосновывает stop, skip и границу.",
+          "Сумма и число горячих значений подтверждены ручным расчётом.",
+          "Отдельный запуск с ошибкой проверяет отсутствие частичной сводки."
+        ]
+      }
+    ],
+    "kind": "c-console",
+    "environment": "Clang / WASI · C17",
+    "files": [
+      {
+        "path": "main.c",
+        "content": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    int sum = 0;\n    int hot = 0;\n\n    for (int seen = 0; seen < 6; ++seen) {\n        int temperature;\n        int state = read_integer(-99, 999, &temperature);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (temperature == 999) {\n            break;\n        }\n        /* TODO: skip the sensor fault code. */\n        if (temperature < -40 || temperature > 60) {\n            puts(\"invalid\");\n            return 0;\n        }\n        ++count;\n        sum += temperature;\n        if (temperature > 30) {\n            ++hot;\n        }\n    }\n\n    if (count == 0) {\n        puts(\"empty\");\n    } else {\n        printf(\"%d %d %d\\n\", count, sum, hot);\n    }\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {
+      "entryFile": "main.c",
+      "languageId": "c",
+      "standard": "C17"
+    },
+    "stdin": "-99\n29\n30\n-40\n60\n999\n",
+    "returnAnchor": "example",
+    "cases": [
+      {
+        "label": "Пропуск, порог и оба предела",
+        "input": "-99\n29\n30\n-40\n60\n999\n",
+        "output": "4 79 2\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Порог включён",
+        "input": "30\n",
+        "output": "1 30 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Все строки пропущены и лимит исчерпан",
+        "input": "-99\n-99\n-99\n-99\n-99\n-99\n32\n",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Маркер раньше лимита",
+        "input": "30\n999\n61\n",
+        "output": "1 30 1\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Пустой поток",
+        "input": "",
+        "output": "empty\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Показание ниже диапазона",
+        "input": "-41\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Показание выше диапазона после допустимого",
+        "input": "30\n61\n",
+        "output": "invalid\n",
+        "stderr": "",
+        "exitCode": 0
+      },
+      {
+        "label": "Шесть измерений и лишняя строка",
+        "input": "30\n30\n30\n30\n30\n30\n61\n",
+        "output": "6 180 6\n",
+        "stderr": "",
+        "exitCode": 0
+      }
+    ],
+    "referenceSolution": {
+      "language": "c",
+      "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nenum { READ_BAD = -1, READ_END = 0, READ_OK = 1 };\n\n/* Read one complete line. Drain an invalid line to its newline or EOF. */\nstatic int read_line(char line[], size_t cap)\n{\n    size_t used = 0;\n    int ch;\n    int rejected = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == '\\0' || ch > CHAR_MAX || used == cap - 1) {\n            rejected = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n\n    if (ferror(stdin) || rejected) {\n        return READ_BAD;\n    }\n    if (ch == EOF && used == 0) {\n        return READ_END;\n    }\n    line[used] = '\\0';\n    return READ_OK;\n}\n\nstatic int read_integer(int low, int high, int *out)\n{\n    char line[64];\n    int state = read_line(line, sizeof line);\n    if (state != READ_OK) {\n        return state;\n    }\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;\n}\n\nint main(void)\n{\n    int count = 0;\n    int sum = 0;\n    int hot = 0;\n\n    for (int seen = 0; seen < 6; ++seen) {\n        int temperature;\n        int state = read_integer(-99, 999, &temperature);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (temperature == 999) {\n            break;\n        }\n        if (temperature == -99) {\n            continue;\n        }\n        if (temperature < -40 || temperature > 60) {\n            puts(\"invalid\");\n            return 0;\n        }\n        ++count;\n        sum += temperature;\n        if (temperature >= 30) {\n            ++hot;\n        }\n    }\n\n    if (count == 0) {\n        puts(\"empty\");\n    } else {\n        printf(\"%d %d %d\\n\", count, sum, hot);\n    }\n    return 0;\n}\n",
+      "files": {},
+      "metadata": {
+        "entryFile": "main.c",
+        "languageId": "c",
+        "standard": "C17"
+      }
+    }
+  },
+  "skill": {
+    "id": "c.guard-control-flow",
+    "prerequisites": [
+      "c.sentinel-termination"
+    ]
+  }
+}
