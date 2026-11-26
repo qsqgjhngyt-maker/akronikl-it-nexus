@@ -39,41 +39,4 @@ export function bindNexusStudioUi(locale='ru'){
     observer.observe(studio.querySelector('#codeFileTabs'),{childList:true,subtree:true});
     observers.push(observer);
   }
-  const library=document.querySelector('[data-studio-library]');
-  if(library){
-    const input=library.querySelector('input'),clear=library.querySelector('[data-studio-search-clear]');
-    const filters=[...library.querySelectorAll('[data-studio-course-filter]')];
-    const normalize=value=>String(value).normalize('NFKC').toLocaleLowerCase(locale).trim();
-    const groups=[...library.querySelectorAll('[data-studio-project-group]')].map(group=>{
-      const title=group.querySelector('h3').textContent;
-      const cards=[...group.querySelectorAll('[data-studio-project]')].map(card=>({card,text:normalize(
-        [card.querySelector('h4').textContent,card.querySelector('p').textContent,card.querySelector('.ps-language').textContent,title].join(' '))}));
-      return {group,cards};
-    });
-    const total=groups.reduce((count,{cards})=>count+cards.length,0);
-    input.disabled=total===0;
-    let selected='all';
-    const apply=()=>{
-      const query=normalize(input.value);
-      let count=0;
-      for(const {group,cards} of groups){
-        const matchesCourse=selected==='all'||selected===group.dataset.studioProjectGroup;
-        let visible=0;
-        for(const {card,text} of cards){
-          card.hidden=!matchesCourse||!text.includes(query);
-          if(!card.hidden)visible++;
-        }
-        group.hidden=visible===0;
-        count+=visible;
-      }
-      library.querySelector('[data-studio-search-count]').textContent=en?`Showing ${count} of ${total}`:`Показано ${count} из ${total}`;
-      library.querySelector('[data-studio-search-empty]').hidden=!query||count!==0;clear.hidden=!input.value;
-    };
-    for(const filter of filters)filter.addEventListener('click',()=>{
-      selected=filter.dataset.studioCourseFilter;
-      for(const button of filters)button.setAttribute('aria-pressed',String(button===filter));
-      apply();
-    },options);
-    input.addEventListener('input',apply,options);clear.addEventListener('click',()=>{input.value='';apply();input.focus()},options);apply();
-  }
 }

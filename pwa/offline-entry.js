@@ -27,6 +27,7 @@ import {bindNexusShell} from '../core/nexus-shell.js';
 import {configureNexusAppearance,bindNexusAppearance} from '../effects/nexus-appearance.js';
 import {startParticleField,updateParticleQuality} from '../effects/particles.js';
 import {bindNexusStudioUi} from '../core/nexus-studio-ui.js';
+import {projectCourseGroups,bindStudioProjectLibrary} from '../core/studio-project-library.mjs';
 import {getCppCourse,getCatalog,getProgrammingLanguages,prepareCppGoldLesson} from '../core/course-registry.js';
 import {codeStudioMarkup,bindCodeStudio} from '../sandbox/code-studio.js';
 import {wasmRuntimeProvider} from '../sandbox/providers/wasm-runtime.js';
@@ -186,8 +187,10 @@ function standaloneStudio(){
 
 function projectList(){
  if(!needLocal())return;
- root.innerHTML='<div class="nexus-project-studio" data-nexus-project-studio>'+projectStudioDashboardMarkup({projects:Object.values(data.projects),courseProjects:course.projectsRu.projects,locale:prefs.uiLocale,localMode:true})+'</div>';
+ const projects=Object.values(data.projects),courseProjects=course.projectsRu.projects;
+ root.innerHTML='<div class="nexus-project-studio" data-nexus-project-studio data-studio-project-courses="'+projectCourseGroups(projects,courseProjects)+'">'+projectStudioDashboardMarkup({projects,courseProjects,locale:prefs.uiLocale,localMode:true})+'</div>';
  root.querySelector('#psNewProject').onclick=async()=>{const title=prompt('Название проекта','Мой C++ проект');if(!title?.trim())return;const p=projectTemplate(title.trim());data.projects[p.id]=p;await save();location.hash='#view=project-studio&project='+encodeURIComponent(p.id)};
+ bindStudioProjectLibrary(root.querySelector('[data-studio-library]'),prefs.uiLocale);
  bindNexusStudioUi(prefs.uiLocale);
 }
 async function editor(p){

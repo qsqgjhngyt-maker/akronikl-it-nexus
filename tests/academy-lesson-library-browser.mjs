@@ -7,6 +7,7 @@ import {staticMime} from '../pwa/static-mime.js';
 import {decodeFixturePathname, resolveFixtureFile} from './helpers/public-fixture-path.mjs';
 
 const frontend = path.resolve(process.env.NEXUS_FRONTEND_DIR);
+const prefix = '/' + JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'),'utf8')).prefix;
 const out = path.resolve(process.env.NEXUS_ACADEMY_LIBRARY_EVIDENCE);
 const {chromium} = await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const account = {accountId:'synthetic-academy-library', displayName:'Учебная проверка', status:'active'};
@@ -197,6 +198,24 @@ try {
       }
       await page.locator('[data-academy-back="academy"]').click();
       await page.waitForURL(url=>new URLSearchParams(url.hash.slice(1)).get('view')==='academy');
+      if (course==='cpp'&&locale==='ru'&&width===1440) {
+        await page.evaluate(async release=>{
+          const {createProject}=await import(release+'project-studio/project-store.js');
+          for(const id of ['onec','1c-enterprise'])createProject({
+            id:'synthetic-'+id,title:'Учебная служба',languageId:'onec',
+            entryFile:'module.bsl',files:[{path:'module.bsl',content:'// Synthetic source',languageId:'onec'}],
+            origin:{kind:'lesson-work',courseId:id},
+          });
+        },prefix);
+        await page.locator('a[href="#view=project-studio"]').first().click();
+        const library=page.locator('[data-studio-library]');
+        const courseFilter=library.locator('[data-studio-course-filter="1c-enterprise"]');
+        await courseFilter.click();
+        assert.equal(await library.locator('[data-studio-project]:visible').count(),1);
+        const project=library.locator('[data-studio-project]:visible a');
+        assert.match(await project.getAttribute('href'),/project=synthetic-1c-enterprise$/);
+        await page.screenshot({path:path.join(out,'my-projects-online.png')});
+      }
       assert.deepEqual(errors,[]);
       checks.push({course,lesson,locale,width,catalogRequests:catalogRequests.length,externalRequests,noEmbed:true,programmeTiles:true,backRoutes:true,sharedHelp:true});
     } catch (error) {
