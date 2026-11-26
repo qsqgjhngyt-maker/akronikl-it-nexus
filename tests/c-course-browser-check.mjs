@@ -165,7 +165,7 @@ async function openModuleFor(page, topicId) {
 
 async function openTopicFromOutline(page, topicId) {
   await openModuleFor(page, topicId);
-  await course(page).locator('[data-academy-topic="' + topicId + '"] [data-academy-open-module]').click();
+  await course(page).locator('[data-academy-topic="' + topicId + '"] a').click();
 }
 
 async function returnToOutline(page) {

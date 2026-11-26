@@ -71,7 +71,15 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
  }
  root.addEventListener('click',async event=>{
   const b=event.target.closest('button[data-open-terms],button[data-term]');if(!b||!active())return;
-  if(!drawer){event.preventDefault();event.stopImmediatePropagation();try{await ensureDrawer();if(active()&&b.isConnected)b.click()}catch{if(active())toolbar.insertAdjacentHTML('beforeend','<span role="status">'+say('Справочник недоступен. Повторите открытие.','Reference unavailable. Try opening it again.')+'</span>')}return;}
+  if(!drawer){
+   event.preventDefault();event.stopImmediatePropagation();
+   try{
+    await ensureDrawer();
+    // Let the native keyboard activation finish before replaying its click.
+    setTimeout(()=>{if(active()&&b.isConnected)b.click()},0);
+   }catch{if(active())toolbar.insertAdjacentHTML('beforeend','<span role="status">'+say('Справочник недоступен. Повторите открытие.','Reference unavailable. Try opening it again.')+'</span>')}
+   return;
+  }
   if(dialog&&dialog!==drawer)close();dialog=drawer;returnFocus=b;
   const ed=root.querySelector('#editor');editorSelection=ed?{start:ed.selectionStart,end:ed.selectionEnd,direction:ed.selectionDirection,top:ed.scrollTop,left:ed.scrollLeft}:null;
   if(b.hasAttribute('data-reference-editor-help')){const selected=ed?.value.slice(ed.selectionStart,ed.selectionEnd).trim(),word=ed?.value.slice(0,ed.selectionStart).match(/[\p{L}\p{N}_:#<>]+$/u)?.[0];

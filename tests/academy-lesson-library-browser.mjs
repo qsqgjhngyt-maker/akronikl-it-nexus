@@ -81,6 +81,10 @@ try {
         await dialog.locator('[data-library-results]:not([aria-busy])').waitFor();
         const links = dialog.locator('.academy-library-source a');
         assert.ok(await links.count(),course+' '+kind+' requires verified resources');
+        if (kind==='reading') {
+          const access = await dialog.locator('.academy-library-source .academy-library-meta').first().innerText();
+          assert.ok(access.endsWith(locale==='en'?' · Free':' · Бесплатно'),course+' should offer free reading first');
+        }
         assert.ok((await links.evaluateAll(nodes => nodes.every(node => node.protocol==='https:' && node.target==='_blank'))));
         assert.equal(await dialog.locator('iframe,video,audio').count(),0);
         assert.equal(await dialog.evaluate(node => node.getBoundingClientRect().right <= innerWidth + 1),true);
@@ -98,7 +102,7 @@ try {
       await back.waitFor();
       for (const tool of ['data-reference-open','data-reference-editor-help']) {
         const trigger = references.locator('['+tool+']');
-        await trigger.click();
+        await trigger.press(tool==='data-reference-open'?'Enter':'Space');
         const drawer = root.locator('.reference-dialog[open]');
         await drawer.locator('[data-reference-card]').first().waitFor();
         if (tool==='data-reference-editor-help') {
