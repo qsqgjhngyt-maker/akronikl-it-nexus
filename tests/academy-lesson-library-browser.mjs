@@ -29,7 +29,6 @@ const cases = [
   [1440,390,320].map(width => [course,lesson,locale,width])));
 await mkdir(out,{recursive:true});
 const checks = [];
-const helpSizes = new Map();
 const browser = await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true});
 try {
   for (const [course,lesson,locale,width] of cases) {
@@ -80,23 +79,17 @@ try {
       const glossary = root.locator('.academy-reference-actions [data-reference-open]');
       const syntax = root.locator('.academy-reference-actions [data-reference-editor-help]');
       await glossary.waitFor();
-      const sizes = [];
-      for (const [action,minimum] of [[glossary,184],[syntax,116]]) {
+      for (const [action,desktopWidth] of [[glossary,208],[syntax,132]]) {
         const [w,h] = await action.evaluate(node=>[node.offsetWidth,node.offsetHeight]);
         assert.equal(h,44);
-        if(width<=760)assert.equal(w,44);
-        else assert.ok(w>=minimum);
-        sizes.push([w,h]);
+        assert.equal(w,width<=760?44:desktopWidth);
       }
-      const layoutKey = locale + '/' + width;
-      if(helpSizes.has(layoutKey))assert.deepEqual(sizes,helpSizes.get(layoutKey),'Help controls are the same size in all courses');
-      else helpSizes.set(layoutKey,sizes);
       const toolbar = root.locator('.academy-reference-actions');
       const bottom = await toolbar.evaluate(node=>Math.round(innerHeight-node.getBoundingClientRect().bottom));
       assert.equal(bottom,width<=760?16:24);
       if(width>760)for(const action of [glossary,syntax]){
         assert.ok(await action.evaluate(node=>{
-          const label=node.querySelector('span'),range=document.createRange();
+          const label=node.querySelector('.academy-reference-label'),range=document.createRange();
           range.selectNodeContents(label);
           const box=node.getBoundingClientRect(),text=range.getBoundingClientRect(),lines=[...range.getClientRects()];
           const sameLine=lines.length>0&&Math.max(...lines.map(part=>part.top))<Math.min(...lines.map(part=>part.bottom));

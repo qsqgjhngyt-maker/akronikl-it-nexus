@@ -43,7 +43,11 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
  for(const panel of scope.querySelectorAll(c17?'.c-main':'[data-r3-panel]'))annotateReferenceTerms(panel,entries);
  const toolbar=scope.querySelector('[data-reference-help]');
  const floating=document.createElement('div');floating.className='lesson-floating academy-reference-actions';
- floating.innerHTML='<button type="button" class="quick-action" data-reference-open data-open-terms aria-label="'+say('Справочник терминов','Terminology reference')+'">⌕ <span>'+say('Справочник терминов','Terminology reference')+'</span></button><button type="button" class="quick-action" data-reference-editor-help data-open-terms aria-label="'+say('Синтаксис','Syntax')+'">{ } <span>'+say('Синтаксис','Syntax')+'</span></button>';
+ floating.innerHTML=[
+  ['data-reference-open','⌕',say('Справочник терминов','Terminology reference')],
+  ['data-reference-editor-help','{ }',say('Синтаксис','Syntax')],
+ ].map(([action,icon,label])=>'<button type="button" class="quick-action" '+action+' data-open-terms aria-label="'+label+
+  '"><span class="academy-reference-icon" aria-hidden="true">'+icon+'</span><span class="academy-reference-label">'+label+'</span></button>').join('');
  scope.append(floating);
  toolbar.innerHTML='<button type="button" class="btn" data-learning-tour>'+say('Как учиться здесь','How to learn here')+'</button>';
  for(const button of scope.querySelectorAll('[data-reference-term]')){const entry=entries.find(e=>e.id===button.dataset.referenceTerm);if(entry)button.dataset.term=entry.term;}

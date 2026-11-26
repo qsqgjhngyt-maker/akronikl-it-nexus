@@ -83,11 +83,10 @@ try {
         const glossary=page.locator('.academy-reference-actions [data-reference-open]');
         const syntax=page.locator('.academy-reference-actions [data-reference-editor-help]');
         await glossary.waitFor();
-        for(const [action,minimum] of [[glossary,184],[syntax,116]]){
+        for(const [action,desktopWidth] of [[glossary,208],[syntax,132]]){
           const [w,h]=await action.evaluate(node=>[node.offsetWidth,node.offsetHeight]);
           assert.equal(h,44);
-          if(width===320)assert.equal(w,44);
-          else assert.ok(w>=minimum);
+          assert.equal(w,width===320?44:desktopWidth);
         }
         if (kind==='labs') {
           if (course.id==='cpp') {
