@@ -41,7 +41,8 @@
       "paragraphs": [
         "Measurements are recorded in time order. A report needs a separate row in ascending order. Keep the original log and rearrange the values in a copy.",
         "Selection sort puts the next minimum at index next. Values to its right still need to be ordered. Before the first pass, the sorted part is empty.",
-        "The result has two observable properties. Adjacent values appear in nondecreasing order. Each value occurs as many times as it does in the original row."
+        "The result has two observable properties. Adjacent values appear in nondecreasing order. Each value occurs as many times as it does in the original row.",
+        "Order and multiplicity are independent checks: order shows that the values ascend, and multiplicity shows the same collection of measurements. Checking either property alone leaves some errors undetected."
       ]
     },
     {
@@ -342,5 +343,28 @@
     "prerequisites": [
       "c.array-statistics-traversal"
     ]
+  },
+  "teaching": {
+    "scene": "Measurements are needed in arrival order and in ascending order. Trace the first swaps and verify that a repeated reading survives in both reports.",
+    "predict": {
+      "prompt": "The example starts with 4, 1, 4 and 2. What does sorting move to the first and second positions, and how many fours should remain?",
+      "answer": "The minimum 1 moves to position 0, giving 1, 4, 4, 2. The remaining minimum 2 is moved next, giving 1, 2, 4, 4. Both fours remain."
+    },
+    "apply": {
+      "prompt": "A new log is 5, −2, 5, 0. Which two lines verify the original order, the sorted order and the duplicates?",
+      "answer": "The first line should remain 5 -2 5 0. The copy should give -2 0 5 5. It is nondecreasing and each value occurs the same number of times."
+    },
+    "practice": {
+      "strategy": "Preserve the original sequence and copy by index. Mark the finished prefix after each step, then check ascending order and the number of occurrences of each value.",
+      "diagnosis": "If the copy is 3 3 2 -1 instead of -1 2 3 3, the comparison selects the other end. Check which candidate gets moved to the front of the unsorted part."
+    },
+    "syntax": {
+      "termId": "swap",
+      "form": "int saved = values[first];\nvalues[first] = values[second];\nvalues[second] = saved;",
+      "example": "int values[] = {4, 1};\nint saved = values[0];\nvalues[0] = values[1];\nvalues[1] = saved;",
+      "explanation": "The temporary variable stores the old first value before overwrite. The swap moves positions and retains all original elements.",
+      "mistake": "Two assignments without a temporary can duplicate one value and lose another. Check repeated values in the result."
+    },
+    "focus": "static void sort_ascending(int sorted[], int length)\n{\n    for (int next = 0; next + 1 < length; ++next) {\n        int least = next;\n        for (int i = next + 1; i < length; ++i) {\n            if (sorted[i] < sorted[least]) {\n                least = i;\n            }\n        }\n        int saved = sorted[next];\n        sorted[next] = sorted[least];\n        sorted[least] = saved;\n    }\n}"
   }
 }

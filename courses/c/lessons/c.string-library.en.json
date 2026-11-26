@@ -47,7 +47,8 @@
       "paragraphs": [
         "A controller expects keys OK and ADJ. An operator types OK! out of habit. Its first two letters match, but the third byte changes the command. The device needs the whole key.",
         "Separate a complete, valid input record from a rejected one first. After establishing that the array contains its '\\0', the text is ready for strcmp and strlen.",
-        "A declaration char text[9] reserves nine cells. Eight can hold text bytes, with a cell left for '\\0' after the input. In that buffer OK still has length two."
+        "A declaration char text[9] reserves nine cells. Eight can hold text bytes, with a cell left for '\\0' after the input. In that buffer OK still has length two.",
+        "Comparison needs only the first difference or a shared terminator. The example does not need to calculate either length before calling strcmp."
       ]
     },
     {
@@ -329,5 +330,28 @@
     "prerequisites": [
       "c.complete-line-input"
     ]
+  },
+  "teaching": {
+    "scene": "A control panel accepts exact commands only. Use REF and REF! to distinguish a complete match from a matching beginning.",
+    "predict": {
+      "prompt": "The program compares the key REF first with REF and then with REF!. Which checks succeed, and in what order do the lines appear?",
+      "answer": "strcmp gives 0 for the first pair, so equal appears. In the second pair the first three bytes match, then the key's '\\0' precedes '!'. The sign check prints before."
+    },
+    "apply": {
+      "prompt": "A new command list accepts RUN and STOP. Which of RUN, RUN! and RUNNER should pass exact matching?",
+      "answer": "Only RUN matches. RUN! and RUNNER share the first three bytes but continue beyond them. strcmp with a check for zero distinguishes the exact command."
+    },
+    "practice": {
+      "strategy": "Use the supplied record validation first. Check equality with each complete key next. Calculate the length only after recognizing a key.",
+      "diagnosis": "The starter accepts OK! and prints known 3. Its byte count is correct, but the third byte should prevent an exact match."
+    },
+    "syntax": {
+      "termId": "strcmp",
+      "form": "if (strcmp(input, key) == 0) {\n    puts(\"equal\");\n}",
+      "example": "int order = strcmp(\"REF\", \"REF!\");\nif (order < 0) {\n    puts(\"before\");\n}",
+      "explanation": "strcmp from <string.h> compares two terminated strings. Zero means equality. The sign of any other result gives their order.",
+      "mistake": "A bare if (strcmp(input, key)) takes the branch when the strings differ. Compare with zero when you need a match."
+    },
+    "focus": "    const char key[] = \"REF\";\n    const char reading[] = \"REF\";\n    const char longer[] = \"REF!\";\n    if (strcmp(key, reading) == 0) {\n        puts(\"equal\");\n    }\n    if (strcmp(key, longer) < 0) {\n        puts(\"before\");"
   }
 }

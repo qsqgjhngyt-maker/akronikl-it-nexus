@@ -61,7 +61,7 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
   assert.ok(opened.top>=opened.shellBottom-1&&opened.tabsFit&&!opened.overflow);
   assert.equal(await lesson.locator('.authored-intro').evaluate(node=>node.getBoundingClientRect().top),readingTop);
   await p.keyboard.press('Tab');
-  assert.ok(await header.locator('[data-action="outline"]').evaluate(el=>el===document.activeElement));
+  assert.ok(await header.locator('[data-academy-menu-item="program"]').evaluate(el=>el===document.activeElement));
   await p.keyboard.press('Escape');
   assert.equal(await toggle.getAttribute('aria-expanded'),'false');
   assert.ok(await toggle.evaluate(el=>el===document.activeElement));

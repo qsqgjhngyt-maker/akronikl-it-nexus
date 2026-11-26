@@ -44,7 +44,8 @@
       "paragraphs": [
         "The workshop stores tools under IDs 17, 23 and 42. The number 23 is not an index: it is the key on position 1.",
         "Search compares only the id of each record. The condition i < count keeps the index in bounds when count matches the number of accessible records. Compute the length where the array itself is visible. A parameter declared as tools[] receives a pointer, and sizeof on that parameter cannot give the element count.",
-        "The function returns the address of a matching element or NULL. The array in main stays alive until main ends. const makes the matching pointer suitable for reading the record."
+        "The function returns the address of a matching element or NULL. The array in main stays alive until main ends. const makes the matching pointer suitable for reading the record.",
+        "The returned pointer identifies the original record. It stays usable only while the referenced array is alive."
       ]
     },
     {
@@ -273,5 +274,28 @@
       "c.array-length-contract",
       "c.borrowed-pointer-contract"
     ]
+  },
+  "teaching": {
+    "scene": "A tool room stores identifiers and quantities in the same records. Find a record by its identifier and report its stock, even when the quantity is zero.",
+    "predict": {
+      "prompt": "The array contains 17:2, 23:5 and 42:1. What does the program find for 23 and 30, and which lines does it print?",
+      "answer": "The second record's id matches 23. The search returns its address and prints 23 5. The search for 30 traverses the range with no match. NULL leads to missing."
+    },
+    "apply": {
+      "prompt": "The log contains a record 54:0 but no record 55. Which two different outputs show that zero stock is distinct from an absent record?",
+      "answer": "54 gives 54 0 because the record was found. 55 gives missing because the search returned no object address."
+    },
+    "practice": {
+      "strategy": "Traverse only the active records. Compare the key with id and return the matching address. Check for a result before reading any member.",
+      "diagnosis": "The starter prints missing for 77 even though the last record has id 77 and quantity 26. Check which member is compared with the key."
+    },
+    "syntax": {
+      "termId": "lookup-key",
+      "form": "if (records[i].id == wanted_id) {\n    return &records[i];\n}",
+      "example": "const struct Tool *tool = find(tools, count, 23);\nif (tool != NULL) {\n    printf(\"%d %d\\n\", tool->id, tool->count);\n}",
+      "explanation": "Use a dot to read a member from an array record. Once the result pointer has been checked, tool->count reads through it. The result borrows its address from the live array.",
+      "mistake": "Comparing quantity searches for a matching number of items, even with a different id. Select the member that represents the search key."
+    },
+    "focus": "    for (size_t i = 0; i < count; ++i) {\n        if (tools[i].id == id) {\n            return &tools[i];\n        }\n    }\n    return NULL;"
   }
 }

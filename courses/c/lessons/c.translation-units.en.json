@@ -51,7 +51,8 @@
       "id": "example",
       "title": "Add the morning and evening counts",
       "paragraphs": [
-        "The project contains main.c, shift.h, and shift.c. Predict the output and identify the .c files that must be compiled."
+        "The project contains main.c, shift.h, and shift.c. Predict the output and identify the .c files that must be compiled.",
+        "A missing declaration affects checking the call within main.c. A missing definition shows up later, when the linker tries to join the separate parts."
       ],
       "steps": [
         "main.c includes shift.h and calls shift_total(4, 7).",
@@ -293,5 +294,28 @@
       "c.guard-header-inclusion",
       "c.function-declaration-call"
     ]
+  },
+  "teaching": {
+    "scene": "Put a call and its implementation in separate files. Use the stage of a build failure to tell a missing declaration from a missing compiled definition.",
+    "predict": {
+      "prompt": "main.c calls shift_total(4, 7). Where does the compiler learn the function type, where is its body, and what line follows a full build?",
+      "answer": "The declaration in shift.h supplies the type, and shift.c provides the definition. Linking connects the call and definition. The function adds 4 and 7, producing shift=11."
+    },
+    "apply": {
+      "prompt": "Build a copy with shift.c removed from the source list and shift.h still present. What can the compiler still check in main.c? What happens when linking?",
+      "answer": "The compiler sees the declaration, so it can check the arguments and result type. Linking cannot find the definition of shift_total, so the program will not run."
+    },
+    "practice": {
+      "strategy": "Check the declaration and that tray.c is a build input. Predict the tray count for 0, 4, and 6 items. Trace the return value to main and check how it determines the slot count.",
+      "diagnosis": "For undefined reference, check that tray.c was built and the definition has the correct name. If the build works but four items give one tray, trace the partial group."
+    },
+    "syntax": {
+      "termId": "translation-unit",
+      "form": "#include \"module.h\"\n/* A source file and its included headers form a translation unit. */",
+      "example": "#include <stdio.h>\n#include \"shift.h\"\n\nint main(void)\n{\n    printf(\"shift=%d\\n\", shift_total(4, 7));\n    return 0;\n}",
+      "explanation": "One source file and its inclusions become a translation unit after preprocessing. The definition in a separate .c file is brought into the program by linking.",
+      "mistake": "Adding #include \"shift.h\" does not bring in the body from shift.c. The header states the contract. The build needs the source containing the implementation."
+    },
+    "focus": "#include \"shift.h\"\n\nint main(void)\n{\n    printf(\"shift=%d\\n\", shift_total(4, 7));\n    return 0;\n}"
   }
 }

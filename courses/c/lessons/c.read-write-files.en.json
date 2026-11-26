@@ -57,7 +57,8 @@
       "id": "example",
       "title": "Why two one-digit numbers take four bytes",
       "paragraphs": [
-        "The file input.txt contains 3, LF, 6, LF. Leave stdin empty. Before running, list the four bytes that should reach copy.txt."
+        "The file input.txt contains 3, LF, 6, LF. Leave stdin empty. Before running, list the four bytes that should reach copy.txt.",
+        "Writing begins only after the input has been read and its stream closed successfully. For a file over the limit, also check that no new copy appears, even if its first 64 bytes look valid."
       ],
       "steps": [
         "Keep every byte, including LF. After fgetc returns EOF, check ferror before closing the input stream.",
@@ -354,5 +355,28 @@
       "c.open-close-file-stream",
       "c.complete-line-input"
     ]
+  },
+  "teaching": {
+    "scene": "Make a route copy that a dispatcher can compare byte for byte. Check that the copy counts digits and line feeds alike.",
+    "predict": {
+      "prompt": "input.txt contains lines 3 and 6, each ending in LF. What number follows written, and why? How can you confirm that the copy is correct?",
+      "answer": "There are four bytes: the digit 3, LF, the digit 6, LF. fgetc returns EOF after the final byte is read. written 4 confirms the length. The contents of copy.txt confirm the byte values and their order."
+    },
+    "apply": {
+      "prompt": "In a separate copy of the input file, remove only the final LF. Leave the line break between 3 and 6. Predict the length and the last bytes of the result.",
+      "answer": "The copy has three bytes: 3, LF, 6. The output is written 3, and there is no LF after the digit 6. Compare the result file itself because the display may add a visual line break."
+    },
+    "practice": {
+      "strategy": "Mark where the loop reads, checks capacity, and stores the byte. Compare copies with and without the final LF, then check what happens at byte 64 and at byte 65.",
+      "diagnosis": "If 18 and 21 without a final LF still produce six bytes, inspect the write for an added line feed. If 64 bytes give input-too-long, check whether the loop really read another byte before rejecting the input."
+    },
+    "syntax": {
+      "termId": "end-of-file",
+      "form": "int byte;\nwhile ((byte = fgetc(stream)) != EOF) {\n    /* byte contains a value read from the stream */\n}",
+      "example": "int byte;\nwhile ((byte = fgetc(input)) != EOF) {\n    bytes[length++] = (unsigned char)byte;\n}",
+      "explanation": "fgetc returns int so it can represent unsigned char values and the separate EOF sentinel. After EOF, use ferror to distinguish end-of-file from a read error.",
+      "mistake": "Keep the result from fgetc in int until you compare it with EOF. Convert to unsigned char after a successful read and a capacity check."
+    },
+    "focus": "    int byte;\n    while ((byte = fgetc(input)) != EOF) {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {"
   }
 }

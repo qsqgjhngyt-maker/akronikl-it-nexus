@@ -9,6 +9,7 @@ const frontend = path.resolve(process.env.NEXUS_FRONTEND_DIR);
 const buildBytes = await readFile(path.join(frontend, 'BUILD_MANIFEST.json'));
 const build = JSON.parse(buildBytes);
 const courseManifest = JSON.parse(await readFile(path.join(frontend, build.prefix, 'courses/c/manifest.json')));
+const curriculum = JSON.parse(await readFile(path.join(frontend, build.prefix, 'courses/c/curriculum.json')));
 const firstId = courseManifest.availableTopicIds[0];
 const firstEnglish = JSON.parse(await readFile(path.join(frontend, build.prefix, 'courses/c/lessons/' + firstId + '.en.json')));
 const fixture = await nativeOfflineFixture('c-course-read');
@@ -59,25 +60,67 @@ try {
     await page.goto(fixture.origin + '/offline.html#view=academy');
     await page.locator('a[data-academy-course="c"]').click();
     await root.getByRole('heading', { level:1, name:courseManifest.title.ru }).waitFor();
-    assert.equal(await root.locator('.c-outline a').count(), 59);
+    const modules = root.locator('[data-academy-course-navigation="modules"] [data-academy-module]');
+    assert.deepEqual(await modules.evaluateAll(cards => cards.map(card => card.dataset.academyModule)),
+      curriculum.modules.map(module => module.id));
+    assert.equal(await root.locator('[data-academy-topic]').count(), 0);
     await capture('cold-academy-c-390');
-    await root.locator('.c-outline a').first().click();
+    await modules.first().locator('[data-academy-open-module]').click();
+    const topics = root.locator('[data-academy-course-navigation="topics"] [data-academy-topic]');
+    await topics.first().waitFor();
+    assert.deepEqual(await topics.evaluateAll(cards => cards.map(card => card.dataset.academyTopic)),
+      curriculum.modules[0].topics.map(topic => topic.id));
+    await topics.first().locator('a').click();
     await root.locator('.c-stages [aria-current="step"]').filter({ hasText:'Объяснение' }).waitFor();
     assert.ok(await root.locator('pre code').count());
     await capture('cold-first-lesson-ru-390');
   });
+  await check('Публичная библиотека и плитки программ C++ и 1С доступны без сети', async () => {
+    for (const [course,lesson,locale] of [
+      ['cpp','cpp.programming-process','en'],
+      ['onec','onec.p2.topic-1','ru'],
+      ['1c-enterprise','1c-enterprise.a2.topic-1','en'],
+    ]) {
+      await page.goto(fixture.origin + '/offline.html#' + new URLSearchParams({course,lesson,locale}));
+      const current = page.locator('[data-r3-topic="'+lesson+'"]');
+      await current.locator('[data-action="tools"]').click();
+      await current.locator('[data-academy-menu-item="reading"]').click();
+      const library = current.locator('.academy-library-dialog[open]');
+      await library.locator('.academy-library-source a').first().waitFor();
+      assert.match(await library.innerText(), /Opening sources requires an internet connection|Для открытия источников нужен интернет/);
+      await capture('cold-library-'+course+'-'+locale+'-390');
+      await page.keyboard.press('Escape');
+      await current.locator('[data-action="tools"]').click();
+      await current.locator('[data-academy-menu-item="program"]').click();
+      const tiles = page.locator('[data-academy-course-navigation="modules"] [data-academy-module]');
+      await tiles.first().locator('[data-academy-open-module]').click();
+      const firstTopic = page.locator('[data-academy-course-navigation="topics"] [data-academy-topic] a').first();
+      await firstTopic.click();
+      await page.locator('[data-r3-topic]').waitFor();
+      const route = new URLSearchParams(new URL(page.url()).hash.slice(1));
+      assert.equal(route.get('course'),course);
+      assert.equal(route.get('locale'),locale);
+    }
+  });
   await check('RU/EN открываются, справка и эталон читаются, запуска и личной записи нет', async () => {
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=' + firstId + '&locale=en');
     await root.getByRole('heading', { level:1, name:firstEnglish.title, exact:true }).waitFor();
-    await root.getByRole('button', {name:'Reference', exact:true}).click();
+    await root.locator('[data-academy-menu-toggle]').click();
+    await root.locator('[data-academy-menu-item="reading"]').click();
+    const library = root.locator('.academy-library-dialog[open]');
+    await library.locator('.academy-library-source a').first().waitFor();
+    assert.match(await library.innerText(), /Opening sources requires an internet connection/);
+    await page.keyboard.press('Escape');
+    await library.waitFor({state:'hidden'});
+    await root.getByRole('button', {name:'Terminology reference', exact:true}).click();
     await root.locator('#termDrawer[open] [data-term-card]').first().waitFor();
     await page.keyboard.press('Escape');
     await root.getByRole('button', {name:'Syntax', exact:true}).click();
-    await root.locator('#termDrawer[open] [data-c-syntax-list] pre code').first().waitFor();
+    await root.locator('#termDrawer[open] [data-reference-details] pre code').first().waitFor();
     await page.keyboard.press('Escape');
     await root.locator('footer').getByRole('link', { name:'Next: self-check →' }).click();
     await root.locator('footer').getByRole('link', { name:'Go to practice →' }).click();
-    await root.getByText('Reference solution', { exact:true }).click();
+    await root.getByText('View reference solution', { exact:true }).click();
     assert.match(await root.innerText(), /offline lesson is available for reading/);
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     assert.equal(await page.evaluate(async prefix => {
@@ -93,7 +136,7 @@ try {
     await capture('cold-m2-ru-390');
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.read-input&stage=practice&locale=en');
     await root.getByRole('heading', {level:1, name:'Reading a line and validating it'}).waitFor();
-    await root.getByText('Reference solution', {exact:true}).click();
+    await root.getByText('View reference solution', {exact:true}).click();
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m2-reference-en-390');
   });
@@ -104,7 +147,7 @@ try {
     await capture('cold-m3-ru-390');
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.function-project&stage=practice&locale=en');
     await root.getByRole('heading', {level:1, name:'Project: unit conversion', exact:true}).waitFor();
-    await root.getByText('Reference solution', {exact:true}).click();
+    await root.getByText('View reference solution', {exact:true}).click();
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m3-project-en-390');
   });
@@ -115,7 +158,7 @@ try {
     await capture('cold-m4-ru-390');
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.array-sort&stage=practice&locale=en');
     await root.getByRole('heading', {level:1, name:'Simple sorting and checking the result', exact:true}).waitFor();
-    await root.getByText('Reference solution', {exact:true}).click();
+    await root.getByText('View reference solution', {exact:true}).click();
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m4-sort-en-390');
   });
@@ -126,7 +169,7 @@ try {
     await capture('cold-m5-ru-390');
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.text-project&stage=practice&locale=en');
     await root.getByRole('heading', {level:1, name:"Project: line filter", exact:true}).waitFor();
-    await root.getByText('Reference solution', {exact:true}).click();
+    await root.getByText('View reference solution', {exact:true}).click();
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m5-filter-en-390');
   });
@@ -137,7 +180,7 @@ try {
     await capture('cold-m6-ru-390');
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.pointer-lifetime-errors&stage=practice&locale=en');
     await root.getByRole('heading', {level:1, name:'Lifetime and pointer errors', exact:true}).waitFor();
-    await root.getByText('Reference solution', {exact:true}).click();
+    await root.getByText('View reference solution', {exact:true}).click();
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m6-reference-en-390');
   });
@@ -148,7 +191,7 @@ try {
     await capture('cold-m7-ru-390');
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.structure-contracts&stage=practice&locale=en');
     await root.getByRole('heading', {level:1, name:'Record invariants and operations', exact:true}).waitFor();
-    await root.getByText('Reference solution', {exact:true}).click();
+    await root.getByText('View reference solution', {exact:true}).click();
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m7-reference-en-390');
   });
@@ -159,7 +202,7 @@ try {
     await capture('cold-m8-ru-390');
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.dynamic-record-project&stage=practice&locale=en');
     await root.getByRole('heading', {level:1, name:'Project: resizable record list', exact:true}).waitFor();
-    await root.getByText('Reference solution', {exact:true}).click();
+    await root.getByText('View reference solution', {exact:true}).click();
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(), 0);
     await capture('cold-m8-reference-en-390');
   });
@@ -169,7 +212,7 @@ try {
     assert.ok(await root.getByText('input/stock.tsv',{exact:true}).count());
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=c.capstone-delivery&stage=practice&locale=en');
     await root.getByRole('heading',{level:1,name:'Evidence and project delivery'}).waitFor();
-    await root.getByText('Reference solution',{exact:true}).click();
+    await root.getByText('View reference solution',{exact:true}).click();
     assert.ok(await root.getByText('inventory.c',{exact:true}).count());
     assert.equal(await root.locator('#editor,[data-c-run],[data-c-complete]').count(),0);
     await capture('cold-m12-reference-en-390');

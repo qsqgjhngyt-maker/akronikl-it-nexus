@@ -44,7 +44,8 @@
       "paragraphs": [
         "A maintenance marker should fall exactly on an interval boundary. A zero interval cannot be used as the divisor of the remainder operation, so test the interval first.",
         "&& and || evaluate their left operand first. For example, a != 0 && x % a == 0 attempts the remainder only after checking a. ! changes zero to 1 and any nonzero value to 0.",
-        "Separate if statements are checked independently. An if / else if / else chain selects one result when several rules can apply."
+        "Separate if statements are checked independently. An if / else if / else chain selects one result when several rules can apply.",
+        "The stock states form a decision tree. Check that the pack is usable, then check whether any stock is available. Test the remainder only in the branch with a positive pack size."
       ]
     },
     {
@@ -304,5 +305,28 @@
     "prerequisites": [
       "c.checked-line-input"
     ]
+  },
+  "teaching": {
+    "scene": "A technician checks whether a marker is on a service interval. The interval is sometimes zero. Trace which parts of the condition actually run and predict the one resulting message.",
+    "predict": {
+      "prompt": "The sample has distance 12 and interval 0. What happens on the left of &&, is the remainder evaluated, and which line appears?",
+      "answer": "interval > 0 is false. && finishes evaluating the condition before `%`, so no division takes place. The else branch prints inspect."
+    },
+    "apply": {
+      "prompt": "Suppose the marker is at distance 20. Test interval 5 and interval 6 in separate runs. When will aligned appear, and how would you verify the other result?",
+      "answer": "At 5 the first check succeeds and 20 % 5 = 0, so aligned appears. At 6 the remainder is 2, giving inspect."
+    },
+    "practice": {
+      "strategy": "Order the states from rejected input through ordinary grouping. Pick one input for each branch and check that each run prints a single line.",
+      "diagnosis": "If 18 with 6 gives partial, inspect the zero-remainder check on nonempty data. If 0 with 0 gives empty, the empty-stock branch is firing too early."
+    },
+    "syntax": {
+      "termId": "short",
+      "form": "if (divisor > 0 && total % divisor == 0) {\n    /* exact grouping */\n}",
+      "example": "int total = 20, group = 5;\nif (group > 0 && total % group == 0) {\n    puts(\"aligned\");\n}",
+      "explanation": "&& evaluates its left operand first. The right side runs only when the left side is true.",
+      "mistake": "Operand order matters. Guard divisor before using it with `%`."
+    },
+    "focus": "int main(void)\n{\n    int distance = 12;\n    int interval = 0;\n\n    if (interval > 0 && distance % interval == 0) {\n        puts(\"aligned\");\n    } else {\n        puts(\"inspect\");\n    }\n    return 0;\n}"
   }
 }

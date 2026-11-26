@@ -41,7 +41,8 @@
       "paragraphs": [
         "Three cards on a table show 5, 8 and 2. In one call all three readings should be added. In another, the meter has supplied no active readings yet. The readings array still has three slots in both cases. Passing an active length of zero tells the function to skip all of them.",
         "The contract has two parts. Pass the array’s starting address and the active length. The caller checks that the length is from 0 through capacity. The loop then reads only indices below length.",
-        "In main, readings names the array. The parameter declaration const int values[] becomes const int * inside sum. There, sizeof values gives the size of a pointer. The active element count comes from length."
+        "In main, readings names the array. The parameter declaration const int values[] becomes const int * inside sum. There, sizeof values gives the size of a pointer. The active element count comes from length.",
+        "Capacity is the number of available slots, and active length is how many readings join the report. Check 0 ≤ length ≤ capacity before the call."
       ]
     },
     {
@@ -302,5 +303,28 @@
     "prerequisites": [
       "c.array-index-range"
     ]
+  },
+  "teaching": {
+    "scene": "Three readings occupy slots on a bench, and some may still be outside the report. Obtain different sums from the same array by varying only the number of elements read.",
+    "predict": {
+      "prompt": "sum receives 5, 8, 2 first with length 3 and then with length 0. Which positions does each call visit, and what does it return?",
+      "answer": "The first call visits 0, 1 and 2, adds 5 + 8 + 2 and returns 15. The second skips the loop body and returns the initial sum 0."
+    },
+    "apply": {
+      "prompt": "A sensor stores 7, 2 and 5, with only the first two active. What will the sum return, and how can you test zero active readings?",
+      "answer": "The active items are 7 and 2, so the sum is 9. A length of 0 on the same buffer should give 0 without reading an element."
+    },
+    "practice": {
+      "strategy": "Validate the supplied length at the call boundary and list the indices it covers. Count only active items, and test equality to the threshold and length 0 separately.",
+      "diagnosis": "If length 4 and threshold 8 give 1, check whether the last active slot is visited. The two eights count separately."
+    },
+    "syntax": {
+      "termId": "active-length",
+      "form": "static int sum(const int values[], int length);\n/* Caller gives the number of usable slots. */\nint total = sum(readings, active);",
+      "example": "const int readings[] = {5, 8, 2};\nint total = sum(readings, 2);",
+      "explanation": "The length parameter gives the active element count. Loop indices range from 0 through length − 1. Length 0 performs no reads.",
+      "mistake": "For an array parameter, `sizeof values` inside the function gives the pointer size. Pass the element count explicitly."
+    },
+    "focus": "static int sum(const int values[], int length)\n{\n    int total = 0;\n    for (int index = 0; index < length; ++index) {\n        total += values[index];\n    }\n    return total;\n}\n\nint main(void)\n{\n    const int readings[] = {5, 8, 2};\n    int capacity = (int)(sizeof readings / sizeof readings[0]);\n    printf(\"%d\\n\", sum(readings, capacity));\n    printf(\"%d\\n\", sum(readings, 0));\n    return 0;\n}"
   }
 }

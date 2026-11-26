@@ -303,5 +303,28 @@
       "c.read-write-through-pointer",
       "c.parameter-value-return"
     ]
+  },
+  "teaching": {
+    "scene": "Two thermostat limits are reversed. Trace the swap so the original first number is still available after the first write.",
+    "predict": {
+      "prompt": "Before swap, low and high are 9 and 4. What does each object hold immediately after *a = *b? What does saved hold at that point?",
+      "answer": "Both objects temporarily hold 4. saved preserved 9 before the write to low. The last assignment takes 9 from saved and writes it to high."
+    },
+    "apply": {
+      "prompt": "With low = 8 and high = 2, reason through normalize(&low, &low). Does it swap, and what triple does the same main print?",
+      "answer": "It compares 8 with itself and returns from the already-ordered branch without writing. The output is 8 2 0."
+    },
+    "practice": {
+      "strategy": "Check both pointers and decide whether a swap is necessary before writing. Save the earlier integer before the first assignment. Check reversed, ordered and equal pairs.",
+      "diagnosis": "With 12 and -2, the starter prints -2 -2 1. The second value is lost because saved contains the address of the object that was already changed. Compare the temporary's type with that of the value being saved."
+    },
+    "syntax": {
+      "termId": "temporary",
+      "form": "int saved = *first;\n*first = *second;\n*second = saved;",
+      "example": "int low = 9;\nint high = 4;\nswap(&low, &high);",
+      "explanation": "A separate int preserves the earlier value. A pointer parameter receives a copy of the address, so access through it reaches the caller's object.",
+      "mistake": "int *saved = first creates another path to the same object. After a write through first, a read through saved sees the updated value."
+    },
+    "focus": "    if (a == NULL || b == NULL) {\n        return;\n    }\n    int saved = *a;\n    *a = *b;\n    *b = saved;"
   }
 }

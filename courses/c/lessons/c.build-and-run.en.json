@@ -261,5 +261,28 @@
     "prerequisites": [
       "c.read-exact-output"
     ]
+  },
+  "teaching": {
+    "scene": "A panel should show that its sensor is ready. Locate the build and the later appearance of fresh output separately. This tells you which step prevented the display from updating.",
+    "predict": {
+      "prompt": "The sample source contains puts. After which action does its line appear, and what does that line say?",
+      "answer": "The environment first compiles the source and links the program with the functions it uses. Running the result reaches puts, which writes Sensor ready. Build success makes execution possible, and stdout confirms the text."
+    },
+    "apply": {
+      "prompt": "An alarm panel still shows its old message after a run with a syntax error. Which two observations tell you when the new message really appears?",
+      "answer": "Look for a build diagnostic and the absence of fresh output after the error. Once the repaired program runs, compare the new line with the panel requirement."
+    },
+    "practice": {
+      "strategy": "First fix the diagnostic and rerun with waiting intact. Once you have verified the first output, change the message and run again.",
+      "diagnosis": "The compiler message points to the source before execution. Seeing waiting after the repair confirms that the build now succeeds and the text still needs updating."
+    },
+    "syntax": {
+      "termId": "compile",
+      "form": "/* Source fragment */\nputs(\"message\");",
+      "example": "puts(\"Sensor ready\");\nreturn 0;",
+      "explanation": "The compiler must parse the source as a call with an argument followed by `;`. Execution reaches the call after a successful build and run.",
+      "mistake": "A missing `;` after the call stops the build. Inspect the end of the call in the first reported area."
+    },
+    "focus": "int main(void)\n{\n    puts(\"Sensor ready\");\n    return 0;\n}"
   }
 }

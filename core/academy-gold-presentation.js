@@ -143,23 +143,50 @@ function goldWorkspaceMarkup(lang,{project=false,title='',multi=false,gui=false}
 export function openGoldWorkspace(root,button,gold,{
  workspace=root.querySelector('#editor')?.closest('.sandbox-block'),
  task=button.closest('[data-gold-laboratory],[data-gold-practicum]'),
+ taskAdditions=[],
+ mobilePanel='editor',
+ editorTabLabel,
+ beforeClose=()=>true,
+ bindTask=panel=>bindAcademyGold(panel,gold),
+ onShowEditor,
+ onClose,
 }={}){
  if(!workspace||!task||root.querySelector('.gold-work-dialog[open]'))return;
  const lang=task.closest('[data-gold-lesson]')?.getAttribute('lang')||gold?.locale||'ru',t=(ru,en)=>label(lang,ru,en);
  const marker=document.createComment('gold-workspace-place'),host=workspace.closest('.lesson')||root.body||root,x=scrollX,y=scrollY;
  const dialog=document.createElement('dialog');dialog.className='gold-work-dialog';dialog.lang=lang;dialog.setAttribute('aria-labelledby','goldWorkTitle');dialog.setAttribute('aria-modal','true');
- dialog.innerHTML='<header class="gold-work-head"><div><span class="eyebrow">'+E(t('РАБОЧЕЕ ОКНО УРОКА','LESSON WORK WINDOW'))+'</span><h2 id="goldWorkTitle">'+E(task.querySelector('h2')?.textContent||t('Практическая работа','Practical work'))+'</h2></div><button type="button" class="btn" data-gold-work-close>'+E(t('Вернуться к заданию','Return to the task'))+'</button></header><div class="gold-work-tabs" role="tablist" aria-label="'+E(t('Задание и редактор','Task and editor'))+'"><button type="button" role="tab" id="goldWorkTaskTab" aria-controls="goldWorkTask" data-gold-work-tab="task">'+E(t('Задание','Task'))+'</button><button type="button" role="tab" id="goldWorkEditorTab" aria-controls="goldWorkEditor" data-gold-work-tab="editor">Code Studio</button></div><div class="gold-work-layout"><div id="goldWorkTask" class="gold-work-task academy-gold" data-gold-work-panel="task" aria-label="'+E(t('Условие и контрольные случаи','Task and reference cases'))+'" lang="'+E(lang)+'" data-gold-lesson="'+E(gold?.lessonId||task.closest('[data-gold-lesson]')?.dataset.goldLesson)+'"></div><div id="goldWorkEditor" class="gold-work-editor" data-gold-work-panel="editor" aria-label="Code Studio"></div></div>';
- const taskPanel=dialog.querySelector('[data-gold-work-panel="task"]'),editorPanel=dialog.querySelector('[data-gold-work-panel="editor"]'),copy=task.cloneNode(true);
- copy.removeAttribute('id');for(const n of copy.querySelectorAll('[id]'))n.removeAttribute('id');
- for(const n of copy.querySelectorAll('.gold-workspace-callout'))n.remove();
+ dialog.innerHTML='<header class="gold-work-head"><div><span class="eyebrow">'+E(t('РАБОЧЕЕ ОКНО УРОКА','LESSON WORK WINDOW'))+'</span><h2 id="goldWorkTitle">'+E(task.querySelector('h2')?.textContent||t('Практическая работа','Practical work'))+'</h2></div><button type="button" class="btn" data-gold-work-close>'+E(t('Вернуться к заданию','Return to the task'))+'</button></header><div class="gold-work-tabs" role="tablist" aria-label="'+E(t('Задание и редактор','Task and editor'))+'"><button type="button" role="tab" id="goldWorkTaskTab" aria-controls="goldWorkTask" data-gold-work-tab="task">'+E(t('Задание','Task'))+'</button><button type="button" role="tab" id="goldWorkEditorTab" aria-controls="goldWorkEditor" data-gold-work-tab="editor">'+E(editorTabLabel||'Code Studio')+'</button></div><div class="gold-work-layout"><div id="goldWorkTask" class="gold-work-task academy-gold" data-gold-work-panel="task" aria-label="'+E(t('Условие и контрольные случаи','Task and reference cases'))+'" lang="'+E(lang)+'" data-gold-lesson="'+E(gold?.lessonId||task.closest('[data-gold-lesson]')?.dataset.goldLesson)+'"></div><div id="goldWorkEditor" class="gold-work-editor" data-gold-work-panel="editor" aria-label="Code Studio"></div></div>';
+ const taskPanel=dialog.querySelector('[data-gold-work-panel="task"]');
+ const editorPanel=dialog.querySelector('[data-gold-work-panel="editor"]');
+ for(const original of [task,...taskAdditions]){
+  if(!original||original!==task&&task.contains(original))continue;
+  const copy=original.cloneNode(true);
+  copy.removeAttribute('id');
+  for(const element of copy.querySelectorAll('[id]'))element.removeAttribute('id');
+  for(const element of copy.querySelectorAll('.gold-workspace-callout,[data-c-open-work-window]'))element.remove();
+  taskPanel.append(copy);
+ }
  editorPanel.lang=workspace.closest('[lang]')?.getAttribute('lang')||document.documentElement.lang||lang;
- taskPanel.append(copy);workspace.before(marker);editorPanel.append(workspace);host.append(dialog);
- bindAcademyGold(taskPanel,gold);
- const media=matchMedia('(max-width:900px)'),tabs=[...dialog.querySelectorAll('[data-gold-work-tab]')],panels=[taskPanel,editorPanel];let active='editor';
+ workspace.before(marker);editorPanel.append(workspace);host.append(dialog);
+ bindTask?.(taskPanel);
+ const media=matchMedia('(max-width:900px)'),tabs=[...dialog.querySelectorAll('[data-gold-work-tab]')],panels=[taskPanel,editorPanel];
+ const panelScroll=new Map();
+ let active=mobilePanel;
  const update=()=>{
   dialog.querySelector('.gold-work-tabs').hidden=!media.matches;
   for(const tab of tabs){const selected=tab.dataset.goldWorkTab===active;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;}
-  for(const panel of panels){panel.hidden=media.matches&&panel.dataset.goldWorkPanel!==active;panel.setAttribute('role',media.matches?'tabpanel':'region');if(media.matches)panel.setAttribute('aria-labelledby',panel===taskPanel?'goldWorkTaskTab':'goldWorkEditorTab');else panel.removeAttribute('aria-labelledby');}
+  for(const panel of panels){
+   const hidden=media.matches&&panel.dataset.goldWorkPanel!==active;
+   if(hidden!==panel.hidden){
+    if(hidden)panelScroll.set(panel,panel.scrollTop);
+    panel.hidden=hidden;
+    if(!hidden)panel.scrollTop=panelScroll.get(panel)??0;
+   }
+   panel.setAttribute('role',media.matches?'tabpanel':'region');
+   if(media.matches)panel.setAttribute('aria-labelledby',panel===taskPanel?'goldWorkTaskTab':'goldWorkEditorTab');
+   else panel.removeAttribute('aria-labelledby');
+  }
+  if(!editorPanel.hidden&&dialog.open)onShowEditor?.();
  };
  for(const tab of tabs){
   tab.addEventListener('click',()=>{active=tab.dataset.goldWorkTab;update();});
@@ -167,9 +194,24 @@ export function openGoldWorkspace(root,button,gold,{
  }
  media.addEventListener('change',update);update();
  let returnToTask=true,closed=false;
- const onRouteChange=()=>{returnToTask=false;dialog.close();};
+ const requestClose=(restoreFocus=true)=>{
+  if(beforeClose()===false){
+   active='editor';
+   update();
+   editorPanel.querySelector('#editor,textarea')?.focus({preventScroll:true});
+   return false;
+  }
+  returnToTask=restoreFocus;
+  dialog.close();
+  return true;
+ };
+ const onRouteChange=()=>{requestClose(false);};
  const observer=new MutationObserver(()=>{if(!dialog.isConnected){returnToTask=false;cleanup();}});
- dialog.addEventListener('click',event=>{if(event.target.closest('[data-gold-work-close]'))dialog.close();else if(event.target.closest('a[href^="#"]')){returnToTask=false;dialog.close();}});
+ dialog.addEventListener('click',event=>{
+  if(event.target.closest('[data-gold-work-close]'))requestClose();
+  else if(event.target.closest('a[href^="#"]')&&!requestClose(false))event.preventDefault();
+ });
+ dialog.addEventListener('cancel',event=>{event.preventDefault();requestClose();});
  const cleanup=()=>{
   if(closed)return;closed=true;
   media.removeEventListener('change',update);
@@ -177,9 +219,16 @@ export function openGoldWorkspace(root,button,gold,{
   if(marker.isConnected){marker.replaceWith(workspace);}
   dialog.remove();
   if(returnToTask&&button.isConnected){button.focus({preventScroll:true});scrollTo({left:x,top:y,behavior:'instant'});}
+  onClose?.();
  };
- dialog.addEventListener('close',cleanup,{once:true});addEventListener('hashchange',onRouteChange,{once:true});observer.observe(document.body,{childList:true,subtree:true});
- dialog.showModal();editorPanel.querySelector('#editor')?.focus({preventScroll:true});
+ dialog.addEventListener('close',cleanup,{once:true});addEventListener('hashchange',onRouteChange);observer.observe(document.body,{childList:true,subtree:true});
+ try{dialog.showModal();}catch(error){returnToTask=false;cleanup();throw error;}
+ if(editorPanel.hidden)tabs.find(tab=>tab.dataset.goldWorkTab===active)?.focus({preventScroll:true});
+ else{
+  onShowEditor?.();
+  editorPanel.querySelector('#editor,textarea')?.focus({preventScroll:true});
+ }
+ return {dispose(){returnToTask=false;cleanup();}};
 }
 function goldDeliveryMarkup(delivery,lang){
  if(!delivery)return '';
@@ -194,6 +243,12 @@ function modulePracticumMarkup(project,lang,{anchor}={}){
  const rubric=project.rubric.map(r=>'<li><h4>'+E(r.criterion)+'</h4><p><strong>2:</strong> '+E(r.complete)+'</p><p><strong>1:</strong> '+E(r.partial)+'</p><p><strong>0:</strong> '+E(r.missing)+'</p></li>').join('');
  return '<section class="block glass-panel gold-laboratory" data-gold-practicum'+(anchor?' id="'+E(anchor)+'"':'')+'><span class="eyebrow">'+E(project.label||t('ИТОГОВЫЙ ПРАКТИКУМ МОДУЛЯ','MODULE PROJECT'))+'</span><h2>'+E(project.title)+'</h2><p>'+E(project.challenge)+'</p><p>'+E(project.readiness)+'</p>'+workspace+'<h3>'+E(t('Какие навыки связываем','Skills you will connect'))+'</h3><ul>'+project.skills.map(s=>'<li><a href="#course=cpp&amp;lesson='+E(encodeURIComponent(s.lessonId))+'">'+E(s.title)+'</a></li>').join('')+'</ul><h3>'+E(t('Требования и контракт','Requirements and contract'))+'</h3>'+ordered(project.requirements)+'<h3>'+E(t('Этапы самостоятельной работы','Independent work milestones'))+'</h3>'+ordered(project.milestones)+'<h3>'+E(t('Опорный разбор','Reasoning guide'))+'</h3>'+project.walkthrough.map(p=>'<p>'+E(p)+'</p>').join('')+code(project.starterLabel||t('Заготовка: доработайте функции и main','Starter: complete the functions and main'),project.starterCode,project.starterFiles)+'<h3>'+E(t('Контрольные случаи','Reference cases'))+'</h3>'+goldCasesMarkup(project.cases,lang)+'<h3>'+E(t('Что сохранить в своём проекте','Project deliverables'))+'</h3>'+ordered(project.artifacts)+'<h3>'+E(t('Рубрика самопроверки — 0, 1 или 2 балла за критерий','Self-check rubric — 0, 1 or 2 points per criterion'))+'</h3><ol class="gold-project-rubric">'+rubric+'</ol><p class="gold-evidence-note">'+E(project.completionRule)+'</p>'+code(t('Эталон: раскройте после собственной попытки','Reference: open after your own attempt'),project.referenceCode,project.referenceFiles)+(project.testDriver?code(t('Отдельный тестовый драйвер: вместо main.cpp','Separate test driver: replace main.cpp'),project.testDriver):'')+'</section>';
 }
+export function goldLaboratoryMarkup(gold,lab=gold.clarity?.laboratory??gold.laboratory,{workspace=goldWorkspaceMarkup(gold.locale,{gui:lab.target==='qt-wasm'})}={}){
+  const lang=gold.locale,t=(ru,en)=>label(lang,ru,en);
+  const heading=k=>'<span class="eyebrow">'+E(k)+'</span>';
+  const tests=lab.target==='qt-wasm'?'<ol class="gold-case-list">'+lab.cases.map((c,i)=>'<li><details class="gold-case"'+(i===0?' open':'')+'><summary>'+E(c.purpose)+'</summary>'+ordered(c.actions)+'<p>'+E(c.expected)+'</p></details></li>').join('')+'</ol>':goldCasesMarkup(lab.cases,lang);
+  return '<section class="block glass-panel gold-laboratory" id="cppLab" data-gold-laboratory>'+heading(t('ЛАБОРАТОРНАЯ РАБОТА','LABORATORY'))+'<h2>'+E(lab.title)+'</h2><p>'+E(lab.challenge)+'</p>'+workspace+'<h3>'+E(t('Порядок работы','Work steps'))+'</h3>'+ordered(lab.steps)+'<details><summary>'+E(t('Заготовка для самостоятельной работы','Starter for independent work'))+'</summary><pre><code>'+E(lab.starterCode)+'</code></pre>'+goldBundleMarkup(lab.starterFiles,lab.metadata||{},lang)+'<button type="button" class="btn" data-gold-copy>'+E(t('Скопировать код','Copy code'))+'</button></details><h3>'+E(t('Контрольные сценарии для сравнения вывода','Reference cases for comparing output'))+'</h3>'+tests+'<p><strong>'+E(t('Доказательства выполнения','Completion evidence'))+':</strong> '+E(t('Сохранённый исходник и материалы по критериям ниже','Saved source and the deliverables in the criteria below'))+'</p>'+ordered(lab.rubric)+'<details><summary>'+E(t('Эталонное решение (по запросу)','Reference solution (on request)'))+'</summary><pre><code>'+E(lab.referenceCode)+'</code></pre>'+goldBundleMarkup(lab.referenceFiles,lab.metadata||{},lang)+'<button type="button" class="btn" data-gold-copy>'+E(t('Скопировать код','Copy code'))+'</button></details><p class="gold-evidence-note">'+E(lab.target==='qt-wasm'?t('Проверка: настоящая сборка Qt, сценарии Preview и тесты модели в Project Studio. Базовые серверные тесты не оценивают произвольное расширение; нужны рубрика и защита.','Verification: a real Qt build, Preview scenarios and model tests in Project Studio. Baseline server tests do not assess every extension; a rubric and defense are required.'):t('Проверка в этом кандидате: запуск в Code Studio и ручное сравнение stdout с указанными случаями. Автоматическая оценка решения ученика не заявляется.','In this candidate: run in Code Studio and compare stdout with the listed cases. Automatic grading of learner submissions is not claimed.'))+'</p></section>';
+}
 function academyGoldDetailMarkup(gold){
   if(!gold)return'';
   const lang=gold.locale, t=(ru,en)=>label(lang,ru,en);
@@ -204,12 +259,11 @@ function academyGoldDetailMarkup(gold){
   const diagnostics=gold.diagnostics.map(x=>'<article class="gold-error-card"><h3>'+E(x.symptom)+'</h3><p><strong>'+E(t('Причина','Cause'))+':</strong> '+E(x.cause)+'</p><p><strong>'+E(t('Исправление','Fix'))+':</strong> '+E(x.fix)+'</p></article>').join('');
   const experiments=gold.experiments.map(x=>'<article class="gold-experiment"><h3>'+E(x.title)+'</h3><p>'+E(x.action)+'</p><details><summary>'+E(t('Предсказание и проверка','Prediction and check'))+'</summary><p>'+E(x.prediction)+'</p><p>'+E(x.verification)+'</p></details></article>').join('');
   const lab=gold.laboratory;
-  const tests=lab.target==='qt-wasm'?'<ol class="gold-case-list">'+lab.cases.map((c,i)=>'<li><details class="gold-case"'+(i===0?' open':'')+'><summary>'+E(c.purpose)+'</summary>'+ordered(c.actions)+'<p>'+E(c.expected)+'</p></details></li>').join('')+'</ol>':goldCasesMarkup(lab.cases,lang);
   const questions=(items,group)=>items.map((q,i)=>'<article class="gold-question" data-gold-question data-gold-answer="'+Number(q.correctIndex)+'" data-gold-explanation="'+E(q.explanation)+'"><h3>'+String(i+1)+'. '+E(q.question)+'</h3>'+q.answers.map((a,j)=>'<label><input type="radio" name="gold-q-'+E(gold.lessonId)+'-'+group+'-'+i+'" value="'+j+'"><span>'+E(a)+'</span></label>').join('')+'<button type="button" class="btn" data-gold-check>'+E(t('Проверить ответ','Check answer'))+'</button><p data-gold-feedback role="status" aria-live="polite"></p></article>').join('');
 
   const quiz=questions(gold.assessment,'assessment');
   const readiness=gold.readinessCheck?'<section class="block glass-panel" data-gold-readiness><h2>'+E((gold.moduleId==='cpp.section.visual-programming'?t('Перед началом: восстановите опоры Module 1–5','Before you start: recall Modules 1–5'):gold.moduleId==='cpp.section.oop'?t('Перед началом: восстановите опоры Module 1–4','Before you start: recall Modules 1–4'):gold.moduleId==='cpp.section.classic-algorithms'?t('Перед началом: восстановите опоры Module 1–3','Before you start: recall Modules 1–3'):gold.moduleId==='cpp.section.structured-programming'?t('Перед началом: восстановите опоры Module 1–2','Before you start: recall Modules 1–2'):t('Перед началом: восстановите опоры Module 1','Before you start: recall Module 1')))+'</h2>'+questions(gold.readinessCheck,'readiness')+'</section>':'';
-  const negatives=gold.diagnosticExamples?.length?'<section class="block glass-panel" data-gold-negatives><h2>'+E(t('Намеренные ошибки: сборка должна отказать','Intentional errors: the build should fail'))+'</h2><p>'+E(t('Эти примеры служат диагностике. Рабочее решение лабораторной должно собираться успешно.','These examples teach diagnosis. The working laboratory solution must build successfully.'))+'</p>'+gold.diagnosticExamples.map(x=>'<details><summary>'+E(x.title)+'</summary><p>'+E(x.explanation)+'</p><pre><code>'+E(x.code)+'</code></pre><button type="button" class="btn" data-gold-copy>'+E(t('Скопировать код','Copy code'))+'</button></details>').join('')+'</section>':'';  return '<div class="academy-gold" data-gold-lesson="'+E(gold.lessonId)+'" lang="'+E(lang)+'"><section class="block glass-panel gold-overview">'+heading('ACADEMY GOLD STANDARD 1.1')+'<h2>'+E(gold.title)+'</h2><p>'+E(gold.why)+'</p><div class="gold-overview-columns"><div><h3>'+E(t('После занятия сможете','Learning outcomes'))+'</h3>'+ordered(gold.objectives)+'</div><div><h3>'+E(t('Перед началом','Prerequisites'))+'</h3>'+ordered(gold.prerequisites)+(gold.prerequisiteLessons?'<ul>'+gold.prerequisiteLessons.map(p=>'<li><a href="#course=cpp&amp;lesson='+E(encodeURIComponent(p.lessonId))+'">'+E(p.title)+'</a></li>').join('')+'</ul>':'')+'</div></div></section>'+readiness+'<section class="block glass-panel gold-theory">'+heading(t('ОСНОВАТЕЛЬНАЯ ТЕОРИЯ','FOUNDATIONAL THEORY'))+'<h2>'+E(t('Разбираемся в причинах и связях','Explain the reasons, not only the rules'))+'</h2>'+sections+'</section>'+goldVisualizationMarkup(gold)+'<section class="block glass-panel">'+heading(t('РАЗОБРАННЫЕ ПРИМЕРЫ','WORKED EXAMPLES'))+'<h2>'+E(t('От задачи к работающему коду','From problem to working code'))+'</h2><div class="gold-example-grid">'+examples+'</div></section><section class="block glass-panel">'+heading(t('УПРАВЛЯЕМЫЕ ЭКСПЕРИМЕНТЫ','GUIDED EXPERIMENTS'))+experiments+'</section><section class="block glass-panel">'+heading(t('ТИПИЧНЫЕ ОШИБКИ','DIAGNOSTICS'))+diagnostics+'</section>'+negatives+'<section class="block glass-panel">'+heading(t('САМОСТОЯТЕЛЬНАЯ ПРАКТИКА','INDEPENDENT PRACTICE'))+activities+'</section><section class="block glass-panel gold-laboratory" id="cppLab" data-gold-laboratory>'+heading(t('ЛАБОРАТОРНАЯ РАБОТА','LABORATORY'))+'<h2>'+E(lab.title)+'</h2><p>'+E(lab.challenge)+'</p>'+goldWorkspaceMarkup(lang,{gui:lab.target==='qt-wasm'})+'<h3>'+E(t('Порядок работы','Work steps'))+'</h3>'+ordered(lab.steps)+'<details><summary>'+E(t('Заготовка для самостоятельной работы','Starter for independent work'))+'</summary><pre><code>'+E(lab.starterCode)+'</code></pre>'+goldBundleMarkup(lab.starterFiles,lab.metadata||{},lang)+'<button type="button" class="btn" data-gold-copy>'+E(t('Скопировать код','Copy code'))+'</button></details><h3>'+E(t('Контрольные сценарии для сравнения вывода','Reference cases for comparing output'))+'</h3>'+tests+'<p><strong>'+E(t('Доказательства выполнения','Completion evidence'))+':</strong> '+E(t('Сохранённый исходник и материалы по критериям ниже','Saved source and the deliverables in the criteria below'))+'</p>'+ordered(lab.rubric)+'<details><summary>'+E(t('Эталонное решение (по запросу)','Reference solution (on request)'))+'</summary><pre><code>'+E(lab.referenceCode)+'</code></pre>'+goldBundleMarkup(lab.referenceFiles,lab.metadata||{},lang)+'<button type="button" class="btn" data-gold-copy>'+E(t('Скопировать код','Copy code'))+'</button></details><p class="gold-evidence-note">'+E(lab.target==='qt-wasm'?t('Проверка: настоящая сборка Qt, сценарии Preview и тесты модели в Project Studio. Базовые серверные тесты не оценивают произвольное расширение; нужны рубрика и защита.','Verification: a real Qt build, Preview scenarios and model tests in Project Studio. Baseline server tests do not assess every extension; a rubric and defense are required.'):t('Проверка в этом кандидате: запуск в Code Studio и ручное сравнение stdout с указанными случаями. Автоматическая оценка решения ученика не заявляется.','In this candidate: run in Code Studio and compare stdout with the listed cases. Automatic grading of learner submissions is not claimed.'))+'</p></section>'+goldDeliveryMarkup(lab.delivery,lang)+modulePracticumMarkup(gold.blockPracticum,lang)+modulePracticumMarkup(gold.modulePracticum,lang)+'<section class="block glass-panel">'+heading(t('КОНТРОЛЬ ПОНИМАНИЯ','KNOWLEDGE CHECK'))+quiz+'<h3>'+E(t('Объясните своими словами','Explain in your own words'))+'</h3>'+ordered(gold.reflection)+'</section><section class="block glass-panel">'+heading(t('ИТОГ И ДАЛЬШЕ','SUMMARY AND NEXT'))+'<p>'+E(gold.bridge)+'</p><h3>'+E(t('Справочные источники','Reference sources'))+'</h3><ul>'+gold.sourceRefs.map(id=>sourceLink(id,lang)).join('')+'</ul></section></div>';
+  const negatives=gold.diagnosticExamples?.length?'<section class="block glass-panel" data-gold-negatives><h2>'+E(t('Намеренные ошибки: сборка должна отказать','Intentional errors: the build should fail'))+'</h2><p>'+E(t('Эти примеры служат диагностике. Рабочее решение лабораторной должно собираться успешно.','These examples teach diagnosis. The working laboratory solution must build successfully.'))+'</p>'+gold.diagnosticExamples.map(x=>'<details><summary>'+E(x.title)+'</summary><p>'+E(x.explanation)+'</p><pre><code>'+E(x.code)+'</code></pre><button type="button" class="btn" data-gold-copy>'+E(t('Скопировать код','Copy code'))+'</button></details>').join('')+'</section>':'';  return '<div class="academy-gold" data-gold-lesson="'+E(gold.lessonId)+'" lang="'+E(lang)+'"><section class="block glass-panel gold-overview">'+heading('ACADEMY GOLD STANDARD 1.1')+'<h2>'+E(gold.title)+'</h2><p>'+E(gold.why)+'</p><div class="gold-overview-columns"><div><h3>'+E(t('После занятия сможете','Learning outcomes'))+'</h3>'+ordered(gold.objectives)+'</div><div><h3>'+E(t('Перед началом','Prerequisites'))+'</h3>'+ordered(gold.prerequisites)+(gold.prerequisiteLessons?'<ul>'+gold.prerequisiteLessons.map(p=>'<li><a href="#course=cpp&amp;lesson='+E(encodeURIComponent(p.lessonId))+'">'+E(p.title)+'</a></li>').join('')+'</ul>':'')+'</div></div></section>'+readiness+'<section class="block glass-panel gold-theory">'+heading(t('ОСНОВАТЕЛЬНАЯ ТЕОРИЯ','FOUNDATIONAL THEORY'))+'<h2>'+E(t('Разбираемся в причинах и связях','Explain the reasons, not only the rules'))+'</h2>'+sections+'</section>'+goldVisualizationMarkup(gold)+'<section class="block glass-panel">'+heading(t('РАЗОБРАННЫЕ ПРИМЕРЫ','WORKED EXAMPLES'))+'<h2>'+E(t('От задачи к работающему коду','From problem to working code'))+'</h2><div class="gold-example-grid">'+examples+'</div></section><section class="block glass-panel">'+heading(t('УПРАВЛЯЕМЫЕ ЭКСПЕРИМЕНТЫ','GUIDED EXPERIMENTS'))+experiments+'</section><section class="block glass-panel">'+heading(t('ТИПИЧНЫЕ ОШИБКИ','DIAGNOSTICS'))+diagnostics+'</section>'+negatives+'<section class="block glass-panel">'+heading(t('САМОСТОЯТЕЛЬНАЯ ПРАКТИКА','INDEPENDENT PRACTICE'))+activities+'</section>'+goldLaboratoryMarkup(gold,lab)+goldDeliveryMarkup(lab.delivery,lang)+modulePracticumMarkup(gold.blockPracticum,lang)+modulePracticumMarkup(gold.modulePracticum,lang)+'<section class="block glass-panel">'+heading(t('КОНТРОЛЬ ПОНИМАНИЯ','KNOWLEDGE CHECK'))+quiz+'<h3>'+E(t('Объясните своими словами','Explain in your own words'))+'</h3>'+ordered(gold.reflection)+'</section><section class="block glass-panel">'+heading(t('ИТОГ И ДАЛЬШЕ','SUMMARY AND NEXT'))+'<p>'+E(gold.bridge)+'</p><h3>'+E(t('Справочные источники','Reference sources'))+'</h3><ul>'+gold.sourceRefs.map(id=>sourceLink(id,lang)).join('')+'</ul></section></div>';
 }
 export function bindAcademyGold(root=document,gold){
   for(const button of root.querySelectorAll('[data-gold-open-editor]')){

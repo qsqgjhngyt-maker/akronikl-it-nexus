@@ -44,7 +44,8 @@
       "paragraphs": [
         "For the water meter, main displays a remaining amount. The shared type and function declaration live in meter.h and the calculation lives in meter.c. That boundary lets the calculation evolve without exposing its details to the console layer.",
         "daily_limit is declared static at file scope in meter.c. Its name has internal linkage, so another .c uses the public remaining_litres function. The header has its own include guard.",
-        "In the exercise, main.c reads a record, while record.c manages prices and validates quantities. Return -1 for a rejected record. Zero is an ordinary total for a valid record."
+        "In the exercise, main.c reads a record, while record.c manages prices and validates quantities. Return -1 for a rejected record. Zero is an ordinary total for a valid record.",
+        "The public interface describes inputs and return values. The source of the limit remains a detail of meter.c and can change without an edit to the caller."
       ]
     },
     {
@@ -300,5 +301,28 @@
       "c.link-translation-units",
       "c.record-member-and-copy"
     ]
+  },
+  "teaching": {
+    "scene": "Split a calculator into an entry point and a rules module. Confirm that main gets its answer through the header while the helper stays inside the implementation.",
+    "predict": {
+      "prompt": "The module uses a daily limit of 12 litres and main creates a struct Reading with value 7. What is printed, and which public function gives main the result?",
+      "answer": "main calls remaining_litres, declared in meter.h. Inside meter.c, it gets 12 from daily_limit and subtracts 7. The line is remaining=5 litres."
+    },
+    "apply": {
+      "prompt": "In a copy of meter.c, change the daily limit to 10. What will the same main print? Does the declaration in meter.h need to change?",
+      "answer": "The result is remaining=3 litres. The header stays the same because the argument and return types are unchanged. Rebuild with the new implementation."
+    },
+    "practice": {
+      "strategy": "Separate the work: main checks the line syntax, and the module validates fields and computes the total. Decide how to distinguish rejection from a valid zero total. Test A 0, B 4, and B 7.",
+      "diagnosis": "If A 0 is rejected, compare the valid total 0 with the error sentinel -1. If B 7 is accepted, see whether the module enforces the range for every caller."
+    },
+    "syntax": {
+      "termId": "private-helper",
+      "form": "static int helper(void)\n{\n    return 12;\n}",
+      "example": "static int daily_limit(void)\n{\n    return 12;\n}",
+      "explanation": "At file scope, static gives a function internal linkage. Outside callers use the function declared in the header. Inside the module, that function can use the local helper.",
+      "mistake": "Declaring daily_limit in the public header would expose an implementation detail. Keep the declarations the caller actually needs."
+    },
+    "focus": "    struct Reading morning = {7};\n    printf(\"remaining=%d litres\\n\", remaining_litres(morning));\n    return 0;\n}"
   }
 }

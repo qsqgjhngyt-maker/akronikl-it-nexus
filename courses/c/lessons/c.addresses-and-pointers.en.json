@@ -290,5 +290,28 @@
       "c.array-index-range",
       "c.local-scope-lived-object"
     ]
+  },
+  "teaching": {
+    "scene": "A panel has two counters and one increment button. Select the address of the intended counter, then check both printed values to see which object received the write.",
+    "predict": {
+      "prompt": "value is 8 and p receives &value. What two numbers print after *p += 3? Where does p point afterward?",
+      "answer": "It prints 11 11. p first stores the address of value. *p denotes that same object, so adding 3 changes its integer from 8 to 11. The address held by p stays the same."
+    },
+    "apply": {
+      "prompt": "The left counter starts at 20 and the right at -1. Select the second counter and add 5. What pair proves that the right counter was updated?",
+      "answer": "The pair 20 4 shows where the write went. The first number stays 20, and the second changes from -1 to 4."
+    },
+    "practice": {
+      "strategy": "Separate selection, pointer validation and the shared increment into three steps. For each branch, identify the live object whose address selected stores.",
+      "diagnosis": "With input 2 the starter prints 7 10. The increment occurred once, but it changed the first number. Trace the branch that supplies the address."
+    },
+    "syntax": {
+      "termId": "indirection",
+      "form": "int *pointer = &object;\n*pointer = new_value;",
+      "example": "int count = 8;\nint *chosen = &count;\n*chosen += 3;",
+      "explanation": "& computes an address. In an expression, * denotes the object at a valid address. A write through * changes that object.",
+      "mistake": "With int *p = value, an integer is supplied where an address is needed. &value obtains the address of the live value object."
+    },
+    "focus": "    int value = 8;\n    int *p = &value;\n\n    *p += 3;\n    printf(\"%d %d\\n\", value, *p);"
   }
 }

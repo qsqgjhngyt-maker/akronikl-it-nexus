@@ -44,7 +44,8 @@
       "paragraphs": [
         "The laboratory log pairs sensor number 14 with its reading of 320 mV. With separate variables, a copy operation might accidentally move only half of the record.",
         "The declaration struct Sample defines a type. The object current gets its own member values. The dot operator selects a member of that object.",
-        "Designated initializers .id and .millivolts bind values to member names. C permits padding between members and at the end, so the structure's memory representation is not a file format."
+        "Designated initializers .id and .millivolts bind values to member names. C permits padding between members and at the end, so the structure's memory representation is not a file format.",
+        "Named fields distinguish the roles of the numbers. Copying a structure with a pointer member copies the pointer value. It does not duplicate the target object."
       ]
     },
     {
@@ -272,5 +273,28 @@
       "c.trace-initialised-values",
       "c.checked-line-input"
     ]
+  },
+  "teaching": {
+    "scene": "A sensor log must keep the original measurement and show the corrected reading next to it. Use the three output fields to verify the identifier, correction and retained snapshot.",
+    "predict": {
+      "prompt": "current holds identifier 14 and 320 mV. The program copies it to archived, then adds 15 only to current.millivolts. Which three numbers does it print?",
+      "answer": "It prints 14 335 320. Both fields are copied first. The increment changes just one field of current, so archived.millivolts still holds 320."
+    },
+    "apply": {
+      "prompt": "For ID 205 the original measurement is 1990 mV. Compare corrections of +15 and -15 with a permitted result from 0 to 2000 mV. How can the snapshot be checked?",
+      "answer": "+15 gives 2005, so the output is invalid. -15 gives 1975, so the output is 205 1975 1990. The last number confirms the original snapshot."
+    },
+    "practice": {
+      "strategy": "Parse the input into named fields and take a snapshot before changing them. Compute the corrected value separately and check its range. Print the reading from the snapshot last.",
+      "diagnosis": "With 42 780 15 the starter prints 42 780 780. The snapshot is right, but the correction is missing. Check how adjusted is computed."
+    },
+    "syntax": {
+      "termId": "structure-copy",
+      "form": "struct Sample archived = current;\ncurrent.millivolts += correction;",
+      "example": "struct Sample current = { .id = 14, .millivolts = 320 };\nstruct Sample archived = current;\ncurrent.millivolts += 15;",
+      "explanation": "Assignment between structures of the same type copies their member values. The int members in this example are separate integer copies.",
+      "mistake": "A snapshot taken after the correction already contains the new value. Take the copy before changing the reading."
+    },
+    "focus": "    struct Sample current = { .id = 14, .millivolts = 320 };\n    struct Sample archived = current;\n    current.millivolts += 15;\n    printf(\"%d %d %d\\n\", current.id, current.millivolts, archived.millivolts);"
   }
 }

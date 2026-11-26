@@ -1,5 +1,10 @@
+import {courseBackMarkup, courseHeroMarkup, courseContinueMarkup} from './academy-course-header.mjs';
 import {bindCCourseWorkspace, createCCourseStorage} from './c-course-workspace.mjs';
-import {bindGlossaryDrawer, termReferenceMarkup} from './nexus-learning-ui.js';
+import {courseNavigationMarkup} from './academy-course-navigation.mjs';
+import {academyLessonMenuToggle, academyLessonMenuPanel, bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
+import {academyPracticeHelpMarkup, academyRecallMarkup} from './academy-practice-help.mjs';
+import {academyAssignmentsMarkup, academyCourseSections, academyCourseWorkMarkup,
+  bindAcademyWorkSearch, loadAcademyWork, loadAcademyProjects} from './academy-course-work.mjs';
 import {registerUpdateParticipant} from '../pwa/interface-update.js';
 
 const stages = [
@@ -11,6 +16,23 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, character =>
   ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[character]));
 const localized = (entry, locale) => entry?.[locale] ?? entry?.ru ?? '';
 const dataRoot = new URL('../courses/c/', import.meta.url);
+
+let styleReady;
+function ensureCCourseStyle() {
+  return styleReady ??= new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.dataset.cCourseStyle = '';
+    link.href = new URL('./c-course.css', import.meta.url).href;
+    link.addEventListener('load', resolve, {once:true});
+    link.addEventListener('error', () => {
+      link.remove();
+      styleReady = undefined;
+      reject(new Error('C course styles could not be loaded'));
+    }, {once:true});
+    document.head.append(link);
+  });
+}
 
 async function loadJson(path) {
   const response = await fetch(new URL(path, dataRoot));
@@ -31,9 +53,10 @@ async function loadCourse() {
     .catch(error => { course = undefined; throw error; });
 }
 
-function routeLink(locale, lessonId, stage) {
+function routeLink(locale, lessonId, stage, moduleId) {
   const params = new URLSearchParams({course:'c'});
   if (lessonId) params.set('lesson', lessonId);
+  if (!lessonId && moduleId) params.set('module', moduleId);
   if (lessonId && stage && stage !== 'explanation') params.set('stage', stage);
   params.set('locale', locale);
   return '#' + params.toString();
@@ -56,48 +79,42 @@ function safeRead(storage, key) {
   catch { return null; }
 }
 
-function overview({data, locale, t, resume, progress}) {
+function overview({data, locale, t, resume, progress, selectedModule, tab, path, work, projects}) {
   const {manifest, curriculum, topics} = data;
   const last = topics.find(topic => topic.id === resume?.lessonId);
   const start = last ?? topics[0];
-  const topicIds = new Set(topics.map(topic => topic.id));
-  const modules = curriculum.modules.map((module, index) => {
-    const active = manifest.availableModuleIds.includes(module.id);
-    const links = module.topics.map(topic => {
-      const title = escape(localized(topic.title, locale));
-      if (!active || !topicIds.has(topic.id)) return '<li>' + title + '</li>';
-      const completed = progress.has(topic.id);
-      return '<li><a href="' + escape(routeLink(locale, topic.id)) + '" aria-label="' + title + '"' +
-        (completed ? ' aria-describedby="c-studied-' + escape(topic.id) + '"' : '') + '><span>' + title +
-        (completed ? ' <small id="c-studied-' + escape(topic.id) + '">' + t('Изучен', 'Studied') + '</small>' : '') +
-        '</span><span aria-hidden="true">→</span></a></li>';
-    }).join('');
-    const title = escape(localized(module.title, locale));
-    const count = t('Темы: ', 'Lessons: ') + module.topics.length;
-    const goals = list(localized(module.goals, locale) || []);
-    return active
-      ? '<article class="c-panel c-module" data-c-module="' + escape(module.id) + '"><p class="eyebrow">' +
-        t('Модуль ', 'Module ') + (index + 1) + ' · ' + count + '</p><h2>' + title + '</h2>' +
-        goals + '<ol class="c-outline">' + links + '</ol></article>'
-      : '<details class="c-panel c-module"><summary>' + title + ' · ' +
-        escape(t('В плане', 'Planned')) + '</summary>' + goals + '<ol>' + links + '</ol></details>';
-  }).join('');
-  const percent = topics.length ? Math.round(100 * progress.size / topics.length) : 0;
-  const moduleCount = manifest.availableModuleIds.length + (manifest.availableModuleIds.length === curriculum.moduleCount ? '' : ' / ' + curriculum.moduleCount);
-  const studied = t('Изучено', 'Studied');
-  return '<div class="nexus-learning"><a class="back-link" href="#view=academy">← ' + t('Академия', 'Academy') + '</a>' +
-    '<header class="c-panel course-hero"><div class="course-code large" aria-hidden="true">C<span>17</span></div><div>' +
-    '<p class="eyebrow">' + t('Учебный курс C17', 'C17 course') + '</p><h1>' +
-    escape(localized(manifest.title, locale)) + '</h1><p>' + escape(localized(manifest.description, locale)) + '</p>' +
-    '<div class="learning-course-facts"><span>' + t('Модули: ', 'Modules: ') + '<b>' + moduleCount + '</b></span><span>' +
-    t('Темы: ', 'Lessons: ') + '<b>' + topics.length + '</b></span></div>' +
-    '<div class="progress-row"><span>' + studied + ' <b>' + progress.size + ' / ' + topics.length + '</b></span><span>' + percent +
-    '%</span></div><div class="progress" role="progressbar" aria-label="' + studied + '" aria-valuemin="0" aria-valuemax="' +
-    topics.length + '" aria-valuenow="' + progress.size + '"><i style="width:' + percent + '%"></i></div>' +
-    button(routeLink(locale, start?.id, last ? resume.stage : undefined),
-      last ? t('Продолжить: ', 'Resume: ') + localized(last.title, locale) : t('Начать первый урок', 'Start the first lesson'), true) +
-    '</div></header><section aria-labelledby="c-curriculum"><h2 id="c-curriculum">' +
-    t('Программа курса', 'Course outline') + '</h2><div class="c-module-grid">' + modules + '</div></section></div>';
+  const moduleIds = new Set(manifest.availableModuleIds);
+  const numbers = new Map(topics.map((topic, index) => [topic.id, index + 1]));
+  const modules = curriculum.modules.map((module, index) => ({
+    id: module.id,
+    title: localized(module.title, locale),
+    number: index + 1,
+    available: moduleIds.has(module.id),
+    description: (module.goals?.[locale] ?? []).join(" "),
+    criterion: localized(module.completion, locale),
+    topics: module.topics.map(topic => ({
+      id: topic.id,
+      title: localized(topic.title, locale),
+      number: numbers.get(topic.id),
+      href: numbers.has(topic.id) ? routeLink(locale, topic.id) : null,
+      completed: progress.has(topic.id),
+    })),
+  }));
+  const selected = modules.some(module => module.id === selectedModule);
+  const navigation = courseNavigationMarkup({locale, modules, selectedModule, includeStyles: selected,
+    overviewHref: routeLink(locale), moduleHref: id => routeLink(locale, null, null, id)});
+  if (selected) return '<div class="nexus-learning c-module-view">' + navigation + '</div>';
+  const hero = courseHeroMarkup({id: 'c', locale, title: localized(manifest.title, locale),
+    description: localized(manifest.description, locale), symbol: 'C', suffix: '17',
+    facts: [[topics.length,t('Темы','Lessons')],[manifest.availableModuleIds.length,t('Практикумы','Practicums')],
+      [projects.length,t('Учебные проекты','Course projects')]],
+    progress: {done:progress.size,total:topics.length}});
+  const continuation = start ? courseContinueMarkup({locale,title:localized(start.title, locale),
+    href:routeLink(locale,start.id,last ? resume.stage : undefined), visited:!!last,
+    stage:last ? stages.find(([id])=>id===resume.stage)?.[locale==='en' ? 2 : 1] : ''}) : '';
+  const sections = academyCourseSections({course:'c',locale,active:tab});
+  const content = academyCourseWorkMarkup({course:'c',locale,modules,outline:navigation,work,projects,tab,path});
+  return '<div class="nexus-learning">' + hero + sections + (tab==='overview'?continuation:'') + content + '</div>';
 }
 
 function renderFiles(files, t, heading) {
@@ -109,15 +126,20 @@ function renderFiles(files, t, heading) {
       '<p>' + t('Файлов нет', 'No files') + '</p>') + '</div>';
 }
 
-function renderCode(code, t, {showResult = true} = {}) {
+function renderCode(code, t, {showResult = true, focus} = {}) {
   if (!code) return '';
   const input = code.stdin ? '<div><h4>' + t('Ввод', 'Input') + '</h4>' + codeBlock(code.stdin) + '</div>' : '';
   const result = !showResult || code.output === undefined ? '' : '<div><h4>' + t('Вывод', 'Output') + '</h4>' +
     codeBlock(code.output, t('Пустой вывод', 'No output')) + '</div>';
   const diagnostic = code.diagnostic ? '<p><strong>' + t('Диагностика', 'Diagnostic') + '</strong> ' +
     escape(code.diagnostic) + '</p>' : '';
-  return '<div class="c-example"><div><h4>main.c</h4>' + codeBlock(code.source) + '</div>' +
-    renderFiles(code.files, t, t('Файлы примера', 'Example files')) +
+  const fullExample = '<div><h4>main.c</h4>' + codeBlock(code.source) + '</div>' +
+    renderFiles(code.files, t, t('Файлы примера', 'Example files'));
+  return '<div class="c-example"><div>' + (focus
+    ? '<h4>' + t('Ключевой фрагмент', 'Key lines') + '</h4>' + codeBlock(focus) +
+      '<details class="c-full-example"><summary>' + t('Показать полную программу', 'Show the full program') +
+      '</summary>' + fullExample + '</details>'
+    : fullExample) + '</div>' +
     (input || result ? '<div class="c-example-io">' + input + result + '</div>' : '') +
     (showResult ? renderFiles(code.outputFiles, t, t('Файлы результата', 'Result files')) +
       (code.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(code.stderr) + '</div>' : '') +
@@ -125,53 +147,32 @@ function renderCode(code, t, {showResult = true} = {}) {
     diagnostic + '</div>';
 }
 
-function lessonReference(lesson, locale, t) {
-  const terms = lesson.terms.map(term => ({...term, term:term.term ?? term.title}));
-  const examples = lesson.sections.filter(section => section.code);
-  return '<div class="lesson-floating c-lesson-reference" role="group" aria-label="' + t('Справка', 'Help') + '">' +
-    '<button class="quick-action" type="button" data-open-terms data-c-reference="terms"><span aria-hidden="true">⌕</span> ' +
-    t('Справочник', 'Reference') + '</button>' +
-    '<button class="quick-action" type="button" data-open-terms data-c-reference="syntax"><span aria-hidden="true">{ }</span> ' +
-    t('Синтаксис', 'Syntax') + '</button></div>' +
-    termReferenceMarkup(terms, {uiLocale:locale, contentLocale:locale}).replace('</dialog>',
-      '<div class="drawer-scroll c-syntax-list" data-c-syntax-list tabindex="0" role="region" aria-labelledby="termDrawerTitle" hidden>' +
-      examples.map(section => '<section><h3>' + escape(section.title) + '</h3>' + renderCode(section.code, t) + '</section>').join('') +
-      '</div></dialog>');
-}
-
-function bindLessonReference(host, t) {
-  const drawer = host.querySelector('#termDrawer');
-  const title = drawer.querySelector('#termDrawerTitle');
-  const search = drawer.querySelector('.drawer-search');
-  const termList = drawer.querySelector('#termList');
-  const syntaxList = drawer.querySelector('[data-c-syntax-list]');
-  return bindGlossaryDrawer(host, {
-    prepareOpen(trigger) {
-      const syntax = trigger.dataset.cReference === 'syntax';
-      drawer.toggleAttribute('data-c-syntax', syntax);
-      title.textContent = syntax ? t('Синтаксис C17 по теме', 'C17 syntax for this lesson') :
-        t('Справочник терминов', 'Terminology reference');
-      search.hidden = syntax;
-      termList.hidden = syntax;
-      syntaxList.hidden = !syntax;
-      return syntax ? syntaxList : search.querySelector('input');
-    },
-  });
+function reasoning(question, label, t) {
+  if (!question) return '';
+  return '<aside class="c-reasoning"><h3>' + label + '</h3><p>' + escape(question.prompt) +
+    '</p><details><summary>' + t('Сверить рассуждение', 'Compare your reasoning') +
+    '</summary><p>' + escape(question.answer) + '</p></details></aside>';
 }
 
 function explanation(lesson, t) {
-  const contents = '<nav class="c-panel c-contents" aria-label="' + t('Содержание объяснения', 'Explanation contents') +
-    '"><h2>' + t('Содержание', 'Contents') + '</h2><ol>' + lesson.sections.map(section =>
+  const teaching = lesson.teaching;
+  const workedExample = lesson.sections.find(section => section.code);
+  const contents = '<details class="c-panel c-contents" open><summary>' + t('В этом уроке', 'In this lesson') +
+    '</summary><nav aria-label="' + t('Содержание объяснения', 'Explanation contents') +
+    '"><ol>' + lesson.sections.map(section =>
       '<li><button type="button" class="c-section-link" data-c-jump="' + escape(section.id) + '">' +
-      escape(section.title) + '</button></li>').join('') + '</ol></nav>';
-  const sections = lesson.sections.map(section =>
-    '<section class="c-panel" data-c-section="' + escape(section.id) + '" tabindex="-1"><h2>' + escape(section.title) + '</h2>' +
+      escape(section.title) + '</button></li>').join('') + '</ol></nav></details>';
+  const traceLabels = [t('Шаг', 'Step'),t('Данные или состояние', 'Data or state'),t('Наблюдение', 'Observation'),t('Почему', 'Why')];
+  const sections = lesson.sections.map((section,index) =>
+    '<section class="c-panel" data-c-section="' + escape(section.id) + '" tabindex="-1"><p class="c-step-count">' +
+    t('Шаг ', 'Step ') + (index+1) + ' / ' + lesson.sections.length + '</p><h2>' + escape(section.title) + '</h2>' +
     (section.paragraphs ?? []).map(paragraph => '<p>' + escape(paragraph) + '</p>').join('') +
-    renderCode(section.code, t) +
+    (section===workedExample ? reasoning(teaching?.predict, t('Предскажите результат', 'Predict the result'), t) : '') +
+    renderCode(section.code, t, {focus:section===workedExample ? teaching?.focus : undefined}) +
     (section.steps?.length ? '<ol>' + section.steps.map(step => '<li>' + escape(step) + '</li>').join('') + '</ol>' : '') +
-    (section.trace?.length ? '<ol class="c-trace">' + section.trace.map(row => '<li>' +
-      row.map((cell, index) => (index === 0 ? '<strong>' + escape(cell) + '</strong>' : '<span>' + escape(cell) + '</span>')).join('') +
-      '</li>').join('') + '</ol>' : '') + '</section>').join('');
+    (section.trace?.length ? '<ol class="c-trace">' + section.trace.map(row => '<li><dl>' +
+      row.map((cell, index) => '<div>' + (traceLabels[index] ? '<dt>' + traceLabels[index] + '</dt>' : '') +
+        '<dd>' + escape(cell) + '</dd></div>').join('') + '</dl></li>').join('') + '</ol>' : '') + '</section>').join('');
   const prerequisites = lesson.prerequisites.map(item => item.text ?? item).filter(Boolean);
   const bibliography = (lesson.reading ?? []).map(item => '<li><strong>' + escape(item.title) + '</strong> ' +
     escape([item.edition, item.section].filter(Boolean).join(' · ')) + '<p>' + escape(item.purpose) + '</p></li>').join('');
@@ -180,8 +181,10 @@ function explanation(lesson, t) {
     '<p>' + t('Найдите место ошибки в программе и сравните его с сообщением компилятора.', 'Find the error in the program and compare its location with the compiler message.') +
     '</p>' + codeBlock(item.source) + renderFiles(item.files, t, t('Файлы проекта', 'Project files')) + '<h3>' + t('Фрагмент сообщения Clang', 'Excerpt from the Clang diagnostic') +
     '</h3>' + codeBlock(Array.isArray(item.stderrIncludes) ? item.stderrIncludes.join(' · ') : item.stderrIncludes) + '</section>').join('');
-  return '<div class="c-reading">' + contents + '<div><section class="c-panel"><h2>' + t('На этом уроке', 'In this lesson') +
-    '</h2><p>' + escape(lesson.goal) + '</p>' + (prerequisites.length ? list(prerequisites) : '') + '</section>' + sections + diagnostics +
+  return '<div class="c-reading">' + contents + '<div><header class="c-intro"><h2>' + escape(lesson.title) +
+    '</h2>' + (teaching?.scene ? '<p class="c-intro-scene">' + escape(teaching.scene) + '</p>' : '') +
+    '<p>' + escape(lesson.goal) + '</p>' + (prerequisites.length ? '<h3>' +
+      t('Что пригодится', 'What you will use') + '</h3>' + list(prerequisites) : '') + '</header>' + sections + diagnostics +
     (bibliography ? '<details class="c-panel"><summary>' + t('Дополнительное чтение', 'Further reading') + '</summary><ul>' +
     bibliography + '</ul></details>' : '') + '</div></div>';
 }
@@ -189,6 +192,7 @@ function explanation(lesson, t) {
 function selfcheck(lesson, t, responses) {
   return lesson.selfcheck.map((item, index) => {
     const response = responses[item.id];
+    const rule = lesson.sections.find(section => section.id === item.recall);
     const answer = item.kind === 'choice' ? '<fieldset><legend>' + t('Выберите ответ', 'Choose an answer') +
       '</legend>' + item.options.map((option, optionIndex) => '<label class="c-option"><input type="radio" name="c-question-' +
         index + '" value="' + optionIndex + '"' + (response === optionIndex ? ' checked' : '') + '> ' + escape(option) + '</label>').join('') +
@@ -198,47 +202,78 @@ function selfcheck(lesson, t, responses) {
       '<details><summary>' + t('Сверить объяснение', 'Compare your explanation') + '</summary><p>' +
       escape(item.feedback) + '</p></details>';
     return '<section class="c-panel" data-c-question="' + index + '"><h2>' + escape(item.prompt) + '</h2>' +
-      renderCode(item.code, t, {showResult:false}) + answer + '</section>';
-  }).join('');
+      renderCode(item.code, t, {showResult:false}) + (rule ? academyRecallMarkup({
+        locale:lesson.locale, title:rule.title, rule:rule.paragraphs?.[0] ?? lesson.goal,
+        explanationUrl:routeLink(lesson.locale, lesson.id) + '&at=' + encodeURIComponent(rule.id),
+      }) : '') + answer + '</section>';
+  }).join('') + (lesson.teaching?.apply ? '<section class="c-panel" data-c-transfer>' +
+    reasoning(lesson.teaching.apply,t('Примените к новой ситуации','Apply it to a new case'),t) + '</section>' : '');
+}
+
+function practiceFile(name, source, t) {
+  return '<div class="c-practice-file"><h4>' + escape(name) + '</h4>' + codeBlock(source) +
+    '<button type="button" class="btn" data-c-copy-source>' + t('Скопировать код', 'Copy code') + '</button></div>';
 }
 
 function practice(lesson, t, readonly) {
+  const locale = lesson.locale;
   const work = lesson.practice;
   const steps = (work.steps ?? []).map(step => '<li><strong>' + escape(step.action) + '</strong>' +
     (step.where && step.where !== 'Code Studio' ? ' <small>' + escape(step.where) + '</small>' : '') +
     (step.why ? '<p>' + escape(step.why) + '</p>' : '') +
     (step.expected ? '<p>' + escape(step.expected) + '</p>' : '') + '</li>').join('');
-  const cases = work.cases.map(test => '<section class="c-test"><h3>' + escape(test.label) + '</h3>' +
+  const cases = work.cases.map((test, index) => '<details class="c-test"' + (index === 0 ? ' open' : '') +
+    '><summary>' + escape(test.label) + '</summary>' +
     '<div class="c-case-pair"><div><h4>' + t('Ввод', 'Input') + '</h4>' + codeBlock(test.input, t('Ввод не нужен', 'No input')) +
-    '</div><div><h4>' + t('Ожидаемый вывод', 'Expected output') + '</h4>' +
-    codeBlock(test.output, t('Пустой вывод', 'No output')) + '</div></div>' +
-    renderFiles(test.inputFiles, t, t('Входные файлы', 'Input files')) +
+    renderFiles(test.inputFiles, t, t('Входные файлы', 'Input files')) + '</div><details data-academy-expected><summary>' +
+    t('Ожидаемый вывод', 'Expected output') + '</summary>' + codeBlock(test.output, t('Пустой вывод', 'No output')) +
     renderFiles(test.outputFiles, t, t('Изменённые и созданные файлы', 'Changed and created files')) +
     (test.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(test.stderr) + '</div>' : '') +
-    (test.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(test.exitCode) + '</p>' : '') + '</section>').join('');
+    (test.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(test.exitCode) + '</p>' : '') + '</details></div></details>').join('');
   const reference = work.referenceSolution;
-  return '<section class="c-panel"><h2>' + escape(work.title) + '</h2><p>' + escape(work.task) +
-    '</p><ol>' + steps + '</ol><details><summary>' + t('Подсказка', 'Hint') + '</summary><p>' + escape(work.hint) +
-    '</p></details></section>' +
+  const starter = work.files.map(file => practiceFile(file.path, file.content ?? file.source, t)).join('');
+  const referenceFiles = Object.entries(reference?.files ?? {}).map(([name, source]) =>
+    practiceFile(name, typeof source === 'string' ? source : source.content ?? source.source, t)).join('');
+  const rule = lesson.sections.find(section => section.id === 'idea') ?? lesson.sections[0];
+  const help = academyPracticeHelpMarkup({
+    locale, title:rule.title, rule:lesson.teaching?.syntax?.explanation ?? rule.paragraphs?.[0] ?? lesson.goal,
+    explanationUrl:routeLink(locale, lesson.id) + '&at=' + encodeURIComponent(work.returnAnchor),
+    start:lesson.teaching?.practice?.strategy, hint:work.hint, diagnosis:lesson.teaching?.practice?.diagnosis,
+  });
+  return '<section class="c-panel c-practice-task" id="academy-lab" tabindex="-1" data-c-work-task><h2>' + escape(work.title) + '</h2><p>' +
+    escape(work.task) + '</p><h3>' + t('Паспорт задачи', 'Task contract') + '</h3><dl class="c-task-contract">' +
+    '<dt>' + t('Среда', 'Environment') + '</dt><dd>' + escape(work.environment) + '</dd><dt>' +
+    t('Точка входа', 'Entry point') + '</dt><dd><code>' + escape(work.metadata.entryFile) + '</code></dd></dl>' + help +
+    '<details class="c-practice-disclosure" data-c-starter-preview><summary>' + t('Посмотреть заготовку', 'View starter') +
+    '</summary>' + starter + (work.stdin ? '<h4>' + t('Начальный ввод', 'Starter input') + '</h4>' +
+      codeBlock(work.stdin) : '') + '</details>' +
+    (steps ? '<h3>' + t('Порядок работы', 'Work steps') + '</h3><ol class="c-practice-steps">' + steps + '</ol>' : '') +
+    '</section>' +
     (readonly
-      ? '<section class="c-panel"><h2>Code Studio</h2><p>' + t('Автономная версия урока доступна для чтения. Для запуска и сохранения откройте рабочую страницу Nexus.', 'The offline lesson is available for reading. Open the Nexus workspace to run and save your program.') + '</p>' +
-        (work.files ?? []).map(file => '<h3>' + escape(file.path) + '</h3>' + codeBlock(file.content ?? file.source)).join('') +
-        '</section>'
-      : '<section class="c-panel c-workspace" data-c-workspace aria-label="Code Studio"></section>') +
-    '<section class="c-panel"><h2>' + t('Как проверить свою работу', 'How to check your work') + '</h2>' +
+      ? '<section class="c-panel"><h2>Code Studio</h2><p>' + t('Автономная версия урока доступна для чтения. Для запуска и сохранения откройте рабочую страницу Nexus.', 'The offline lesson is available for reading. Open the Nexus workspace to run and save your program.') + '</p></section>'
+      : '<section class="c-panel c-workspace-section"><h2>' + t('Рабочее окно урока', 'Lesson workspace') +
+        '</h2><button type="button" class="btn" data-c-open-work-window>' +
+        t('Задание и Code Studio', 'Task and Code Studio') +
+        '</button><div class="c-workspace" data-c-workspace aria-label="Code Studio"></div></section>') +
+    '<section class="c-panel" data-c-work-cases><h2>' + t('Как проверить свою работу', 'How to check your work') + '</h2>' +
+    '<p>' + t('Выберите случай и запишите свой прогноз. После запуска раскройте ожидаемый вывод и сравните его со своим.',
+      'Choose a case and write down your prediction. After running, reveal the expected output and compare it with yours.') + '</p>' +
     cases + list(work.criteria) + '</section>' +
-    (work.exercises ?? []).map(item => '<section class="c-panel"><h2>' + escape(item.title) + '</h2><p>' +
-      escape(item.task) + '</p>' + list(item.criteria ?? []) + '</section>').join('') +
-    (reference ? '<details class="c-panel"><summary>' + t('Эталонное решение', 'Reference solution') +
+    academyAssignmentsMarkup(work.exercises, locale) +
+    (reference ? '<details class="c-panel c-practice-disclosure" data-c-reference-solution><summary>' +
+      t('Посмотреть эталонное решение', 'View reference solution') +
       '</summary><p>' + t('Откройте после своей попытки и сравните с вашим решением.', 'Open after your attempt and compare with your solution.') +
-      '</p>' + codeBlock(reference.source) + Object.entries(reference.files ?? {}).map(([path, source]) =>
-        '<h3>' + escape(path) + '</h3>' + codeBlock(typeof source === 'string' ? source : source.content ?? source.source)).join('') +
+      '</p>' + practiceFile(reference.metadata?.entryFile ?? work.metadata.entryFile, reference.source, t) + referenceFiles +
       '</details>' : '');
 }
 
-function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave, readonly}) {
+function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave, readonly, assistantEnabled}) {
   const index = data.topics.findIndex(topic => topic.id === lesson.id);
   const previous = data.topics[index - 1], next = data.topics[index + 1];
+  const module = data.curriculum.modules.find(item => item.id === lesson.moduleId);
+  const overviewHref = routeLink(locale);
+  const moduleHref = routeLink(locale, null, null, module?.id);
+  const moduleTitle = localized(module?.title, locale);
   const titleOf = topic => localized(topic.title, locale);
   const nextLabel = next ? t('Следующий урок: ', 'Next lesson: ') + titleOf(next) + ' →' : '';
   const contents = stage === 'explanation' ? explanation(lesson, t) :
@@ -254,30 +289,50 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
       : next ? button(routeLink(locale, next.id), nextLabel, true)
         : '<p>' + t('Вы дошли до конца доступных уроков курса C17.', 'You have reached the end of the available C17 lessons.') + '</p>' +
           button(routeLink(locale), t('Вернуться к программе →', 'Back to the course outline →'), true);
-  return '<header class="c-lesson-header"><div class="c-context-row"><span class="c-topic-marker">' +
+  return courseBackMarkup(locale, overviewHref) + '<nav class="c-breadcrumbs" aria-label="' + t('Место в Академии', 'Location in the Academy') +
+    '"><ol><li><a href="#view=academy">' + t('Академия', 'Academy') + '</a></li><li><a href="' +
+    escape(overviewHref) + '">C17</a></li>' + (module ? '<li><a href="' +
+      escape(moduleHref) + '">' + escape(moduleTitle) + '</a></li>' : '') + '</ol></nav>' +
+    '<header class="c-lesson-header academy-lesson-context"><div class="c-context-row"><span class="c-topic-marker">' +
     t('Тема ', 'Lesson ') + (index + 1) + '/' + data.topics.length + '</span><h1 tabindex="-1" data-c-heading>' +
-    escape(lesson.title) + '</h1><a class="btn back-link" href="' + escape(routeLink(locale)) + '">' +
-    t('Программа курса', 'Course outline') + '</a></div>' +
-    '<nav class="c-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
-    '<nav class="c-neighbors" aria-label="' + t('Уроки', 'Lessons') + '">' +
+    escape(lesson.title) + '</h1>' + academyLessonMenuToggle(locale) + '</div>' +
+    academyLessonMenuPanel({locale,programHref:overviewHref,assistantEnabled}) +
+    '<nav class="c-stages academy-lesson-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
+    '<nav class="c-neighbors academy-lesson-neighbours" aria-label="' + t('Уроки', 'Lessons') + '">' +
     (previous ? button(routeLink(locale, previous.id), t('← Предыдущий урок: ', '← Previous lesson: ') + titleOf(previous)) : '') +
     (next ? button(routeLink(locale, next.id), nextLabel) : '') + '</nav>' +
-    '<div class="c-main">' + contents + '<footer class="c-panel c-actions">' +
+    '<div data-reference-help></div><p data-academy-library-status role="status"></p>' +
+    '<div class="c-main">' + contents + '<footer class="c-panel c-actions academy-lesson-continuation">' +
     (stage === 'practice' && canSave ? '<button class="btn" type="button" data-c-complete aria-pressed="' + progress.has(lesson.id) +
       '">' + (progress.has(lesson.id) ? t('Отмечен изученным', 'Marked as studied') : t('Отметить изученным', 'Mark as studied')) +
-    '</button>' : '') + action + '</footer></div>' + lessonReference(lesson, locale, t);
+    '</button>' : '') + action + '</footer></div>';
 }
 
-export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readonly = false, isCurrent = () => true} = {}) {
+export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readonly = false,
+  isCurrent = () => true, openAssistant = null} = {}) {
   if (!host) return null;
   locale = locale === 'en' ? 'en' : 'ru';
   stage = stages.some(([id]) => id === stage) ? stage : 'explanation';
   const t = (ru, en) => locale === 'en' ? en : ru;
-  const data = await loadCourse();
-  const topic = data.topics.find(item => item.id === lessonId);
-  const lesson = topic ? await loadJson('lessons/' + topic.id + '.' + locale + '.json') : null;
+  const lessonData = loadCourse().then(async data => {
+    const topic = data.topics.find(item => item.id === lessonId);
+    const lesson = topic ? await loadJson('lessons/' + topic.id + '.' + locale + '.json') : null;
+    return {data, lesson};
+  });
+  const [{data, lesson}] = await Promise.all([lessonData, ensureCCourseStyle()]);
   if (!isCurrent()) return null;
   const hash = location.hash;
+  const params = new URLSearchParams(hash.slice(1));
+  const selectedModule = data.curriculum.modules.find(module=>module.id===params.get('module'))?.id;
+  const requestedTab = params.get('tab');
+  const requestedPath = params.get('path');
+  const tab = ['practicums','projects','final'].includes(requestedTab) ? requestedTab : 'overview';
+  const path = ['tasks','labs'].includes(requestedPath) ? requestedPath : 'topics';
+  const [work,projects] = !lesson&&!selectedModule?await Promise.all([
+    tab==='practicums'||(tab==='overview'&&path!=='topics')?loadAcademyWork('c',locale):null,
+    loadAcademyProjects('c',locale),
+  ]):[null,[]];
+  if (!isCurrent()) return null;
   const storage = readonly ? null : createCCourseStorage();
   const resume = safeRead(storage, 'last-lesson');
   const storedProgress = safeRead(storage, 'studied');
@@ -289,17 +344,25 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   const options = {signal:events.signal};
   host.lang = locale;
   host.toggleAttribute('data-c-lesson', Boolean(lesson));
-  const style = document.createElement('link');
-  style.rel = 'stylesheet';
-  style.href = new URL('./c-course.css', import.meta.url).href;
   host.innerHTML = '<p class="c-route-status" role="status" data-c-status></p>' +
-    (lesson ? lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave:Boolean(storage), readonly}) :
+    (lesson ? lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave:Boolean(storage), readonly,
+      assistantEnabled:Boolean(openAssistant)}) :
       (lessonId ? '<p role="status">' + t('Эта тема пока недоступна.', 'This lesson is not available yet.') + '</p>' : '') +
-      overview({data, locale, t, resume, progress}));
-  host.prepend(style);
+      overview({data,locale,t,resume,progress,selectedModule,tab,path,work,projects}));
+  if (!lesson) bindAcademyWorkSearch(host,locale);
 
   const status = host.querySelector('[data-c-status]');
-  const disposeReference = lesson ? bindLessonReference(host, t) : null;
+  let disposeReference;
+  if (lesson) {
+    const active = () => !events.signal.aborted && isCurrent();
+    import('./reference-learning-help.mjs').then(async ({mountReferenceHelp}) => {
+      if (active()) disposeReference = await mountReferenceHelp(host,{lesson,locale,isCurrent:active,c17:true,
+        relatedTitles:Object.fromEntries(data.topics.map(topic=>[topic.id,localized(topic.title,locale)]))});
+    }).catch(() => {
+      if (active()) host.querySelector('[data-reference-help]').textContent =
+        t('Справка не загрузилась. Попробуйте ещё раз.', 'Help did not load. Please try again.');
+    });
+  }
   const context = host.querySelector('.c-lesson-header');
   const topbar = document.querySelector('.topbar');
   const measureContext = () => {
@@ -314,6 +377,11 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
       contextObserver.observe(context);
       if (topbar) contextObserver.observe(topbar);
     }
+    const libraryStatus = host.querySelector('[data-academy-library-status]');
+    bindAcademyLessonMenu(host, {
+      locale, courseId:'c', topicId:lesson.id, title:lesson.title, offline:readonly, signal:events.signal, isCurrent,
+      openAssistant, showError:message => { libraryStatus.textContent = message; },
+    });
   }
   function store(key, value) {
     if (!storage) return false;
@@ -335,11 +403,57 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
     if (storage) unsavedResponse = !store(responseKey, responses);
   }
 
-  host.querySelectorAll('[data-c-jump]').forEach(button => button.addEventListener('click', () => {
-    const section = [...host.querySelectorAll('[data-c-section]')].find(element => element.dataset.cSection === button.dataset.cJump);
-    section?.focus({preventScroll:true});
-    section?.scrollIntoView({block:'start'});
-  }, options));
+  const contents = host.querySelector('.c-contents');
+  let readingFrame = 0;
+  if (contents) {
+    if (matchMedia('(max-width: 760px)').matches) contents.open = false;
+    const sections = [...host.querySelectorAll('[data-c-section]')];
+    const jumps = [...contents.querySelectorAll('[data-c-jump]')];
+    function markSection(id) {
+      for (const jump of jumps) {
+        if (jump.dataset.cJump === id) jump.setAttribute('aria-current', 'location');
+        else jump.removeAttribute('aria-current');
+      }
+    }
+    function trackReading() {
+      if (readingFrame) return;
+      readingFrame = requestAnimationFrame(() => {
+        readingFrame = 0;
+        const top = context.getBoundingClientRect().bottom + 24;
+        const current = sections.findLast(section => section.getBoundingClientRect().top <= top) ?? sections[0];
+        if (current) markSection(current.dataset.cSection);
+      });
+    }
+    for (const [index, jump] of jumps.entries()) jump.addEventListener('click', () => {
+      const section = sections[index];
+      if (!section) return;
+      markSection(section.dataset.cSection);
+      section.focus({preventScroll:true});
+      section.scrollIntoView({block:'start'});
+    }, options);
+    window.addEventListener('scroll', trackReading, {passive:true, ...options});
+    trackReading();
+  }
+  host.addEventListener('click', async event => {
+    const copy = event.target.closest('[data-c-copy-source]');
+    if (!copy) return;
+    const code = copy.closest('.c-practice-file')?.querySelector('pre');
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code.textContent);
+      if (!events.signal.aborted) copy.textContent = t('Скопировано', 'Copied');
+    } catch {
+      if (events.signal.aborted) return;
+      const selection = getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      copy.textContent = t('Скопируйте выделенный код', 'Copy the selected code');
+    }
+  }, options);
   host.querySelectorAll('[data-c-question]').forEach(panel => {
     const question = lesson.selfcheck[Number(panel.dataset.cQuestion)];
     panel.querySelectorAll('input[type="radio"]').forEach(radio =>
@@ -362,8 +476,19 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
     event.currentTarget.textContent = t('Отмечен изученным', 'Marked as studied');
   }, options);
 
-  const heading = host.querySelector('[data-c-heading]');
+  const heading = host.querySelector('[data-c-heading], [data-academy-course-navigation="topics"] [data-academy-nav-heading]');
   heading?.focus({preventScroll:true});
+  const anchor = params.get('at');
+  const target = stage === 'explanation' && anchor
+    ? [...host.querySelectorAll('[data-c-section]')].find(section => section.dataset.cSection === anchor)
+    : stage === 'practice' && ['academy-lab','academy-assignments'].includes(anchor) ? host.querySelector('#'+anchor) : null;
+  if (target) {
+    requestAnimationFrame(()=>{
+      if (events.signal.aborted||!isCurrent()) return;
+      target?.focus({preventScroll:true});
+      target?.scrollIntoView({block:'start'});
+    });
+  }
   function flush() {
     const saved = (workspace?.flush() ?? true) && (!unsavedResponse || store(responseKey, responses));
     if (saved) unsavedResponse = false;
@@ -393,6 +518,7 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
     },
     dispose() {
       events.abort();
+      cancelAnimationFrame(readingFrame);
       contextObserver?.disconnect();
       disposeReference?.();
       unregisterUpdate();

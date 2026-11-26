@@ -39,19 +39,4 @@ export function bindNexusStudioUi(locale='ru'){
     observer.observe(studio.querySelector('#codeFileTabs'),{childList:true,subtree:true});
     observers.push(observer);
   }
-  const library=document.querySelector('[data-studio-library]');
-  if(library){
-    const input=library.querySelector('input'),clear=library.querySelector('[data-studio-search-clear]');
-    const cards=[...library.querySelectorAll('[data-studio-project]')];
-    input.disabled=cards.length===0;
-    const normalize=value=>String(value).normalize('NFKC').toLocaleLowerCase(locale).trim();
-    const texts=new Map(cards.map(card=>[card,normalize(card.querySelector('h3').textContent+' '+card.querySelector('p').textContent+' '+card.querySelector('.ps-language').textContent)]));
-    const apply=()=>{
-      const query=normalize(input.value);cards.forEach(card=>card.hidden=!!query&&!texts.get(card).includes(query));
-      const count=cards.filter(card=>!card.hidden).length;
-      library.querySelector('[data-studio-search-count]').textContent=en?`Showing ${count} of ${cards.length}`:`Показано ${count} из ${cards.length}`;
-      library.querySelector('[data-studio-search-empty]').hidden=!query||count!==0;clear.hidden=!input.value;
-    };
-    input.addEventListener('input',apply,options);clear.addEventListener('click',()=>{input.value='';apply();input.focus()},options);apply();
-  }
 }

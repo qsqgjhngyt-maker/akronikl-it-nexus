@@ -41,7 +41,8 @@
       "paragraphs": [
         "A control panel has three zones numbered 0, 1 and 2. The levels array stores the setting for each zone in that order: 8, 4 and 9. A request for zone 2 selects the third position, which holds 9.",
         "The list in braces supplies the initial values and fixes the length of levels. Dividing sizeof levels by sizeof levels[0] gives the element count while levels names the array itself.",
-        "Before evaluating levels[index], the program must establish that index is between 0 and length − 1. Check both bounds while index has the signed int type."
+        "Before evaluating levels[index], the program must establish that index is between 0 and length − 1. Check both bounds while index has the signed int type.",
+        "A boundary rejection is a control-flow check: `return` must happen before values[index] is read. A coincidental displayed value beyond the boundary cannot verify the program."
       ]
     },
     {
@@ -286,5 +287,28 @@
     "prerequisites": [
       "c.function-boundary-driver"
     ]
+  },
+  "teaching": {
+    "scene": "A panel has three sectors with different levels. The operator enters a number and the program should show a level or report an invalid sector. Check both bounds before reading a cell.",
+    "predict": {
+      "prompt": "The levels are 8, 4 and 9, then the calls use 2, −1 and 3. Which call can read a cell, which are stopped, and which three lines appear?",
+      "answer": "Index 2 selects the third cell, holding 9. Both −1 and 3 are outside 0…2 and print invalid. The lines in order are 9, invalid, invalid."
+    },
+    "apply": {
+      "prompt": "A new panel has four sectors holding 5, 6, 2 and 8. What is its last valid index, and what do 3 and 4 produce?",
+      "answer": "Index 3 selects 8. Index 4 equals the length and produces invalid. Check the two neighboring inputs together."
+    },
+    "practice": {
+      "strategy": "List the first and last valid indices and the nearest rejection at each end. Compare the starter condition with those four values before indexing the array.",
+      "diagnosis": "The starter gives invalid for index 3. For a four-value array, check whether the upper guard excludes the last valid position."
+    },
+    "syntax": {
+      "termId": "index",
+      "form": "if (index < 0 || index >= length) {\n    puts(\"invalid\");\n    return;\n}\nprintf(\"%d\\n\", values[index]);",
+      "example": "const int levels[] = {8, 4, 9};\nint last_index = 2;",
+      "explanation": "With positive length, valid indices run from 0 through length − 1. Checking both bounds before indexing keeps the operation within the array.",
+      "mistake": "The condition `index > length` allows index equal to length. Trace it on paper and reject that index before reading."
+    },
+    "focus": "static void show_level(int index)\n{\n    const int levels[] = {8, 4, 9};\n    int length = (int)(sizeof levels / sizeof levels[0]);\n    if (index < 0 || index >= length) {\n        puts(\"invalid\");\n        return;\n    }\n    printf(\"%d\\n\", levels[index]);\n}\n\nint main(void)\n{\n    show_level(2);\n    show_level(-1);\n    show_level(3);\n    return 0;\n}"
   }
 }

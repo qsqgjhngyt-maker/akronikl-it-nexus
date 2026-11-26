@@ -11,7 +11,7 @@ for(const locale of ['ru','en']){
  const t=translator(await json('locales/'+locale+'/ui.json')),prefs={uiLocale:locale,courseLocale:locale,mentorLocale:locale},state={courses:{cpp:{lessons:{}}},skills:{}},deps={prefs,t,cpp,catalog,programming,loadState:()=>state,lessonState:id=>state.courses.cpp.lessons[id]||{},visualIcon:()=>'',progress:()=>({done:0,total:40,pct:0}),cppContinuation:()=>createLearningResume({storage:null,principal:()=>'synthetic'}).continuation(cpp,{})};
  const views=createLearningViews(deps);
  for(const [name,arg]of [['home'],['programmingHub'],['overview'],['practicums'],['projectsView'],...cpp.curriculum.lessons.map(l=>['lessonView',l.id]),...cpp.practicumsRu.practicums.map(p=>['practicumView',p.id])]){
-  const markup=views[name](arg);assert.ok(markup.length>100);assert.ok(!markup.includes('[object Object]'));count++;
+  const markup=await views[name](arg);assert.ok(markup.length>100);assert.ok(!markup.includes('[object Object]'));count++;
  }
 }
 const p={id:'synthetic-parity',title:'<img src=x onerror=alert(1)>',workspace:{files:[{path:'main.cpp',content:'int main(){}'}],entryFile:'main.cpp'},progress:{},checkpoints:[]};

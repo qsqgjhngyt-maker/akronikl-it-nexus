@@ -37,7 +37,7 @@ async function openOfflineCopy(generation,vaultId){
  const pageErrors=[];local.on('pageerror',e=>pageErrors.push(e.message));
  try{
   await local.goto(origin+'/#copy='+vaultId);await local.locator('#localPhrase').fill(phrase);await local.locator('#unlockLocal button').click();await local.locator('#psNewProject').waitFor();
-  assert.equal(await local.locator('[data-studio-project] h3').textContent(),'Synthetic preserved project');
+  assert.equal(await local.locator('[data-studio-project] :is(h3,h4)').textContent(),'Synthetic preserved project');
   // A rollback shell may only import modules authorized by that exact old worker.
   // Future-generation bytes in IndexedDB do not grant the old worker authority.
   const restored=await local.evaluate(async({generation,vaultId,phrase})=>{const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js'),store=createVaultStore();let session;try{session=await store.unlock(vaultId,phrase);return session.read()}finally{await session?.lock();await store.close()}},{generation,vaultId,phrase});

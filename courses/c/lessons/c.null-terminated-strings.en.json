@@ -41,7 +41,8 @@
       "paragraphs": [
         "A stockroom label reads OK and has five cells available. Reading stops at the first cell that holds zero. The remaining cells still belong to the buffer, and the label length is two.",
         "A C string is a sequence of bytes ending at the first '\\0'. The character '0' is visible in text such as T09. The terminating '\\0' marks the boundary.",
-        "A label with n single-byte text characters needs at least n + 1 cells. For these labels, strlen gives the number of visible characters."
+        "A label with n single-byte text characters needs at least n + 1 cells. For these labels, strlen gives the number of visible characters.",
+        "Equal capacity allows different lengths. Two five-cell buffers can hold strings of length 2 and 4, depending on the location of the first null byte."
       ]
     },
     {
@@ -301,5 +302,28 @@
     "prerequisites": [
       "c.array-index-range"
     ]
+  },
+  "teaching": {
+    "scene": "A display shows a short label while its buffer still contains bytes from an earlier message. Use the five cells to determine the visible label and its length.",
+    "predict": {
+      "prompt": "The array holds O, K, '\\0', X and Y. What does printf display, and what number does strlen return?",
+      "answer": "It prints OK 2. Both operations stop at '\\0' in position 2. X and Y are still in the array, whose capacity is 5."
+    },
+    "apply": {
+      "prompt": "Lay out the bytes of the label T09. What is the minimum capacity, and what output proves that the digit 0 stays visible?",
+      "answer": "The bytes are T, '0', '9', '\\0'. Four cells are required. Printing gives T09 3 because the visible digit '0' and the terminator '\\0' are different."
+    },
+    "practice": {
+      "strategy": "Validate the two input numbers separately. Map the cells for the letter, tens digit, ones digit and terminator. Check an ordinary pair and a pair with a leading zero.",
+      "diagnosis": "For inputs 0 and 9 the starter prints T90 3. The length is correct. Check which digit occupies the first position after the letter."
+    },
+    "syntax": {
+      "termId": "terminator",
+      "form": "char cells[] = {'O', 'K', '\\0'};\nsize_t count = strlen(cells);",
+      "example": "char tag[] = \"T09\";\nprintf(\"%s %zu\\n\", tag, strlen(tag));",
+      "explanation": "strlen from <string.h> returns the number of bytes before the first '\\0'. A string literal supplies that terminator automatically.",
+      "mistake": "An array with three visible bytes and no terminator is unsafe to pass to strlen or %s. Reserve a separate cell for the terminator when building the string by hand."
+    },
+    "focus": "    const char cells[] = {'O', 'K', '\\0', 'X', 'Y'};\n    printf(\"%s %zu\\n\", cells, strlen(cells));"
   }
 }

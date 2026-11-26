@@ -44,7 +44,8 @@
       "paragraphs": [
         "The operation starts with a valid store. A request needs a unique identifier and the sequence new → active → done. An invalid command must preserve the previous record.",
         "Separate checking from writing. First decide whether the change is valid. Assign only in the success branch. For insertion, store count and capacity separately.",
-        "Check order affects the diagnostic result. If the store is full and the ID already exists, this contract reports duplicate because it checks the ID before capacity. A test can then explain each rejection unambiguously."
+        "Check order affects the diagnostic result. If the store is full and the ID already exists, this contract reports duplicate because it checks the ID before capacity. A test can then explain each rejection unambiguously.",
+        "Rejection priority is part of the observable contract. The same final array can come with duplicate or full, so check both the reply and the records."
       ]
     },
     {
@@ -283,5 +284,28 @@
       "c.named-state-transition",
       "c.record-array-lookup"
     ]
+  },
+  "teaching": {
+    "scene": "At a warehouse, an invalid command must leave the register intact. Follow a record's state through a rejection and then a permitted command.",
+    "predict": {
+      "prompt": "Tray 41 starts in RECEIVED. Trace a request for STORED followed by CHECKED. What reply and state does the program print after each step?",
+      "answer": "The direct move to STORED is denied, giving denied and 41:1. From the preserved RECEIVED state, the move to CHECKED succeeds. The next lines are ok and 41:2."
+    },
+    "apply": {
+      "prompt": "A store with three slots holds 101:1 and 203:2. Insert 321:1, then request insertion of 203:1. Which rejection takes priority once the store is full?",
+      "answer": "The first insertion gives ok. The second finds existing ID 203 and gives duplicate even though there is no room. The final records are 101:1 203:2 321:1."
+    },
+    "practice": {
+      "strategy": "Write down the valid states and check order for each operation. Look up the record before testing capacity. Change the store only on a successful branch.",
+      "diagnosis": "Two insertions of 321 produce ok and full in the starter. The second operation reaches the capacity check before testing for an existing identifier."
+    },
+    "syntax": {
+      "termId": "invariant",
+      "form": "if (!allowed) {\n    return 0;\n}\nrecord->state = next;",
+      "example": "struct Tray tray = {41, RECEIVED};\nint accepted = move_tray(&tray, CHECKED);",
+      "explanation": "An invariant must hold after each operation. Checks before the write preserve the earlier state on a rejection path.",
+      "mistake": "A write before checking can leave a partly changed store. Validate the transition and insert preconditions before committing."
+    },
+    "focus": "    if (!((tray->state == RECEIVED && next == CHECKED) ||\n          (tray->state == CHECKED && next == STORED))) {\n        return 0;\n    }\n    tray->state = next;"
   }
 }

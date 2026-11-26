@@ -35,9 +35,17 @@ for(const locale of ['ru','en']){
   assert.match(markup,/<h3>C\+\+<\/h3>/);
   assert.equal(markup,render(full));
  });
- test('Opening C++ retains the complete overview, lessons, practicums and projects ('+locale+')',()=>{
+ test('Opening C++ retains the complete two-level overview, lessons, practicums and projects ('+locale+')',async()=>{
   const views=createLearningViews({...deps,cpp:full});
-  assert.equal((views.overview().match(/class="topic(?: done)?\s*"/g)||[]).length,outline.curriculum.lessons.length);
+  const overview=await views.overview();
+  assert.deepEqual([...overview.matchAll(/data-academy-module="([^"]+)"/g)].map(match=>match[1]),
+    outline.curriculum.sections.map(section=>section.id));
+  assert.doesNotMatch(overview,/data-academy-topic="/);
+  for(const section of outline.curriculum.sections){
+   const module=await views.overview(section.id);
+   assert.doesNotMatch(module,/data-academy-module="/);
+   assert.deepEqual([...module.matchAll(/data-academy-topic="([^"]+)"/g)].map(match=>match[1]),section.lessonIds);
+  }
   assert.match(views.lessonView(outline.curriculum.lessons[0].id),/id="editor"/);
   assert.equal((views.practicums().match(/data-practicum-progress/g)||[]).length,outline.manifest.practicumCount);
   assert.equal((views.projectsView().match(/class="project-card-rich/g)||[]).length,outline.manifest.projectCount);

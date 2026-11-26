@@ -34,7 +34,8 @@
       "title": "Why it matters",
       "paragraphs": [
         "Check a power limiter before building its interface by calling the computation with known numbers.",
-        "Write expected values before execution. A function contract and a presentation check are separate layers."
+        "Write expected values before execution. A function contract and a presentation check are separate layers.",
+        "A boundary value helps when the adjacent branches produce distinguishable results. In clamp50, both branches can return exactly 50. In bonus, the driver’s output can expose a changed result at the boundary."
       ]
     },
     {
@@ -244,5 +245,28 @@
     "prerequisites": [
       "c.local-scope-lived-object"
     ]
+  },
+  "teaching": {
+    "scene": "Before connecting a power controller, test its function with known values. Inputs on both sides and at the boundary help identify which part of the rule ran.",
+    "predict": {
+      "prompt": "The driver calls clamp50 with −5, 70 and 50. What comes back for each input, and which line can you verify?",
+      "answer": "−5 is below zero, so it returns 0. 70 exceeds the upper bound and returns 50. Exactly 50 is returned unchanged. The output is 0 50 50."
+    },
+    "apply": {
+      "prompt": "Choose expected results for −1, 34 and 51. Which check detects a function that changes a reading already in range?",
+      "answer": "Expect 0, 34, 50. The input 34 should be preserved. A different result exposes a problem within the allowed range."
+    },
+    "practice": {
+      "strategy": "Write the expected outcomes for 49, 50 and 51 before execution. Use the supplied driver to compare them and inspect the exact-boundary case separately.",
+      "diagnosis": "If 49 and 51 pass and 50 gives 0, the defect is at equality. Compare the bonus predicate with the wording of its lower bound."
+    },
+    "syntax": {
+      "termId": "driver",
+      "form": "int actual = function_under_test(input);\nif (actual != expected) {\n    puts(\"fail\");\n}",
+      "example": "int actual = clamp50(51);\nif (actual != 50) {\n    puts(\"fail\");\n}",
+      "explanation": "A test driver supplies known input, compares the return value with an independently calculated expectation and reports mismatches.",
+      "mistake": "One passing edge case covers only that input. Add the exact boundary between its two neighbors."
+    },
+    "focus": "static int clamp50(int number)\n{\n    if (number < 0) {\n        return 0;\n    }\n    if (number > 50) {\n        return 50;\n    }\n    return number;\n}\n\nint main(void)\n{\n    printf(\"%d %d %d\\n\", clamp50(-5), clamp50(70), clamp50(50));\n    return 0;\n}"
   }
 }

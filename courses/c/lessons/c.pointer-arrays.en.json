@@ -41,7 +41,8 @@
       "paragraphs": [
         "To walk through readings, keep a pointer cursor to the current item and end at the position after the used items. Check cursor != end before reading through *cursor.",
         "In begin = readings the array name converts to a pointer to its first element. Adding 1 advances one element because the pointer type determines the stride.",
-        "When the working length equals capacity, end points one past the full array. Use this position as a boundary when comparing pointers within the same array. End the loop before reading through end. When length is zero, begin already equals end on the first check."
+        "When the working length equals capacity, end points one past the full array. Use this position as a boundary when comparing pointers within the same array. End the loop before reading through end. When length is zero, begin already equals end on the first check.",
+        "begin and end must belong to the same array. Numeric addresses alone do not establish that relationship, so validate the size against the actual buffer."
       ]
     },
     {
@@ -320,5 +321,28 @@
       "c.read-write-through-pointer",
       "c.array-length-contract"
     ]
+  },
+  "teaching": {
+    "scene": "A sensor buffer has space for more readings than the current session collected. Count only the active items and explain why no read happens at the boundary.",
+    "predict": {
+      "prompt": "The readings are 2, 8 and 5. The first call receives begin and begin + 3, and the second receives begin twice. Which offsets are read in each call and what sums result?",
+      "answer": "The first call reads offsets 0, 1 and 2. The condition is false at offset 3, leaving 15. In the second call begin already equals end, so no reads occur and the sum is 0."
+    },
+    "apply": {
+      "prompt": "The buffer holds 4, 8, 7 and 9 with a working length of 2. For an inclusive threshold of 8, mark end and predict the count. What changes at length 4?",
+      "answer": "At first, end has offset 2 and only 8 counts, giving 1. At length 4 the end offset becomes 4, making 8 and 9 count for a result of 2."
+    },
+    "practice": {
+      "strategy": "Validate length against capacity before forming end. Compare cursor with end first on each iteration. Test both a zero length and a match at the final active position.",
+      "diagnosis": "For 1, 7 and 8 at length 3, the starter prints 0. The only match is last. Trace whether the end boundary has moved inward."
+    },
+    "syntax": {
+      "termId": "end",
+      "form": "const int *end = begin + length;\nfor (const int *cursor = begin; cursor != end; ++cursor) {\n    total += *cursor;\n}",
+      "example": "const int readings[] = {2, 8, 5};\nconst int *begin = readings;\nconst int *end = begin + 3;",
+      "explanation": "end is an exclusive boundary in the same array. Add length after validating the range. A pointer one past the full array may be formed and compared, but cannot be read through.",
+      "mistake": "A <= test may let cursor reach end in the body. Form end - 1 only after establishing that the working range is nonempty."
+    },
+    "focus": "    int total = 0;\n    for (const int *cursor = begin; cursor != end; ++cursor) {\n        total += *cursor;\n    }\n    return total;"
   }
 }

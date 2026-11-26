@@ -6,6 +6,10 @@ export async function buildOnecOffline(output){
  try{await fs.access(out);throw Error('OUTPUT_EXISTS')}catch(error){if(error.code!=='ENOENT')throw error;}
  await fs.mkdir(out,{recursive:true});
  const data={};for(const course of ['onec','1c-enterprise']){const c=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/curriculum.json`),'utf8'));data[`../${course}/curriculum.json`]=c;data[`../${course}/final-assessment.json`]=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/final-assessment.json`),'utf8'));for(const t of c.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics))for(const locale of ['ru','en']){const f=t.content[locale];data[`../${course}/${f}`]=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/${f}`),'utf8'));}}
+ for(const locale of ['ru','en']){
+  const name='academy-work-projects.'+locale+'.json',projects=JSON.parse(await fs.readFile(path.join(root,'courses',name),'utf8'));
+  data['../'+name]={onec:projects.onec,'1c-enterprise':projects['1c-enterprise']};
+ }
  for(const f of ['shared.v1.json','shared.a2p2.v1.json','shared.full.v1.json','supplement.v1.json','service-desk.v1.json','service-desk.a2p2.v1.json','sources.v1.json','glossary.v2.json','lab-route.v2.json'])data[f]=JSON.parse(await fs.readFile(path.join(base,f),'utf8'));
  for(const key of Object.keys(data).filter(k=>k.endsWith('.json'))){const l=data[key];if(l?.codeFile&&!Object.hasOwn(data,l.codeFile))data[l.codeFile]=await fs.readFile(path.join(base,l.codeFile),'utf8');}
  data['native/service-desk/Ext/ManagedApplicationModule.bsl']=await fs.readFile(path.join(base,'native/service-desk/Ext/ManagedApplicationModule.bsl'),'utf8');
@@ -14,6 +18,12 @@ export async function buildOnecOffline(output){
  for(const locale of ['ru','en']){const index=JSON.parse(await fs.readFile(path.join(base,`guide-index.${locale}.json`),'utf8'));for(const c of index.courses)for(const l of c.lessons){l.text='';l.sections=[];}data[`guide-index.${locale}.json`]=index;}
  const guideModel=(await fs.readFile(path.join(base,'guide-model.mjs'),'utf8')).replace(/^export /gm,''),guideUI=(await fs.readFile(path.join(base,'guide.mjs'),'utf8')).replace(/^import.*?;\r?\n/gm,'').replace(/^export /gm,'');
  const termReference='',learningUi=(await fs.readFile(path.join(root,'core/nexus-learning-ui.js'),'utf8')).replace(/^export /gm,'');
+ const courseHeaderSource=(await fs.readFile(path.join(root,'core/academy-course-header.mjs'),'utf8')).replace(/^export /gm,'');
+ const courseHeader=`const {courseBackMarkup,courseHeroMarkup,courseContinueMarkup,courseTabsMarkup}=(()=>{${courseHeaderSource}\nreturn {courseBackMarkup,courseHeroMarkup,courseContinueMarkup,courseTabsMarkup};})();`;
+ const workSource=(await fs.readFile(path.join(root,'core/academy-course-work.mjs'),'utf8')).replace(/^import .*?;\r?\n/gm,'').replace(/^export /gm,'');
+ const work=`const {academyCourseSections,academyCourseWorkMarkup,bindAcademyWorkSearch,loadAcademyProjects,loadAcademyWork}=(()=>{${workSource}\nreturn {academyCourseSections,academyCourseWorkMarkup,bindAcademyWorkSearch,loadAcademyProjects,loadAcademyWork};})();`;
+ const navigationSource=(await fs.readFile(path.join(root,'core/academy-course-navigation.mjs'),'utf8')).replace(/^import .*?;\r?\n/gm,'').replace(/^export /gm,'');
+ const navigation=`const courseNavigationMarkup=(()=>{${navigationSource}\nreturn courseNavigationMarkup;})();`;
  const glossary=(await fs.readFile(path.join(base,'glossary.mjs'),'utf8')).replace(/^import.*?;\r?\n/gm,'').replace(/^export /gm,'');
  const learningContextSource=(await fs.readFile(path.join(base,'learning-context.mjs'),'utf8')).replace(/^export /gm,'');
  const learningContext=`const {createOnecLearningContext,reconcileLearningStep,onecTabIdentity,normalizeLearningPoint,deriveOnecTabIdentity}=(()=>{${learningContextSource}\nreturn{createOnecLearningContext,reconcileLearningStep,onecTabIdentity,normalizeLearningPoint,deriveOnecTabIdentity};})();`;
@@ -22,12 +32,12 @@ export async function buildOnecOffline(output){
  let labHelp=(await fs.readFile(path.join(base,'lab-help.mjs'),'utf8')).replace(/^import.*?;\r?\n/gm,'').replace(/^export /gm,'');
  const goldStyle=await fs.readFile(path.join(root,'styles/academy-gold.css'),'utf8'),sharedStyle=await fs.readFile(path.join(root,'styles/learning-gold-shared.css'),'utf8'),css=(await fs.readFile(path.join(base,'candidate.css'),'utf8')).replace(/^@import url\('..\/..\/styles\/learning-gold-shared.css'\);\r?\n/,()=>sharedStyle).replace(/^@import url\('..\/..\/styles\/academy-gold.css'\);\r?\n/m,()=>goldStyle);
  // CSS упакован как данные вместе с материалами; код не декомпрессируется и не исполняется из строки.
- data['presentation.css']=css;
+ data['presentation.css']=css+'\n'+await fs.readFile(path.join(root,'styles/academy-course-navigation.css'),'utf8');
  const raw=JSON.stringify(data);if(Buffer.byteLength(raw)>4000000)throw Error('OFFLINE_UNPACKED_BUDGET_EXCEEDED');
  const partManifest=await writeOnecOfflineParts(gzipSync(Buffer.from(JSON.stringify(packOnecOfflineData(data))),{level:9}),out);
  const offlineParts=(await fs.readFile(path.join(base,'offline-parts.mjs'),'utf8')).replace(/^export /gm,'');
  const offlineCodec=(await fs.readFile(path.join(base,'offline-data.mjs'),'utf8')).replace(/^export /gm,'');
- const sourceScript=`${offlineCodec}\n${offlineParts}\nif(typeof DecompressionStream!=='function')throw Error('OFFLINE_DECOMPRESSION_UNAVAILABLE');const publicBytes=await loadOnecOfflineParts(${JSON.stringify(partManifest)}).catch(error=>{document.querySelector('#app').textContent='Не удалось открыть автономные материалы. Распакуйте весь пакет, сохранив рядом папку data/, и откройте onec-offline.html снова. / Offline data unavailable. Extract the complete package including data/ and reopen onec-offline.html.';throw error;});globalThis.__ONEC_OFFLINE__=unpackOnecOfflineData(await new Response(new Blob([publicBytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json());document.querySelector('[data-onec-offline-style]').textContent=globalThis.__ONEC_OFFLINE__['presentation.css'];\n${model}\n${final}\n${guideModel}\n${guideUI}\n${termReference}\n${learningUi}\n${glossary}\n${learningContext}\n${lessonMedia}\n${labRoute}\n${labHelp}\n${app}`;
+ const sourceScript=`${offlineCodec}\n${offlineParts}\nif(typeof DecompressionStream!=='function')throw Error('OFFLINE_DECOMPRESSION_UNAVAILABLE');const publicBytes=await loadOnecOfflineParts(${JSON.stringify(partManifest)}).catch(error=>{document.querySelector('#app').textContent='Не удалось открыть автономные материалы. Распакуйте весь пакет, сохранив рядом папку data/, и откройте onec-offline.html снова. / Offline data unavailable. Extract the complete package including data/ and reopen onec-offline.html.';throw error;});globalThis.__ONEC_OFFLINE__=unpackOnecOfflineData(await new Response(new Blob([publicBytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json());document.querySelector('[data-onec-offline-style]').textContent=globalThis.__ONEC_OFFLINE__['presentation.css'];\n${model}\n${final}\n${guideModel}\n${guideUI}\n${termReference}\n${learningUi}\n${courseHeader}\n${work}\n${navigation}\n${glossary}\n${learningContext}\n${lessonMedia}\n${labRoute}\n${labHelp}\n${app}`;
  // Тот же закреплённый esbuild, что у существующего frontend builder.
  // Сокращаем только статический JS. Части данных изолированы sandbox;
  // CSP допускает только точный хеш скрипта и локальные дочерние документы.

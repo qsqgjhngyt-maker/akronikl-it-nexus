@@ -47,7 +47,8 @@
       "paragraphs": [
         "A scanner sends one label per line. Five cells leave room for four label bytes and '\\0'. Once the fourth cell is filled, check what comes next: the record boundary or one more data byte.",
         "LF and the CRLF pair end a line. A final line with data can end at EOF. A blank line has a line ending, while an empty stream contains neither a record nor a line ending.",
-        "getchar returns int, which can represent each byte and the separate EOF value. Check that status before converting a byte to char."
+        "getchar returns int, which can represent each byte and the separate EOF value. Check that status before converting a byte to char.",
+        "The overflow flag belongs to the entire record. Even when the reader stops copying bytes to the buffer, it continues to locate the record boundary."
       ]
     },
     {
@@ -323,5 +324,28 @@
     "prerequisites": [
       "c.string-termination"
     ]
+  },
+  "teaching": {
+    "scene": "A checkpoint accepts records of up to four bytes. Predict the report for an exact fit, an oversized record and the following record.",
+    "predict": {
+      "prompt": "The example has a five-cell buffer. What three output lines do ABCD, ABCDE and OK produce as separate input lines?",
+      "answer": "It gives ok ABCD, long, ok OK. Four bytes fit with the terminator. The fifth marks an oversized record. The reader drains that record, so OK starts a new one."
+    },
+    "apply": {
+      "prompt": "The buffer has three cells. The input has XY, XYZ and Z, with EOF right after Z. What report proves the long line did not consume Z?",
+      "answer": "The report is ok XY, long, ok Z. Two cells can hold text. XYZ is classified as one long record, and data already read before EOF makes Z a final record."
+    },
+    "practice": {
+      "strategy": "Keep the recorded byte count separate from error flags. Test the exact limit, an oversized record and the next record. Choose the final status when the record ends.",
+      "diagnosis": "The starter gives long, long, ok OK on ABCDEF, ABCDEFG and OK. Draining already works. The first record exposes the mistake because it fits exactly."
+    },
+    "syntax": {
+      "termId": "eof",
+      "form": "int byte = getchar();\nif (byte == EOF) {\n    /* Check whether a record has started. */\n}",
+      "example": "int byte = getchar();\nif (byte == EOF && ferror(stdin)) {\n    puts(\"invalid\");\n}",
+      "explanation": "getchar returns int so a byte value is distinguishable from EOF. EOF before a new record and EOF after data require different decisions.",
+      "mistake": "Storing getchar directly in char can erase the distinction between a byte and EOF. Keep its result in int and check EOF before conversion."
+    },
+    "focus": "    while (byte != '\\n' && byte != EOF) {\n        int next = getchar();\n        if (!(byte == '\\r' && next == '\\n')) {\n            if (byte == 0) {\n                contains_nul = 1;\n            }\n            if (used + 1 < capacity) {\n                ((unsigned char *)text)[used++] = (unsigned char)byte;\n            } else {\n                overflow = 1;\n            }\n        }\n        byte = next;\n    }\n    text[used] = '\\0';"
   }
 }

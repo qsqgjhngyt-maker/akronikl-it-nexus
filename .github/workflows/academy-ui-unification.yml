@@ -1,0 +1,135 @@
+name: Академия — единый интерфейс и сохранность
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/academy-ui-unification.yml'
+      - 'core/academy-course-header.mjs'
+      - 'core/academy-course-navigation.mjs'
+      - 'core/academy-course-work.mjs'
+      - 'core/academy-gold-presentation.js'
+      - 'core/academy-lesson-*.mjs'
+      - 'styles/academy-*.css'
+      - 'core/c-course*'
+      - 'core/cpp-clarity-r3-renderer.mjs'
+      - 'core/reference-learning-help.mjs'
+      - 'core/nexus-learning-ui.js'
+      - 'core/learning-views.js'
+      - 'courses/c/lessons/**'
+      - 'courses/c/reference.*.json'
+      - 'courses/academy-work/**'
+      - 'courses/academy-work-projects.*.json'
+      - 'course-final/view.js'
+      - 'tools/build-academy-work.mjs'
+      - 'tests/academy-course-work-browser.mjs'
+      - 'courses/onec-education/**'
+      - 'courses/academy-library/**'
+      - 'pwa/offline-entry.js'
+      - 'tools/build-onec-offline.mjs'
+      - 'tests/academy-lesson-library-browser.mjs'
+      - 'tests/c-course-browser-check.mjs'
+      - 'tests/c-course-offline-browser-check.mjs'
+      - 'tests/c-course-teaching-preservation.mjs'
+      - 'akronikl/presence.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: academy-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    if: github.head_ref == 'feature/ui-academy-unification-01-20261124'
+    name: Точные редакции, сохранение и бюджет старта
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Сверить baseline и сохранность учебных материалов
+        env:
+          BASE: 1b1994b044b276b712256e9533ddbc99c37ca441
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse "$BASE^{tree}")" = 98d1698e0618205da0b3e49df863be31546b47eb
+          git show -s --format='%H %T' HEAD
+          git diff --exit-code "$BASE" HEAD -- \
+            courses/c ':(exclude)courses/c/lessons/*.json' \
+            ':(exclude)courses/c/reference.ru.json' ':(exclude)courses/c/reference.en.json' \
+            courses/cpp courses/onec courses/1c-enterprise \
+            courses/clarity courses/cpp-clarity-r3 \
+            core/account-storage.js core/storage.js core/startup-intro.js \
+            server-access cloudflare sync sandbox project-studio \
+            pwa/policy.js pwa/durable-store.js pwa/service-worker.js pwa/interface-update.js
+          test "$(git ls-files 'courses/c/lessons/*.json' 'courses/clarity/lessons/*.json' 'courses/cpp-clarity-r3/lessons/*.json' | wc -l)" -eq 420
+          node tests/c-course-teaching-preservation.mjs "$BASE"
+          node tools/build-academy-work.mjs --check
+      - name: Повторить контракты старта, сессий и изоляции 1С
+        run: |
+          set -euo pipefail
+          node --test \
+            tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs \
+            tests/platform-startup-views.test.mjs tests/c-course-content.test.mjs \
+            tests/cpp-clarity-r3-state.test.mjs tests/cpp-clarity-r3-session.test.mjs \
+            tests/cpp-clarity-r3-writer.test.mjs tests/cpp-clarity-r3-onec-writer.test.mjs \
+            tests/pwa-controller-graph-compatibility.test.mjs tests/onec-offline-data.test.mjs
+          node tests/shared-learning-views-check.mjs
+          node tools/check-cpp-course-perf.mjs
+
+  lessons:
+    if: github.head_ref == 'feature/ui-academy-unification-01-20261124'
+    name: Уроки C++ и 1С в браузере
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-academy-ui-frontend
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_ACADEMY_EVIDENCE: /tmp/nexus-academy-ui-evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Собрать непубликованный кандидат
+        run: |
+          set -euo pipefail
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
+          printf 'NEXUS_CHROME_PATH=%s\n' "$(command -v google-chrome)" >> "$GITHUB_ENV"
+          node tools/build-cpp-clarity-candidate.mjs
+      - name: Проверить 302 редакции C++ и 1С
+        run: node tests/reference-courses-rollout-browser.mjs . "$NEXUS_FRONTEND_DIR" "$NEXUS_ACADEMY_EVIDENCE/editions"
+      - name: Сверить каталог, меню, шапки и возвраты четырёх курсов
+        env:
+          NEXUS_ACADEMY_LIBRARY_EVIDENCE: /tmp/nexus-academy-ui-evidence/library
+        run: |
+          set -euo pipefail
+          node tools/check-academy-library.mjs
+          node tests/academy-lesson-library-browser.mjs
+      - name: Проверить автономную библиотеку и плитки через Service Worker
+        env:
+          NEXUS_NATIVE_EVIDENCE: /tmp/nexus-academy-ui-evidence/offline
+        run: node tests/c-course-offline-browser-check.mjs
+      - name: Проверить реальные задания, лабораторные, проекты и итоговые работы
+        env:
+          NEXUS_NATIVE_EVIDENCE: /tmp/nexus-academy-ui-evidence/course-work
+        run: node tests/academy-course-work-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-ui-${{ github.event.pull_request.head.sha }}
+          path: /tmp/nexus-academy-ui-evidence/
+          retention-days: 30
+          if-no-files-found: error

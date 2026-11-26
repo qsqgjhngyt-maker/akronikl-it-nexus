@@ -284,5 +284,28 @@
       "c.checked-size-product",
       "c.record-operation-invariants"
     ]
+  },
+  "teaching": {
+    "scene": "Очередь заданий может принять первую запись и отказаться от следующей. По длине, вместимости и сумме проверьте, какие записи действительно закрепились.",
+    "predict": {
+      "prompt": "Очередь начинается с 1:5 при used = capacity = 1. Первая попытка роста для записи 8 проходит, а вторая для записи 13 отклоняется. Какие строки и записи остаются после двух append?",
+      "answer": "Первая попытка увеличивает вместимость до 2, записывает 2:8 и делает used равным 2. Вторая возвращает отказ до записи. Отчёт обозначает allocation-failed 2 2 13 и показывает записи 1:5 и 2:8."
+    },
+    "apply": {
+      "prompt": "Для практики со стартовой записью 1:10 сравните 6 7 2 и 6 7 0. Как по длине и сумме понять, успела ли вторая новая запись закрепиться?",
+      "answer": "Для 6 7 2 закрепляется только 6, поэтому allocation-failed 2 2 16. Для 6 7 0 закрепляются обе, рост идёт 1 → 2 → 4, вывод ok 3 4 23."
+    },
+    "practice": {
+      "strategy": "Разделите вычисление следующей вместимости, номер допустимой попытки и запись по месту. После отказа сравните не только статус, но и used, capacity и сумму уже записанных элементов.",
+      "diagnosis": "С режимом 2 на 20 30 заготовка печатает ok 3 4 60. Счётчик попыток остаётся нулём, поэтому выбранный отказ не достигается."
+    },
+    "syntax": {
+      "termId": "committed-prefix",
+      "form": "if (queue->used == queue->capacity && !reserve(queue, policy)) {\n    return 0;\n}\nqueue->items[queue->used] = record;\n++queue->used;",
+      "example": "if (queue->used == queue->capacity && !reserve(queue, policy)) {\n    return 0;\n}\nqueue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = 8};\n++queue->used;",
+      "explanation": "Первые used записей образуют закреплённую часть списка. Добавление меняет её только после проверки места и успешного роста, если он нужен.",
+      "mistake": "Увеличение used до reserve делает незаписанную ячейку видимой. При отказе также нельзя менять указатель владельца или capacity."
+    },
+    "focus": "    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;"
   }
 }

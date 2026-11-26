@@ -2,7 +2,16 @@
 import {portableBuildManifest} from '../project-studio/project-transfer.js';
 const clone=value=>structuredClone(value),canonical=value=>JSON.stringify(value??null);
 const editable=(p,{manifest=true}={})=>p?{title:p.title,description:p.description||'',workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints||[],stdin:p.stdin||'',...(manifest&&p.languageId==='cpp'&&p.manifest?{manifest:portableBuildManifest(p)}:{})}:null;
-const safeProject=p=>({id:p.id,languageId:p.languageId||'cpp',...clone(editable(p)),...Object.fromEntries(['createdAt','updatedAt'].filter(k=>typeof p[k]==='string'&&/^\d{4}-\d{2}-\d{2}T[0-9:.]+Z$/.test(p[k])).map(k=>[k,p[k]])),...(p.origin?.kind==='course-project'&&p.origin.courseId==='cpp'?{origin:{kind:'course-project',courseId:'cpp',projectId:String(p.origin.projectId||'')}}:p.origin?.kind==='graphics-lab'?{origin:{kind:'graphics-lab',template:['nexus','sphere','orbit','system','blank'].includes(p.origin.template)?p.origin.template:'blank'}}:{})});
+function portableOrigin(origin) {
+ if(origin?.kind==='course-project'&&origin.courseId==='cpp')return {kind:'course-project',courseId:'cpp',projectId:String(origin.projectId||'')};
+ if(origin?.kind==='graphics-lab')return {kind:'graphics-lab',template:['nexus','sphere','orbit','system','blank'].includes(origin.template)?origin.template:'blank'};
+ if(['cpp','c','onec','1c-enterprise'].includes(origin?.courseId))return {courseId:origin.courseId};
+ if(origin?.kind==='course-final'&&origin.assessmentId==='cpp.course-final.v1')return {courseId:'cpp'};
+}
+const safeProject=p=>{
+ const origin=portableOrigin(p.origin);
+ return {id:p.id,languageId:p.languageId||'cpp',...clone(editable(p)),...Object.fromEntries(['createdAt','updatedAt'].filter(k=>typeof p[k]==='string'&&/^\d{4}-\d{2}-\d{2}T[0-9:.]+Z$/.test(p[k])).map(k=>[k,p[k]])),...(origin?{origin}:{})};
+};
 export function makeLocalPayload({account,state,projects,isOwner}){
  if(!account?.accountId||account.status!=='active')throw Error('VERIFIED_ACCOUNT_REQUIRED');
  const personal=projects.filter(p=>p.access?.workspaceKind==='personal'&&isOwner(p.access));

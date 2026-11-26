@@ -44,7 +44,8 @@
       "paragraphs": [
         "A pickup station uses two shelving profiles. The profile determines the capacity, while input determines the number of groups after launch. A build-time setting is appropriate when the deployment configuration is known in advance and stays fixed for the run.",
         "The #if expression is evaluated by the preprocessor. Its result determines which CAPACITY definition is kept. For an unsupported profile, #error stops the build with the specified diagnostic.",
-        "TOTAL(1 + 2) expands to ((1 + 2) * 8). Keep parentheses around a macro parameter and around the full result. Repeating a parameter in a macro can also repeat side effects in its argument."
+        "TOTAL(1 + 2) expands to ((1 + 2) * 8). Keep parentheses around a macro parameter and around the full result. Repeating a parameter in a macro can also repeat side effects in its argument.",
+        "Changing a macro in a header requires another build. It does not create a switch the running program can read from stdin."
       ]
     },
     {
@@ -286,5 +287,28 @@
     "prerequisites": [
       "c.read-compiler-diagnostics"
     ]
+  },
+  "teaching": {
+    "scene": "A warehouse builds the same program for different box sizes. Determine how a build-time selection changes the capacity and the calculation.",
+    "predict": {
+      "prompt": "DELIVERY_MODE is 1 in the header, and main calls TOTAL(1 + 2). What line does the program print? Show the replacement expression.",
+      "answer": "Mode 1 defines CAPACITY as 8. TOTAL(1 + 2) becomes ((1 + 2) * 8). The result is capacity=8 total=24."
+    },
+    "apply": {
+      "prompt": "Select DELIVERY_MODE 2 in a copy of the header. Predict both fields after rebuilding, with main.c untouched.",
+      "answer": "The #elif branch defines CAPACITY as 12. The sum 1 + 2 is multiplied by 12. The result is capacity=12 total=36 after the new build."
+    },
+    "practice": {
+      "strategy": "Check which profile the header selects. Then trace how the box count read in main reaches the calculation. Test 3, 0, and a malformed line.",
+      "diagnosis": "If items is wrong for 3, separate two possibilities: the build selected the other profile or main bypassed the macro. Inspect both files before changing the input rules."
+    },
+    "syntax": {
+      "termId": "macro",
+      "form": "#define NAME value\n#define FORMULA(argument) ((argument) * (value))",
+      "example": "#define CAPACITY 8\n#define TOTAL(count) ((count) * CAPACITY)",
+      "explanation": "The preprocessor replaces sequences of tokens before compilation. Parentheses preserve the intended grouping when an argument is an expression.",
+      "mistake": "If TOTAL(count) expands to count * CAPACITY, the input 1 + 2 gives 1 + 2 * 8, or 17. Keep parentheses around both the argument and the replacement."
+    },
+    "focus": "int main(void)\n{\n    printf(\"capacity=%d total=%d\\n\", CAPACITY, TOTAL(1 + 2));\n    return 0;\n}"
   }
 }

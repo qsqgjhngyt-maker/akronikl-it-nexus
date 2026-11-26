@@ -38,9 +38,10 @@ export function createLearningResume({storage=accountLocalStorage(),principal=ac
     !['explanation','selfcheck','practice'].includes(sectionId))return false;
   return record(courseId,{lessonId,sectionId,visitedAt:now()});
  };
- const lastOnec=()=>{
+ const lastOnec=(requestedCourse)=>{
   const courses=read();
-  return onecIds.flatMap(courseId=>{
+  const candidates=requestedCourse?onecIds.filter(id=>id===requestedCourse):onecIds;
+  return candidates.flatMap(courseId=>{
    const point=courses[courseId];
    return point?.lessonId?.startsWith?.(courseId+'.')&&Number.isFinite(Date.parse(point.visitedAt))?
     [{courseId,topicId:point.lessonId,sectionId:point.sectionId,updatedAt:point.visitedAt}]:[];

@@ -1,0 +1,1292 @@
+[
+  {
+    "id": "main-and-source",
+    "term": "Исходный файл и main",
+    "aliases": [
+      "точка входа",
+      "исходник",
+      "main",
+      "int-main",
+      "#include",
+      "return"
+    ],
+    "lessons": [
+      "c.what-is-c",
+      "c.first-program"
+    ],
+    "simple": "Исходник описывает действия. В обычной консольной программе первое ваше действие находится в main.",
+    "definition": "В размещённой среде C запуск вызывает main. В форме int main(void) функция возвращает int и не принимает аргументов.",
+    "purpose": "Соберите минимальную программу, чтобы отделить проблему среды от проблемы в своём коде.",
+    "form": "#include <stdio.h>\nint main(void)\n{\n    /* statements */\n    return 0;\n}",
+    "example": "#include <stdio.h>\nint main(void)\n{\n    puts(\"Ready\");\n    return 0;\n}",
+    "breakdown": [
+      "#include подключает объявления заголовка.",
+      "Фигурные скобки ограничивают тело main.",
+      "return 0 сообщает об успешном завершении."
+    ],
+    "observation": "В stdout будет Ready и перевод строки. Код завершения равен 0 и в текст вывода не входит.",
+    "mistake": "При ошибке объявления puts проверьте подключение stdio.h. Пропущенную скобку или точку с запятой исправляют до запуска."
+  },
+  {
+    "id": "build-and-link",
+    "term": "Сборка и компоновка",
+    "aliases": [
+      "объектный файл",
+      "компоновщик",
+      "clang",
+      "gcc",
+      "-std=c17",
+      "-c",
+      "linking",
+      "build"
+    ],
+    "lessons": [
+      "c.build-and-run",
+      "c.compiler-diagnostics",
+      "c.translation-units",
+      "c.capstone-delivery"
+    ],
+    "simple": "Сначала исходники переводятся в объектные файлы. Компоновщик соединяет вызовы с реализациями.",
+    "definition": "Обработка каждого исходника включает препроцессирование. Драйвер Clang может отдельно компилировать с -c или провести сборку до готовой программы.",
+    "purpose": "По этапу ошибки определите, где искать причину: в одном исходнике или в наборе собранных файлов.",
+    "form": "clang -std=c17 -Wall -Wextra -Wpedantic main.c worker.c -o report",
+    "example": "clang -std=c17 -c main.c -o main.o\nclang -std=c17 -c worker.c -o worker.o\nclang main.o worker.o -o report",
+    "breakdown": [
+      "Команды предназначены для нативного Clang.",
+      "Ключ -c останавливает сборку перед компоновкой.",
+      "Последняя команда связывает два объектных файла."
+    ],
+    "observation": "Если main.c видит корректное объявление из worker.c, обе компиляции проходят. Удаление worker.o из последней команды может вызвать ошибку отсутствующего определения.",
+    "mistake": "Один #include с объявлением не подключает реализацию. Добавьте нужный исходный или объектный файл в сборку."
+  },
+  {
+    "id": "console-streams",
+    "term": "Стандартные потоки",
+    "aliases": [
+      "ввод",
+      "вывод",
+      "диагностика",
+      "stdin",
+      "stdout",
+      "stderr",
+      "puts",
+      "fputs"
+    ],
+    "lessons": [
+      "c.first-program",
+      "c.read-input",
+      "c.debugging-first-difference",
+      "c.capstone-errors"
+    ],
+    "simple": "Ввод, ответ программы и диагностические сообщения идут через разные потоки.",
+    "definition": "Заголовок stdio.h предоставляет stdin, stdout и stderr. puts пишет строку и перевод строки в stdout. fputs пишет в указанный поток без добавленного переноса.",
+    "purpose": "Сравнивайте точный ответ задачи отдельно от пояснений и трассы.",
+    "form": "puts(text);\nfputs(text, stream);",
+    "example": "puts(\"accepted\");\nfputs(\"checked range\\n\", stderr);",
+    "breakdown": [
+      "stdin подаёт данные для чтения.",
+      "stdout обычно содержит проверяемый результат.",
+      "stderr подходит для отдельной диагностики."
+    ],
+    "observation": "В stdout будет accepted с переводом строки. В stderr будет checked range с переводом строки из литерала.",
+    "mistake": "Если проверка отвергает правильный ответ, ищите лишний отладочный текст в stdout. Перенесите его в stderr или удалите."
+  },
+  {
+    "id": "printf-formats",
+    "term": "Форматированный вывод",
+    "aliases": [
+      "строка формата",
+      "спецификатор",
+      "printf",
+      "fprintf",
+      "snprintf",
+      "%d",
+      "%zu",
+      "%ld",
+      "%.2f"
+    ],
+    "lessons": [
+      "c.formatted-output",
+      "c.m1-project",
+      "c.first-program",
+      "c.capstone-contract"
+    ],
+    "simple": "Формат задаёт, где появится каждое значение и как его напечатать.",
+    "definition": "Функции семейства printf интерпретируют строку формата и последующие аргументы. %d соответствует int, %ld — long, %zu — size_t, %f в printf — double.",
+    "purpose": "Выведите числа, подписи и единицы измерения в точности по контракту задачи.",
+    "form": "printf(\"label %d\\n\", value);\nfprintf(stream, \"%zu\\n\", count);",
+    "example": "size_t count = 3;\ndouble mass = 1.25;\nprintf(\"%zu items, %.2f kg\\n\", count, mass);",
+    "breakdown": [
+      "Обычные символы копируются в вывод.",
+      "Спецификатор соответствует позиции и типу аргумента.",
+      "%.2f показывает два знака после десятичного разделителя."
+    ],
+    "observation": "В числовой локали C строка равна 3 items, 1.25 kg с переводом строки.",
+    "mistake": "Замена %zu на %d для size_t может привести к неопределённому поведению. Чтобы устранить предупреждение, подберите спецификатор под фактический тип."
+  },
+  {
+    "id": "scalar-types",
+    "term": "Типы и начальные значения",
+    "aliases": [
+      "объявление",
+      "инициализация",
+      "int",
+      "long",
+      "double",
+      "char",
+      "size_t",
+      "sizeof"
+    ],
+    "lessons": [
+      "c.variables-and-types",
+      "c.arithmetic-and-conversions",
+      "c.m1-project"
+    ],
+    "simple": "Тип определяет, какие значения можно хранить и как их обрабатывают операции.",
+    "definition": "int и long — знаковые целые, double — тип с плавающей точкой, char подходит для хранения символа. Точные диапазоны зависят от реализации.",
+    "purpose": "Выбирайте тип по диапазону и смыслу данных. Задайте известное значение при объявлении.",
+    "form": "int units = 0;\ndouble rate = 0.0;\nchar grade = 'A';",
+    "example": "int boxes = 12;\nlong cents = 12500L;\ndouble rate = 1.5;\nchar grade = 'B';",
+    "breakdown": [
+      "12 имеет тип int, суффикс L задаёт long.",
+      "1.5 — литерал double.",
+      "Одинарные кавычки обозначают символьную константу."
+    ],
+    "observation": "boxes равен 12, cents — 12500, rate — 1.5, grade хранит значение символа B. Диапазоны описаны в limits.h и float.h.",
+    "mistake": "У локального int boxes; без инициализации нет заданного значения. Присвойте его до чтения. Ширина int зависит от реализации."
+  },
+  {
+    "id": "division-conversions",
+    "term": "Частное, остаток и приведение",
+    "aliases": [
+      "целое деление",
+      "преобразование типов",
+      "cast",
+      "/",
+      "%",
+      "quotient",
+      "remainder"
+    ],
+    "lessons": [
+      "c.arithmetic-and-conversions",
+      "c.integer-division",
+      "c.m1-project"
+    ],
+    "simple": "При делении двух целых дробь отбрасывается. Приведение одного операнда до деления позволяет посчитать дробное среднее.",
+    "definition": "Целое частное в C17 округляется к нулю. Остаток восстанавливает исходное число: total == full * groups + left, если частное представимо.",
+    "purpose": "Найдите полные группы и остаток или вещественное среднее. Сначала проверьте делитель.",
+    "form": "double average = (double)total / groups;\nint full = total / groups;\nint left = total % groups;",
+    "example": "int total = 17;\nint groups = 4;\nint full = total / groups;\nint left = total % groups;\ndouble average = (double)total / groups;",
+    "breakdown": [
+      "17 / 4 даёт 4 полные группы.",
+      "17 % 4 даёт 1 остаток.",
+      "(double)total преобразует операнд перед делением."
+    ],
+    "observation": "4 * 4 + 1 равно 17. Дробный результат равен 4.25.",
+    "mistake": "(double)(total / groups) получит 4.0 после потери дроби. Отдельно исключите нулевой делитель и непредставимое целое частное."
+  },
+  {
+    "id": "input-validation",
+    "term": "Проверка целого ввода",
+    "aliases": [
+      "разбор числа",
+      "указатель конца",
+      "диапазон",
+      "strtol",
+      "errno",
+      "ERANGE",
+      "endptr"
+    ],
+    "lessons": [
+      "c.read-input",
+      "c.guard-boundaries",
+      "c.text-project",
+      "c.validate-file-records",
+      "c.test-boundaries"
+    ],
+    "simple": "Прочитать начало числа мало. Проверьте остаток строки и допустимый диапазон.",
+    "definition": "strtol из stdlib.h возвращает long и через второй аргумент записывает место остановки. errno из errno.h помогает обнаружить выход за диапазон long.",
+    "purpose": "Разберите строку до вычислений. Согласуйте, разрешены ли пробелы, знак и перевод строки.",
+    "form": "errno = 0;\nchar *end;\nlong value = strtol(text, &end, 10);",
+    "example": "errno = 0;\nchar *end;\nlong value = strtol(text, &end, 10);\nif (end == text || errno == ERANGE || *end != '\\0' ||\n    value < 0 || value > 999) {\n    return 0;\n}",
+    "breakdown": [
+      "Сначала обнулите errno, чтобы не принять старую ошибку за новую.",
+      "end == text выявляет отсутствие преобразования.",
+      "В примере после числа требуется конец строки, а допустимы числа 0–999."
+    ],
+    "observation": "42 принимается, 42x отклоняется из-за хвоста, 1000 — из-за диапазона. Если контракт допускает пробельный хвост, пропустите его явно.",
+    "mistake": "И текст 0, и текст без числа могут дать 0. Сначала проверяйте end и errno."
+  },
+  {
+    "id": "branch-guards",
+    "term": "Условия и защитные проверки",
+    "aliases": [
+      "ветвление",
+      "короткое замыкание",
+      "граница",
+      "if",
+      "else",
+      "&&",
+      "||",
+      "==",
+      "<="
+    ],
+    "lessons": [
+      "c.conditions",
+      "c.guard-boundaries",
+      "c.memory-safe-review",
+      "c.test-boundaries"
+    ],
+    "simple": "Проверьте условие безопасного доступа до обращения к данным.",
+    "definition": "if выбирает ветвь по ненулевому значению условия. && вычисляет правую часть только при истинной левой, а || — только при ложной.",
+    "purpose": "Проверяйте диапазоны, допустимость входа и предпосылки вычисления.",
+    "form": "if (condition) {\n    /* accepted branch */\n} else {\n    /* rejected branch */\n}",
+    "example": "if (index >= 0 && (uintmax_t)index < count) {\n    printf(\"%d\\n\", values[(size_t)index]);\n} else {\n    puts(\"invalid\");\n}",
+    "breakdown": [
+      "Первая проверка отсекает отрицательные числа.",
+      "Вторая сравнивает индекс с count до сужения.",
+      "Обращение к элементу выполняется только после обеих проверок."
+    ],
+    "observation": "Для массива {8, 13} и count = 2 вход 1 печатает 13. Вход 2 даёт invalid.",
+    "mistake": "Сравнение <= count пропустит индекс за последним. 0 <= index < count сравнивает промежуточные 0 или 1 с count. Используйте два отдельных сравнения."
+  },
+  {
+    "id": "counted-loop",
+    "term": "Цикл со счётчиком",
+    "aliases": [
+      "for",
+      "итерация",
+      "счётчик",
+      "iteration",
+      "++",
+      "index"
+    ],
+    "lessons": [
+      "c.counted-loops",
+      "c.array-bounds",
+      "c.array-statistics"
+    ],
+    "simple": "Один проход обрабатывает один индекс, пока индекс меньше длины массива.",
+    "definition": "В for инициализация выполняется один раз, условие проверяется перед каждым проходом, а выражение изменения — после тела прохода.",
+    "purpose": "Обойдите известное число элементов или повторите действие заданное число раз.",
+    "form": "for (size_t i = 0; i < count; ++i) {\n    /* use i */\n}",
+    "example": "int values[] = {3, 6, 9};\nfor (size_t i = 0; i < sizeof values / sizeof values[0]; ++i) {\n    printf(\"%d\\n\", values[i]);\n}",
+    "breakdown": [
+      "i начинается с 0.",
+      "sizeof даёт данные о самом массиве в этой области.",
+      "После каждого прохода ++i готовит следующий индекс."
+    ],
+    "observation": "Будут напечатаны 3, 6 и 9 на отдельных строках. При явном count = 0 тело пропускается.",
+    "mistake": "Проверьте последний индекс и пустой диапазон. Условие i <= count добавляет лишний проход."
+  },
+  {
+    "id": "sentinel-loop",
+    "term": "Цикл до сигнала завершения",
+    "aliases": [
+      "признак конца",
+      "стоп-значение",
+      "while",
+      "EOF",
+      "break",
+      "getchar"
+    ],
+    "lessons": [
+      "c.sentinel-loops",
+      "c.read-input",
+      "c.read-write-files"
+    ],
+    "simple": "Чтение даёт очередной символ или признак, что читать дальше нельзя.",
+    "definition": "while проверяет условие до тела. getchar возвращает очередной символ как int или EOF. ferror(stdin) отличает ошибку от конца потока.",
+    "purpose": "Остановите обработку на конце первой строки или по концу потока, когда длина заранее неизвестна.",
+    "form": "while ((ch = getchar()) != EOF) {\n    /* handle one character */\n}",
+    "example": "int ch;\nwhile ((ch = getchar()) != EOF) {\n    if (ch == '\\n') {\n        break;\n    }\n    putchar(ch);\n}",
+    "breakdown": [
+      "Чтение происходит внутри условия.",
+      "break завершает цикл на LF.",
+      "int хранит результат до проверки EOF."
+    ],
+    "observation": "Ввод AB с LF печатает AB без перевода строки. При пустом потоке тело пропускается.",
+    "mistake": "При повторении последнего символа проверьте, записывает ли условие новое значение. Не сужайте результат до char перед проверкой EOF."
+  },
+  {
+    "id": "function-contract",
+    "term": "Прототип и контракт функции",
+    "aliases": [
+      "сигнатура",
+      "результат",
+      "предусловие",
+      "function",
+      "return",
+      "prototype",
+      "contract",
+      "invariant"
+    ],
+    "lessons": [
+      "c.functions",
+      "c.parameters",
+      "c.function-project",
+      "c.structure-contracts",
+      "c.capstone-contract"
+    ],
+    "simple": "Перед вызовом выясните, какие данные принимает функция и какой результат обещает.",
+    "definition": "Прототип описывает тип результата и параметры. Контракт добавляет смысл аргументов, предпосылки и гарантии, которых тип может не выразить.",
+    "purpose": "Разделите задачу на операции, которые можно проверить независимо.",
+    "form": "int larger(int left, int right);",
+    "example": "int larger(int left, int right)\n{\n    return left > right ? left : right;\n}",
+    "breakdown": [
+      "Прототип можно поместить в заголовок.",
+      "Определение добавляет тело, вычисляющее обещанный результат.",
+      "Условный оператор возвращает одно из двух значений, включая случай равенства."
+    ],
+    "observation": "larger(3, 8) даёт 8, larger(-2, -7) даёт -2, larger(5, 5) даёт 5.",
+    "mistake": "Одинаковый тип int у двух параметров не делает их взаимозаменяемыми в общем случае. Документируйте смысл и порядок."
+  },
+  {
+    "id": "passing-values",
+    "term": "Передача аргумента по значению",
+    "aliases": [
+      "аргумент",
+      "параметр",
+      "копия",
+      "parameter",
+      "argument",
+      "call",
+      "copy-value"
+    ],
+    "lessons": [
+      "c.functions",
+      "c.parameters",
+      "c.scope",
+      "c.structure-contracts"
+    ],
+    "simple": "Функция получает значение аргумента в собственном параметре.",
+    "definition": "В C параметры инициализируются значениями аргументов. Изменение параметра само по себе не меняет объект в вызывающей функции. Для указателя тоже копируется значение указателя.",
+    "purpose": "Проверяйте отдельно переменные вызывающего кода и результат вызова.",
+    "form": "int step(int current);",
+    "example": "int step(int current)\n{\n    ++current;\n    return current;\n}\n/* In the caller: int next = step(previous); */",
+    "breakdown": [
+      "current получает копию previous.",
+      "++current меняет локальный current.",
+      "return передаёт новое значение в next."
+    ],
+    "observation": "Если previous равно 5, после вызова next равно 6, а previous равно 5.",
+    "mistake": "При step(previous); результат отброшен. Для изменения previous присвойте результат или определите отдельный контракт указателя."
+  },
+  {
+    "id": "scope-and-lifetime",
+    "term": "Область видимости и время жизни",
+    "aliases": [
+      "блок",
+      "локальная переменная",
+      "block",
+      "scope",
+      "lifetime",
+      "local"
+    ],
+    "lessons": [
+      "c.scope",
+      "c.functions",
+      "c.pointer-lifetime-errors",
+      "c.memory-safe-review"
+    ],
+    "simple": "Имя видно в своей области. Время жизни отвечает за то, существует ли ещё сам объект.",
+    "definition": "Для обычной локальной переменной автоматического хранения время жизни ограничено выполнением блока. У объектов статического хранения действуют другие правила.",
+    "purpose": "Перенесите значение во внешнюю переменную до окончания внутренней работы.",
+    "form": "{\n    int temporary = 0;\n    /* use temporary inside this block */\n}",
+    "example": "int saved;\n{\n    int measured = 12;\n    saved = measured;\n}\nprintf(\"%d\\n\", saved);",
+    "breakdown": [
+      "saved объявлена снаружи.",
+      "measured создаётся внутри и копируется как число.",
+      "После блока печатается собственное значение saved."
+    ],
+    "observation": "Вывод равен 12. Использовать имя measured после блока нельзя.",
+    "mistake": "Вместо числа иногда сохраняют &measured. Адрес не продлевает время жизни, читать по нему после блока нельзя."
+  },
+  {
+    "id": "function-check",
+    "term": "Проверка результата функции",
+    "aliases": [
+      "ожидаемый ответ",
+      "проверка",
+      "assert",
+      "expected",
+      "actual",
+      "unit-test"
+    ],
+    "lessons": [
+      "c.function-test-cases",
+      "c.function-project",
+      "c.test-boundaries"
+    ],
+    "simple": "Сначала вычислите ожидаемое вручную, затем сравните с вызовом.",
+    "definition": "assert из assert.h проверяет ненулевой результат. В сборке, где при подключении определён NDEBUG, проверка может быть отключена стандартным макросом.",
+    "purpose": "Проверьте обычный случай, равенство и границу до соединения частей программы.",
+    "form": "assert(actual == expected);",
+    "example": "#include <assert.h>\n/* After defining int larger(int, int): */\nassert(larger(-4, -2) == -2);\nassert(larger(3, 3) == 3);",
+    "breakdown": [
+      "Ожидание записано справа от ==.",
+      "В первом примере оба аргумента отрицательны.",
+      "Равенство проверяет, что ничья даёт допустимый ответ."
+    ],
+    "observation": "Для корректной larger обе проверки проходят без сообщения. Подмените один ожидаемый ответ, чтобы увидеть отказ в проверочной сборке.",
+    "mistake": "Не вызывайте через assert действия, необходимые программе. При NDEBUG выражение не выполняется."
+  },
+  {
+    "id": "array-elements",
+    "term": "Массив и число элементов",
+    "aliases": [
+      "массив",
+      "индекс",
+      "длина",
+      "array",
+      "index",
+      "sizeof",
+      "count"
+    ],
+    "lessons": [
+      "c.array-bounds",
+      "c.array-statistics",
+      "c.structure-arrays"
+    ],
+    "simple": "Элементы нумеруются от нуля. При длине 3 последняя позиция — 2.",
+    "definition": "Массив — последовательность однотипных элементов. Для объекта-массива sizeof даёт его размер в байтах, а sizeof одного элемента позволяет вычислить длину.",
+    "purpose": "Найдите длину и обходите только реально существующие элементы.",
+    "form": "int sample[] = {5, 8, 13};\nsize_t count = sizeof sample / sizeof sample[0];",
+    "example": "int sample[] = {5, 8, 13};\nsize_t count = sizeof sample / sizeof sample[0];\nint last = sample[count - 1];",
+    "breakdown": [
+      "Инициализатор определяет длину sample.",
+      "Деление размеров при известном типе массива даёт count = 3.",
+      "count - 1 — последний индекс только при count > 0."
+    ],
+    "observation": "last имеет значение 13. Для условно пустого диапазона длину нужно проверить до вычисления count - 1.",
+    "mistake": "sample[count] выходит за границу. В параметре функции sizeof того же имени не вычисляет длину массива."
+  },
+  {
+    "id": "array-parameter",
+    "term": "Массив как параметр",
+    "aliases": [
+      "длина параметра",
+      "диапазон массива",
+      "array-parameter",
+      "pointer",
+      "size_t",
+      "const"
+    ],
+    "lessons": [
+      "c.array-parameters",
+      "c.pointer-arrays",
+      "c.array-statistics",
+      "c.structure-arrays"
+    ],
+    "simple": "Передайте адрес первого элемента и число элементов, доступных функции.",
+    "definition": "Объявление параметра const int values[] корректируется до const int *. Длина в этот указатель не входит. Вызывающий код сообщает её отдельно.",
+    "purpose": "Одна функция может читать массивы разных длин с явно заданными границами.",
+    "form": "long sum(const int values[], size_t count);",
+    "example": "long sum(const int values[], size_t count)\n{\n    long total = 0;\n    for (size_t i = 0; i < count; ++i) {\n        total += values[i];\n    }\n    return total;\n}",
+    "breakdown": [
+      "count определяет допустимый диапазон [0, count).",
+      "const запрещает записи через values.",
+      "Для этой функции сумма должна помещаться в long."
+    ],
+    "observation": "Для массива {2, 4, 8} и count 2 результат 6, а при count 3 результат 14.",
+    "mistake": "Не вычисляйте число элементов как sizeof values / sizeof values[0] внутри sum. sizeof values даёт размер указателя."
+  },
+  {
+    "id": "array-summary",
+    "term": "Накопление и поиск максимума",
+    "aliases": [
+      "сумма",
+      "агрегат",
+      "максимум",
+      "sequence",
+      "sum",
+      "minimum",
+      "maximum",
+      "aggregate"
+    ],
+    "lessons": [
+      "c.array-statistics",
+      "c.structure-arrays",
+      "c.dynamic-record-project"
+    ],
+    "simple": "На каждом проходе обновляйте итог с учётом очередного элемента.",
+    "definition": "Инвариант описывает, что означает накопленный результат после обработки уже просмотренного префикса. Для максимума пустого диапазона ответ требует отдельного правила.",
+    "purpose": "Проверьте статистику, объясняя состояние после каждого прохода.",
+    "form": "long total = 0;\nfor (size_t i = 0; i < count; ++i) {\n    total += values[i];\n}",
+    "example": "int values[] = {-5, -2, -9};\nint maximum = values[0];\nfor (size_t i = 1; i < 3; ++i) {\n    if (values[i] > maximum) {\n        maximum = values[i];\n    }\n}",
+    "breakdown": [
+      "Сумма пустого диапазона в форме равна 0.",
+      "В непустом примере максимум начинается с реально существующего элемента.",
+      "В цикле обновляйте его только при большем значении."
+    ],
+    "observation": "Для {-5, -2, -9} значение maximum последовательно равно -5, -2 и -2.",
+    "mistake": "Начальное maximum = 0 даёт 0 для полностью отрицательного массива. Проверьте непустоту и начните с первого элемента."
+  },
+  {
+    "id": "qsort-comparator",
+    "term": "Сортировка qsort",
+    "aliases": [
+      "функция сравнения",
+      "порядок сортировки",
+      "qsort",
+      "comparator",
+      "order",
+      "stdlib.h"
+    ],
+    "lessons": [
+      "c.array-sort"
+    ],
+    "simple": "Сортировка получает функцию, которая сообщает порядок двух элементов.",
+    "definition": "qsort из stdlib.h переставляет элементы исходного массива. Функция сравнения получает адреса элементов и возвращает отрицательное число, ноль или положительное число в соответствии с порядком.",
+    "purpose": "Отделите способ сравнения от работы сортировки. Проверяйте дубликаты и крайние значения.",
+    "form": "qsort(values, count, sizeof values[0], compare_int);",
+    "example": "static int compare_int(const void *left, const void *right)\n{\n    int a = *(const int *)left;\n    int b = *(const int *)right;\n    return (a > b) - (a < b);\n}",
+    "breakdown": [
+      "void * обозначает адрес элемента без объявленного типа.",
+      "Приведение и разыменование читают int правильного объекта.",
+      "Разность результатов сравнений безопасна: каждый результат 0 или 1."
+    ],
+    "observation": "Для {6, -1, 6, 2} сортировка по возрастанию даёт {-1, 2, 6, 6}. Стабильность порядка равных элементов не обещана.",
+    "mistake": "Не используйте return a - b для общего int: знаковая разность может переполниться."
+  },
+  {
+    "id": "string-terminator",
+    "term": "Строка и завершающий ноль",
+    "aliases": [
+      "терминатор",
+      "длина строки",
+      "нулевой байт",
+      "string",
+      "char",
+      "strlen",
+      "'\\0'",
+      "NUL"
+    ],
+    "lessons": [
+      "c.null-terminated-strings",
+      "c.string-library",
+      "c.text-project"
+    ],
+    "simple": "Строка заканчивается нулевым байтом. Этот байт занимает место, но не входит в длину текста.",
+    "definition": "Стандартная строка C — последовательность символов, завершённая первым нулевым символом. strlen считает байты до него.",
+    "purpose": "Выделяйте место для текста и терминатора и проверяйте границу перед вызовами библиотеки.",
+    "form": "char name[] = \"Go\";\nsize_t length = strlen(name);",
+    "example": "char name[] = {'G', 'o', '\\0'};\nprintf(\"%zu / %zu\\n\", strlen(name), sizeof name);",
+    "breakdown": [
+      "Массив хранит G, o и ноль.",
+      "strlen находит два байта до нуля.",
+      "sizeof учитывает все три элемента массива."
+    ],
+    "observation": "Пример печатает 2 / 3. Для строки \"\" длина равна 0, а хранилище литерала имеет один байт.",
+    "mistake": "Массив {'G', 'o'} без нуля не является строкой для strlen. Добавьте терминатор или передавайте явную длину и работайте с байтами."
+  },
+  {
+    "id": "bounded-line",
+    "term": "Ограниченное чтение строки",
+    "aliases": [
+      "буфер",
+      "fgets",
+      "перевод строки",
+      "LF",
+      "buffer",
+      "strchr"
+    ],
+    "lessons": [
+      "c.line-input",
+      "c.read-input",
+      "c.text-project",
+      "c.sentinel-loops"
+    ],
+    "simple": "Чтение заполняет буфер не целиком и сохраняет перевод строки, если он помещается.",
+    "definition": "Для размера больше 1 fgets читает до limit - 1 символов, до LF или до конца потока и завершает успешный результат нулём.",
+    "purpose": "Читайте строку безопасным объёмом, затем отдельно проверьте её полноту по правилам задачи.",
+    "form": "char line[32];\nif (fgets(line, sizeof line, stdin) == NULL) {\n    /* inspect EOF or error */\n}",
+    "example": "char line[8];\nif (fgets(line, sizeof line, stdin) != NULL) {\n    char *lf = strchr(line, '\\n');\n    if (lf != NULL) {\n        *lf = '\\0';\n    }\n    printf(\"[%s]\\n\", line);\n}",
+    "breakdown": [
+      "Размер 8 оставляет место семи символам и нулю.",
+      "strchr из string.h ищет LF в успешно прочитанной строке.",
+      "Замена LF нулём убирает этот перевод строки."
+    ],
+    "observation": "С входом ABC и LF stdout содержит [ABC]. При вводе длиннее семи байтов этот фрагмент сам по себе выведет только начало.",
+    "mistake": "Отсутствие LF может означать короткую строку в конце файла или заполненный буфер с непрочитанным хвостом. Проверяйте дальше, если контракт требует целую строку."
+  },
+  {
+    "id": "string-library",
+    "term": "Сравнение строк",
+    "aliases": [
+      "strcmp",
+      "равенство текста",
+      "strlen",
+      "snprintf",
+      "string.h"
+    ],
+    "lessons": [
+      "c.string-library",
+      "c.text-project",
+      "c.capstone-implementation"
+    ],
+    "simple": "Сравнивайте содержимое строк, а не совпадение адресов.",
+    "definition": "strcmp из string.h сравнивает строки до различия или терминатора и сообщает знак результата. 0 означает равенство.",
+    "purpose": "Разберите полную команду и отличите совпадение от похожего префикса.",
+    "form": "int matches = strcmp(actual, expected) == 0;",
+    "example": "const char *command = \"report\";\nif (strcmp(command, \"report\") == 0) {\n    puts(\"matched\");\n}",
+    "breakdown": [
+      "Оба аргумента должны быть валидными строками.",
+      "Проверка == 0 означает полное совпадение.",
+      "Положительное и отрицательное значения сообщают порядок, без гарантии точных чисел."
+    ],
+    "observation": "С report будет matched. Строка report сейчас либо report с пробелом не совпадёт.",
+    "mistake": "command == \"report\" сравнивает указатели. Используйте strcmp, предварительно подтвердив завершение строки."
+  },
+  {
+    "id": "pointer-address",
+    "term": "Адрес и разыменование",
+    "aliases": [
+      "указатель",
+      "адрес",
+      "память",
+      "pointer",
+      "&",
+      "*",
+      "dereference",
+      "address"
+    ],
+    "lessons": [
+      "c.addresses-and-pointers",
+      "c.pointer-parameters"
+    ],
+    "simple": "Указатель хранит адрес. Разыменование обращается к объекту по этому адресу.",
+    "definition": "& получает адрес объекта. * в объявлении образует указательный тип, а в выражении обращается к объекту, если указатель пригоден для доступа.",
+    "purpose": "Передавайте функции доступ к существующему объекту и проверяйте, что изменился исходный объект.",
+    "form": "int *pointer = &object;\nint copy = *pointer;",
+    "example": "int temperature = 18;\nint *p = &temperature;\n*p = 20;",
+    "breakdown": [
+      "&temperature даёт указатель на temperature.",
+      "int *p объявляет указатель на int.",
+      "*p = 20 записывает значение в temperature."
+    ],
+    "observation": "После записи temperature равно 20. Если вместо этого изменить копию int copy = *p, temperature не изменится.",
+    "mistake": "Не разыменовывайте неинициализированный, нулевой или утративший действительность указатель. Сначала установите, на какой объект он указывает."
+  },
+  {
+    "id": "pointer-range",
+    "term": "Указатели внутри массива",
+    "aliases": [
+      "арифметика указателей",
+      "позиция за массивом",
+      "pointer-arithmetic",
+      "a[i]",
+      "one-past",
+      "ptrdiff_t"
+    ],
+    "lessons": [
+      "c.pointer-arrays",
+      "c.array-parameters",
+      "c.memory-safe-review"
+    ],
+    "simple": "Прибавление 1 к указателю переводит его на следующий элемент.",
+    "definition": "Арифметика указателей допустима внутри одного массива и до позиции сразу за последним элементом. Указатель на эту позицию можно сравнивать в обходе, но нельзя разыменовывать.",
+    "purpose": "Обходите элементы по диапазону, когда функция уже получила указатель и длину.",
+    "form": "const int *past = values + count;\nfor (const int *p = values; p != past; ++p) {\n    /* read *p */\n}",
+    "example": "int values[] = {2, 5, 8};\nconst int *past = values + 3;\nfor (const int *p = values; p != past; ++p) {\n    printf(\"%d \", *p);\n}",
+    "breakdown": [
+      "values обозначает адрес первого элемента в этом выражении.",
+      "values + 3 — граничная позиция для массива из трёх int.",
+      "Условие останавливает цикл до чтения этой позиции."
+    ],
+    "observation": "Пример печатает 2, 5 и 8 через пробел с пробелом в конце. При пустом диапазоне с действительным начальным указателем тело пропускается.",
+    "mistake": "Пересечение за past не даёт допустимый указатель. Проверку до вычисления нового адреса делайте по индексу и длине."
+  },
+  {
+    "id": "output-parameter",
+    "term": "Выходной параметр",
+    "aliases": [
+      "выходной указатель",
+      "статус",
+      "out",
+      "output-parameter",
+      "&",
+      "*"
+    ],
+    "lessons": [
+      "c.pointer-parameters",
+      "c.guard-boundaries",
+      "c.structure-contracts"
+    ],
+    "simple": "Функция может вернуть статус, а данные записать в объект вызывающей стороны.",
+    "definition": "Значение указателя передаётся копированием. Разыменование этого значения обращается к исходному объекту. Контракт определяет, когда запись разрешена.",
+    "purpose": "Различайте ошибку вызова и допустимый результат, например ноль.",
+    "form": "int operation(int input, int *out);",
+    "example": "int clamp_nonnegative(int input, int *out)\n{\n    if (out == NULL) {\n        return 0;\n    }\n    *out = input < 0 ? 0 : input;\n    return 1;\n}",
+    "breakdown": [
+      "Вызывающий код передаёт &result.",
+      "При NULL функция возвращает 0 до записи.",
+      "На успехе результат помещается в *out, статус равен 1."
+    ],
+    "observation": "Передайте -7 и &result: статус будет 1, result станет 0. При NULL статус равен 0.",
+    "mistake": "Проверка NULL не проверяет время жизни объекта. Передавайте адрес живого доступного int и читайте результат только после успеха."
+  },
+  {
+    "id": "const-and-null",
+    "term": "Чтение через const и NULL",
+    "aliases": [
+      "указатель для чтения",
+      "нулевой указатель",
+      "const",
+      "NULL",
+      "nonnull",
+      "read-only"
+    ],
+    "lessons": [
+      "c.const-and-null",
+      "c.pointer-parameters",
+      "c.module-layout",
+      "c.capstone-implementation"
+    ],
+    "simple": "const ограничивает запись через указатель, а NULL означает, что указатель не указывает на объект.",
+    "definition": "В const int * тип объекта для доступа через указатель — const int. Сам указатель можно переназначить. Нулевой указатель сравнивают, но не разыменовывают.",
+    "purpose": "Документируйте доступ для чтения и обработайте отсутствие объекта по контракту.",
+    "form": "const int *read_only = &value;\nif (read_only != NULL) { /* read */ }",
+    "example": "int value = 7;\nconst int *read_only = &value;\nint copy = *read_only;",
+    "breakdown": [
+      "&value указывает на живой int.",
+      "const int * разрешает чтение этого int через read_only.",
+      "Копирование через *read_only сохраняет число, а не адрес."
+    ],
+    "observation": "copy равна 7. Если присвоить value = 9, copy останется 7, а очередное чтение через read_only увидит 9.",
+    "mistake": "Не снимайте const приведением для записи. Если объект определён как const, такая запись имеет неопределённое поведение."
+  },
+  {
+    "id": "struct-record",
+    "term": "Структура и поля",
+    "aliases": [
+      "запись",
+      "структура данных",
+      "поле",
+      "struct",
+      "Record",
+      "field",
+      ".",
+      "->"
+    ],
+    "lessons": [
+      "c.structures",
+      "c.structure-arrays",
+      "c.structure-contracts",
+      "c.capstone-contract"
+    ],
+    "simple": "Структура объединяет связанные значения в одну запись.",
+    "definition": "struct задаёт набор именованных полей. Обращайтесь к полю объекта через . и к полю объекта по указателю через ->.",
+    "purpose": "Храните ID и значение вместе, передавайте или проверяйте запись целиком.",
+    "form": "struct Reading { int id; int value; };",
+    "example": "struct Reading { int id; int value; };\nstruct Reading reading = {.id = 7, .value = 12};\nstruct Reading *row = &reading;\nrow->value = 18;",
+    "breakdown": [
+      "Именованный инициализатор сопоставляет значения полям.",
+      "row->value эквивалентно (*row).value.",
+      "Массив структур хранит последовательность таких записей."
+    ],
+    "observation": "После присваивания reading.value равно 18, а reading.id остаётся 7.",
+    "mistake": "Не сравнивайте структуры оператором ==. Сравнивайте нужные поля. Присваивание структуры, напротив, копирует её значение."
+  },
+  {
+    "id": "enumerated-states",
+    "term": "Перечисление состояний",
+    "aliases": [
+      "перечисление",
+      "состояние",
+      "статус",
+      "enum",
+      "status",
+      "state",
+      "switch",
+      "case"
+    ],
+    "lessons": [
+      "c.enumerations",
+      "c.structure-contracts",
+      "c.error-cleanup",
+      "c.capstone-errors"
+    ],
+    "simple": "Дайте именам состояний значения, чтобы читать условия по смыслу.",
+    "definition": "enum определяет тип и именованные целые константы. По умолчанию первая константа равна 0, а следующая получает значение предыдущей плюс один.",
+    "purpose": "Разведите отсутствие записи, ошибку данных и успех без загадочных чисел.",
+    "form": "enum Status { STATUS_OK, STATUS_MISSING, STATUS_INVALID };",
+    "example": "enum Status { STATUS_OK, STATUS_MISSING, STATUS_INVALID };\nenum Status status = STATUS_MISSING;\nif (status == STATUS_MISSING) {\n    puts(\"missing\");\n}",
+    "breakdown": [
+      "Перечислители описывают три разных исхода.",
+      "status хранит выбранное состояние.",
+      "Условие сравнивает осмысленное имя, а не число."
+    ],
+    "observation": "Пример печатает missing. STATUS_OK при тех же условиях эту ветвь пропускает.",
+    "mistake": "Не считайте произвольное число допустимым только потому, что оно присвоено enum. Разберите внешний ввод и подтвердите разрешённое состояние."
+  },
+  {
+    "id": "size-checked-allocation",
+    "term": "Проверка размера выделения",
+    "aliases": [
+      "переполнение размера",
+      "проверка ёмкости",
+      "SIZE_MAX",
+      "sizeof",
+      "size_t",
+      "overflow"
+    ],
+    "lessons": [
+      "c.allocate-bounds",
+      "c.allocation",
+      "c.resize-safely",
+      "c.dynamic-record-project"
+    ],
+    "simple": "Сначала убедитесь, что произведение числа элементов и размера элемента представимо.",
+    "definition": "malloc принимает число байтов типа size_t. Переполнение беззнакового умножения может уменьшить переданный размер. SIZE_MAX объявлен в stdint.h.",
+    "purpose": "Выделяйте ровно столько памяти, сколько потребуется для допустимого числа элементов.",
+    "form": "if (count > SIZE_MAX / sizeof *items) { /* reject */ }",
+    "example": "int *items = NULL;\nif (count == 0 || count > SIZE_MAX / sizeof *items) {\n    return 0;\n}\nitems = malloc(count * sizeof *items);",
+    "breakdown": [
+      "До умножения сравните count с предельным частным.",
+      "sizeof *items соответствует типу элемента.",
+      "В показанном контракте нулевая ёмкость отвергается отдельно. После malloc нужен тест NULL."
+    ],
+    "observation": "Если count = 3 и sizeof(int) = 4, передаётся 12 байтов. Заведомо слишком большое count отбрасывается до умножения.",
+    "mistake": "Проверка только результата malloc не обнаруживает переполненное произведение: меньшее число байтов могло успешно выделиться."
+  },
+  {
+    "id": "malloc-ownership",
+    "term": "Выделение, владение и free",
+    "aliases": [
+      "динамическая память",
+      "владелец",
+      "освобождение",
+      "malloc",
+      "free",
+      "ownership",
+      "calloc",
+      "heap"
+    ],
+    "lessons": [
+      "c.allocation",
+      "c.ownership-and-release",
+      "c.pointer-lifetime-errors",
+      "c.dynamic-record-project"
+    ],
+    "simple": "Приобретённый блок должен иметь ответственного за освобождение на всех путях завершения.",
+    "definition": "malloc из stdlib.h возвращает указатель на выделенную память или NULL при отказе для ненулевого запроса. Память malloc не инициализирована. free завершает её время жизни.",
+    "purpose": "Держите ответственность за блок явной, когда функция получает или отдаёт указатель.",
+    "form": "int *items = malloc(count * sizeof *items);\nif (items == NULL) { /* handle failure */ }",
+    "example": "int *value = malloc(sizeof *value);\nif (value == NULL) {\n    return 1;\n}\n*value = 21;\nprintf(\"%d\\n\", *value);\nfree(value);\nvalue = NULL;",
+    "breakdown": [
+      "Проверьте результат выделения перед записью.",
+      "Запишите 21 до чтения неинициализированной памяти.",
+      "Владелец вызывает free ровно один раз, затем обнуляет свою переменную."
+    ],
+    "observation": "При успешном выделении будет напечатано 21. Если выделение не удалось, функция выходит до разыменования.",
+    "mistake": "NULL в переменной владельца после free не исправляет копии прежнего указателя. Прекратите доступ через все такие копии."
+  },
+  {
+    "id": "realloc-safely",
+    "term": "Безопасный realloc",
+    "aliases": [
+      "расширение",
+      "ёмкость",
+      "временный указатель",
+      "realloc",
+      "capacity",
+      "resize",
+      "temporary"
+    ],
+    "lessons": [
+      "c.resize-safely",
+      "c.dynamic-record-project",
+      "c.ownership-and-release"
+    ],
+    "simple": "Просите новый размер через временный указатель. Сохраняйте владельца, пока не подтвердится успех.",
+    "definition": "При ненулевой новой длине realloc может переместить блок. При отказе старый блок сохраняется. При успехе используйте возвращённый указатель.",
+    "purpose": "Расширяйте динамический массив, сохраняя элементы и согласованность ёмкости.",
+    "form": "int *grown = realloc(items, new_bytes);\nif (grown != NULL) {\n    items = grown;\n}",
+    "example": "int *grown = realloc(items, new_capacity * sizeof *items);\nif (grown == NULL) {\n    /* The old nonzero allocation still belongs to items. */\n    return 0;\n}\nitems = grown;\ncapacity = new_capacity;",
+    "breakdown": [
+      "Сначала проверьте размер и потребуйте ненулевую ёмкость.",
+      "Запишите результат в grown.",
+      "При успехе обновите items и capacity вместе."
+    ],
+    "observation": "При росте первые старые элементы сохраняются. Если выделение отклонено, прежний указатель и ёмкость остаются пригодны для работы.",
+    "mistake": "items = realloc(items, n) может потерять единственный адрес при отказе. При успехе заново получайте адреса элементов из нового указателя."
+  },
+  {
+    "id": "file-stream",
+    "term": "Открытие и закрытие потока",
+    "aliases": [
+      "файл",
+      "поток",
+      "режим открытия",
+      "FILE",
+      "fopen",
+      "fclose",
+      "rb",
+      "wb",
+      "ab"
+    ],
+    "lessons": [
+      "c.file-streams",
+      "c.read-write-files",
+      "c.error-cleanup"
+    ],
+    "simple": "Сначала получите открытый поток. После работы проверьте закрытие.",
+    "definition": "fopen из stdio.h возвращает FILE * или NULL. rb читает существующий файл в двоичном режиме, wb создаёт или очищает файл, ab пишет в конец.",
+    "purpose": "Различайте ошибку пути, пустой файл и ошибку записи. Выберите режим до открытия.",
+    "form": "FILE *stream = fopen(path, \"rb\");\nif (stream == NULL) { /* handle failure */ }",
+    "example": "FILE *input = fopen(\"input/reading.txt\", \"rb\");\nif (input == NULL) {\n    return 1;\n}\nreturn fclose(input) == 0 ? 0 : 1;",
+    "breakdown": [
+      "Имя файла относительно рабочей области должно совпадать с путём.",
+      "NULL означает отказ открытия.",
+      "fclose возвращает 0 при успехе или EOF при ошибке."
+    ],
+    "observation": "Существующий пустой input/reading.txt открывается и может закрыться с кодом 0. Отсутствующий файл даёт код 1 ещё до fclose.",
+    "mistake": "fclose(NULL) недопустим. Открытие wb очищает существующий файл, даже если затем программа останавливается до записи."
+  },
+  {
+    "id": "file-read-write",
+    "term": "Чтение и запись байтов",
+    "aliases": [
+      "конец файла",
+      "двоичное чтение",
+      "копирование",
+      "fgetc",
+      "fread",
+      "fwrite",
+      "ferror",
+      "feof",
+      "EOF"
+    ],
+    "lessons": [
+      "c.read-write-files",
+      "c.file-streams",
+      "c.result-artifacts"
+    ],
+    "simple": "Копируйте прочитанные байты и проверяйте отказ независимо от конца файла.",
+    "definition": "fgetc возвращает байт как int или EOF. fread и fwrite возвращают число обработанных элементов. При размере элемента 1 это число байтов.",
+    "purpose": "Сделайте точную копию файла с сохранением переводов строк и обработкой короткой записи.",
+    "form": "size_t n = fread(buffer, 1, capacity, input);\nsize_t written = fwrite(buffer, 1, n, output);",
+    "example": "int byte;\nwhile ((byte = fgetc(input)) != EOF) {\n    if (fputc(byte, output) == EOF) {\n        return 1; /* cleanup belongs to the caller of this copy routine */\n    }\n}\nreturn ferror(input) ? 1 : 0;",
+    "breakdown": [
+      "Чтение в условии получает следующий байт.",
+      "fputc проверяется на EOF после каждой записи.",
+      "ferror(input) отличает ошибку чтения от нормального конца."
+    ],
+    "observation": "При двоичных потоках текст 3, LF, 6, LF копируется как четыре байта. Для пустого входа записано ноль байтов.",
+    "mistake": "Цикл while (!feof(input)) проверяет состояние до попытки чтения и может использовать неверный результат в последнем проходе. Проверяйте результат чтения."
+  },
+  {
+    "id": "tsv-records",
+    "term": "Разбор строки TSV",
+    "aliases": [
+      "запись",
+      "табуляция",
+      "формат файла",
+      "TAB",
+      "TSV",
+      "parser",
+      "record",
+      "strtol"
+    ],
+    "lessons": [
+      "c.validate-file-records",
+      "c.text-project",
+      "c.capstone-contract",
+      "c.capstone-errors"
+    ],
+    "simple": "Найдите границы полей и подтвердите всю строку прежде, чем добавлять запись.",
+    "definition": "В TSV поля разделены символом табуляции. Контракт определяет их число, диапазоны, правила перевода строки и допустимые повторы.",
+    "purpose": "Разберите изменяемую копию строки с уже проверенной длиной. Проверяйте разделитель отдельно от содержимого полей.",
+    "form": "char *separator = strchr(row, '\\t');\nif (separator == NULL) { /* reject the row */ }",
+    "example": "char *tab = strchr(row, '\\t');\nif (tab == NULL || strchr(tab + 1, '\\t') != NULL) {\n    return 0;\n}\n*tab = '\\0';\n/* Validate row and tab + 1 as complete fields. */",
+    "breakdown": [
+      "strchr находит первую табуляцию в завершённой строке.",
+      "Следующий вызов отвергает лишний разделитель.",
+      "Замена TAB на ноль даёт две отдельные строки для проверки чисел."
+    ],
+    "observation": "Для 7 TAB 15 получатся поля 7 и 15. Для 7 TAB 15 TAB 2 фрагмент вернёт отказ до проверки чисел.",
+    "mistake": "Разделение полей не подтверждает диапазон, уникальность или отсутствие суффиксов. Выполните эти проверки до увеличения числа сохранённых записей."
+  },
+  {
+    "id": "primary-error-cleanup",
+    "term": "Очистка и первичная ошибка",
+    "aliases": [
+      "ресурс",
+      "отказ",
+      "первичная причина",
+      "cleanup",
+      "first-error",
+      "fclose",
+      "resource"
+    ],
+    "lessons": [
+      "c.error-cleanup",
+      "c.ownership-and-release",
+      "c.capstone-errors"
+    ],
+    "simple": "Освободите полученные ресурсы на любом пути, сохраняя причину первого отказа.",
+    "definition": "Переменная состояния сообщает, был ли ресурс получен. Код очистки отделяет освобождение ресурса от выбора сообщения об ошибке.",
+    "purpose": "Проверьте, что отказ записи не пропускает закрытие файла и не скрывается сообщением о вторичной ошибке.",
+    "form": "if (stream != NULL) {\n    if (fclose(stream) == EOF && problem == NULL) {\n        problem = \"close-error\";\n    }\n}",
+    "example": "const char *problem = \"write-error\";\nif (output != NULL) {\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-error\";\n    }\n    output = NULL;\n}",
+    "breakdown": [
+      "Условие output != NULL охраняет закрытие.",
+      "fclose вызывается в левой части && и выполняется даже при старом problem.",
+      "Проверка справа разрешает менять problem только при отсутствии прежней ошибки."
+    ],
+    "observation": "В примере write-error сохраняется даже при ошибке закрытия. Если до закрытия problem == NULL, ошибка закрытия становится первой.",
+    "mistake": "Если написать problem == NULL && fclose(output) == EOF, ранняя ошибка помешает вызвать fclose. Разделите действие с ресурсом и запись сообщения."
+  },
+  {
+    "id": "run-artifact",
+    "term": "Файл результата и дельта запуска",
+    "aliases": [
+      "отчёт",
+      "артефакт",
+      "выходной файл",
+      "artifact",
+      "outputFiles",
+      "delta",
+      "FILE",
+      "wb"
+    ],
+    "lessons": [
+      "c.result-artifacts",
+      "c.capstone-delivery",
+      "c.capstone-errors"
+    ],
+    "simple": "Успешный расчёт и файл результата можно проверять отдельно.",
+    "definition": "Программа C создаёт байты в файловой области запуска. Дельта Nexus показывает новые или изменённые файлы. Сохранение результата в проект — отдельное действие.",
+    "purpose": "Сверьте путь и содержимое отчёта перед загрузкой или сохранением.",
+    "form": "FILE *output = fopen(path, \"wb\");\nif (output == NULL) { return 1; }\n/* Write, then check fclose(output). */",
+    "example": "FILE *output = fopen(\"totals.tsv\", \"wb\");\nif (output == NULL) {\n    return 1;\n}\nint written = fputs(\"records\\ttotal\\n2\\t3\\n\", output);\nint closed = fclose(output);\nreturn written == EOF || closed == EOF ? 1 : 0;",
+    "breakdown": [
+      "wb открывает файл для замены содержимого.",
+      "Запись и закрытие проверяются независимо.",
+      "Файл открывается в файловой области конкретного запуска."
+    ],
+    "observation": "Файл totals.tsv содержит records TAB total LF и 2 TAB 3 LF. Если те же байты уже лежали в этом файле, дельта Nexus пуста.",
+    "mistake": "Не делайте вывод о содержимом отчёта по одному коду 0. Откройте файл и сравните байты. Если нужна версия в редакторе, сохраните её явно."
+  },
+  {
+    "id": "preprocessor-macro",
+    "term": "Макросы и условная компиляция",
+    "aliases": [
+      "препроцессор",
+      "подстановка",
+      "директива",
+      "macro",
+      "#define",
+      "#if",
+      "#elif",
+      "#endif"
+    ],
+    "lessons": [
+      "c.preprocessor",
+      "c.module-layout"
+    ],
+    "simple": "Директивы выбирают и подставляют текст программы до выполнения.",
+    "definition": "Препроцессор работает с токенами. #if выбирает ветвь до компиляции. Макрос с параметром подставляет токены аргумента в выражение.",
+    "purpose": "Соберите разные версии одной программы с понятным режимом и защитой от лишней подстановки.",
+    "form": "#define CAPACITY 8\n#define TOTAL(count) ((count) * CAPACITY)",
+    "example": "#define MODE 2\n#if MODE == 2\n#define CAPACITY 12\n#else\n#define CAPACITY 8\n#endif\n#define TOTAL(count) ((count) * CAPACITY)\n/* Inside a function: int items = TOTAL(1 + 2); */",
+    "breakdown": [
+      "MODE выбирает ветвь с CAPACITY 12.",
+      "TOTAL(1 + 2) раскрывается в ((1 + 2) * 12).",
+      "Изменения заголовка проявятся после пересборки."
+    ],
+    "observation": "items равно 36. После MODE 1 и пересборки оно равно 24.",
+    "mistake": "Без скобок 1 + 2 * CAPACITY даёт другой результат. Если макрос использует аргумент несколько раз, не передавайте выражение с побочными эффектами."
+  },
+  {
+    "id": "include-guard",
+    "term": "Защита заголовка",
+    "aliases": [
+      "защита от повторного включения",
+      "подключение",
+      "include-guard",
+      "#ifndef",
+      "#define",
+      "#endif"
+    ],
+    "lessons": [
+      "c.header-guards",
+      "c.translation-units",
+      "c.module-layout"
+    ],
+    "simple": "Два пути к одному заголовку должны дать одно определение структуры в исходнике.",
+    "definition": "Условная обработка по уникальному макросу пропускает тело заголовка при повторном включении внутри той же единицы трансляции.",
+    "purpose": "Сохраните нужные зависимости, не получая повторных определений.",
+    "form": "#ifndef MODULE_H\n#define MODULE_H\n/* public declarations */\n#endif",
+    "example": "#ifndef GAUGE_H\n#define GAUGE_H\nstruct Gauge { int millimetres; };\n#endif",
+    "breakdown": [
+      "Первое #ifndef пропускает внутрь, когда GAUGE_H ещё не задан.",
+      "#define запоминает, что объявление уже подключено.",
+      "При втором пути к тому же файлу тело пропускается."
+    ],
+    "observation": "Дважды включённый gauge.h даёт одно определение struct Gauge в исходнике после препроцессирования.",
+    "mistake": "Если #ifndef и #define используют разное имя, защита не работает. Разные заголовки также должны иметь разные имена макросов."
+  },
+  {
+    "id": "module-interface",
+    "term": "Интерфейс модуля и static",
+    "aliases": [
+      "единица трансляции",
+      "заголовок",
+      "внутреннее связывание",
+      "header",
+      "static",
+      "interface",
+      "translation-unit",
+      "linkage"
+    ],
+    "lessons": [
+      "c.module-layout",
+      "c.translation-units",
+      "c.capstone-implementation",
+      "c.capstone-delivery"
+    ],
+    "simple": "Заголовок описывает доступные вызовы. Вспомогательные функции могут оставаться внутри исходника.",
+    "definition": "Объявления сообщают типы вызывающей стороне. У функции со static на уровне файла внутреннее связывание. Определение публичной функции компонуется с местами вызова.",
+    "purpose": "Дайте пользователю модуля стабильный вызов и оставьте выбор внутренних правил в реализации.",
+    "form": "/* gauge.h */\nint remaining_litres(int used);",
+    "example": "/* In gauge.c */\n#include \"gauge.h\"\n\nstatic int limit(void) { return 12; }\nint remaining_litres(int used) { return limit() - used; }",
+    "breakdown": [
+      "gauge.h объявляет remaining_litres.",
+      "gauge.c подключает свой заголовок для согласования типов.",
+      "limit видна внутри этой единицы трансляции."
+    ],
+    "observation": "Вызов remaining_litres(7) даёт 5. Замена внутреннего лимита на 10 меняет результат на 3 после пересборки.",
+    "mistake": "Объявление внутренней функции в публичном заголовке нарушает границу модуля. Добавляйте сам .c в сборку, а не через #include."
+  },
+  {
+    "id": "debug-trace",
+    "term": "Трасса и первое расхождение",
+    "aliases": [
+      "отладочный вывод",
+      "проверка состояния",
+      "trace",
+      "first-difference",
+      "stderr",
+      "fprintf"
+    ],
+    "lessons": [
+      "c.debugging-first-difference",
+      "c.compiler-diagnostics",
+      "c.test-boundaries"
+    ],
+    "simple": "Сравните промежуточные значения и найдите первое место, где ожидание расходится с запуском.",
+    "definition": "Трасса фиксирует именно наблюдаемые результаты отдельных шагов. Отладочный stderr помогает сохранить точный контракт stdout.",
+    "purpose": "Локализуйте ошибку условия, не редактируя сразу весь разбор и вывод.",
+    "form": "fprintf(stderr, \"name=%d\\n\", value);",
+    "example": "int below = value < 20;\nint above = value > 70;\nfprintf(stderr, \"below=%d above=%d\\n\", below, above);\nputs(below || above ? \"invalid\" : \"accepted\");",
+    "breakdown": [
+      "Два флага рассчитываются независимо.",
+      "stderr показывает оба значения.",
+      "stdout сообщает только итоговое решение."
+    ],
+    "observation": "Для value = 70 трасса below=0 above=0, ответ accepted. Для value = 71 трасса below=0 above=1, ответ invalid.",
+    "mistake": "Тест только окончательной строки invalid путает отказ разбора и превышение границы. Сначала зафиксируйте одинаковый ввод, затем сравните трассу."
+  },
+  {
+    "id": "compiler-checks",
+    "term": "Предупреждения и санитайзеры",
+    "aliases": [
+      "компилятор",
+      "проверка исполнения",
+      "инструментирование",
+      "warnings",
+      "sanitizer",
+      "ASan",
+      "UBSan",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic"
+    ],
+    "lessons": [
+      "c.warnings-and-sanitizers",
+      "c.pointer-lifetime-errors",
+      "c.memory-safe-review",
+      "c.compiler-diagnostics"
+    ],
+    "simple": "Предупреждение возникает во время сборки. Санитайзер может обнаружить сбой во время конкретного запуска.",
+    "definition": "Флаги компилятора включают разные проверки. -fsyntax-only выполняет проверку исходника без создания программы. Санитайзер добавляет проверки в исполняемый код.",
+    "purpose": "Подключите нативную диагностику к проверкам контракта, используя маленькие воспроизводимые случаи.",
+    "form": "clang -std=c17 -Wall -Wextra -Wpedantic -fsyntax-only main.c",
+    "example": "clang -std=c17 -g -fsanitize=address,undefined main.c -o check\n./check",
+    "breakdown": [
+      "Первая команда проверяет исходник с предупреждениями.",
+      "Вторая сборка включает адресный санитайзер и проверку некоторых видов неопределённого поведения.",
+      "Только запуск с тестовыми данными исполняет инструменты проверки."
+    ],
+    "observation": "Рабочая программа может пройти сборку и все обычные тесты, но ошибиться на границе. Санитайзер сообщает о конкретной обнаруженной ошибке на пройденном пути.",
+    "mistake": "Чистый вывод санитайзера не доказывает отсутствие ошибок на других путях. Эти команды требуют доступного нативного Clang и его библиотек; обычный запуск WASI их не заменяет."
+  },
+  {
+    "id": "boundary-regression",
+    "term": "Границы и регрессионная проверка",
+    "aliases": [
+      "соседние значения",
+      "воспроизведение",
+      "контрольный ввод",
+      "boundary",
+      "regression",
+      "fixture",
+      "expected-result"
+    ],
+    "lessons": [
+      "c.test-boundaries",
+      "c.reproducible-regression",
+      "c.function-test-cases",
+      "c.capstone-errors"
+    ],
+    "simple": "Проверьте границу и ближайшее число за ней. Сохраните вход, на котором ошибка была видна.",
+    "definition": "Регрессионная проверка повторяет точный прежний вход и наблюдения после изменения кода. Граничный тест отличает соседние ветви.",
+    "purpose": "Зафиксируйте ожидаемые stdout, stderr и код выхода для точных входных байтов, чтобы проверить исправление повторно.",
+    "form": "int in_range(long value, long low, long high)\n{\n    return value >= low && value <= high;\n}",
+    "example": "assert(!in_range(9, 10, 18));\nassert(in_range(10, 10, 18));\nassert(in_range(18, 10, 18));\nassert(!in_range(19, 10, 18));",
+    "breakdown": [
+      "9 и 10 проверяют нижнюю границу.",
+      "18 и 19 проверяют верхнюю границу.",
+      "Для парсера добавьте текстовый ввод 12x, отдельно от допустимого 12."
+    ],
+    "observation": "В показанной последовательности результаты in_range равны 0, 1, 1, 0. Парсер проекта дополнительно должен отклонить лишний хвост.",
+    "mistake": "Замена неудачного входа после исправления теряет доказательство. Повторите те же байты и отдельно проверьте соседний допустимый случай."
+  },
+  {
+    "id": "project-inventory",
+    "term": "Контракт проекта инвентаря",
+    "aliases": [
+      "инвариант",
+      "проект",
+      "запись склада",
+      "inventory",
+      "contract",
+      "invariant",
+      "find",
+      "set",
+      "report"
+    ],
+    "lessons": [
+      "c.m1-project",
+      "c.dynamic-record-project",
+      "c.capstone-contract",
+      "c.capstone-implementation",
+      "c.capstone-errors",
+      "c.capstone-delivery"
+    ],
+    "simple": "Сначала проверьте исходные записи. Команды меняют только то, что разрешает контракт.",
+    "definition": "В проекте загружают уникальные ID в пределах ёмкости, читают или обновляют существующую позицию и сохраняют отчёт в согласованном порядке.",
+    "purpose": "Проверьте одну цепочку от исходного файла до изменения в памяти и появления точного отчёта.",
+    "form": "const Record *inventory_find(const Inventory *stock, int id);\nint inventory_set(Inventory *stock, int id, int quantity);",
+    "example": "/* After load and validation, with entries already present: */\nconst Record *before = inventory_find(&stock, 20);\nif (before != NULL && inventory_set(&stock, 20, 7)) {\n    const Record *after = inventory_find(&stock, 20);\n    if (after != NULL) {\n        printf(\"%d %d\\n\", after->id, after->quantity);\n    }\n}",
+    "breakdown": [
+      "find возвращает указатель для чтения или NULL.",
+      "set изменяет количество существующей записи и сообщает успех.",
+      "Повторный find позволяет наблюдать изменение отдельно от сообщения ok."
+    ],
+    "observation": "Если ID 20 существовал с количеством 0 и set успешен, повторное чтение печатает 20 7. Файл исходных записей меняется только при отдельной записи, которой здесь нет.",
+    "mistake": "Нельзя выводить отчёт после неудачной загрузки или добавлять неизвестный ID через set. Проверяйте результат операции до следующего шага."
+  }
+]

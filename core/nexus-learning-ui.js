@@ -46,7 +46,7 @@ export function bindNexusLearningUi(translate){
 
 // Нативный modal владеет фокусом и блокирует фон одинаково online/offline.
 // Сохранение курса и пользовательские данные здесь не затрагиваются.
-export function bindGlossaryDrawer(root=document,{prepareOpen}={}){
+export function bindGlossaryDrawer(root=document,{prepareOpen,onClose}={}){
   const drawer=root.querySelector('#termDrawer');if(!drawer)return;
   const controller=new AbortController(),options={signal:controller.signal};
   const search=drawer.querySelector('#termSearch'),cards=[...drawer.querySelectorAll('[data-term-card]')];
@@ -68,19 +68,21 @@ export function bindGlossaryDrawer(root=document,{prepareOpen}={}){
     drawer.close();syncClosed();
     if(restore&&returnFocus?.isConnected)returnFocus.focus({preventScroll:true});
     returnFocus=null;
+    if(restore)onClose?.();
+  };
+  const open=trigger=>{
+    if(disposed||drawer.open||!trigger?.isConnected)return;
+    returnFocus=trigger;drawer.hidden=false;drawer.inert=false;drawer.setAttribute('aria-hidden','false');
+    search.value=trigger.dataset.term||'';filter();
+    const initialFocus=prepareOpen?.(trigger)||search;
+    drawer.showModal();
+    triggers.forEach(button=>button.setAttribute('aria-expanded',String(!prepareOpen||button===trigger)));
+    initialFocus.focus({preventScroll:true});
+    if(trigger.dataset.term)cards.find(card=>card.dataset.termCard===trigger.dataset.term.toLowerCase())?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
   };
   for(const trigger of triggers){
     trigger.setAttribute('aria-controls',drawer.id);trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-expanded','false');
-    trigger.addEventListener('click',()=>{
-      if(disposed||drawer.open)return;
-      returnFocus=trigger;drawer.hidden=false;drawer.inert=false;drawer.setAttribute('aria-hidden','false');
-      search.value=trigger.dataset.term||'';filter();
-      const initialFocus=prepareOpen?.(trigger)||search;
-      drawer.showModal();
-      triggers.forEach(button=>button.setAttribute('aria-expanded',String(!prepareOpen||button===trigger)));
-      initialFocus.focus({preventScroll:true});
-      if(trigger.dataset.term)cards.find(card=>card.dataset.termCard===trigger.dataset.term.toLowerCase())?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
-    },options);
+    trigger.addEventListener('click',()=>open(trigger),options);
   }
   search.addEventListener('input',filter,options);
   drawer.querySelector('#closeTerms').addEventListener('click',()=>close(),options);
@@ -90,7 +92,9 @@ export function bindGlossaryDrawer(root=document,{prepareOpen}={}){
   const outside=event=>{const r=drawer.getBoundingClientRect();return event.target===drawer&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)};
   drawer.addEventListener('pointerdown',event=>{backdropDown=outside(event)},options);
   drawer.addEventListener('click',event=>{if(backdropDown&&outside(event))close();backdropDown=false},options);
-  return ()=>{if(disposed)return;disposed=true;controller.abort();close(false);returnFocus=null};
+  const dispose=()=>{if(disposed)return;disposed=true;controller.abort();close(false);returnFocus=null};
+  dispose.open=open;
+  return dispose;
 }
 
 // Одна разметка справочника для C++ Gold и других курсов Академии.

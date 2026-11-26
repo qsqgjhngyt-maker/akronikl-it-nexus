@@ -105,7 +105,8 @@
       "title": "Locate the row and its failing boundary",
       "paragraphs": [
         "If 26 TAB 3junk produces a normal summary, inspect what end points to. strtol parsed 3 and stopped at j. Check that *end is the terminating null character.",
-        "strtol needs text, the address of an end pointer, and a base. Clang stops the build if an argument is missing. An invalid line N message comes from a running program and names the first rejected row."
+        "strtol needs text, the address of an end pointer, and a base. Clang stops the build if an argument is missing. An invalid line N message comes from a running program and names the first rejected row.",
+        "The reported line number is the number of accepted rows plus one. Earlier rows may have passed, but a partial total is not a successful result after a rejection."
       ]
     },
     {
@@ -401,5 +402,28 @@
       "c.copy-file-check-eof-and-write",
       "c.record-operation-invariants"
     ]
+  },
+  "teaching": {
+    "scene": "The warehouse sent a manifest of item IDs and quantities. Before adding the quantities, find where each number ends and confirm that the complete row matches the agreed format.",
+    "predict": {
+      "prompt": "records.tsv has two rows: ID 7 with quantity 3 and ID 8 with quantity 0. What record count and total will the example print? Does the zero-quantity item count?",
+      "answer": "Both rows have a TAB after the ID and no characters after the quantity. Two records are accepted, including the zero-quantity one. The line is records 2 total 3."
+    },
+    "apply": {
+      "prompt": "In a fresh run, supply the rows 7 TAB 3 LF and 007 TAB 9 LF. Decide whether 007 is a new ID and check the reported line number.",
+      "answer": "Both rows have numeric ID 7. The second row reaches the uniqueness check and is rejected: invalid line 2, exit code 1. No success total is printed."
+    },
+    "practice": {
+      "strategy": "Split a delivery row into ID, separator, quantity, and end. Test the suffix, duplicate, and 65th row separately. Then compare the total for a valid file.",
+      "diagnosis": "If 26 TAB 3junk is accepted, the parser found the numeric value 3 but missed its suffix. If a row differs only in the presence of LF, examine line reading independently from number parsing."
+    },
+    "syntax": {
+      "termId": "parse-end",
+      "form": "char *end;\nlong value = strtol(text, &end, 10);",
+      "example": "*value = read_number(end + 1, &end, 999);\nif (*value < 0) {\n    return 0;\n}\nreturn *end == '\\0';",
+      "explanation": "strtol stores the address of the first character after the number through &end. Here read_number also checks ASCII syntax and range. At end, the first number needs a TAB and the second needs the string terminator.",
+      "mistake": "Converting 3junk to 3 does not establish that the full row is valid. Confirm that the number was read, then inspect what remains."
+    },
+    "focus": "static int read_record(const char *line, int *id, int *value)\n{\n    char *end;\n    *id = read_number(line, &end, 9999);\n    if (*id < 1 || *end != '\\t') {\n        return 0;\n    }\n    *value = read_number(end + 1, &end, 999);\n    if (*value < 0) {\n        return 0;\n    }\n    return *end == '\\0';\n}"
   }
 }

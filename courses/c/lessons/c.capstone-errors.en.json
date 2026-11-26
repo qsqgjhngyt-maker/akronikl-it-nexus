@@ -124,7 +124,8 @@
       "id": "diagnostics",
       "title": "Where to look for the cause",
       "paragraphs": [
-        "For a fclose compiler diagnostic, check the FILE * argument. At runtime, read stdout alongside stderr and the exit status. Empty stdout, nonempty stderr and status 1 place the failure before command processing."
+        "For a fclose compiler diagnostic, check the FILE * argument. At runtime, read stdout alongside stderr and the exit status. Empty stdout, nonempty stderr and status 1 place the failure before command processing.",
+        "When a directory occupies the report path, an I/O error can appear during open or close depending on the environment. Check the stream and message for that environment, status 3, and the absence of a new file."
       ]
     },
     {
@@ -372,5 +373,28 @@
       "c.error-cleanup",
       "c.reproducible-regression"
     ]
+  },
+  "teaching": {
+    "scene": "Before inventory starts, check that one malformed record stops loading before commands run. Distinguish loading, command, and report failures by their streams and exit status.",
+    "predict": {
+      "prompt": "The example has IDs 10 and 0010 and stdin contains report. Will report run? Predict stdout, stderr, the exit status, and whether a new file appears.",
+      "answer": "Both spellings parse as numeric ID 10. Loading stops at the duplicate before the command loop. stdout is empty, stderr contains duplicate-id, exit status is 1, and no new report is created."
+    },
+    "apply": {
+      "prompt": "Use the valid input with 10 TAB 5 and 20 TAB 0. Run report, set 20 10000, then report again. Is a report left behind, and was it generated twice?",
+      "answer": "The first report writes the original quantities 5 and 0 and prints reported. set rejects the five-digit quantity, prints invalid, and exits 2. The second report is never reached, and the first file remains in the run results."
+    },
+    "practice": {
+      "strategy": "Sketch the checks for one record in order: syntax, uniqueness, capacity. Record four observations separately for duplicate ID 32, a malformed command, a missing item, and a blocked report path.",
+      "diagnosis": "If duplicate ID 32 still gives reported, check whether the insertion happens before the uniqueness test. If a missing ID stops a valid command sequence, distinguish the normal missing response from a command failure."
+    },
+    "syntax": {
+      "termId": "early-validation",
+      "form": "if (bad_record) {\n    /* record the failure before inserting */\n} else {\n    stock->records[stock->count++] = record;\n}",
+      "example": "if (inventory_find(stock, record.id) != NULL) {\n    problem = \"duplicate-id\";\n} else if (stock->count == INVENTORY_CAPACITY) {\n    problem = \"capacity-error\";\n} else {\n    stock->records[stock->count++] = record;\n}",
+      "explanation": "Append only after validation. Short-circuiting in the || chain protects later parsing operations. The else if branches distinguish a duplicate from a capacity failure.",
+      "mistake": "Do not check for duplicates after increasing count. The record you just inserted would already be in the search range. Keep the different stages of failure in separate tests."
+    },
+    "focus": "        if (!read_number(&p, 1, &record.id) || *p++ != '\\t' ||\n            !read_number(&p, 0, &record.quantity) || *p != '\\0') {\n            problem = \"invalid-record\";\n        } else if (inventory_find(stock, record.id) != NULL) {\n            problem = \"duplicate-id\";\n        } else if (stock->count == INVENTORY_CAPACITY) {\n            problem = \"capacity-error\";\n        } else {\n            stock->records[stock->count++] = record;\n        }\n        if (problem != NULL) {\n            break;"
   }
 }

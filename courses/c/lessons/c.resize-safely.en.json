@@ -44,7 +44,8 @@
       "paragraphs": [
         "A list with two records can have capacity 2 or 6. The resize request sets the new number of slots. Existing records and their values follow a separate contract.",
         "For a positive request, realloc may return a new pointer or NULL. On NULL, the old allocation remains available. Store the result in a temporary variable and update pointer and metadata only after the check.",
-        "On success the previous allocation's lifetime ends. Use the returned pointer and derive element pointers from it again. Do not evaluate the old pointer, even for comparison. Initialize new slots before reading them."
+        "On success the previous allocation's lifetime ends. Use the returned pointer and derive element pointers from it again. Do not evaluate the old pointer, even for comparison. Initialize new slots before reading them.",
+        "Capacity limits storage, while used counts written entries. Additional slots stay outside the used range until they have been initialized."
       ]
     },
     {
@@ -288,5 +289,28 @@
     "prerequisites": [
       "c.single-owner-cleanup"
     ]
+  },
+  "teaching": {
+    "scene": "The list needs more room while retaining the entries already present. Check the capacity and sum to see that the new block is adopted only on success.",
+    "predict": {
+      "prompt": "The list contains 8 and 13, with used and capacity both 2. If resize(&list, 4, 1) succeeds, which values change and what does main print?",
+      "answer": "capacity becomes 4 and used stays 2. The first two elements still hold 8 and 13, so the sum is 21 and the output is ok 4 21."
+    },
+    "apply": {
+      "prompt": "For a list holding 4 and 7 with capacity = 2, compare requests 2 0 and 5 0. How do the outputs distinguish an unchanged capacity from controlled refusal to grow?",
+      "answer": "2 0 gives ok 2 11 with no size change. The flag refuses growth for 5 0, giving allocation-failed 2 11. Both preserve the original entries and capacity."
+    },
+    "practice": {
+      "strategy": "Validate the new capacity and ensure it can hold all used elements. Keep the realloc result separate. Update both the address and capacity on success.",
+      "diagnosis": "On successful allocation for 6 1, the starter prints ok 2 11. It preserves the sum and gives the success status, but capacity still describes the old size."
+    },
+    "syntax": {
+      "termId": "temporary-result",
+      "form": "int *next = realloc(list->items, bytes);\nif (next == NULL) {\n    return 0;\n}\nlist->items = next;",
+      "example": "int *next = realloc(list->items, requested * sizeof *list->items);\nif (next != NULL) {\n    list->items = next;\n    list->capacity = requested;\n}",
+      "explanation": "Keep the realloc result in a temporary pointer. On success it replaces the owner address and allows a capacity update. Failure for a positive size leaves the original block valid.",
+      "mistake": "Directly assigning list->items = realloc(...) can overwrite the only address on failure. Update the fields after checking the temporary result."
+    },
+    "focus": "    int *next = realloc(list->items, requested * sizeof *list->items);\n    if (next == NULL) {\n        return 0;\n    }\n    list->items = next;\n    list->capacity = requested;"
   }
 }

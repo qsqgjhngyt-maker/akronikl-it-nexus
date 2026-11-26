@@ -277,5 +277,28 @@
       "c.variables-types",
       "c.arithmetic-conversion"
     ]
+  },
+  "teaching": {
+    "scene": "After a rename, the cargo report stops producing fresh output. Find the difference between the declared name and the name used in the call, then verify the value in a successful run.",
+    "predict": {
+      "prompt": "The declared cargo value is 7. Which identifier does the working example pass to printf, and which output confirms the match?",
+      "answer": "printf uses cargo, exactly as declared. The build succeeds, %d receives 7 and stdout shows Cargo: 7."
+    },
+    "apply": {
+      "prompt": "A new version declares `int seats = 3;` and passes `seat` to printf. How do you distinguish the outcomes before and after correcting the name?",
+      "answer": "Clang reports that seat is undeclared, so the original build yields no fresh output. After changing the name to seats, a successful run can print 3."
+    },
+    "practice": {
+      "strategy": "Start with the first diagnostic and compare its identifier with the declaration. Build after that one edit. Once execution works, verify the formula with the two input values.",
+      "diagnosis": "When the bas diagnostic disappears and Total is still wrong, the name fix worked. Investigate the expression supplying the value to printf."
+    },
+    "syntax": {
+      "termId": "identifier",
+      "form": "int count = 7;\nprintf(\"%d\\n\", count);",
+      "example": "int cargo = 7;\nprintf(\"Cargo: %d\\n\", cargo);",
+      "explanation": "A declaration binds an identifier to a variable. In a printf argument, the compiler resolves the name within its scope.",
+      "mistake": "seat and seats are distinct identifiers. Match the exact spelling in the diagnostic and declaration."
+    },
+    "focus": "int main(void)\n{\n    int cargo = 7;\n    printf(\"Cargo: %d\\n\", cargo);\n    return 0;\n}"
   }
 }

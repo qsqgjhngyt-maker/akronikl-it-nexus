@@ -307,5 +307,28 @@
       "c.update-through-parameter",
       "c.local-scope-lived-object"
     ]
+  },
+  "teaching": {
+    "scene": "The display keeps its last reading when the sensor is unavailable. Compare a call with no source and a successful copy by reading the status and the display value.",
+    "predict": {
+      "prompt": "The display holds 17. The first call receives NULL, then sensor changes to 49 and read_display(view, &display) runs. Which two pairs does main print?",
+      "answer": "The first is 0 17 because there is no read or write. The second call reads the current 49 through view and copies it to display, giving 1 49."
+    },
+    "apply": {
+      "prompt": "The display starts at -4. On separate runs, check a NULL source, a NULL output and a live source holding 8. What output confirms that both failures preserve the old result?",
+      "answer": "A missing source gives absent -4, and missing output gives invalid -4. Both keep -4. A successful call gives present 8."
+    },
+    "practice": {
+      "strategy": "Check the writable target and readable source separately. Decide what status each path reports. Write only after both objects are available.",
+      "diagnosis": "With mode 0 the starter gives absent 0. It reports the right status, but changed the display. Check whether that branch performs a write."
+    },
+    "syntax": {
+      "termId": "qualified-view",
+      "form": "const int *requested = &reading;\nif (requested != NULL) {\n    printf(\"%d\\n\", *requested);\n}",
+      "example": "int sensor = 31;\nconst int *view = &sensor;\nsensor = 49;\nprintf(\"%d\\n\", *view);",
+      "explanation": "const int * permits reading through that pointer. Another valid path to an ordinary int, such as assigning to sensor by name, can still change it.",
+      "mistake": "A non-null address alone does not prove that its object is alive. A borrowed address is used within the lifetime guaranteed by the caller."
+    },
+    "focus": "    if (display == NULL) {\n        return -1;\n    }\n    if (view == NULL) {\n        return 0;\n    }\n    *display = *view;"
   }
 }
