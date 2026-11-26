@@ -105,7 +105,7 @@ try {
   await check('RU/EN открываются, справка и эталон читаются, запуска и личной записи нет', async () => {
     await page.goto(fixture.origin + '/offline.html#course=c&lesson=' + firstId + '&locale=en');
     await root.getByRole('heading', { level:1, name:firstEnglish.title, exact:true }).waitFor();
-    await root.locator('.c-lesson-menu summary').click();
+    await root.locator('[data-academy-menu-toggle]').click();
     await root.locator('[data-academy-menu-item="reading"]').click();
     const library = root.locator('.academy-library-dialog[open]');
     await library.locator('.academy-library-source a').first().waitFor();

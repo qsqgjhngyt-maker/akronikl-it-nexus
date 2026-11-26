@@ -24,6 +24,25 @@ export function finalAssessmentMarkup(spec,locale){
  const en=locale==='en',text=v=>finalEscape(finalText(v,locale));
  return `<article data-final-assessment="${finalEscape(spec.courseId)}"><h2>${en?'Final assessment':'Итоговая аттестация'}</h2><p>${en?'Three variants, 24 questions each, 4 practical tasks and 3 project choices. Theory is a local self-check;practical evidence requires actual work in the stated 1C environment.':'Три варианта по 24 вопроса, 4 практические работы и 3 проекта на выбор. Теория проверяется локально; практические доказательства требуют реальной работы в указанной среде 1С.'}</p><p class="notice">${en?'No server verification,instructor grade,authorship verification or certification is awarded here. Previous attempts are preserved.':'Здесь нет серверной проверки, преподавательской оценки, подтверждения авторства или выдачи сертификата. Предыдущие попытки сохраняются.'}</p><label>${en?'Variant':'Вариант'} <select data-final-variant>${spec.variants.map(v=>`<option value="${finalEscape(v.id)}">${text(v.title)}</option>`).join('')}</select></label><div data-final-questions></div><p role="status" data-final-status></p><section><h3>${en?'Practical tasks':'Практические работы'}</h3>${spec.practices.map((p,i)=>`<article class="card"><h4>${i+1}. ${text(p.title)}</h4><p>${text(p.task)}</p><details><summary>${en?'Acceptance criteria':'Критерии приёмки'}</summary><p>${text(p.criteria)}</p></details></article>`).join('')}</section><section><h3>${en?'Independent project':'Самостоятельный проект'}</h3><label>${en?'Choose project':'Выберите проект'} <select data-final-project>${spec.projects.map(p=>`<option value="${finalEscape(p.id)}">${text(p.title)}</option>`).join('')}</select></label><div data-final-project-detail></div><label>${en?'Evidence portfolio:work-copy ID,source hashes,case IDs,observed results,negative cases and recovery. Do not include secrets or private data.':'Портфолио: ID рабочей копии, хеши исходников, case IDs, фактические результаты, отрицательные проверки и восстановление. Не включайте секреты и приватные данные.'}<textarea data-final-portfolio maxlength="12000" rows="8"></textarea></label><label><input type="checkbox" data-final-attest> ${en?'I performed the listed tasks and preserved evidence. This is my self-report,not a native verification receipt.':'Я выполнил(а) указанные задания и сохранил(а) доказательства. Это мой самоотчёт, а не акт нативной проверки.'}</label><button type="button" data-final-save-portfolio>${en?'Preserve portfolio version':'Сохранить версию портфолио'}</button></section><section><h3>${en?'Critical acceptance gates':'Критические условия приёмки'}</h3><ul>${spec.criticalGates.map(g=>`<li>${text(g)}</li>`).join('')}</ul></section><section><h3>${en?'Attempt history':'История попыток'}</h3><div data-final-history></div><button type="button" data-final-export>${en?'Export this course assessment history':'Экспорт итоговой истории этого курса'}</button></section></article>`;
 }
+export function onecFinalReadOnlyMarkup(spec,locale) {
+ const en=locale==='en',t=(ru,english)=>en?english:ru,text=value=>finalEscape(finalText(value,locale));
+ const questions=new Map(spec.questions.map(question=>[question.id,question]));
+ return `<article class="academy-work" data-final-preview="${finalEscape(spec.courseId)}">
+  <h2>${t('Итоговая работа','Final assessment')}</h2>
+  <p role="note">${t('Просмотр условий. Ответы и портфолио можно сохранить в рабочем Nexus. Практика выполняется в отдельной учебной базе 1С.','Preview the requirements. Save answers and your portfolio in the main Nexus app. Complete practice in a separate 1C training infobase.')}</p>
+  <section><h3>${t('Теория','Theory')}</h3>${spec.variants.map(variant=>`<details class="academy-work-card">
+   <summary>${text(variant.title)}</summary><ol>${variant.questionIds.map(id=>{
+    const question=questions.get(id);
+    return `<li><p>${text(question.question)}</p><ul>${question.options.map(option=>`<li>${text(option)}</li>`).join('')}</ul></li>`;
+   }).join('')}</ol></details>`).join('')}</section>
+  <section><h3>${t('Практические работы','Practical work')}</h3><div class="academy-work-grid">${spec.practices.map(item=>
+   `<article class="academy-work-card"><h4>${text(item.title)}</h4><p>${text(item.task)}</p><p>${text(item.criteria)}</p></article>`).join('')}</div></section>
+  <section><h3>${t('Проекты на выбор','Project choices')}</h3><div class="academy-work-grid">${spec.projects.map(project=>
+   `<article class="academy-work-card"><h4>${text(project.title)}</h4><p>${text(project.scope)}</p>
+    <ul>${project.deliverables.map(item=>`<li>${text(item)}</li>`).join('')}</ul></article>`).join('')}</div></section>
+ </article>`;
+}
+
 export function bindFinalAssessment(mount,spec,locale,storage=localStorage){
  mount=mount.querySelector('[data-final-assessment]');
  const en=locale==='en',store=createFinalAssessmentStore(storage,spec),select=mount.querySelector('[data-final-variant]'),status=mount.querySelector('[data-final-status]');

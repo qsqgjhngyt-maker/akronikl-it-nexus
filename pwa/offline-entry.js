@@ -103,6 +103,72 @@ function views(){
 }
 function lessons(){const tab=new URLSearchParams(location.hash.slice(1)).get('tab');return tab==='practicums'?views().practicums():tab==='projects'?views().projectsView():views().overview()}
 
+async function cppFinalPreview(route,seq){
+ const language=(route.get('locale')||locale)==='en'?'en':'ru';
+ const say=(ru,en)=>language==='en'?en:ru;
+ const hash=location.hash,current=()=>seq===renderSequence&&location.hash===hash;
+ root.innerHTML='<p role="status">'+say('Открываем итоговую работу C++…','Opening the C++ final assessment…')+'</p>';
+ const [{ensureFinalStyles,documentMarkup},{TRACK_IDS},{SERVER_ACCOUNT_ORIGIN}]=await Promise.all([
+  import('../course-final/view.js'),import('../course-final/contract.js'),import('../core/server-account-origin.js')
+ ]);
+ const [kits]=await Promise.all([
+  Promise.allSettled(TRACK_IDS.map(async id=>{
+   const response=await fetch(new URL('../courses/cpp/final/projects/'+id+'.json',import.meta.url),{credentials:'omit',cache:'force-cache',redirect:'error'});
+   if(!response.ok)throw Error('PUBLIC_FINAL_BRIEF_UNAVAILABLE');
+   const kit=await response.json();
+   if (![kit.title?.[language],kit.assignment?.[language],kit.defense?.[language]].every(value=>typeof value==='string'&&value.length))throw Error('PUBLIC_FINAL_BRIEF_INVALID');
+   return {id,kit};
+  })),
+  ensureFinalStyles().catch(()=>{})
+ ]);
+ if(!current())return;
+ const onlineUrl=SERVER_ACCOUNT_ORIGIN+'/account/entry/#view=academy&course=cpp';
+ const available=kits.filter(result=>result.status==='fulfilled').map(result=>result.value);
+ const briefs=available.map(({id,kit})=>`
+  <article class="final-card" data-cpp-final-brief>
+   <h3>${esc(kit.title[language])}</h3>
+   <details><summary>${say('Условие и критерии проекта','Project assignment and criteria')}</summary>
+    <div class="final-document">${documentMarkup(kit.assignment[language])}</div>
+   </details>
+   <details><summary>${say('Задание для защиты','Defense assignment')}</summary>
+    <div class="final-document">${documentMarkup(kit.defense[language])}</div>
+   </details>
+   <div class="final-actions"><button type="button" class="btn" data-cpp-final-download="${id}">${say('Скачать заготовку ZIP','Download starter ZIP')}</button></div>
+   <p class="final-note" data-cpp-final-download-status role="status"></p>
+  </article>`).join('');
+ root.innerHTML=`<section class="final-page" data-cpp-final-preview lang="${language}">
+  <a class="back-link" href="#course=cpp&locale=${language}">← ${say('Курс C++','C++ course')}</a>
+  <header class="final-hero glass-panel"><h1 tabindex="-1">${say('Итоговая работа','Final assessment')}</h1>
+   <p>${say('Экзамен, переносимый проект и практическая защита.','An exam, a portable project, and a practical defense.')}</p>
+   <p class="final-scope">${say('Здесь можно прочитать условия и скачать публичную заготовку. Для создания и сохранения попытки, автоматической проверки и получения оценки нужен вход в Nexus при подключении к интернету.','Here you can read the assignments and download a public starter. To create or save an attempt, run assessment checks, and receive a grade, sign in to Nexus with an internet connection.')}</p>
+   <div class="final-actions"><a class="btn primary" href="${esc(onlineUrl)}">${say('Войти в Nexus для итоговой работы','Sign in to Nexus for the assessment')}</a></div>
+  </header>
+  <section class="final-card"><h2>${say('Экзамен','Exam')}</h2>
+   <p>${say('Теоретические вопросы и четыре практические работы: разбор данных, индекс и поиск, владение и замена состояния, событийное приложение Qt. Вариант открывается при создании попытки.','Theory questions and four practical tasks cover data parsing, indexing and lookup, ownership and state replacement, and an event-driven Qt application. Your variant opens when you create an attempt.')}</p>
+  </section>
+  <section aria-labelledby="cpp-final-tracks"><h2 id="cpp-final-tracks">${say('Проект и защита','Project and defense')}</h2>
+   <p>${say('Выберите направление, прочитайте условие проекта и отдельное задание по его изменению для защиты.','Choose a track and read the project brief and the separate extension task for the defense.')}</p>
+   ${kits.some(result=>result.status==='rejected')?`<p role="status">${say('Часть условий проекта недоступна. Откройте раздел при подключении к интернету, чтобы загрузить их.','Some project briefs are unavailable. Open this section with an internet connection to load them.')}</p>`:''}
+   ${briefs}
+  </section>
+ </section>`;
+ for(const {id,kit} of available){
+  const button=root.querySelector('[data-cpp-final-download="'+id+'"]');
+  const status=button.closest('article').querySelector('[data-cpp-final-download-status]');
+  button.addEventListener('click',async()=>{
+   button.disabled=true;status.textContent='';
+   try{
+    const {downloadPortableProject}=await import('../project-studio/portable-archive.js');
+    if(current())downloadPortableProject({title:kit.title[language],
+     manifest:kit.template,workspace:{entryFile:kit.template.entryFile,files:kit.template.files}});
+   }catch{
+    if(current())status.textContent=say('Не удалось скачать заготовку. Условие доступно выше.','Could not download the starter. The assignment is available above.');
+   }finally{if(current())button.disabled=false;}
+  });
+ }
+ root.querySelector('[data-cpp-final-preview] h1').focus();
+}
+
 function projectTemplate(title,source,id=crypto.randomUUID(),provided=null){
  const template=provided||blankCppProjectTemplate(title),stamp=new Date().toISOString();
  if(source!==undefined)template.files[0].content=source;
@@ -171,6 +237,7 @@ async function renderCurrent(seq){
  // hashchange может прийти во время начальной загрузки метаданных. Bootstrap
  // повторит render для текущего hash; локальную копию и её данные не изменяем.
  if(!course){root.innerHTML='<p role="status">Подготавливаем учебные материалы…</p>';return}
+ if(route.get('view')==='course-final')return cppFinalPreview(route,seq);
  if(['labs','practices'].includes(route.get('view'))){root.innerHTML=discoveryPageMarkup({kind:route.get('view'),course,contentFor:id=>(locale==='en'?course.lessonsEn:course.lessonsRu).lessons.find(l=>l.id===id),projects:Object.values(data?.projects||{}),state:data?.state.courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:locale});bindLearningDiscovery(t);return}
  if(route.get('view')==='programming'){
   root.innerHTML=views().programmingHub();
@@ -203,20 +270,38 @@ async function renderCurrent(seq){
   if(!active()){mounted?.dispose();return;}
   clarityController=mounted;return;
  }
- if(!lessonId&&!route.has('assessment')&&['onec','1c-enterprise'].includes(route.get('course'))){
+ if(!lessonId&&['onec','1c-enterprise'].includes(route.get('course'))){
   const courseId=route.get('course'),language=(route.get('locale')||locale)==='en'?'en':'ru';
-  const [{onecCourseNavigation,onecOverviewHero},response]=await Promise.all([
+  const final=route.get('assessment')==='final';
+  const tab=final?'final':['practicums','projects'].includes(route.get('tab'))?route.get('tab'):'overview';
+  const material=['tasks','labs'].includes(route.get('path'))?route.get('path'):'topics';
+  const [{onecAcademyOverview},workUI,response]=await Promise.all([
    import('../courses/onec-education/candidate.mjs'),
+   import('../core/academy-course-work.mjs'),
    fetch(new URL('../courses/'+courseId+'/curriculum.json',import.meta.url),{credentials:'omit'}),
   ]);
   if(!response.ok)throw Error('ONEC_CURRICULUM_UNAVAILABLE');
-  const curriculum=await response.json();if(seq!==renderSequence)return;
-  const selectedModule=route.get('module');
-  const selected=curriculum.modules.some(module=>module.moduleId===selectedModule);
+  const curriculum=await response.json();
+  const module=final?null:route.get('module');
+  const selected=curriculum.modules.some(item=>item.moduleId===module);
+  const [projects,work,finalHTML]=await Promise.all([
+   selected?[]:workUI.loadAcademyProjects(courseId,language),
+   !selected&&(tab==='practicums'||tab==='overview'&&material!=='topics')?workUI.loadAcademyWork(courseId,language):null,
+   final?(async()=>{
+    const [{onecFinalReadOnlyMarkup},spec]=await Promise.all([
+     import('../courses/onec-education/final-assessment.mjs'),
+     fetch(new URL('../courses/'+courseId+'/final-assessment.json',import.meta.url),{credentials:'omit'}),
+    ]);
+    if(!spec.ok)throw Error('ONEC_FINAL_UNAVAILABLE');
+    return onecFinalReadOnlyMarkup(await spec.json(),language);
+   })():'',
+  ]);
+  if(seq!==renderSequence)return;
   const overview=document.createElement('section');overview.lang=language;
-  overview.innerHTML=(selected?'':onecOverviewHero(curriculum,{locale:language}))+
-   onecCourseNavigation(curriculum,{locale:language,selectedModule,includeStyles:selected});
-  root.replaceChildren(overview);return;
+  overview.innerHTML=onecAcademyOverview(curriculum,{locale:language,module,tab,path:material,projects,work})+finalHTML;
+  root.replaceChildren(overview);
+  workUI.bindAcademyWorkSearch(overview,language);
+  return;
  }
  // Публичное чтение 1С без подключения её личного хранилища к C++ vault.
  if(lessonId&&['onec','1c-enterprise'].includes(route.get('course'))){

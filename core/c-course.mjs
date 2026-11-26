@@ -1,7 +1,9 @@
-import {courseBackMarkup, courseHeroMarkup, courseContinueMarkup, courseTabsMarkup} from './academy-course-header.mjs';
+import {courseBackMarkup, courseHeroMarkup, courseContinueMarkup} from './academy-course-header.mjs';
 import {bindCCourseWorkspace, createCCourseStorage} from './c-course-workspace.mjs';
 import {courseNavigationMarkup} from './academy-course-navigation.mjs';
-import {academyLessonMenuItems, bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
+import {academyLessonMenuToggle, academyLessonMenuPanel, bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
+import {academyAssignmentsMarkup, academyCourseSections, academyCourseWorkMarkup,
+  bindAcademyWorkSearch, loadAcademyWork, loadAcademyProjects} from './academy-course-work.mjs';
 import {registerUpdateParticipant} from '../pwa/interface-update.js';
 
 const stages = [
@@ -76,7 +78,7 @@ function safeRead(storage, key) {
   catch { return null; }
 }
 
-function overview({data, locale, t, resume, progress, selectedModule}) {
+function overview({data, locale, t, resume, progress, selectedModule, tab, path, work, projects}) {
   const {manifest, curriculum, topics} = data;
   const last = topics.find(topic => topic.id === resume?.lessonId);
   const start = last ?? topics[0];
@@ -103,15 +105,15 @@ function overview({data, locale, t, resume, progress, selectedModule}) {
   if (selected) return '<div class="nexus-learning c-module-view">' + navigation + '</div>';
   const hero = courseHeroMarkup({id: 'c', locale, title: localized(manifest.title, locale),
     description: localized(manifest.description, locale), symbol: 'C', suffix: '17',
-    facts: [[topics.length,t('Темы','Lessons')],[manifest.availableModuleIds.length,t('Модули','Modules')]],
+    facts: [[topics.length,t('Темы','Lessons')],[manifest.availableModuleIds.length,t('Практикумы','Practicums')],
+      [projects.length,t('Учебные проекты','Course projects')]],
     progress: {done:progress.size,total:topics.length}});
   const continuation = start ? courseContinueMarkup({locale,title:localized(start.title, locale),
     href:routeLink(locale,start.id,last ? resume.stage : undefined), visited:!!last,
     stage:last ? stages.find(([id])=>id===resume.stage)?.[locale==='en' ? 2 : 1] : ''}) : '';
-  const project = modules.find(module => module.topics.some(topic => topic.id==='c.capstone-contract' && topic.href));
-  const links = [{href:routeLink(locale),title:t('Учебная траектория','Learning path'),active:true}];
-  if (project) links.push({href:routeLink(locale,null,null,project.id),title:t('Итоговый проект','Final project')});
-  return '<div class="nexus-learning">' + hero + courseTabsMarkup(locale,links) + continuation + navigation + '</div>';
+  const sections = academyCourseSections({course:'c',locale,active:tab});
+  const content = academyCourseWorkMarkup({course:'c',locale,modules,outline:navigation,work,projects,tab,path});
+  return '<div class="nexus-learning">' + hero + sections + (tab==='overview'?continuation:'') + content + '</div>';
 }
 
 function renderFiles(files, t, heading) {
@@ -209,6 +211,7 @@ function practiceFile(name, source, t) {
 }
 
 function practice(lesson, t, readonly) {
+  const locale = lesson.locale;
   const work = lesson.practice;
   const steps = (work.steps ?? []).map(step => '<li><strong>' + escape(step.action) + '</strong>' +
     (step.where && step.where !== 'Code Studio' ? ' <small>' + escape(step.where) + '</small>' : '') +
@@ -227,7 +230,7 @@ function practice(lesson, t, readonly) {
   const starter = work.files.map(file => practiceFile(file.path, file.content ?? file.source, t)).join('');
   const referenceFiles = Object.entries(reference?.files ?? {}).map(([name, source]) =>
     practiceFile(name, typeof source === 'string' ? source : source.content ?? source.source, t)).join('');
-  return '<section class="c-panel c-practice-task" data-c-work-task><h2>' + escape(work.title) + '</h2><p>' +
+  return '<section class="c-panel c-practice-task" id="academy-lab" tabindex="-1" data-c-work-task><h2>' + escape(work.title) + '</h2><p>' +
     escape(work.task) + '</p>' + (lesson.teaching?.practice?.strategy ? '<h3>' + t('С чего начать', 'How to start') +
       '</h3><p>' + escape(lesson.teaching.practice.strategy) + '</p>' : '') + '<h3>' + t('Паспорт задачи', 'Task contract') + '</h3><dl class="c-task-contract">' +
     '<dt>' + t('Среда', 'Environment') + '</dt><dd>' + escape(work.environment) + '</dd><dt>' +
@@ -247,8 +250,7 @@ function practice(lesson, t, readonly) {
     '<section class="c-panel" data-c-work-cases><h2>' + t('Как проверить свою работу', 'How to check your work') + '</h2>' +
     (lesson.teaching?.practice?.diagnosis ? '<p>' + escape(lesson.teaching.practice.diagnosis) + '</p>' : '') +
     cases + list(work.criteria) + '</section>' +
-    (work.exercises ?? []).map(item => '<section class="c-panel"><h2>' + escape(item.title) + '</h2><p>' +
-      escape(item.task) + '</p>' + list(item.criteria ?? []) + '</section>').join('') +
+    academyAssignmentsMarkup(work.exercises, locale) +
     (reference ? '<details class="c-panel c-practice-disclosure" data-c-reference-solution><summary>' +
       t('Посмотреть эталонное решение', 'View reference solution') +
       '</summary><p>' + t('Откройте после своей попытки и сравните с вашим решением.', 'Open after your attempt and compare with your solution.') +
@@ -284,9 +286,8 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
       escape(moduleHref) + '">' + escape(moduleTitle) + '</a></li>' : '') + '</ol></nav>' +
     '<header class="c-lesson-header"><div class="c-context-row"><span class="c-topic-marker">' +
     t('Тема ', 'Lesson ') + (index + 1) + '/' + data.topics.length + '</span><h1 tabindex="-1" data-c-heading>' +
-    escape(lesson.title) + '</h1><details class="c-lesson-menu"><summary class="btn">' + t('Меню', 'Menu') +
-    '</summary><div class="c-lesson-menu-links">' +
-    academyLessonMenuItems({locale, programHref:overviewHref, assistantEnabled}) + '</div></details></div>' +
+    escape(lesson.title) + '</h1>' + academyLessonMenuToggle(locale) + '</div>' +
+    academyLessonMenuPanel({locale,programHref:overviewHref,assistantEnabled}) +
     '<nav class="c-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
     '<div data-reference-help></div><p data-academy-library-status role="status"></p>' +
     '<nav class="c-neighbors" aria-label="' + t('Уроки', 'Lessons') + '">' +
@@ -312,6 +313,17 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   const [{data, lesson}] = await Promise.all([lessonData, ensureCCourseStyle()]);
   if (!isCurrent()) return null;
   const hash = location.hash;
+  const params = new URLSearchParams(hash.slice(1));
+  const selectedModule = data.curriculum.modules.find(module=>module.id===params.get('module'))?.id;
+  const requestedTab = params.get('tab');
+  const requestedPath = params.get('path');
+  const tab = ['practicums','projects','final'].includes(requestedTab) ? requestedTab : 'overview';
+  const path = ['tasks','labs'].includes(requestedPath) ? requestedPath : 'topics';
+  const [work,projects] = !lesson&&!selectedModule?await Promise.all([
+    tab==='practicums'||(tab==='overview'&&path!=='topics')?loadAcademyWork('c',locale):null,
+    loadAcademyProjects('c',locale),
+  ]):[null,[]];
+  if (!isCurrent()) return null;
   const storage = readonly ? null : createCCourseStorage();
   const resume = safeRead(storage, 'last-lesson');
   const storedProgress = safeRead(storage, 'studied');
@@ -327,14 +339,16 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
     (lesson ? lessonMarkup({lesson, data, locale, t, stage, progress, responses, canSave:Boolean(storage), readonly,
       assistantEnabled:Boolean(openAssistant)}) :
       (lessonId ? '<p role="status">' + t('Эта тема пока недоступна.', 'This lesson is not available yet.') + '</p>' : '') +
-      overview({data, locale, t, resume, progress, selectedModule:new URLSearchParams(hash.slice(1)).get('module')}));
+      overview({data,locale,t,resume,progress,selectedModule,tab,path,work,projects}));
+  if (!lesson) bindAcademyWorkSearch(host,locale);
 
   const status = host.querySelector('[data-c-status]');
   let disposeReference;
   if (lesson) {
     const active = () => !events.signal.aborted && isCurrent();
     import('./reference-learning-help.mjs').then(async ({mountReferenceHelp}) => {
-      if (active()) disposeReference = await mountReferenceHelp(host,{lesson,locale,isCurrent:active,c17:true});
+      if (active()) disposeReference = await mountReferenceHelp(host,{lesson,locale,isCurrent:active,c17:true,
+        relatedTitles:Object.fromEntries(data.topics.map(topic=>[topic.id,localized(topic.title,locale)]))});
     }).catch(() => {
       if (active()) host.querySelector('[data-reference-help]').textContent =
         t('Справка не загрузилась. Попробуйте ещё раз.', 'Help did not load. Please try again.');
@@ -354,11 +368,9 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
       contextObserver.observe(context);
       if (topbar) contextObserver.observe(topbar);
     }
-    const menu = context.querySelector('.c-lesson-menu');
     const libraryStatus = host.querySelector('[data-academy-library-status]');
     bindAcademyLessonMenu(host, {
       locale, courseId:'c', topicId:lesson.id, title:lesson.title, offline:readonly, signal:events.signal, isCurrent,
-      closeMenu:() => { menu.open = false; }, focusTarget:() => menu.querySelector('summary'),
       openAssistant, showError:message => { libraryStatus.textContent = message; },
     });
   }
@@ -457,6 +469,15 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
 
   const heading = host.querySelector('[data-c-heading], [data-academy-course-navigation="topics"] [data-academy-nav-heading]');
   heading?.focus({preventScroll:true});
+  const anchor = params.get('at');
+  if (stage==='practice'&&['academy-lab','academy-assignments'].includes(anchor)) {
+    const target = host.querySelector('#'+anchor);
+    requestAnimationFrame(()=>{
+      if (events.signal.aborted||!isCurrent()) return;
+      target?.focus({preventScroll:true});
+      target?.scrollIntoView({block:'start'});
+    });
+  }
   function flush() {
     const saved = (workspace?.flush() ?? true) && (!unsavedResponse || store(responseKey, responses));
     if (saved) unsavedResponse = false;

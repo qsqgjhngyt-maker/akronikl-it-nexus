@@ -3,7 +3,13 @@ import {loadPrefs,savePrefs} from './storage.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s).normalize('NFKC').toLocaleLowerCase().replace(/ё/g,'е');
 const jsonCache=new Map();
-async function resource(file){if(!jsonCache.has(file))jsonCache.set(file,fetch(new URL('../courses/reference/'+file,import.meta.url),{credentials:'omit'}).then(r=>{if(!r.ok)throw Error('REFERENCE_UNAVAILABLE');return r.json()}).catch(e=>{jsonCache.delete(file);throw e}));return jsonCache.get(file)}
+async function resource(file,folder='reference'){
+ const key=folder+'/'+file;
+ if(!jsonCache.has(key))jsonCache.set(key,fetch(new URL('../courses/'+key,import.meta.url),{credentials:'omit'}).then(r=>{
+  if(!r.ok)throw Error('REFERENCE_UNAVAILABLE');return r.json();
+ }).catch(error=>{jsonCache.delete(key);throw error}));
+ return jsonCache.get(key);
+}
 const safeUrl=url=>{try{const u=new URL(url);return u.protocol==='https:'?u.href:''}catch{return ''}};
 export function annotateReferenceTerms(scope,entries,{limit=18}={}){
  if(scope.dataset.referenceAnnotated==='true')return scope.querySelectorAll('[data-reference-term]').length;
@@ -21,7 +27,7 @@ export function annotateReferenceTerms(scope,entries,{limit=18}={}){
  }
  return used.size;
 }
-export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>true,c17=false}){
+export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>true,c17=false,relatedTitles={}}){
  const en=locale==='en',say=(ru,eng)=>en?eng:ru,abort=new AbortController();let disposed=false,dialog=null,drawer=null,disposeDrawer=null,drawerTask=null,returnFocus=null,editorSelection=null;
  const active=()=>!disposed&&isCurrent(),scope=c17?root:root.querySelector('.r3-lesson'),course=c17?'c':lesson.courseId;
  const explicit=new Set((lesson.terms||[]).filter(t=>typeof t==='string'));
@@ -44,11 +50,27 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
  function close(){dialog?.close()}
  async function ensureDrawer(){
   if(drawer)return drawer;
-  const cards=c17?Promise.resolve(syntax?[{id:syntax.termId,form:syntax.form,example:syntax.example,
-   breakdown:syntax.explanation,mistake:syntax.mistake}]:[]):resource('cards.'+locale+'.json');
-  return drawerTask??=cards.then(cards=>{
+  drawerTask??=(c17?resource('reference.'+locale+'.json','c'):resource('cards.'+locale+'.json')).then(cards=>{
    if(!active())return null;
-   const byId=new Map(cards.map(c=>[c.id,c])),items=entries.map(e=>{const c=byId.get(e.id);return{id:e.id,term:e.term,aliases:e.aliases,definition:c?.simple||e.definition||'',example:c?.form||''}});
+   const localSyntax=syntax?{id:syntax.termId,form:syntax.form,example:syntax.example,
+    purpose:lesson.goal,breakdown:syntax.explanation,mistake:syntax.mistake}:null;
+   const byId=new Map(cards.map(card=>[card.id,card]));
+   const curatedByTerm=c17?new Map(cards.map(card=>[norm(card.term),card])):null;
+   if(curatedByTerm)for(const entry of entries){
+    const curated=curatedByTerm.get(norm(entry.term));
+    if(curated)byId.set(entry.id,curated);
+   }
+   if(localSyntax)byId.set(localSyntax.id,{...byId.get(localSyntax.id),...localSyntax});
+   const seen=new Set(entries.map(entry=>norm(entry.term)));
+   const courseEntries=c17?cards.filter(card=>{
+    const term=norm(card.term);
+    if(seen.has(term))return false;
+    seen.add(term);return true;
+   }):[];
+   const items=[...entries,...courseEntries].map(entry=>{
+    const card=byId.get(entry.id);
+    return {id:entry.id,term:entry.term,aliases:entry.aliases,definition:card?.simple||entry.definition||'',example:card?.form||''};
+   });
    const holder=document.createElement('div');holder.innerHTML=termReferenceMarkup(items,{uiLocale:locale,contentLocale:locale});
    const d=holder.firstElementChild;d.classList.add('reference-dialog');d.querySelector('#termSearch').dataset.referenceSearch='';d.querySelector('#termList').dataset.referenceList='';
    for(const article of d.querySelectorAll('[data-term-card]')){
@@ -57,8 +79,14 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
     detail.addEventListener('toggle',()=>{if(!detail.open||detail.dataset.loaded)return;detail.dataset.loaded='true';
      const labels=en?['Definition','Why it is useful','Form','Example','Walkthrough','Expected observation','Common mistake']:['Точное определение','Зачем нужно','Форма записи','Пример','Разбор','Что наблюдать','Типичная ошибка'];
      const fields=['definition','purpose','form','example','breakdown','observation','mistake'];
-     const body=fields.map((k,i)=>c[k]?'<section><h4>'+labels[i]+'</h4>'+(k==='form'||k==='example'?'<pre><code>'+esc(c[k])+'</code></pre>':'<p>'+esc(c[k])+'</p>')+'</section>':'').join('');
-     const related=c.lessons?.length?'<p>'+say('Связанные уроки','Related lessons')+': '+c.lessons.map(id=>'<a href="#'+new URLSearchParams({course:id.startsWith('1c-enterprise.')?'1c-enterprise':id.startsWith('cpp.')?'cpp':'onec',lesson:id,locale,stage:'explanation'})+'">'+esc(id)+'</a>').join(' · ')+'</p>':'';
+     const body=fields.map((k,i)=>{
+      const value=c[k];
+      if(!value)return '';
+      const content=k==='form'||k==='example'?'<pre><code>'+esc(value)+'</code></pre>':
+        Array.isArray(value)?'<ul>'+value.map(line=>'<li>'+esc(line)+'</li>').join('')+'</ul>':'<p>'+esc(value)+'</p>';
+      return '<section><h4>'+labels[i]+'</h4>'+content+'</section>';
+     }).join('');
+     const related=c.lessons?.length?'<p>'+say('Связанные уроки','Related lessons')+' '+c.lessons.map(id=>'<a href="#'+new URLSearchParams({course:id.startsWith('1c-enterprise.')?'1c-enterprise':id.startsWith('cpp.')?'cpp':id.startsWith('c.')?'c':'onec',lesson:id,locale,stage:'explanation'})+'">'+esc(relatedTitles[id]??id)+'</a>').join(' · ')+'</p>':'';
      const source=safeUrl(c.source?.url);
      detail.insertAdjacentHTML('beforeend',body+(c.category?'<p>'+esc(c.category)+' · '+(c.level==='later'?say('Позже','Later'):say('Нужно сейчас','Needed now'))+'</p>':'')+related+
       (source?'<p>'+say('Источник','Source')+': <a href="'+esc(source)+'" target="_blank" rel="noopener">'+esc(c.source.section)+'</a> · '+esc(c.checkedAt)+'</p>':''));
@@ -68,6 +96,7 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
    d.addEventListener('close',()=>{if(!active())return;returnFocus?.focus({preventScroll:true});const ed=root.querySelector('#editor');if(ed&&editorSelection){ed.setSelectionRange(editorSelection.start,editorSelection.end,editorSelection.direction);ed.scrollTop=editorSelection.top;ed.scrollLeft=editorSelection.left}},{signal:abort.signal});
    return d;
   }).catch(error=>{drawerTask=null;throw error});
+  return drawerTask;
  }
  root.addEventListener('click',async event=>{
   const b=event.target.closest('button[data-open-terms],button[data-term]');if(!b||!active())return;
@@ -81,9 +110,12 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
    return;
   }
   if(dialog&&dialog!==drawer)close();dialog=drawer;returnFocus=b;
+  const useSyntax=b.hasAttribute('data-reference-editor-help');
+  if(c17)drawer.querySelector('#termDrawerTitle').textContent=useSyntax?
+   say('Синтаксис C17','C17 syntax'):say('Справочник терминов','Terminology reference');
   const ed=root.querySelector('#editor');editorSelection=ed?{start:ed.selectionStart,end:ed.selectionEnd,direction:ed.selectionDirection,top:ed.scrollTop,left:ed.scrollLeft}:null;
-  if(b.hasAttribute('data-reference-editor-help')){const selected=ed?.value.slice(ed.selectionStart,ed.selectionEnd).trim(),word=ed?.value.slice(0,ed.selectionStart).match(/[\p{L}\p{N}_:#<>]+$/u)?.[0];
-   b.dataset.term=syntax?entries[0].term:(selected?.slice(0,100)||word||'');}
+  if(useSyntax){const selected=ed?.value.slice(ed.selectionStart,ed.selectionEnd).trim(),word=ed?.value.slice(0,ed.selectionStart).match(/[\p{L}\p{N}_:#<>]+$/u)?.[0];
+   b.dataset.term=c17?'':(selected?.slice(0,100)||word||'');}
  },{capture:true,signal:abort.signal});
  const onClick=event=>{const b=event.target.closest('button');if(!b||!active())return;
   if(b.hasAttribute('data-reference-editor-help')&&drawer?.open){const first=[...drawer.querySelectorAll('[data-term-card]')].find(n=>!n.hidden);const detail=first?.querySelector('details');if(detail)detail.open=true;}

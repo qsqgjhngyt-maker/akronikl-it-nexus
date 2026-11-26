@@ -6,7 +6,7 @@ import {createLearningSession,createClarityRunObserver} from './cpp-clarity-r3-s
 import {emptyClarityDraft,validateClarityDraft,answerIsChecked,CLARITY_CONTENT_REVISION,snapshotDigests,canonicalJson} from './cpp-clarity-r3-state.mjs';
 import {referenceCourseStyles,mountReferenceNavigation} from './reference-course-ui.mjs';
 import {evaluateReferenceRun} from './reference-practice-assessment.mjs';
-import {academyLessonMenuItems,bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
+import {academyLessonMenuToggle,academyLessonMenuPanel,bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
 import {auditStudyPilot,studyReviewMarkup,studyBridgeMarkup,selfAssessmentMarkup,diagnosticMarkup,addSectionGroups,addStudyFeedback,studyFeedbackBody} from './nexus-audit-study.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const R3_TOPICS=Object.freeze(Object.keys(CLARITY_COURSES));
@@ -27,7 +27,14 @@ const words = {
  en:{explanation:'Explanation',selfcheck:'Self-check',practice:'Practice',program:'Course outline',previous:'Previous topic',next:'Next topic',first:'First topic in this course',goal:'After this lesson',required:'Before you start',source:'Worked example',output:'Expected output',trace:['Line','Before','After','Why'],check:'Check answer',free:'Keep explanation in this open preview',return:'Return to explanation',nextStage:'Continue',review:'R3 samples · awaiting 03/07 review',scope:'Work stays in memory in this open preview. Switching stages and topics preserves it. Refreshing or closing the window discards drafts; download your file before leaving.',work:'My independent work',file:'Current file',stdin:'Program input (stdin)',reported:'My record of an external run',record:'Record result for the current file versions',download:'Download current file',example:'View example without replacing my work',setup:'Environment setup',criteria:'How to check your work',hint:'Hint',outside:'This neighbouring topic is outside the three R3 samples.',outsideText:'Its title and position come from the current course outline. Its content has not been rewritten here. Returning to a sample keeps your open draft.',openR2:'Open the current topic in a separate tab (local R2 preview)',back:'Return to sample',runtime:'Review screen: code execution is not connected here yet. Download the file and run it in the specified environment. A result entered below is your self-report, not platform verification.',saved:'Recorded for this version. This is a self-report.',stale:'Files or input changed after the result was recorded. Run your program again.',none:'No result recorded yet.',unrecorded:'Self-report text changed — edits have not been recorded.',draft:'Optional browser draft',draftNote:'You can work directly in Designer (Configurator). This file is not synchronised with 1C; the snapshot below contains only the browser draft and your record, not verified source from the external run.',outsideChoice:'Topic outside the R3 samples',answerDraft:'Answer not checked yet.',freeSaved:'Explanation kept in preview memory; correctness is not graded automatically.',close:'Close',prepTitle:'Prepare a separate learning environment',optional:'If needed',snapshot:'Result file version',notCompleted:'Opening a stage creates no attempt and completes no topic.'}
 };
 
- function position(params,fallback='explanation'){const old=params.get('section')||params.get('focus')||'',requested=params.get('stage');return {stage:stages.includes(requested)?requested:/^(practice|lab|laboratory|code|sandbox|step-)/.test(old)?'practice':/^(quiz|knowledge|selfcheck)$/.test(old)?'selfcheck':old?'explanation':fallback,anchor:params.get('at')||(/^theory-\d+$|^step-/.test(old)?old:old==='examples'?'example-1':'')};}
+ function position(params,fallback='explanation'){
+  const legacy=params.get('section')||params.get('focus')||'',requested=params.get('stage');
+  const stage=stages.includes(requested)?requested:/^(practice|task|lab|laboratory|code|sandbox|step-)/.test(legacy)?'practice':
+   /^(quiz|knowledge|selfcheck)$/.test(legacy)?'selfcheck':legacy?'explanation':fallback;
+  const anchor=params.get('at')||(/^theory-\d+$|^step-/.test(legacy)?legacy:legacy==='examples'?'example-1':
+   /^(lab|laboratory)$/.test(legacy)?'academy-lab':'');
+  return {stage,anchor};
+ }
  const text=()=>words[locale],w=text();
  w.free=say('Сохранить объяснение','Save explanation');w.freeSaved=say('Объяснение сохранено; правильность автоматически не оценивается.','Explanation saved; correctness is not graded automatically.');
  const learningRoute=new URLSearchParams(location.hash.slice(1)).get('learningRoute')==='reference-start'?'reference-start':null;
@@ -191,20 +198,50 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    </div>
   </section>`;
  }
- let labReferencePromise;
+ let goldPromise,labReferencePromise;
+ function loadGold(){
+  if(!goldPromise)goldPromise=(async()=>{
+   const {goldLessonPath}=await import('./academy-gold-catalog.js');
+   const response=await fetch(new URL('../'+goldLessonPath(topicId,locale),import.meta.url),{credentials:'omit'});
+   if(!response.ok)throw Error('GOLD_LAB_UNAVAILABLE');
+   return response.json();
+  })().catch(error=>{goldPromise=null;throw error;});
+  return goldPromise;
+ }
  async function labReference(){
   if(lesson.practice.referenceSolution)return lesson.practice.referenceSolution;
   if(!labReferencePromise)labReferencePromise=(async()=>{
-   const {goldLessonPath}=await import('./academy-gold-catalog.js');
-   const response=await fetch(new URL('../'+goldLessonPath(topicId,locale),import.meta.url),{credentials:'omit'});
-   if(!response.ok)throw Error('LAB_REFERENCE_UNAVAILABLE');
-   const gold=await response.json(),authored=gold.teachingEdition;
+   const gold=await loadGold(),authored=gold.teachingEdition;
    if(authored?.referenceProgram)return {source:authored.referenceProgram,files:authored.referenceFiles,metadata:lesson.practice.metadata};
    const lab=CLARITY_COURSES[topicId].pilot?gold.clarity?.laboratory:gold.laboratory;
    if(!lab?.referenceCode)throw Error('LAB_REFERENCE_UNAVAILABLE');
    return {source:lab.referenceCode,files:lab.referenceFiles,metadata:lab.metadata};
   })().catch(error=>{labReferencePromise=null;throw error;});
   return labReferencePromise;
+ }
+ let canonicalLabTask;
+ async function showCanonicalLab(){
+  const target=root.querySelector('[data-cpp-canonical-lab]');
+  if(!target||target.dataset.loaded||!live())return;
+  target.dataset.loaded='pending';
+  try{
+   const [gold,tools]=await Promise.all([loadGold(),import('./academy-gold-presentation.js')]);
+   await tools.ensureGoldStyles();
+   if(!live())return;
+   const workspace=`<aside class="gold-workspace-callout">
+    <p>${say('Сверяйте запуск с контрольными случаями этой лабораторной. Заготовку можно скопировать в свою работу или в отдельный проект.',
+     'Compare the run with this lab’s reference cases. Copy the starter into your work or into a separate project.')}</p>
+    <div class="gold-workspace-actions">${session&&!qt?`<button type="button" class="btn primary" data-action="canonical-lab-window">${say('Задание и Code Studio','Task and Code Studio')}</button>`:''}
+    <a class="btn" href="${qt?'#view=project-studio':'#view=code-studio'}">${qt?'Project Studio':say('Отдельный проект в Code Studio','Separate project in Code Studio')}</a></div></aside>`;
+   target.innerHTML=tools.goldLaboratoryMarkup(gold,undefined,{workspace});
+   canonicalLabTask=target.querySelector('[data-gold-laboratory]');
+   tools.bindAcademyGold(target,gold);
+   target.dataset.loaded='true';
+  }catch{
+   if(!live())return;
+   delete target.dataset.loaded;
+   target.textContent=say('Лабораторная не загрузилась. Закройте раздел и откройте снова.','The lab did not load. Close this section and open it again.');
+  }
  }
  function practicePassport(p){
   if(!p.passport)return '';
@@ -213,11 +250,15 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  function practice(){
   const p=lesson.practice,canCreate=external&&p.files.length>0;
-  return `<h1>${esc(p.title)}</h1><p class="goal">${esc(p.task)}</p>
+  return `<h1${external?' id="academy-lab"':''}>${esc(p.title)}</h1><p class="goal">${esc(p.task)}</p>
+  ${external?'':`<details class="practice-card" id="academy-lab"><summary>${say('Лабораторная работа по теме','Lesson lab')}</summary>
+   <div class="academy-gold" data-gold-lesson="${topicId}" data-cpp-canonical-lab lang="${locale}"></div></details>`}
   ${practicePassport(p)}${starterDisclosure(p)}
   <section class="environment"><strong>${w.setup}</strong><p>${external?esc(p.environment):qt?say('Графическое приложение Qt выполняется в Project Studio. Для первоначальной подготовки Qt нужна сеть. Ваш C++ собирается на устройстве; консольный runner не запускает этот интерфейс.','The Qt graphical application runs in Project Studio. Initial Qt preparation requires a connection. Your C++ builds on the device; the console runner cannot run this interface.'):say('Штатный C++ runner Nexus. Технический запуск и объяснение решения проверяются отдельно.','The standard Nexus C++ runner. Execution and understanding are assessed separately.')}</p>${external?`<button class="btn" data-action="setup">${w.setup}</button>`:''}</section>
   ${external&&p.externalRoute?`<p>${esc(p.externalRoute)}</p>`:''}${practiceSteps(p)}${external?queryTransfer(p.transfer):''}${practiceHint(p)}
   ${p.exercises?`<section class="practice-card"><h2>${say('От разбора к самостоятельному действию','From the example to independent work')}</h2><ol>${p.exercises.map(x=>`<li><p>${esc(x.task)}</p><details><summary>${w.criteria}</summary><p>${esc(x.criteria)}</p></details></li>`).join('')}</ol></section>`:''}
+  ${external?`<details class="practice-card" id="academy-assignments" data-academy-lesson-assignments>
+    <summary>${say('Задания урока','Lesson assignments')}</summary><div data-academy-assignment-content></div></details>`:''}
   ${canCreate?`<h2>${w.draft}</h2><p>${w.draftNote}</p><button class="btn" data-r3-create ${adapter?'':'disabled'} ${currentWork?'hidden':''}>${say('Создать свою работу в Studio','Create my Studio work')}</button>`:''}
   ${!reported||external&&(canCreate||currentWork)?workspaceCallout(p):''}
   ${qt?`<p>${say('Откройте Project Studio в соседней вкладке и создайте новое приложение C++. Перенесите заготовку в отдельный проект; сохранённая работа останется на месте. Эта страница хранит условие и место чтения.','Open Project Studio in another tab and create a new C++ application. Copy the starter into a separate project; your saved work remains intact. This page retains the task and reading position.')}</p><a class="btn" href="./#view=project-studio" target="_blank" rel="noopener">Project Studio ↗</a>`:!external||canCreate||currentWork?`<div data-r3-editor class="sandbox-block" ${currentWork?'':'hidden'}></div>`:''}
@@ -261,18 +302,6 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  .r3-lesson .context-row .context-title{display:flex;align-items:center;gap:6px;flex:1;min-width:0;max-width:none;margin:0;font-size:.88rem;font-weight:700}
  .r3-lesson .topic-marker{flex:none;padding:0 5px;border:1px solid var(--r3-line);border-radius:5px;font-size:.7rem;white-space:nowrap}
  .r3-lesson .lesson-topic-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
- .r3-lesson .lesson-tools-toggle{min-height:30px;padding:0 8px;border-radius:7px;font-size:12px;flex:none}
- .r3-lesson .lesson-tools{
-  position:absolute;inset-inline:0;top:calc(100% + 4px);padding:12px;
-  max-height:calc(100dvh - var(--r3-shell-top,0px) - var(--r3-context-height,80px) - 12px);
-  overflow:auto;overscroll-behavior:contain;overflow-anchor:none;
-  background:var(--panel,#102333);border:1px solid var(--r3-line);border-radius:10px;
-  box-shadow:0 10px 24px #0005;
- }
- .r3-lesson .lesson-tools p{margin:0 0 8px;font-weight:700}
- .r3-lesson .course-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
- .r3-lesson .course-controls a{padding:6px 8px}
- .r3-lesson .course-controls button{white-space:normal}
  .r3-lesson .stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
  .r3-lesson .stages a{
   position:relative;display:grid;place-items:center;min-height:36px;
@@ -309,13 +338,10 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
     <span class="topic-marker"><span class="topic-marker-label">${say('Тема','Topic')} </span>${idx+1}/${course.topics.length}</span>
     <span class="lesson-topic-name" title="${esc(topic.title[locale])}">${esc(topic.title[locale])}</span>
    </p>
-   <button type="button" class="btn lesson-tools-toggle" data-action="tools"
-     aria-label="${say('Навигация по уроку','Lesson navigation')}" aria-controls="r3-tools" aria-expanded="false">${say('Меню','Menu')}</button>
+   ${academyLessonMenuToggle(locale)}
   </div>
   <p data-academy-library-status role="status"></p>
-  <div class="lesson-tools" id="r3-tools" hidden>
-   ${academyLessonMenuItems({locale,programHref:'#'+new URLSearchParams({course:lesson.courseId,locale,...(lesson.courseId==='cpp'?{path:'topics'}:{})}),assistantEnabled:Boolean(openAssistant)})}
-  </div>
+  ${academyLessonMenuPanel({locale,programHref:'#'+new URLSearchParams({course:lesson.courseId,locale,...(lesson.courseId==='cpp'?{path:'topics'}:{})}),assistantEnabled:Boolean(openAssistant)})}
   <nav class="stages" aria-label="${say('Раздел урока','Lesson stage')}">
    ${stages.map(stage=>`<a data-stage="${stage}" aria-label="${esc(w[stage])}" href="${url(topicId,stage)}"><span>${stage==='selfcheck'&&locale==='ru'?'Само&shy;проверка':w[stage]}</span><span data-current-marker aria-hidden="true" hidden></span></a>`).join('')}
   </nav>
@@ -422,7 +448,16 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   }
   setToolsOpen(false);
   panel(stage).focus({preventScroll:true});
-  if(stage==='practice')await ensureEditor();
+  if(stage==='practice'){
+   await ensureEditor();
+   if(anchor==='academy-assignments'){
+    const assignments=root.querySelector('[data-academy-lesson-assignments]');
+    if(assignments)assignments.open=true;
+   }else if(anchor==='academy-lab'&&!external){
+    root.querySelector('#academy-lab').open=true;
+    await showCanonicalLab();
+   }
+  }
   if(!live())return;
   acceptedHash=location.hash;
   notifyView();
@@ -483,30 +518,32 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  let lastEditable=null;
  const abort=new AbortController(),listen=(node,event,fn)=>node.addEventListener(event,fn,{signal:abort.signal});
- const toolsToggle=contextHeader.querySelector('[data-action="tools"]');
- const toolsPanel=contextHeader.querySelector('.lesson-tools');
- function setToolsOpen(open){
-  toolsPanel.hidden=!open;
-  toolsToggle.setAttribute('aria-expanded',String(open));
- }
  const libraryStatus=contextHeader.querySelector('[data-academy-library-status]');
- bindAcademyLessonMenu(lessonElement,{
+ const setToolsOpen=bindAcademyLessonMenu(lessonElement,{
   locale,courseId:lesson.courseId,topicId,title:lesson.title,offline,signal:abort.signal,isCurrent:live,
-  closeMenu:()=>setToolsOpen(false),focusTarget:()=>toolsToggle,
   openAssistant:openAssistant?button=>{notifyView();openAssistant(button,{courseId:lesson.courseId,lessonId:topicId,sectionId:route.stage,locale});}:null,
   showError:message=>{libraryStatus.textContent=message;},
  });
- listen(window,'pointerdown',event=>{
-  if(live()&&!toolsPanel.hidden&&!event.composedPath().includes(contextHeader)&&!root.querySelector('dialog[open]'))setToolsOpen(false);
- });
- listen(contextHeader,'keydown',event=>{
-  if(event.key!=='Escape'||toolsPanel.hidden)return;
-  event.preventDefault();
-  toolsToggle.focus({preventScroll:true});
-  setToolsOpen(false);
+ const assignments=root.querySelector('[data-academy-lesson-assignments]');
+ const canonicalLab=root.querySelector('[data-cpp-canonical-lab]')?.closest('details');
+ if(canonicalLab)listen(canonicalLab,'toggle',()=>{if(canonicalLab.open)void showCanonicalLab()});
+ if(assignments)listen(assignments,'toggle',async()=>{
+  const target=assignments.querySelector('[data-academy-assignment-content]');
+  if(!assignments.open||target.dataset.loaded||!live())return;
+  target.dataset.loaded='pending';
+  try{
+   const {loadAcademyWork,academyAssignmentsMarkup}=await import('./academy-course-work.mjs');
+   const index=await loadAcademyWork(lesson.courseId,locale);
+   if(!live())return;
+   target.innerHTML=academyAssignmentsMarkup(index[topicId].assignments,locale,{embedded:true});
+   target.dataset.loaded='true';
+  }catch{
+   if(!live())return;
+   delete target.dataset.loaded;
+   target.textContent=say('Задания не загрузились. Закройте блок и откройте снова.','Assignments did not load. Close this section and open it again.');
+  }
  });
  listen(root,'focusin',event=>{
-  if(!toolsPanel.hidden&&event.target.closest('.stage-body'))setToolsOpen(false);
   if(event.target.matches('textarea,input'))lastEditable=event.target;
  });
  listen(root,'input',event=>{if(!session||!live())return;const el=event.target;if(el.dataset.answer){const id=el.dataset.answer;session.change(d=>{d.answers[id]={value:el.type==='radio'?Number(el.value):el.value,checked:false,contentRevision};});feedback(lesson.selfcheck.find(q=>q.id===id));}if(el.hasAttribute('data-r3-report'))session.change(d=>{d.reportDraft=el.value;});});
@@ -586,6 +623,14 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
     const lessonRoot=root.querySelector('.r3-lesson');
     openGoldWorkspace(lessonRoot,button,{lessonId:topicId,locale},{workspace:lessonRoot.querySelector('[data-r3-editor]'),task});
    }
+   if(button.dataset.action==='canonical-lab-window'&&session&&canonicalLabTask){
+    await ensureEditor();
+    const {openGoldWorkspace}=await import('./academy-gold-presentation.js');
+    if(!live()||route.stage!=='practice')return;
+    openGoldWorkspace(lessonElement,button,{lessonId:topicId,locale},{
+     workspace:root.querySelector('[data-r3-editor]'),task:canonicalLabTask,mobilePanel:'task',
+    });
+   }
    if(button.dataset.action==='copy-reference'||button.dataset.action==='copy-starter'){
     const source=button.dataset.action==='copy-starter'?button.previousElementSibling.querySelector('code').textContent:button.closest('[data-lab-reference-content]').querySelector('[data-reference-source] code').textContent;
     try{
@@ -596,7 +641,6 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    if(button.dataset.action==='restore-starter')await confirmStarterRestore();
    if(author&&button.dataset.action==='reading')dialog(say('Источники объяснения','Lesson sources'),author.reading());
    if(author&&button.dataset.recall){const content=author.recall(button.dataset.recall);if(content){const owner=button.closest('[data-question]')||button.closest('[data-r3-panel]');const target=lastEditable&&root.contains(lastEditable)&&owner?.contains(lastEditable)&&lastEditable.getClientRects().length?lastEditable:button,x=scrollX,y=scrollY,start=target.selectionStart,end=target.selectionEnd,top=target.scrollTop,left=target.scrollLeft;const node=dialog(content.title,content.body);node.onclose=()=>{node.remove();if(!live())return;target.focus({preventScroll:true});if(typeof start==='number')target.setSelectionRange(start,end);target.scrollTop=top;target.scrollLeft=left;scrollTo(x,y);};}}
-   if(button===toolsToggle)setToolsOpen(toolsPanel.hidden);
    if(button.hasAttribute('data-r3-export'))download();
    if(button.hasAttribute('data-r3-retry'))await session?.retry();
    if(button.dataset.action==='setup'&&!CLARITY_COURSES[topicId].pilot){const [{labHelpMarkup},response]=await Promise.all([import('../courses/onec-education/lab-help.mjs'),fetch(new URL('../courses/onec-education/lab-route.v2.json',import.meta.url),{credentials:'omit'})]);if(!response.ok)throw Error('COURSE_SETUP_UNAVAILABLE');const copy=await response.json();if(live())dialog(w.prepTitle,labHelpMarkup(locale,{copy,open:true}));}

@@ -169,9 +169,8 @@ async function openTopicFromOutline(page, topicId) {
 }
 
 async function returnToOutline(page) {
-  const menu = course(page).locator('.c-lesson-menu');
-  await menu.locator('summary').click();
-  await menu.locator('.c-lesson-menu-links a').first().click();
+  await course(page).locator('[data-academy-menu-toggle]').click();
+  await course(page).locator('[data-academy-menu-item="program"]').click();
   await moduleCards(page).first().waitFor();
 }
 
@@ -257,7 +256,7 @@ async function checkDraft(page, first, next, words, {studied = 0, complete = tru
   if (first.id === lessons.en[0].id) {
     await editor.evaluate(node => node.setSelectionRange(4, 8));
     await course(page).locator('[data-reference-editor-help]').click();
-    await course(page).locator('dialog[open] [data-reference-details]').waitFor();
+    await course(page).locator('dialog[open] [data-reference-details][open]').waitFor();
     await page.keyboard.press('Escape');
     assert.deepEqual(await editor.evaluate(node => [node.value, node.selectionStart, node.selectionEnd]), [source, 4, 8]);
     assert.equal(await stdin.inputValue(), input);

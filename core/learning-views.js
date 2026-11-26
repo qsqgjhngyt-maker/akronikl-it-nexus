@@ -84,14 +84,19 @@ function courseProjectById(id){return cpp?.projectsRu?.projects?.find(item=>item
 function projectStudioDashboard(){const ps=projectStudioApi;return shell(`<div class="nexus-project-studio" data-nexus-project-studio>${ps.projectStudioDashboardMarkup({projects:ps.listProjects(),courseProjects:cpp?.projectsRu?.projects||[],locale:prefs.uiLocale})}</div>`,'projects')}
 function projectStudioProject(projectId){const ps=projectStudioApi;const project=ps.getProject(projectId);if(!project)return shell(`<a class="back-link" href="#view=project-studio">← Project Studio</a><section class="placeholder"><h1>${e(t('journey.error.project'))}</h1><p>${e(t('journey.error.project.text'))}</p></section>`,'projects');const source=project.origin?.courseId==='cpp'?courseProjectById(project.origin?.projectId):null;return shell(`<div class="nexus-project-studio" data-nexus-project-studio>${ps.projectStudioViewMarkup({project,courseProject:source,locale:prefs.uiLocale})}</div>`,'projects')}
 function courseTabs(tab,locale){
+  const en=locale==='en';
+  const requested=new URLSearchParams(globalThis.location?.hash?.slice(1)).get('locale');
+  const suffix=['ru','en'].includes(requested)?'&locale='+requested:'';
   return courseTabsMarkup(locale,[
-    {href:'#course=cpp',title:t('learningPath.title'),active:tab==='overview'},
-    {href:'#course=cpp&tab=practicums',title:t('codeHub.tab.practicums'),active:tab==='practicums'},
-    {href:'#course=cpp&tab=projects',title:t('codeHub.courseProjects'),active:tab==='projects'},
-    {href:'#view=course-final',title:locale==='en'?'Final assessment':'Итоговая работа'},
+    {href:'#course=cpp'+suffix,title:en?'Learning path':'Учебная траектория',active:tab==='overview'},
+    {href:'#course=cpp&tab=practicums'+suffix,title:en?'Practicums':'Практикумы',active:tab==='practicums'},
+    {href:'#course=cpp&tab=projects'+suffix,title:en?'Course projects':'Учебные проекты',active:tab==='projects'},
+    {href:'#view=course-final'+suffix,title:en?'Final assessment':'Итоговая работа'},
   ]);
 }
-function courseHead(tab,locale=prefs.courseLocale){
+function courseHead(tab,locale){
+  const requested=new URLSearchParams(globalThis.location?.hash?.slice(1)).get('locale');
+  locale??=['ru','en'].includes(requested)?requested:prefs.courseLocale;
   const p=progress(),en=locale==='en';
   const hero=courseHeroMarkup({id:'cpp',locale,title:textFor(cpp.manifest.title,locale),
     description:textFor(cpp.manifest.description,locale),symbol:'C',suffix:'++',

@@ -65,7 +65,7 @@ try {
       page.on('pageerror',error => errors.push(error.message));
       await page.goto(origin+'/#'+new URLSearchParams({course,lesson,locale,stage:'explanation'}));
       const root = course === 'c' ? page.locator('[data-c-course]') : page.locator('[data-r3-topic="'+lesson+'"][data-r3-ready="true"]');
-      const menu = course === 'c' ? root.locator('.c-lesson-menu summary') : root.locator('[data-action="tools"]');
+      const menu = root.locator('[data-academy-menu-toggle]');
       await menu.waitFor();
       assert.equal(catalogRequests.length,0,'Ordinary opening must not request the library catalog');
       assert.equal(libraryModules.length,0,'Ordinary opening must not load the library dialog');
@@ -144,6 +144,26 @@ try {
         page.locator('[data-r3-topic="'+directId+'"][data-r3-ready="true"]');
       await lessonRoot.locator('[data-academy-back="course"]').click();
       await hero.waitFor();
+      if (course==='cpp'&&locale==='ru'&&width===1440) {
+        await page.locator('[data-learning-filter="labs"]').click();
+        await page.locator('#cppPathPanel-labs .learning-lab-card a').first().click();
+        const lab=page.locator('#academy-lab[open] [data-gold-laboratory]');
+        await lab.waitFor();
+        const editor=page.locator('#editor');
+        const original=await editor.inputValue();
+        const work=original+'\n// synthetic laboratory draft';
+        await editor.fill(work);
+        await lab.locator('[data-action="canonical-lab-window"]').click();
+        const dialog=page.locator('dialog.gold-work-dialog[open]');
+        await dialog.locator('.gold-case-body').first().waitFor();
+        assert.match(await dialog.locator('[data-gold-work-panel="task"]').innerText(),/350/);
+        assert.equal(await dialog.locator('#editor').inputValue(),work);
+        await dialog.locator('[data-gold-work-close]').click();
+        await dialog.waitFor({state:'detached'});
+        assert.equal(await editor.inputValue(),work);
+        await page.locator('[data-r3-ready="true"] [data-academy-back="course"]').click();
+        await hero.waitFor();
+      }
       await page.locator('[data-academy-back="academy"]').click();
       await page.waitForURL(url=>new URLSearchParams(url.hash.slice(1)).get('view')==='academy');
       assert.deepEqual(errors,[]);
