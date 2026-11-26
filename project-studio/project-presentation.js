@@ -9,7 +9,7 @@ const projectGroups = [
   ['c', 'Программирование на C17', 'C17 programming'],
   ['onec', 'Программирование 1С', '1C programming'],
   ['1c-enterprise', '1С:Предприятие', '1C:Enterprise'],
-  ['independent', 'Самостоятельные проекты', 'Independent projects'],
+  ['independent', 'Без привязки к курсу', 'No linked course'],
 ];
 
 function projectGroup(project, cppProjectIds) {

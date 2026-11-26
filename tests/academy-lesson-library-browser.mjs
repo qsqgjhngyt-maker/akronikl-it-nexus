@@ -68,11 +68,12 @@ try {
       const menu = root.locator('[data-academy-menu-toggle]');
       await menu.waitFor();
       const geometry = await root.locator('.academy-lesson-stages a').evaluateAll(nodes =>
-        nodes.map(node=>[node.offsetWidth,node.offsetHeight]));
+        nodes.map(node=>[node.offsetWidth,node.offsetHeight,node.scrollWidth<=node.clientWidth+1]));
       assert.equal(geometry.length,3);
-      for(const [w,h] of geometry){
+      for(const [w,h,contained] of geometry){
         assert.ok(Math.abs(w-geometry[0][0])<=1,'Stages divide the lesson bar into equal columns');
         assert.equal(h,44,'Shared lesson tab height');
+        assert.ok(contained,'Stage label fits inside its button');
       }
       const glossary = root.locator('.academy-reference-actions [data-reference-open]');
       const syntax = root.locator('.academy-reference-actions [data-reference-editor-help]');

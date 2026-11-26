@@ -29,13 +29,18 @@ try {
   await fixture.waitReady();
   const vaultId=await page.evaluate(async ({seeds,generation,phrase})=>{
     const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js');
+    const {makeLocalPayload}=await import('/releases/'+generation+'/pwa/offline-transfer.js');
     const store=createVaultStore();
-    const projects=Object.fromEntries(seeds.map(project=>[project.id,{
+    const projects=seeds.map(project=>({
       ...project,workspace:{entryFile:'main.txt',activeFile:'main.txt',files:[{path:'main.txt',content:'Synthetic project source'}]},
-      progress:{milestones:[]},checkpoints:[],
-    }]));
-    const vault=await store.create({schemaVersion:1,owner:{accountId:'synthetic-projects',displayName:'Test projects'},
-      projects,state:{courses:{}},base:{projects:{},state:{courses:{}}}},phrase);
+      progress:{milestones:[]},checkpoints:[],access:{workspaceKind:'personal'},
+    }));
+    const payload=makeLocalPayload({account:{accountId:'synthetic-projects',displayName:'Test projects',status:'active'},
+      projects,state:{},isOwner:()=>true});
+    // This older lesson copy was created inside the vault, not exported from Project Studio.
+    for(const project of projects.filter(item=>item.learning))payload.projects[project.id].learning=project.learning;
+    if(payload.projects['enterprise-draft'].origin.sourceCourseId)throw Error('Original source metadata left the account');
+    const vault=await store.create(payload,phrase);
     const id=vault.id;
     await vault.lock();
     await store.close();
@@ -176,6 +181,12 @@ try {
     await related.click();
     await drawer.waitFor({state:'hidden'});
     assert.equal(new URLSearchParams(new URL(page.url()).hash.slice(1)).get('course'),'c');
+    await page.goto(url({course:'onec',lesson:'onec.p7.topic-2',stage:'practice',locale}));
+    const tableResult=page.locator('[data-r3-panel="practice"] [data-academy-expected]').first();
+    await tableResult.waitFor();
+    assert.equal(await tableResult.locator('table').isVisible(),false);
+    await tableResult.locator('summary').click();
+    assert.ok(await tableResult.locator('table').isVisible());
   }
   await page.setViewportSize({width:1366,height:900});
   await page.goto(url({copy:vaultId}));

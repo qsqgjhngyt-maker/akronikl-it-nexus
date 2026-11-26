@@ -143,6 +143,10 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
    const meaning=p.outputFields&&values?.length===p.outputFields.length
     ?`<dl class="practice-case-meaning">${p.outputFields.map((label,i)=>`<div><dt>${esc(label)}</dt><dd>${esc(values[i])}</dd></div>`).join('')}</dl>`
     :'';
+   const outputDetails=programFiles(c.outputFiles,say('Ожидаемые файлы результата','Expected output files'))+
+    (c.fileChecks?.length?'<h4>'+say('Свойства файлов результата','Output file checks')+'</h4><ul>'+c.fileChecks.map(({path,description})=>'<li><code>'+esc(path)+'</code> · '+esc(description)+'</li>').join('')+'</ul>':'')+
+    meaning+(c.table?table(c.table):'');
+   const expected=c.output!==undefined?`<p class="practice-observation" data-expected-output>${esc(c.output)}</p>`:'';
    return `<li class="practice-case">
     <h3>${esc(c.label)}</h3>
     <dl class="practice-case-io">
@@ -150,12 +154,8 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
      ${!external&&c.output!==undefined?`<div><dt>${qt?say('Ожидаемое наблюдение','Expected observation'):w.output}</dt><dd><pre data-expected-output>\n${esc(c.output)}</pre></dd></div>`:''}
     </dl>
     ${programFiles(c.files,say('Входные файлы для проверки','Input files for this case'))}
-    ${external&&c.output!==undefined?`<details data-academy-expected><summary>${say('Ожидаемое наблюдение','Expected observation')}</summary><p class="practice-observation" data-expected-output>${esc(c.output)}</p></details>`:''}
     ${c.sourceVariant?`<details class="case-source-variant"><summary>${say('Для этого опыта изменяется исходник','This experiment changes the source')}</summary><p>${say('Одинаковый stdin здесь относится к другой версии констант. Сравните версию перед запуском; просмотр не заменяет вашу работу.','The same stdin here belongs to a different version of the constants. Compare the version before running; viewing it does not replace your work.')}</p>${code(c.sourceVariant.source,undefined,undefined,undefined,c.sourceVariant)}</details>`:''}
-    ${programFiles(c.outputFiles,say('Ожидаемые файлы результата','Expected output files'))}
-    ${c.fileChecks?.length?'<h4>'+say('Свойства файлов результата','Output file checks')+'</h4><ul>'+c.fileChecks.map(({path,description})=>'<li><code>'+esc(path)+'</code> · '+esc(description)+'</li>').join('')+'</ul>':''}
-    ${meaning}
-    ${c.table?table(c.table):''}
+    ${external?(expected||outputDetails?`<details data-academy-expected><summary>${say('Ожидаемое наблюдение','Expected observation')}</summary>${expected}${outputDetails}</details>`:''):outputDetails}
    </li>`;
   }).join('')}</ol>`;
  }
