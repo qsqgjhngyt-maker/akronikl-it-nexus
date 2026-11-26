@@ -80,6 +80,17 @@ try {
       await glossary.waitFor();
       assert.deepEqual(await glossary.evaluate(node=>[node.offsetWidth,node.offsetHeight]),[width<=760?44:184,44]);
       assert.deepEqual(await syntax.evaluate(node=>[node.offsetWidth,node.offsetHeight]),[width<=760?44:116,44]);
+      const toolbar = root.locator('.academy-reference-actions');
+      const bottom = await toolbar.evaluate(node=>Math.round(innerHeight-node.getBoundingClientRect().bottom));
+      assert.equal(bottom,width<=760?16:24);
+      if(width>760)for(const action of [glossary,syntax]){
+        assert.ok(await action.evaluate(node=>{
+          const label=node.querySelector('span'),range=document.createRange();
+          range.selectNodeContents(label);
+          const box=node.getBoundingClientRect(),text=range.getBoundingClientRect();
+          return range.getClientRects().length===1&&text.left>=box.left&&text.right<=box.right;
+        }),'Complete help label fits on a single line');
+      }
       const neighbours = root.locator('.academy-lesson-neighbours');
       const next = neighbours.locator('a').last();
       await next.waitFor();
