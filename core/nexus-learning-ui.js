@@ -46,7 +46,7 @@ export function bindNexusLearningUi(translate){
 
 // Нативный modal владеет фокусом и блокирует фон одинаково online/offline.
 // Сохранение курса и пользовательские данные здесь не затрагиваются.
-export function bindGlossaryDrawer(root=document,{prepareOpen}={}){
+export function bindGlossaryDrawer(root=document,{prepareOpen,onClose}={}){
   const drawer=root.querySelector('#termDrawer');if(!drawer)return;
   const controller=new AbortController(),options={signal:controller.signal};
   const search=drawer.querySelector('#termSearch'),cards=[...drawer.querySelectorAll('[data-term-card]')];
@@ -68,6 +68,7 @@ export function bindGlossaryDrawer(root=document,{prepareOpen}={}){
     drawer.close();syncClosed();
     if(restore&&returnFocus?.isConnected)returnFocus.focus({preventScroll:true});
     returnFocus=null;
+    if(restore)onClose?.();
   };
   const open=trigger=>{
     if(disposed||drawer.open||!trigger?.isConnected)return;

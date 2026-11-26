@@ -92,8 +92,14 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
       (source?'<p>'+say('Источник','Source')+': <a href="'+esc(source)+'" target="_blank" rel="noopener">'+esc(c.source.section)+'</a> · '+esc(c.checkedAt)+'</p>':''));
     },{signal:abort.signal});article.append(detail);
    }
-   scope.append(d);drawer=d;disposeDrawer=bindGlossaryDrawer(scope);
-   d.addEventListener('close',()=>{if(!active()||d.open)return;const ed=root.querySelector('#editor');if(ed&&editorSelection){ed.setSelectionRange(editorSelection.start,editorSelection.end,editorSelection.direction);ed.scrollTop=editorSelection.top;ed.scrollLeft=editorSelection.left}},{signal:abort.signal});
+   scope.append(d);drawer=d;disposeDrawer=bindGlossaryDrawer(scope,{onClose(){
+    const ed=root.querySelector('#editor');
+    if(ed&&editorSelection){
+     ed.setSelectionRange(editorSelection.start,editorSelection.end,editorSelection.direction);
+     ed.scrollTop=editorSelection.top;ed.scrollLeft=editorSelection.left;
+    }
+    editorSelection=null;
+   }});
    return d;
   }).catch(error=>{drawerTask=null;throw error});
   return drawerTask;

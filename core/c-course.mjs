@@ -2,6 +2,7 @@ import {courseBackMarkup, courseHeroMarkup, courseContinueMarkup} from './academ
 import {bindCCourseWorkspace, createCCourseStorage} from './c-course-workspace.mjs';
 import {courseNavigationMarkup} from './academy-course-navigation.mjs';
 import {academyLessonMenuToggle, academyLessonMenuPanel, bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
+import {academyPracticeHelpMarkup, academyRecallMarkup} from './academy-practice-help.mjs';
 import {academyAssignmentsMarkup, academyCourseSections, academyCourseWorkMarkup,
   bindAcademyWorkSearch, loadAcademyWork, loadAcademyProjects} from './academy-course-work.mjs';
 import {registerUpdateParticipant} from '../pwa/interface-update.js';
@@ -191,6 +192,7 @@ function explanation(lesson, t) {
 function selfcheck(lesson, t, responses) {
   return lesson.selfcheck.map((item, index) => {
     const response = responses[item.id];
+    const rule = lesson.sections.find(section => section.id === item.recall);
     const answer = item.kind === 'choice' ? '<fieldset><legend>' + t('Выберите ответ', 'Choose an answer') +
       '</legend>' + item.options.map((option, optionIndex) => '<label class="c-option"><input type="radio" name="c-question-' +
         index + '" value="' + optionIndex + '"' + (response === optionIndex ? ' checked' : '') + '> ' + escape(option) + '</label>').join('') +
@@ -200,7 +202,10 @@ function selfcheck(lesson, t, responses) {
       '<details><summary>' + t('Сверить объяснение', 'Compare your explanation') + '</summary><p>' +
       escape(item.feedback) + '</p></details>';
     return '<section class="c-panel" data-c-question="' + index + '"><h2>' + escape(item.prompt) + '</h2>' +
-      renderCode(item.code, t, {showResult:false}) + answer + '</section>';
+      renderCode(item.code, t, {showResult:false}) + (rule ? academyRecallMarkup({
+        locale:lesson.locale, title:rule.title, rule:rule.paragraphs?.[0] ?? lesson.goal,
+        explanationUrl:routeLink(lesson.locale, lesson.id) + '&at=' + encodeURIComponent(rule.id),
+      }) : '') + answer + '</section>';
   }).join('') + (lesson.teaching?.apply ? '<section class="c-panel" data-c-transfer>' +
     reasoning(lesson.teaching.apply,t('Примените к новой ситуации','Apply it to a new case'),t) + '</section>' : '');
 }
@@ -220,27 +225,30 @@ function practice(lesson, t, readonly) {
   const cases = work.cases.map((test, index) => '<details class="c-test"' + (index === 0 ? ' open' : '') +
     '><summary>' + escape(test.label) + '</summary>' +
     '<div class="c-case-pair"><div><h4>' + t('Ввод', 'Input') + '</h4>' + codeBlock(test.input, t('Ввод не нужен', 'No input')) +
-    '</div><div><h4>' + t('Ожидаемый вывод', 'Expected output') + '</h4>' +
-    codeBlock(test.output, t('Пустой вывод', 'No output')) + '</div></div>' +
-    renderFiles(test.inputFiles, t, t('Входные файлы', 'Input files')) +
+    renderFiles(test.inputFiles, t, t('Входные файлы', 'Input files')) + '</div><details data-academy-expected><summary>' +
+    t('Ожидаемый вывод', 'Expected output') + '</summary>' + codeBlock(test.output, t('Пустой вывод', 'No output')) +
     renderFiles(test.outputFiles, t, t('Изменённые и созданные файлы', 'Changed and created files')) +
     (test.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(test.stderr) + '</div>' : '') +
-    (test.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(test.exitCode) + '</p>' : '') + '</details>').join('');
+    (test.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(test.exitCode) + '</p>' : '') + '</details></div></details>').join('');
   const reference = work.referenceSolution;
   const starter = work.files.map(file => practiceFile(file.path, file.content ?? file.source, t)).join('');
   const referenceFiles = Object.entries(reference?.files ?? {}).map(([name, source]) =>
     practiceFile(name, typeof source === 'string' ? source : source.content ?? source.source, t)).join('');
+  const rule = lesson.sections.find(section => section.id === 'idea') ?? lesson.sections[0];
+  const help = academyPracticeHelpMarkup({
+    locale, title:rule.title, rule:lesson.teaching?.syntax?.explanation ?? rule.paragraphs?.[0] ?? lesson.goal,
+    explanationUrl:routeLink(locale, lesson.id) + '&at=' + encodeURIComponent(work.returnAnchor),
+    start:lesson.teaching?.practice?.strategy, hint:work.hint, diagnosis:lesson.teaching?.practice?.diagnosis,
+  });
   return '<section class="c-panel c-practice-task" id="academy-lab" tabindex="-1" data-c-work-task><h2>' + escape(work.title) + '</h2><p>' +
-    escape(work.task) + '</p>' + (lesson.teaching?.practice?.strategy ? '<h3>' + t('С чего начать', 'How to start') +
-      '</h3><p>' + escape(lesson.teaching.practice.strategy) + '</p>' : '') + '<h3>' + t('Паспорт задачи', 'Task contract') + '</h3><dl class="c-task-contract">' +
+    escape(work.task) + '</p><h3>' + t('Паспорт задачи', 'Task contract') + '</h3><dl class="c-task-contract">' +
     '<dt>' + t('Среда', 'Environment') + '</dt><dd>' + escape(work.environment) + '</dd><dt>' +
-    t('Точка входа', 'Entry point') + '</dt><dd><code>' + escape(work.metadata.entryFile) + '</code></dd></dl>' +
+    t('Точка входа', 'Entry point') + '</dt><dd><code>' + escape(work.metadata.entryFile) + '</code></dd></dl>' + help +
     '<details class="c-practice-disclosure" data-c-starter-preview><summary>' + t('Посмотреть заготовку', 'View starter') +
     '</summary>' + starter + (work.stdin ? '<h4>' + t('Начальный ввод', 'Starter input') + '</h4>' +
       codeBlock(work.stdin) : '') + '</details>' +
     (steps ? '<h3>' + t('Порядок работы', 'Work steps') + '</h3><ol class="c-practice-steps">' + steps + '</ol>' : '') +
-    (work.hint ? '<details class="c-practice-disclosure"><summary>' + t('Подсказка', 'Hint') +
-      '</summary><p>' + escape(work.hint) + '</p></details>' : '') + '</section>' +
+    '</section>' +
     (readonly
       ? '<section class="c-panel"><h2>Code Studio</h2><p>' + t('Автономная версия урока доступна для чтения. Для запуска и сохранения откройте рабочую страницу Nexus.', 'The offline lesson is available for reading. Open the Nexus workspace to run and save your program.') + '</p></section>'
       : '<section class="c-panel c-workspace-section"><h2>' + t('Рабочее окно урока', 'Lesson workspace') +
@@ -248,7 +256,8 @@ function practice(lesson, t, readonly) {
         t('Задание и Code Studio', 'Task and Code Studio') +
         '</button><div class="c-workspace" data-c-workspace aria-label="Code Studio"></div></section>') +
     '<section class="c-panel" data-c-work-cases><h2>' + t('Как проверить свою работу', 'How to check your work') + '</h2>' +
-    (lesson.teaching?.practice?.diagnosis ? '<p>' + escape(lesson.teaching.practice.diagnosis) + '</p>' : '') +
+    '<p>' + t('Выберите случай и запишите свой прогноз. После запуска раскройте ожидаемый вывод и сравните его со своим.',
+      'Choose a case and write down your prediction. After running, reveal the expected output and compare it with yours.') + '</p>' +
     cases + list(work.criteria) + '</section>' +
     academyAssignmentsMarkup(work.exercises, locale) +
     (reference ? '<details class="c-panel c-practice-disclosure" data-c-reference-solution><summary>' +
@@ -284,16 +293,16 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
     '"><ol><li><a href="#view=academy">' + t('Академия', 'Academy') + '</a></li><li><a href="' +
     escape(overviewHref) + '">C17</a></li>' + (module ? '<li><a href="' +
       escape(moduleHref) + '">' + escape(moduleTitle) + '</a></li>' : '') + '</ol></nav>' +
-    '<header class="c-lesson-header"><div class="c-context-row"><span class="c-topic-marker">' +
+    '<header class="c-lesson-header academy-lesson-context"><div class="c-context-row"><span class="c-topic-marker">' +
     t('Тема ', 'Lesson ') + (index + 1) + '/' + data.topics.length + '</span><h1 tabindex="-1" data-c-heading>' +
     escape(lesson.title) + '</h1>' + academyLessonMenuToggle(locale) + '</div>' +
     academyLessonMenuPanel({locale,programHref:overviewHref,assistantEnabled}) +
-    '<nav class="c-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
-    '<div data-reference-help></div><p data-academy-library-status role="status"></p>' +
-    '<nav class="c-neighbors" aria-label="' + t('Уроки', 'Lessons') + '">' +
+    '<nav class="c-stages academy-lesson-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
+    '<nav class="c-neighbors academy-lesson-neighbours" aria-label="' + t('Уроки', 'Lessons') + '">' +
     (previous ? button(routeLink(locale, previous.id), t('← Предыдущий урок: ', '← Previous lesson: ') + titleOf(previous)) : '') +
     (next ? button(routeLink(locale, next.id), nextLabel) : '') + '</nav>' +
-    '<div class="c-main">' + contents + '<footer class="c-panel c-actions">' +
+    '<div data-reference-help></div><p data-academy-library-status role="status"></p>' +
+    '<div class="c-main">' + contents + '<footer class="c-panel c-actions academy-lesson-continuation">' +
     (stage === 'practice' && canSave ? '<button class="btn" type="button" data-c-complete aria-pressed="' + progress.has(lesson.id) +
       '">' + (progress.has(lesson.id) ? t('Отмечен изученным', 'Marked as studied') : t('Отметить изученным', 'Mark as studied')) +
     '</button>' : '') + action + '</footer></div>';
@@ -470,8 +479,10 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
   const heading = host.querySelector('[data-c-heading], [data-academy-course-navigation="topics"] [data-academy-nav-heading]');
   heading?.focus({preventScroll:true});
   const anchor = params.get('at');
-  if (stage==='practice'&&['academy-lab','academy-assignments'].includes(anchor)) {
-    const target = host.querySelector('#'+anchor);
+  const target = stage === 'explanation' && anchor
+    ? [...host.querySelectorAll('[data-c-section]')].find(section => section.dataset.cSection === anchor)
+    : stage === 'practice' && ['academy-lab','academy-assignments'].includes(anchor) ? host.querySelector('#'+anchor) : null;
+  if (target) {
     requestAnimationFrame(()=>{
       if (events.signal.aborted||!isCurrent()) return;
       target?.focus({preventScroll:true});

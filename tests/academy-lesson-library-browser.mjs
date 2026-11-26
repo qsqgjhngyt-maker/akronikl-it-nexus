@@ -67,6 +67,25 @@ try {
       const root = course === 'c' ? page.locator('[data-c-course]') : page.locator('[data-r3-topic="'+lesson+'"][data-r3-ready="true"]');
       const menu = root.locator('[data-academy-menu-toggle]');
       await menu.waitFor();
+      const geometry = await root.locator('.academy-lesson-stages a').evaluateAll(nodes =>
+        nodes.map(node=>[node.offsetWidth,node.offsetHeight]));
+      assert.equal(geometry.length,3);
+      for(const [w,h] of geometry){
+        assert.ok(Math.abs(w-geometry[0][0])<=1,'Stages divide the lesson bar into equal columns');
+        assert.equal(h,44,'Shared lesson tab height');
+      }
+      const glossary = root.locator('.academy-reference-actions [data-reference-open]');
+      const syntax = root.locator('.academy-reference-actions [data-reference-editor-help]');
+      await glossary.waitFor();
+      assert.deepEqual(await glossary.evaluate(node=>[node.offsetWidth,node.offsetHeight]),[width<=760?44:184,44]);
+      assert.deepEqual(await syntax.evaluate(node=>[node.offsetWidth,node.offsetHeight]),[width<=760?44:116,44]);
+      const neighbours = root.locator('.academy-lesson-neighbours');
+      const next = neighbours.locator('a').last();
+      await next.waitFor();
+      assert.ok(await next.evaluate((link,mobile)=>{
+        const bounds=link.getBoundingClientRect(), width=link.parentElement.getBoundingClientRect().width;
+        return bounds.height>=44 && (mobile?Math.abs(bounds.width-width)<=1:bounds.width<width);
+      },width<=760),'Next lesson matches the common desktop or mobile layout');
       assert.equal(catalogRequests.length,0,'Ordinary opening must not request the library catalog');
       assert.equal(libraryModules.length,0,'Ordinary opening must not load the library dialog');
       const initialExternalRequests = externalRequests;

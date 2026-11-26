@@ -5,12 +5,7 @@ export const referenceCourseStyles=`
  .reference-badge{display:inline-block;padding:3px 8px;border:1px solid #9cb8d2;border-radius:6px;color:#e4eef9;background:#1b3046;font-size:.8rem;line-height:1.5}
  .r3-lesson .reference-help,.r3-lesson .reference-continuation{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
  .r3-lesson .reference-continuation{padding:16px 0;border-top:1px solid #607d98;background:#0b1929}
- .r3-lesson .reference-lesson-neighbours{display:flex;gap:8px;align-items:stretch;margin:8px 0;flex-wrap:wrap;font-size:.85rem;line-height:1.5}
- .r3-lesson .reference-lesson-neighbours a,.r3-lesson .reference-lesson-neighbours button{display:flex;align-items:center;gap:6px;padding:9px 12px;min-height:44px;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;text-align:left;max-width:100%;flex:1 1 200px}
- .r3-lesson .reference-lesson-neighbours a:first-child{flex:0 1 auto}
- .r3-lesson .reference-continuation .primary{background:#a5e7de;color:#102b35;font-weight:700;min-height:44px;white-space:normal}
  .r3-lesson .reference-continuation p{font-size:.85rem;line-height:1.5;margin:0}
- .r3-lesson .reference-continuation>a{padding:10px;border:1px solid #6888a6;border-radius:8px;overflow-wrap:anywhere}
  .term-drawer.reference-dialog .reference-syntax{padding:0;margin:10px 0;border:0;font-size:13px}
  .term-drawer.reference-dialog .reference-syntax h4{font-size:13px;margin:12px 0 6px}
  .term-drawer.reference-dialog .reference-syntax pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;padding:12px;font-size:12px}
@@ -43,7 +38,7 @@ export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
  const scope=root.querySelector('.r3-lesson'),en=lesson.locale==='en',say=(r,e)=>en?e:r,abort=new AbortController();let disposed=false,observer=null,currentSection=null;
  const active=()=>!disposed&&isCurrent(),referenceMode=new URLSearchParams(location.hash.slice(1)).get('learningRoute')==='reference-start';
  const plan=lessonNavigationPlan(lesson.id,catalog,{referenceMode,locale:lesson.locale}),{route,index:idx}=plan;
- const neighbours=document.createElement('nav');neighbours.className='reference-lesson-neighbours';neighbours.setAttribute('aria-label',say('Между уроками','Between lessons'));
+ const neighbours=document.createElement('nav');neighbours.className='reference-lesson-neighbours academy-lesson-neighbours';neighbours.setAttribute('aria-label',say('Между уроками','Between lessons'));
  function lessonLink(target,previous=false){const a=document.createElement('a');a.className='btn';a.href=url(target.id,'explanation');a.dataset[previous?'referencePreviousLesson':'referenceNextLesson']='';a.textContent=previous?say('← Предыдущий урок: ','← Previous lesson: ')+target.title:say('Следующий урок: ','Next lesson: ')+target.title+' →';return a;}
  function routeEndLink(){const a=document.createElement('a');a.className='btn';a.dataset.referenceRouteEnd='';a.href='#course='+lesson.courseId;a.textContent=say('Конец маршрута · К программе курса →','End of route · Back to course outline →');return a;}
  if(plan.previous)neighbours.append(lessonLink(plan.previous,true));
@@ -66,7 +61,7 @@ export function mountReferenceNavigation(root,{lesson,catalog,url,isCurrent}){
   const panel=root.querySelector('[data-r3-panel="'+stage+'"]');
   // Прежний вывод renderer содержал ещё одну кнопку того же продолжения.
   for(const child of [...panel.children]){if(child.matches('a[href]')&&['selfcheck','practice'].includes(new URLSearchParams(child.hash.slice(1)).get('stage'))||child.matches('.next-card'))child.remove();}
-  const footer=document.createElement('nav');footer.className='reference-continuation';footer.dataset.referenceContinuation=stage;footer.setAttribute('aria-label',say('Продолжение обучения','Continue learning'));let action;
+  const footer=document.createElement('nav');footer.className='reference-continuation academy-lesson-continuation';footer.dataset.referenceContinuation=stage;footer.setAttribute('aria-label',say('Продолжение обучения','Continue learning'));let action;
   if(stage!=='practice'){action=document.createElement('a');action.href=url(lesson.id,stage==='explanation'?'selfcheck':'practice');action.textContent=stage==='explanation'?say('Дальше: самопроверка →','Next: self-check →'):say('Перейти к практике →','Go to practice →');}
   else if(plan.next)action=lessonLink(plan.next);
   else if(route)action=routeEndLink();

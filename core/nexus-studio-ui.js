@@ -42,16 +42,38 @@ export function bindNexusStudioUi(locale='ru'){
   const library=document.querySelector('[data-studio-library]');
   if(library){
     const input=library.querySelector('input'),clear=library.querySelector('[data-studio-search-clear]');
-    const cards=[...library.querySelectorAll('[data-studio-project]')];
-    input.disabled=cards.length===0;
+    const filters=[...library.querySelectorAll('[data-studio-course-filter]')];
     const normalize=value=>String(value).normalize('NFKC').toLocaleLowerCase(locale).trim();
-    const texts=new Map(cards.map(card=>[card,normalize(card.querySelector('h3').textContent+' '+card.querySelector('p').textContent+' '+card.querySelector('.ps-language').textContent)]));
+    const groups=[...library.querySelectorAll('[data-studio-project-group]')].map(group=>{
+      const title=group.querySelector('h3').textContent;
+      const cards=[...group.querySelectorAll('[data-studio-project]')].map(card=>({card,text:normalize(
+        [card.querySelector('h4').textContent,card.querySelector('p').textContent,card.querySelector('.ps-language').textContent,title].join(' '))}));
+      return {group,cards};
+    });
+    const total=groups.reduce((count,{cards})=>count+cards.length,0);
+    input.disabled=total===0;
+    let selected='all';
     const apply=()=>{
-      const query=normalize(input.value);cards.forEach(card=>card.hidden=!!query&&!texts.get(card).includes(query));
-      const count=cards.filter(card=>!card.hidden).length;
-      library.querySelector('[data-studio-search-count]').textContent=en?`Showing ${count} of ${cards.length}`:`Показано ${count} из ${cards.length}`;
+      const query=normalize(input.value);
+      let count=0;
+      for(const {group,cards} of groups){
+        const matchesCourse=selected==='all'||selected===group.dataset.studioProjectGroup;
+        let visible=0;
+        for(const {card,text} of cards){
+          card.hidden=!matchesCourse||!text.includes(query);
+          if(!card.hidden)visible++;
+        }
+        group.hidden=visible===0;
+        count+=visible;
+      }
+      library.querySelector('[data-studio-search-count]').textContent=en?`Showing ${count} of ${total}`:`Показано ${count} из ${total}`;
       library.querySelector('[data-studio-search-empty]').hidden=!query||count!==0;clear.hidden=!input.value;
     };
+    for(const filter of filters)filter.addEventListener('click',()=>{
+      selected=filter.dataset.studioCourseFilter;
+      for(const button of filters)button.setAttribute('aria-pressed',String(button===filter));
+      apply();
+    },options);
     input.addEventListener('input',apply,options);clear.addEventListener('click',()=>{input.value='';apply();input.focus()},options);apply();
   }
 }
