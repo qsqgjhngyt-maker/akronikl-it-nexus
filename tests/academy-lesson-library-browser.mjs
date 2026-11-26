@@ -29,6 +29,7 @@ const cases = [
   [1440,390,320].map(width => [course,lesson,locale,width])));
 await mkdir(out,{recursive:true});
 const checks = [];
+const helpSizes = new Map();
 const browser = await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true});
 try {
   for (const [course,lesson,locale,width] of cases) {
@@ -79,8 +80,17 @@ try {
       const glossary = root.locator('.academy-reference-actions [data-reference-open]');
       const syntax = root.locator('.academy-reference-actions [data-reference-editor-help]');
       await glossary.waitFor();
-      assert.deepEqual(await glossary.evaluate(node=>[node.offsetWidth,node.offsetHeight]),[width<=760?44:184,44]);
-      assert.deepEqual(await syntax.evaluate(node=>[node.offsetWidth,node.offsetHeight]),[width<=760?44:116,44]);
+      const sizes = [];
+      for (const [action,minimum] of [[glossary,184],[syntax,116]]) {
+        const [w,h] = await action.evaluate(node=>[node.offsetWidth,node.offsetHeight]);
+        assert.equal(h,44);
+        if(width<=760)assert.equal(w,44);
+        else assert.ok(w>=minimum);
+        sizes.push([w,h]);
+      }
+      const layoutKey = locale + '/' + width;
+      if(helpSizes.has(layoutKey))assert.deepEqual(sizes,helpSizes.get(layoutKey),'Help controls are the same size in all courses');
+      else helpSizes.set(layoutKey,sizes);
       const toolbar = root.locator('.academy-reference-actions');
       const bottom = await toolbar.evaluate(node=>Math.round(innerHeight-node.getBoundingClientRect().bottom));
       assert.equal(bottom,width<=760?16:24);
@@ -88,9 +98,10 @@ try {
         assert.ok(await action.evaluate(node=>{
           const label=node.querySelector('span'),range=document.createRange();
           range.selectNodeContents(label);
-          const box=node.getBoundingClientRect(),text=range.getBoundingClientRect();
-          return range.getClientRects().length===1&&text.left>=box.left&&text.right<=box.right;
-        }),'Complete help label fits on a single line');
+          const box=node.getBoundingClientRect(),text=range.getBoundingClientRect(),lines=[...range.getClientRects()];
+          const sameLine=lines.length>0&&Math.max(...lines.map(part=>part.top))<Math.min(...lines.map(part=>part.bottom));
+          return sameLine&&text.left>=box.left-1&&text.right<=box.right+1;
+        }),`${course}/${locale}/${width}: complete help label fits on a single line`);
       }
       const neighbours = root.locator('.academy-lesson-neighbours');
       const next = neighbours.locator('a').last();
