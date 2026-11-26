@@ -35,7 +35,8 @@
       "paragraphs": [
         "Every trip needs its own total. If it survives between calls, the next calculation accidentally inherits an earlier result.",
         "Scope concerns the source, while lifetime concerns execution. Local static retains a value across calls without widening name visibility.",
-        "On a function declaration, static gives the name internal linkage: it can name this function within the source file. Local static on minutes gives the object a lifetime that spans the entire program."
+        "On a function declaration, static gives the name internal linkage: it can name this function within the source file. Local static on minutes gives the object a lifetime that spans the entire program.",
+        "Scope tells you where you can name a variable. Lifetime tells you when its value is stored. Separate trips test whether the accumulator carries over between calls."
       ]
     },
     {
@@ -272,5 +273,28 @@
     "prerequisites": [
       "c.parameter-value-return"
     ]
+  },
+  "teaching": {
+    "scene": "A route needs a temporary adjustment on its first segment. The overall total survives the segment, while the temporary name can be declared again. Check which variable is visible at each point.",
+    "predict": {
+      "prompt": "total starts at 8. The inner block declares step = 2, and code after it declares step = 7. Which two values are available to printf?",
+      "answer": "The inner step adds 2 to total and goes out of scope at the closing brace. The later step is 7. The printed pair is 10 7."
+    },
+    "apply": {
+      "prompt": "If total starts at 1, the inner step is 4 and the later step is 9, what should be printed after the block?",
+      "answer": "The inner adjustment leaves total equal to 5. The later step is in scope at the print and equals 9. Expect 5 9."
+    },
+    "practice": {
+      "strategy": "Decide which data belongs to one call of trip_minutes. Trace the starting value of each sum and try two identical routes in the same run.",
+      "diagnosis": "If two routes of two stops give 6 12, the second calculation likely inherited the first total. Inspect the lifetime of the variable that holds the minutes."
+    },
+    "syntax": {
+      "termId": "scope",
+      "form": "int total = 8;\n{\n    int step = 2;\n    total += step;\n}\nint step = 7;",
+      "example": "int total = 1;\n{\n    int step = 4;\n    total += step;\n}\nint step = 9;",
+      "explanation": "The inner declaration is visible from its declaration through the end of the block. An outer variable can keep a value assigned by that block.",
+      "mistake": "A local `static` name retains its block scope, and its stored value persists between calls. Independent calculations depend on both properties."
+    },
+    "focus": "int main(void)\n{\n    int total = 8;\n    {\n        int step = 2;\n        total += step;\n    }\n    int step = 7;\n    printf(\"%d %d\\n\", total, step);\n    return 0;\n}"
   }
 }

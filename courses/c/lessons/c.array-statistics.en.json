@@ -41,7 +41,8 @@
       "paragraphs": [
         "Workshop sensors report changes in temperature. The person on duty needs the lowest reading, the position of the first reading equal to a target and the number of readings equal to that target. Equal readings can come from different positions.",
         "Give each answer its own variable before scanning. Use the first reading to initialise the minimum after checking the length. Start the count at 0. Record the index at the first match and keep it for the rest of the scan.",
-        "At length zero, the program prints empty before accessing the first element."
+        "At length zero, the program prints empty before accessing the first element.",
+        "Take the initial minimum from the first element after checking length, so it belongs to the data. The match count starts at zero because the loop has yet to process an element."
       ]
     },
     {
@@ -346,5 +347,28 @@
     "prerequisites": [
       "c.array-length-contract"
     ]
+  },
+  "teaching": {
+    "scene": "A sensor repeats a reading several times during a shift. Find the lowest value and count target hits. An extended report will also need the first matching position.",
+    "predict": {
+      "prompt": "The sample readings are 6, −1 and 6, with target 6. How do the minimum and match count change at each of the three positions?",
+      "answer": "The minimum starts at 6. At position 0 the match count rises to 1. At position 1 the minimum drops to −1. Position 2 raises the count to 2. The line is -1 2."
+    },
+    "apply": {
+      "prompt": "Take readings 4, 2, 4, 1 with target 4. What should the extended report give for the minimum, first index and match count?",
+      "answer": "The lowest value is 1, the first hit is at position 0 and there are two hits. The extended report should give 1 0 2."
+    },
+    "practice": {
+      "strategy": "Handle the empty case first. For a nonempty set, use separate variables for minimum, first position and match count. Check a repeated target and an all-positive set without the target.",
+      "diagnosis": "For `-3, 4, -3, 7` with target −3, an index of 2 means a later hit replaced the first. A minimum of 0 in an all-positive set points to the initial value."
+    },
+    "syntax": {
+      "termId": "first-hit",
+      "form": "int first = -1;\n/* At each valid index i: */\nif (readings[i] == target && first == -1) {\n    first = i;\n}",
+      "example": "int first = -1;\nconst int readings[] = {6, -1, 6};\n/* The first hit for 6 is at index 0. */",
+      "explanation": "−1 marks that no match has occurred yet. After storing the first index, continue counting repeats while preserving that index.",
+      "mistake": "Index 0 represents a valid hit. Use a distinct value such as −1 to represent absence."
+    },
+    "focus": "    int minimum = readings[0];\n    int count = 0;\n    for (int i = 0; i < length; ++i) {\n        if (readings[i] < minimum) {\n            minimum = readings[i];\n        }\n        if (readings[i] == target) {\n            ++count;\n        }\n    }\n    printf(\"%d %d\\n\", minimum, count);\n    return 0;\n}"
   }
 }

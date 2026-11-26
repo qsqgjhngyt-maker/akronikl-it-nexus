@@ -41,7 +41,8 @@
       "paragraphs": [
         "Before calculating a floor area, a carpenter specifies the measurements needed. A prototype states a similar contract: name, return type and parameters.",
         "A prototype ends at its semicolon. A definition contains a body. A prototype makes a later definition callable from main.",
-        "In C17, the prototype int f(void) specifies a function with no parameters. The declaration int f() leaves the parameters unspecified."
+        "In C17, the prototype int f(void) specifies a function with no parameters. The declaration int f() leaves the parameters unspecified.",
+        "A prototype lets the compiler check the shape of a call. A separate example checks the calculation itself: a valid call with two integers may still return the wrong area."
       ]
     },
     {
@@ -278,5 +279,28 @@
     "prerequisites": [
       "c.guard-control-flow"
     ]
+  },
+  "teaching": {
+    "scene": "A carpenter needs to verify the area calculation independently of printing. Trace both dimensions into the parameters and follow the result back to the call.",
+    "predict": {
+      "prompt": "main calls rect_area(3, 4). Which values do the two parameters receive, what comes back, and what reaches stdout?",
+      "answer": "width receives 3 and height receives 4. The body multiplies them and returns 12. main stores the result in floor, and a separate printf writes 12."
+    },
+    "apply": {
+      "prompt": "For a 2 by 5 panel, which pair would you pass and which value should the same contract return?",
+      "answer": "Pass 2 and 5 in width and height order. The call should return 10. Compare that value directly with the calculated area."
+    },
+    "practice": {
+      "strategy": "Keep the declaration and calls consistent. State how rows and cells per row combine, then check ordinary and zero dimensions.",
+      "diagnosis": "If two rows of six give 8, both the call and output happened. Compare the calculation with the number of cells in two equal rows."
+    },
+    "syntax": {
+      "termId": "declaration",
+      "form": "static int area(int width, int height);\n\nstatic int area(int width, int height)\n{\n    return width * height;\n}",
+      "example": "static int area(int width, int height);\n/* After the declaration, inside main: */\nint result = area(2, 5);",
+      "explanation": "The prototype gives the result and parameter types before the call. The definition has the corresponding signature, a body and return.",
+      "mistake": "The types and number of parameters must agree in the prototype and definition. Check the signatures first when they differ."
+    },
+    "focus": "static int rect_area(int width, int height);\n\nint main(void)\n{\n    int floor = rect_area(3, 4);\n    printf(\"%d\\n\", floor);\n    return 0;\n}\n\nstatic int rect_area(int width, int height)\n{\n    return width * height;\n}"
   }
 }

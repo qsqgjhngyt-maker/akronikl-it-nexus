@@ -44,7 +44,8 @@
       "paragraphs": [
         "When count and width are positive, the maximum valid count is SIZE_MAX / width. Compare with that bound before multiplying.",
         "With width = 0, that bound calculation cannot divide by width. The first check therefore ensures a positive divisor. A zero count is outside this task's contract as well.",
-        "An out-of-range product computed in an unsigned type wraps and can become small. Check the size before multiplying. This lesson does not allocate memory. The caller passes the address of a live bytes variable, and the function writes the result only on success."
+        "An out-of-range product computed in an unsigned type wraps and can become small. Check the size before multiplying. This lesson does not allocate memory. The caller passes the address of a live bytes variable, and the function writes the result only on success.",
+        "Rejection reasons imply different corrections. Zero width violates the input contract, while overflow means a positive product does not fit the size type."
       ]
     },
     {
@@ -276,5 +277,28 @@
     "prerequisites": [
       "c.checked-allocation"
     ]
+  },
+  "teaching": {
+    "scene": "A service must compute a request size before asking for memory. Check an ordinary request, an unrepresentable product and a zero width without large allocations.",
+    "predict": {
+      "prompt": "The function receives (4, 3), (SIZE_MAX, 2) and (3, 0). Which check handles each pair, and what prints?",
+      "answer": "(4, 3) fits and prints 12. SIZE_MAX is above SIZE_MAX / 2, leading to overflow without multiplication. A zero width gives invalid before division."
+    },
+    "apply": {
+      "prompt": "Compare requests 7 6, 7 0 and the special input -1 2. Which computes a byte size and which ones produce different rejection reasons?",
+      "answer": "7 6 gives bytes 42. 7 0 gives invalid before division. -1 2 becomes (SIZE_MAX, 2), giving overflow before multiplication."
+    },
+    "practice": {
+      "strategy": "Check zero sizes before dividing. Compare count with the largest representable quotient. Store the product only on the valid path and distinguish the two errors.",
+      "diagnosis": "The starter gives bytes 3 for 3 4 and invalid for -1 2. It stores count in the first case and fails to report the overflow status in the second."
+    },
+    "syntax": {
+      "termId": "size-max",
+      "form": "if (width != 0 && count <= SIZE_MAX / width) {\n    bytes = count * width;\n}",
+      "example": "size_t count = 4;\nsize_t width = 3;\nif (width != 0 && count <= SIZE_MAX / width) {\n    printf(\"%zu\\n\", count * width);\n}",
+      "explanation": "SIZE_MAX from <stdint.h> bounds size_t. For a positive width, comparing count with SIZE_MAX / width establishes that multiplication fits before it is performed.",
+      "mistake": "Checking an already multiplied size may see a wrapped value. Use the quotient test before multiplying and rule out division by zero."
+    },
+    "focus": "    if (count == 0 || width == 0) {\n        return INVALID_SIZE;\n    }\n    if (count > SIZE_MAX / width) {\n        return SIZE_OVERFLOW;\n    }\n    *bytes = count * width;"
   }
 }

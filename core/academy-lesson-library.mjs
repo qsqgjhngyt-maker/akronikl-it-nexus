@@ -91,7 +91,14 @@ export function openAcademyLibrary(root, {kind, courseId, topicId, title, locale
   void loadCatalog(courseId).then(data => {
     if (!dialog.open) return;
     const rows = data.topics?.[topicId]?.[kind] ?? [];
-    const markup = rows.map(row => {
+    const ordered = kind === 'reading' ? [...rows].sort((a,b) => {
+      const priority = row => {
+        const source = data.sources?.[row.id];
+        return (source?.access === 'free' ? 0 : 2) + (source?.language === locale ? 0 : 1);
+      };
+      return priority(a) - priority(b);
+    }) : rows;
+    const markup = ordered.map(row => {
       const source = data.sources?.[row.id];
       return source?.kind === kind ? resourceMarkup(source, row, locale) : '';
     }).join('');

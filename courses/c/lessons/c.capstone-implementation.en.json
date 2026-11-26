@@ -42,7 +42,8 @@
       "id": "example",
       "title": "Trace a command from stdin to the record",
       "paragraphs": [
-        "First look up the last item, which has zero stock. Then look up an unknown ID and update the actual record. Point to the step where main receives a success result from inventory_set."
+        "First look up the last item, which has zero stock. Then look up an unknown ID and update the actual record. Point to the step where main receives a success result from inventory_set.",
+        "inventory_find receives read-only access through a pointer to const Inventory. inventory_set receives a mutable Inventory because it updates the selected record."
       ],
       "steps": [
         "inventory_find returns a pointer to record 20. The interface prints 20 0.",
@@ -327,5 +328,28 @@
       "c.define-inventory-contract",
       "c.module-layout"
     ]
+  },
+  "teaching": {
+    "scene": "Separate command parsing from inventory storage. Identify where the quantity changes and use a second lookup to prove that it changed.",
+    "predict": {
+      "prompt": "In the loaded example, item 20 has quantity 0. Predict the lines from find 20, find 99, set 20 7, and find 20 again. Which operations change the state?",
+      "answer": "The lines are 20 0, missing, ok, and 20 7. The first and last searches read the same item in different states. Only a successful set changes its quantity. No report file appears without report."
+    },
+    "apply": {
+      "prompt": "In a fresh run of the same example, send set 10 0, find 10, and find 20. How will you tell that the update touched only one record?",
+      "answer": "The lines are ok, 10 0, and 20 0. Initially item 10 had 5 and item 20 already had 0. Track the IDs as well as quantities: matching quantities do not make two items one record."
+    },
+    "practice": {
+      "strategy": "State what the function should return for a found or missing ID. Verify that the scan reaches the last item and that a missing ID changes nothing. Build main.c with inventory.c.",
+      "diagnosis": "If the first item updates but 72 still has quantity 0, inspect whether the scan returns after the first nonmatching item. If linking cannot find inventory_set, check the build inputs."
+    },
+    "syntax": {
+      "termId": "interface",
+      "form": "int inventory_set(Inventory *stock, int id, int quantity);",
+      "example": "puts(inventory_set(stock, id, quantity) ? \"ok\" : \"missing\");",
+      "explanation": "The header gives the caller argument and return types. The caller can print ok or missing from the return status. The actual field update belongs in inventory.c.",
+      "mistake": "An ok line alone does not prove the value was stored. Follow it with a lookup or compare the report."
+    },
+    "focus": "        const char *p = line + 4;\n        int quantity;\n        if (read_number(&p, 1, &id) && *p++ == ' ' &&\n            read_number(&p, 0, &quantity) && *p == '\\0') {\n            puts(inventory_set(stock, id, quantity) ? \"ok\" : \"missing\");\n            return 0;\n        }"
   }
 }

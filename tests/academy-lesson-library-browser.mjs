@@ -20,11 +20,12 @@ const dto = new Map([
   ['/api/akronikl/cloud/preferences', {revision:0, value:null}],
 ]);
 const cases = [
-  ['cpp','cpp.programming-process','ru',1440],
-  ['c','c.first-program','en',320],
-  ['onec','onec.p2.topic-1','ru',390],
-  ['1c-enterprise','1c-enterprise.a2.topic-1','en',768],
-];
+  ['cpp','cpp.programming-process'],
+  ['c','c.first-program'],
+  ['onec','onec.p2.topic-1'],
+  ['1c-enterprise','1c-enterprise.a2.topic-1'],
+].flatMap(([course,lesson]) => ['ru','en'].flatMap(locale =>
+  [1440,390,320].map(width => [course,lesson,locale,width])));
 await mkdir(out,{recursive:true});
 const checks = [];
 const browser = await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true});
@@ -83,7 +84,7 @@ try {
         assert.ok((await links.evaluateAll(nodes => nodes.every(node => node.protocol==='https:' && node.target==='_blank'))));
         assert.equal(await dialog.locator('iframe,video,audio').count(),0);
         assert.equal(await dialog.evaluate(node => node.getBoundingClientRect().right <= innerWidth + 1),true);
-        if (kind==='video') await page.screenshot({path:path.join(out,course+'-'+width+'-video.png')});
+        if (kind==='video' && width===390) await page.screenshot({path:path.join(out,course+'-'+locale+'-'+width+'-video.png')});
         await page.keyboard.press('Escape');
         await root.locator('dialog.academy-library-dialog').waitFor({state:'detached'});
         assert.equal(await menu.evaluate(node => node === node.getRootNode().activeElement),true);
@@ -92,6 +93,21 @@ try {
       assert.equal(libraryModules.length,1);
       assert.ok(catalogRequests[0].endsWith('/'+course+'.json'));
       assert.equal(externalRequests,initialExternalRequests,'Showing catalog entries must not load external resources');
+      const back = root.locator('[data-academy-back="course"]');
+      const references = root.locator('.academy-reference-actions');
+      await back.waitFor();
+      for (const tool of ['data-reference-open','data-reference-editor-help']) {
+        const trigger = references.locator('['+tool+']');
+        await trigger.click();
+        const drawer = root.locator('.reference-dialog[open]');
+        await drawer.locator('[data-reference-card]').first().waitFor();
+        if (tool==='data-reference-editor-help') {
+          await drawer.locator('[data-reference-details][open] pre').first().waitFor();
+          if (width!==320) await page.screenshot({path:path.join(out,course+'-'+locale+'-'+width+'-syntax.png')});
+        }
+        await page.keyboard.press('Escape');
+        await drawer.waitFor({state:'hidden'});
+      }
       await menu.click();
       await root.locator('[data-academy-menu-item="program"]').click();
       await page.locator('[data-academy-course-navigation="modules"] [data-academy-module]').first().waitFor();
@@ -99,11 +115,38 @@ try {
       assert.equal(programme.get('course'),course);
       assert.equal(programme.get('locale'),locale);
       assert.equal(programme.has('lesson'),false);
+      const hero = page.locator('[data-academy-course-hero]');
+      assert.equal(await hero.getAttribute('data-course-id'),course);
+      await hero.locator('progress').waitFor();
+      await page.locator('.academy-course-tabs [aria-current="page"]').waitFor();
+      const tiles = page.locator('[data-academy-course-navigation="modules"] .academy-nav-grid');
+      assert.equal(await tiles.evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length),width>760?2:1);
+      const direct = tiles.locator('[data-academy-module-topic] a').first();
+      await direct.waitFor();
+      if (width!==320) {
+        await page.screenshot({path:path.join(out,course+'-'+locale+'-'+width+'-course.png')});
+        await direct.scrollIntoViewIfNeeded();
+        await page.screenshot({path:path.join(out,course+'-'+locale+'-'+width+'-modules.png')});
+      }
+      const moduleLink = tiles.locator('[data-academy-open-module]').first();
+      await moduleLink.click();
+      const topics = page.locator('[data-academy-course-navigation="topics"]');
+      await topics.locator('[data-academy-topic] a').first().waitFor();
+      await topics.locator('[data-academy-back="course"]').click();
+      await tiles.waitFor();
+      const directId = new URLSearchParams((await direct.getAttribute('href')).slice(1)).get('lesson');
+      await direct.click();
+      const lessonRoot = course==='c'?page.locator('[data-c-course][data-c-lesson]'):
+        page.locator('[data-r3-topic="'+directId+'"][data-r3-ready="true"]');
+      await lessonRoot.locator('[data-academy-back="course"]').click();
+      await hero.waitFor();
+      await page.locator('[data-academy-back="academy"]').click();
+      await page.waitForURL(url=>new URLSearchParams(url.hash.slice(1)).get('view')==='academy');
       assert.deepEqual(errors,[]);
-      checks.push({course,lesson,locale,width,catalogRequests:catalogRequests.length,externalRequests,noEmbed:true,programmeTiles:true});
+      checks.push({course,lesson,locale,width,catalogRequests:catalogRequests.length,externalRequests,noEmbed:true,programmeTiles:true,backRoutes:true,sharedHelp:true});
     } catch (error) {
       const page = context.pages()[0];
-      if (page) await page.screenshot({path:path.join(out,course+'-failure.png')}).catch(()=>{});
+      if (page) await page.screenshot({path:path.join(out,course+'-'+locale+'-'+width+'-failure.png')}).catch(()=>{});
       throw error;
     } finally { await context.close(); }
   }

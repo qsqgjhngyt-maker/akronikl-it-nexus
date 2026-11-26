@@ -1,3 +1,4 @@
+import {courseBackMarkup} from './academy-course-header.mjs';
 import {CLARITY_COURSES} from './clarity-course-registry.mjs';
 import {clarityContentRevision} from './cpp-clarity-r3-state.mjs';
 import {codeStudioMarkup,bindCodeStudio} from '../sandbox/code-studio.js';
@@ -296,6 +297,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  </style>
  <link rel="stylesheet" href="${esc(new URL('../styles/academy-lesson-appearance.css',import.meta.url).href)}">
+ ${courseBackMarkup(locale,'#'+new URLSearchParams({course:lesson.courseId,locale,...(lesson.courseId==='cpp'?{path:'topics'}:{})}))}
  <nav class="breadcrumbs" aria-label="${say('Вы здесь','You are here')}">
   <a href="#view=academy">${say('Академия','Academy')}</a> ›
   <a href="#course=${lesson.courseId}">${esc(course.title[locale])}</a> ›

@@ -40,7 +40,8 @@
       "title": "Ask three questions before an access",
       "paragraphs": [
         "A readings table contains 8 and 13. Find where the index is still signed, where it is checked and where the array is alive. Put all three checks before values[index] in the review checklist.",
-        "A negative input is rejected directly. Casting it to size_t first loses its sign. Converting a large positive number to a narrower size_t can also produce a small value. The comparison in uintmax_t retains the magnitude until the check."
+        "A negative input is rejected directly. Casting it to size_t first loses its sign. Converting a large positive number to a narrower size_t can also produce a small value. The comparison in uintmax_t retains the magnitude until the check.",
+        "The copied integer belongs to a separate object. A saved element address would still refer to the original object, whose lifetime ends with its block."
       ]
     },
     {
@@ -313,5 +314,28 @@
       "c.copy-before-lifetime-ends",
       "c.checked-size-product"
     ]
+  },
+  "teaching": {
+    "scene": "A sensor selects a number from a short table. Trace the input into a checked index and keep the selected number available for printing after the inner block ends.",
+    "predict": {
+      "prompt": "The example array contains 8 and 13 and the input is 1. Which checks happen before the array read, and what is saved?",
+      "answer": "1 passes the negative check. After conversion, 1 is less than the length 2, so the code safely reads values[1], copies 13 into saved, and prints 13."
+    },
+    "apply": {
+      "prompt": "Predict the results for 2, -1, and 2147483647 separately. At which step does the program avoid indexing in each case?",
+      "answer": "2 and 2147483647 parse but are not below count, so indexing is rejected. -1 is rejected before unsigned conversion. All three runs print invalid."
+    },
+    "practice": {
+      "strategy": "Separate the index range from object lifetime. Test the first, middle, and final indices, then the length and a negative input. Copy the value for an accepted index while the array is live.",
+      "diagnosis": "If 0 gives 21 but 1 and 2 give invalid, find the extra restriction beyond the length check. If the array is read outside its block, move the value copy back inside."
+    },
+    "syntax": {
+      "termId": "array-bound",
+      "form": "if (index >= count) {\n    /* reject before indexing */\n}",
+      "example": "uintmax_t index = (uintmax_t)input;\nif (index >= count) {\n    return 0;\n}\n*out = values[(size_t)index];",
+      "explanation": "Reject negative inputs before the cast. uintmax_t lets you compare the nonnegative index with count before narrowing to size_t.",
+      "mistake": "Index count is beyond the last element. Even an in-range index does not make a read safe after the array elements cease to exist."
+    },
+    "focus": "    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}"
   }
 }

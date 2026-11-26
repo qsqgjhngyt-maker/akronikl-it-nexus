@@ -44,7 +44,8 @@
       "paragraphs": [
         "A training program receives a sensor's result count. Runtime allocation can reserve the validated number of integers. The pointer does not carry the length, so retain count separately.",
         "First verify a positive element count and that count times element size fits. Separate the steps: request bytes, check the result, initialize the elements, compute the sum, and release the block.",
-        "Here sizeof *values uses the element type. It does not read memory through values. Unlike sizeof, values[0] accesses an object and is valid only after obtaining a block."
+        "Here sizeof *values uses the element type. It does not read memory through values. Unlike sizeof, values[0] accesses an object and is valid only after obtaining a block.",
+        "The exercise distinguishes controlled refusal from actual memory exhaustion. Flag 0 exercises the NULL path reproducibly with a small request."
       ]
     },
     {
@@ -282,5 +283,28 @@
     "prerequisites": [
       "c.record-array-lookup"
     ]
+  },
+  "teaching": {
+    "scene": "A measurement collector knows how many values it needs. Separate the memory request from the writes and use both outcomes to check that refusal prevents access.",
+    "predict": {
+      "prompt": "The example requests three elements. When malloc succeeds, which values are stored and what prints? How far does execution get if malloc returns NULL?",
+      "answer": "On success it stores 1, 2 and 3 and prints sum 6, then frees the block. With NULL it prints allocation-failed, then returns before writing."
+    },
+    "apply": {
+      "prompt": "Consider requests 6 1 and 6 0. What output demonstrates both successful initialization and controlled refusal without accessing the block?",
+      "answer": "On successful allocation, 6 1 produces sum 21 by adding 1 through 6. 6 0 gives allocation-failed. The flag refuses the request before malloc."
+    },
+    "practice": {
+      "strategy": "Check the flag, positive size and product before requesting storage. Check the returned address, initialize all used slots and release the block.",
+      "diagnosis": "For 4 1 the starter prints allocation-failed even though the request passed validation. Find out whether the final branch returns the address from malloc."
+    },
+    "syntax": {
+      "termId": "allocation",
+      "form": "int *values = malloc(count * sizeof *values);\nif (values == NULL) {\n    return 1;\n}",
+      "example": "const size_t count = 3;\nint *values = malloc(count * sizeof *values);\nif (values != NULL) {\n    values[0] = 1;\n    free(values);\n}",
+      "explanation": "malloc from <stdlib.h> requests bytes. sizeof *values gives the size of one int. Check the returned pointer for NULL before writing.",
+      "mistake": "malloc leaves the element values uninitialized. Store every value you intend to read or sum."
+    },
+    "focus": "    int *values = malloc(count * sizeof *values);\n    if (values == NULL) {\n        puts(\"allocation-failed\");\n        return 0;\n    }\n    values[0] = 1;\n    values[1] = 2;\n    values[2] = 3;"
   }
 }

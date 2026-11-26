@@ -87,7 +87,8 @@
         "In a native Clang terminal, save the clean example as main.c and build it with clang -std=c17 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=undefined main.c -o count-check. Run the resulting file (./count-check on POSIX, or .\\count-check.exe on Windows if the build used that name). Check for count 4, empty stderr and status 0.",
         "If the installed compiler or libraries do not support these flags, record environment unavailable and keep the actual build error. Code Studio uses Clang/WASI. Record its compile check separately from the native sanitizer run.",
         "A program using count > 7 in place of count > 8 can run without a memory error. A contract test at 8 still exposes the wrong result.",
-        "The control uses #pragma clang diagnostic error to enable unused variable as an error for that source. This makes the rejection testable in Code Studio with the existing environment flags."
+        "The control uses #pragma clang diagnostic error to enable unused variable as an error for that source. This makes the rejection testable in Code Studio with the existing environment flags.",
+        "A sanitizer inserts checks during compilation. Whether a check triggers depends on the executed path. Code Studio uses the stated control runs here. An ordinary WASI result is not evidence of separate native instrumentation."
       ]
     },
     {
@@ -270,5 +271,28 @@
     "prerequisites": [
       "c.choose-boundary-test-partitions"
     ]
+  },
+  "teaching": {
+    "scene": "A counter builds without visible warnings. Check three different things: its format arguments, whether a runtime problem can be observed, and what it does at the largest allowed value.",
+    "predict": {
+      "prompt": "The example has an int named count with value 4. What does %d receive, and what result can you observe? Can that run verify the limit of 8 in a different task?",
+      "answer": "The %d conversion receives the expected int and stdout contains count 4. The run checks that call. A limit in the practice task needs separate input cases."
+    },
+    "apply": {
+      "prompt": "Suppose the code builds cleanly but 8 yields invalid and 7 gives count 7. What does that suggest, and what other input would you keep after fixing it?",
+      "answer": "The observable failure is at the contract boundary 8. After the fix, keep 8 as an accepted case and add 9 as the nearest rejected case so you detect an overbroad fix."
+    },
+    "practice": {
+      "strategy": "Write the exact outputs for 0, 8, and 9. Find where the limit is declared and where the program actually checks the number. If native Clang is available, add a strict build.",
+      "diagnosis": "An unused limit may cause a warning, but deleting it would leave the wrong boundary. Check that the comparison uses the intended limit and produces different outcomes for 8 and 9."
+    },
+    "syntax": {
+      "termId": "compiler-warning",
+      "form": "int count = 4;\nprintf(\"%d\\n\", count);",
+      "example": "int count = 4;\nprintf(\"count %d\\n\", count);",
+      "explanation": "A printf conversion and the actual argument type must agree. The compiler can often check them when the format is a string literal and the function declaration is visible.",
+      "mistake": "Fix a format-type warning before running the modified code. A warning-free build still needs a contract check at the input boundary."
+    },
+    "focus": "    int count = 4;\n    printf(\"count %d\\n\", count);\n    return 0;"
   }
 }

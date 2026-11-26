@@ -1,7 +1,7 @@
+import {courseBackMarkup, courseHeroMarkup, courseContinueMarkup, courseTabsMarkup} from './academy-course-header.mjs';
 import {bindCCourseWorkspace, createCCourseStorage} from './c-course-workspace.mjs';
 import {courseNavigationMarkup} from './academy-course-navigation.mjs';
 import {academyLessonMenuItems, bindAcademyLessonMenu} from './academy-lesson-menu.mjs';
-import {bindGlossaryDrawer, termReferenceMarkup} from './nexus-learning-ui.js';
 import {registerUpdateParticipant} from '../pwa/interface-update.js';
 
 const stages = [
@@ -87,6 +87,8 @@ function overview({data, locale, t, resume, progress, selectedModule}) {
     title: localized(module.title, locale),
     number: index + 1,
     available: moduleIds.has(module.id),
+    description: (module.goals?.[locale] ?? []).join(" "),
+    criterion: localized(module.completion, locale),
     topics: module.topics.map(topic => ({
       id: topic.id,
       title: localized(topic.title, locale),
@@ -95,27 +97,21 @@ function overview({data, locale, t, resume, progress, selectedModule}) {
       completed: progress.has(topic.id),
     })),
   }));
-  const navigation = courseNavigationMarkup({locale, modules, selectedModule,
+  const selected = modules.some(module => module.id === selectedModule);
+  const navigation = courseNavigationMarkup({locale, modules, selectedModule, includeStyles: selected,
     overviewHref: routeLink(locale), moduleHref: id => routeLink(locale, null, null, id)});
-  if (modules.some(module => module.id === selectedModule)) {
-    return '<div class="nexus-learning c-module-view"><h1>' + escape(localized(manifest.title, locale)) +
-      '</h1>' + navigation + '</div>';
-  }
-  const percent = topics.length ? Math.round(100 * progress.size / topics.length) : 0;
-  const moduleCount = manifest.availableModuleIds.length + (manifest.availableModuleIds.length === curriculum.moduleCount ? '' : ' / ' + curriculum.moduleCount);
-  const studied = t('Изучено', 'Studied');
-  return '<div class="nexus-learning"><a class="back-link" href="#view=academy">← ' + t('Академия', 'Academy') + '</a>' +
-    '<header class="c-panel course-hero"><div class="course-code large" aria-hidden="true">C<span>17</span></div><div>' +
-    '<p class="eyebrow">' + t('Учебный курс C17', 'C17 course') + '</p><h1>' +
-    escape(localized(manifest.title, locale)) + '</h1><p>' + escape(localized(manifest.description, locale)) + '</p>' +
-    '<div class="learning-course-facts"><span>' + t('Модули: ', 'Modules: ') + '<b>' + moduleCount + '</b></span><span>' +
-    t('Темы: ', 'Lessons: ') + '<b>' + topics.length + '</b></span></div>' +
-    '<div class="progress-row"><span>' + studied + ' <b>' + progress.size + ' / ' + topics.length + '</b></span><span>' + percent +
-    '%</span></div><div class="progress" role="progressbar" aria-label="' + studied + '" aria-valuemin="0" aria-valuemax="' +
-    topics.length + '" aria-valuenow="' + progress.size + '"><i style="width:' + percent + '%"></i></div>' +
-    button(routeLink(locale, start?.id, last ? resume.stage : undefined),
-      last ? t('Продолжить: ', 'Resume: ') + localized(last.title, locale) : t('Начать первый урок', 'Start the first lesson'), true) +
-    '</div></header>' + navigation + '</div>';
+  if (selected) return '<div class="nexus-learning c-module-view">' + navigation + '</div>';
+  const hero = courseHeroMarkup({id: 'c', locale, title: localized(manifest.title, locale),
+    description: localized(manifest.description, locale), symbol: 'C', suffix: '17',
+    facts: [[topics.length,t('Темы','Lessons')],[manifest.availableModuleIds.length,t('Модули','Modules')]],
+    progress: {done:progress.size,total:topics.length}});
+  const continuation = start ? courseContinueMarkup({locale,title:localized(start.title, locale),
+    href:routeLink(locale,start.id,last ? resume.stage : undefined), visited:!!last,
+    stage:last ? stages.find(([id])=>id===resume.stage)?.[locale==='en' ? 2 : 1] : ''}) : '';
+  const project = modules.find(module => module.topics.some(topic => topic.id==='c.capstone-contract' && topic.href));
+  const links = [{href:routeLink(locale),title:t('Учебная траектория','Learning path'),active:true}];
+  if (project) links.push({href:routeLink(locale,null,null,project.id),title:t('Итоговый проект','Final project')});
+  return '<div class="nexus-learning">' + hero + courseTabsMarkup(locale,links) + continuation + navigation + '</div>';
 }
 
 function renderFiles(files, t, heading) {
@@ -127,15 +123,20 @@ function renderFiles(files, t, heading) {
       '<p>' + t('Файлов нет', 'No files') + '</p>') + '</div>';
 }
 
-function renderCode(code, t, {showResult = true} = {}) {
+function renderCode(code, t, {showResult = true, focus} = {}) {
   if (!code) return '';
   const input = code.stdin ? '<div><h4>' + t('Ввод', 'Input') + '</h4>' + codeBlock(code.stdin) + '</div>' : '';
   const result = !showResult || code.output === undefined ? '' : '<div><h4>' + t('Вывод', 'Output') + '</h4>' +
     codeBlock(code.output, t('Пустой вывод', 'No output')) + '</div>';
   const diagnostic = code.diagnostic ? '<p><strong>' + t('Диагностика', 'Diagnostic') + '</strong> ' +
     escape(code.diagnostic) + '</p>' : '';
-  return '<div class="c-example"><div><h4>main.c</h4>' + codeBlock(code.source) + '</div>' +
-    renderFiles(code.files, t, t('Файлы примера', 'Example files')) +
+  const fullExample = '<div><h4>main.c</h4>' + codeBlock(code.source) + '</div>' +
+    renderFiles(code.files, t, t('Файлы примера', 'Example files'));
+  return '<div class="c-example"><div>' + (focus
+    ? '<h4>' + t('Ключевой фрагмент', 'Key lines') + '</h4>' + codeBlock(focus) +
+      '<details class="c-full-example"><summary>' + t('Показать полную программу', 'Show the full program') +
+      '</summary>' + fullExample + '</details>'
+    : fullExample) + '</div>' +
     (input || result ? '<div class="c-example-io">' + input + result + '</div>' : '') +
     (showResult ? renderFiles(code.outputFiles, t, t('Файлы результата', 'Result files')) +
       (code.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(code.stderr) + '</div>' : '') +
@@ -143,54 +144,32 @@ function renderCode(code, t, {showResult = true} = {}) {
     diagnostic + '</div>';
 }
 
-function lessonReference(lesson, locale, t) {
-  const terms = lesson.terms.map(term => ({...term, term:term.term ?? term.title}));
-  const examples = lesson.sections.filter(section => section.code);
-  return '<div class="lesson-floating c-lesson-reference" role="group" aria-label="' + t('Справка', 'Help') + '">' +
-    '<button class="quick-action" type="button" data-open-terms data-c-reference="terms"><span aria-hidden="true">⌕</span> ' +
-    t('Справочник', 'Reference') + '</button>' +
-    '<button class="quick-action" type="button" data-open-terms data-c-reference="syntax"><span aria-hidden="true">{ }</span> ' +
-    t('Синтаксис', 'Syntax') + '</button></div>' +
-    termReferenceMarkup(terms, {uiLocale:locale, contentLocale:locale}).replace('</dialog>',
-      '<div class="drawer-scroll c-syntax-list" data-c-syntax-list tabindex="0" role="region" aria-labelledby="termDrawerTitle" hidden>' +
-      examples.map(section => '<section><h3>' + escape(section.title) + '</h3>' + renderCode(section.code, t) + '</section>').join('') +
-      '</div></dialog>');
-}
-
-function bindLessonReference(host, t) {
-  const drawer = host.querySelector('#termDrawer');
-  const title = drawer.querySelector('#termDrawerTitle');
-  const search = drawer.querySelector('.drawer-search');
-  const termList = drawer.querySelector('#termList');
-  const syntaxList = drawer.querySelector('[data-c-syntax-list]');
-  return bindGlossaryDrawer(host, {
-    prepareOpen(trigger) {
-      const syntax = trigger.dataset.cReference === 'syntax';
-      drawer.toggleAttribute('data-c-syntax', syntax);
-      title.textContent = syntax ? t('Синтаксис C17 по теме', 'C17 syntax for this lesson') :
-        t('Справочник терминов', 'Terminology reference');
-      search.hidden = syntax;
-      termList.hidden = syntax;
-      syntaxList.hidden = !syntax;
-      return syntax ? syntaxList : search.querySelector('input');
-    },
-  });
+function reasoning(question, label, t) {
+  if (!question) return '';
+  return '<aside class="c-reasoning"><h3>' + label + '</h3><p>' + escape(question.prompt) +
+    '</p><details><summary>' + t('Сверить рассуждение', 'Compare your reasoning') +
+    '</summary><p>' + escape(question.answer) + '</p></details></aside>';
 }
 
 function explanation(lesson, t) {
-  const contents = '<details class="c-panel c-contents" open><summary>' + t('Содержание', 'Contents') +
+  const teaching = lesson.teaching;
+  const workedExample = lesson.sections.find(section => section.code);
+  const contents = '<details class="c-panel c-contents" open><summary>' + t('В этом уроке', 'In this lesson') +
     '</summary><nav aria-label="' + t('Содержание объяснения', 'Explanation contents') +
     '"><ol>' + lesson.sections.map(section =>
       '<li><button type="button" class="c-section-link" data-c-jump="' + escape(section.id) + '">' +
       escape(section.title) + '</button></li>').join('') + '</ol></nav></details>';
-  const sections = lesson.sections.map(section =>
-    '<section class="c-panel" data-c-section="' + escape(section.id) + '" tabindex="-1"><h2>' + escape(section.title) + '</h2>' +
+  const traceLabels = [t('Шаг', 'Step'),t('Данные или состояние', 'Data or state'),t('Наблюдение', 'Observation'),t('Почему', 'Why')];
+  const sections = lesson.sections.map((section,index) =>
+    '<section class="c-panel" data-c-section="' + escape(section.id) + '" tabindex="-1"><p class="c-step-count">' +
+    t('Шаг ', 'Step ') + (index+1) + ' / ' + lesson.sections.length + '</p><h2>' + escape(section.title) + '</h2>' +
     (section.paragraphs ?? []).map(paragraph => '<p>' + escape(paragraph) + '</p>').join('') +
-    renderCode(section.code, t) +
+    (section===workedExample ? reasoning(teaching?.predict, t('Предскажите результат', 'Predict the result'), t) : '') +
+    renderCode(section.code, t, {focus:section===workedExample ? teaching?.focus : undefined}) +
     (section.steps?.length ? '<ol>' + section.steps.map(step => '<li>' + escape(step) + '</li>').join('') + '</ol>' : '') +
-    (section.trace?.length ? '<ol class="c-trace">' + section.trace.map(row => '<li>' +
-      row.map((cell, index) => (index === 0 ? '<strong>' + escape(cell) + '</strong>' : '<span>' + escape(cell) + '</span>')).join('') +
-      '</li>').join('') + '</ol>' : '') + '</section>').join('');
+    (section.trace?.length ? '<ol class="c-trace">' + section.trace.map(row => '<li><dl>' +
+      row.map((cell, index) => '<div>' + (traceLabels[index] ? '<dt>' + traceLabels[index] + '</dt>' : '') +
+        '<dd>' + escape(cell) + '</dd></div>').join('') + '</dl></li>').join('') + '</ol>' : '') + '</section>').join('');
   const prerequisites = lesson.prerequisites.map(item => item.text ?? item).filter(Boolean);
   const bibliography = (lesson.reading ?? []).map(item => '<li><strong>' + escape(item.title) + '</strong> ' +
     escape([item.edition, item.section].filter(Boolean).join(' · ')) + '<p>' + escape(item.purpose) + '</p></li>').join('');
@@ -199,8 +178,10 @@ function explanation(lesson, t) {
     '<p>' + t('Найдите место ошибки в программе и сравните его с сообщением компилятора.', 'Find the error in the program and compare its location with the compiler message.') +
     '</p>' + codeBlock(item.source) + renderFiles(item.files, t, t('Файлы проекта', 'Project files')) + '<h3>' + t('Фрагмент сообщения Clang', 'Excerpt from the Clang diagnostic') +
     '</h3>' + codeBlock(Array.isArray(item.stderrIncludes) ? item.stderrIncludes.join(' · ') : item.stderrIncludes) + '</section>').join('');
-  return '<div class="c-reading">' + contents + '<div><section class="c-panel"><h2>' + t('На этом уроке', 'In this lesson') +
-    '</h2><p>' + escape(lesson.goal) + '</p>' + (prerequisites.length ? list(prerequisites) : '') + '</section>' + sections + diagnostics +
+  return '<div class="c-reading">' + contents + '<div><header class="c-intro"><h2>' + escape(lesson.title) +
+    '</h2>' + (teaching?.scene ? '<p class="c-intro-scene">' + escape(teaching.scene) + '</p>' : '') +
+    '<p>' + escape(lesson.goal) + '</p>' + (prerequisites.length ? '<h3>' +
+      t('Что пригодится', 'What you will use') + '</h3>' + list(prerequisites) : '') + '</header>' + sections + diagnostics +
     (bibliography ? '<details class="c-panel"><summary>' + t('Дополнительное чтение', 'Further reading') + '</summary><ul>' +
     bibliography + '</ul></details>' : '') + '</div></div>';
 }
@@ -218,7 +199,8 @@ function selfcheck(lesson, t, responses) {
       escape(item.feedback) + '</p></details>';
     return '<section class="c-panel" data-c-question="' + index + '"><h2>' + escape(item.prompt) + '</h2>' +
       renderCode(item.code, t, {showResult:false}) + answer + '</section>';
-  }).join('');
+  }).join('') + (lesson.teaching?.apply ? '<section class="c-panel" data-c-transfer>' +
+    reasoning(lesson.teaching.apply,t('Примените к новой ситуации','Apply it to a new case'),t) + '</section>' : '');
 }
 
 function practiceFile(name, source, t) {
@@ -246,7 +228,8 @@ function practice(lesson, t, readonly) {
   const referenceFiles = Object.entries(reference?.files ?? {}).map(([name, source]) =>
     practiceFile(name, typeof source === 'string' ? source : source.content ?? source.source, t)).join('');
   return '<section class="c-panel c-practice-task" data-c-work-task><h2>' + escape(work.title) + '</h2><p>' +
-    escape(work.task) + '</p><h3>' + t('Паспорт задачи', 'Task contract') + '</h3><dl class="c-task-contract">' +
+    escape(work.task) + '</p>' + (lesson.teaching?.practice?.strategy ? '<h3>' + t('С чего начать', 'How to start') +
+      '</h3><p>' + escape(lesson.teaching.practice.strategy) + '</p>' : '') + '<h3>' + t('Паспорт задачи', 'Task contract') + '</h3><dl class="c-task-contract">' +
     '<dt>' + t('Среда', 'Environment') + '</dt><dd>' + escape(work.environment) + '</dd><dt>' +
     t('Точка входа', 'Entry point') + '</dt><dd><code>' + escape(work.metadata.entryFile) + '</code></dd></dl>' +
     '<details class="c-practice-disclosure" data-c-starter-preview><summary>' + t('Посмотреть заготовку', 'View starter') +
@@ -262,6 +245,7 @@ function practice(lesson, t, readonly) {
         t('Задание и Code Studio', 'Task and Code Studio') +
         '</button><div class="c-workspace" data-c-workspace aria-label="Code Studio"></div></section>') +
     '<section class="c-panel" data-c-work-cases><h2>' + t('Как проверить свою работу', 'How to check your work') + '</h2>' +
+    (lesson.teaching?.practice?.diagnosis ? '<p>' + escape(lesson.teaching.practice.diagnosis) + '</p>' : '') +
     cases + list(work.criteria) + '</section>' +
     (work.exercises ?? []).map(item => '<section class="c-panel"><h2>' + escape(item.title) + '</h2><p>' +
       escape(item.task) + '</p>' + list(item.criteria ?? []) + '</section>').join('') +
@@ -294,7 +278,7 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
       : next ? button(routeLink(locale, next.id), nextLabel, true)
         : '<p>' + t('Вы дошли до конца доступных уроков курса C17.', 'You have reached the end of the available C17 lessons.') + '</p>' +
           button(routeLink(locale), t('Вернуться к программе →', 'Back to the course outline →'), true);
-  return '<nav class="c-breadcrumbs" aria-label="' + t('Место в Академии', 'Location in the Academy') +
+  return courseBackMarkup(locale, overviewHref) + '<nav class="c-breadcrumbs" aria-label="' + t('Место в Академии', 'Location in the Academy') +
     '"><ol><li><a href="#view=academy">' + t('Академия', 'Academy') + '</a></li><li><a href="' +
     escape(overviewHref) + '">C17</a></li>' + (module ? '<li><a href="' +
       escape(moduleHref) + '">' + escape(moduleTitle) + '</a></li>' : '') + '</ol></nav>' +
@@ -304,14 +288,14 @@ function lessonMarkup({lesson, data, locale, t, stage, progress, responses, canS
     '</summary><div class="c-lesson-menu-links">' +
     academyLessonMenuItems({locale, programHref:overviewHref, assistantEnabled}) + '</div></details></div>' +
     '<nav class="c-stages" aria-label="' + t('Этапы урока', 'Lesson stages') + '">' + tabs + '</nav></header>' +
-    '<p data-academy-library-status role="status"></p>' +
+    '<div data-reference-help></div><p data-academy-library-status role="status"></p>' +
     '<nav class="c-neighbors" aria-label="' + t('Уроки', 'Lessons') + '">' +
     (previous ? button(routeLink(locale, previous.id), t('← Предыдущий урок: ', '← Previous lesson: ') + titleOf(previous)) : '') +
     (next ? button(routeLink(locale, next.id), nextLabel) : '') + '</nav>' +
     '<div class="c-main">' + contents + '<footer class="c-panel c-actions">' +
     (stage === 'practice' && canSave ? '<button class="btn" type="button" data-c-complete aria-pressed="' + progress.has(lesson.id) +
       '">' + (progress.has(lesson.id) ? t('Отмечен изученным', 'Marked as studied') : t('Отметить изученным', 'Mark as studied')) +
-    '</button>' : '') + action + '</footer></div>' + lessonReference(lesson, locale, t);
+    '</button>' : '') + action + '</footer></div>';
 }
 
 export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readonly = false,
@@ -346,7 +330,16 @@ export async function mountCCourse(host, {lessonId, stage, locale = 'ru', readon
       overview({data, locale, t, resume, progress, selectedModule:new URLSearchParams(hash.slice(1)).get('module')}));
 
   const status = host.querySelector('[data-c-status]');
-  const disposeReference = lesson ? bindLessonReference(host, t) : null;
+  let disposeReference;
+  if (lesson) {
+    const active = () => !events.signal.aborted && isCurrent();
+    import('./reference-learning-help.mjs').then(async ({mountReferenceHelp}) => {
+      if (active()) disposeReference = await mountReferenceHelp(host,{lesson,locale,isCurrent:active,c17:true});
+    }).catch(() => {
+      if (active()) host.querySelector('[data-reference-help]').textContent =
+        t('Справка не загрузилась. Попробуйте ещё раз.', 'Help did not load. Please try again.');
+    });
+  }
   const context = host.querySelector('.c-lesson-header');
   const topbar = document.querySelector('.topbar');
   const measureContext = () => {

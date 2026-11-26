@@ -96,7 +96,8 @@
       "title": "Find the earliest changed value",
       "paragraphs": [
         "If the code uses >=, the output at 70 incorrectly becomes invalid. The value 70 and below 0 still match the prediction. Look for the first unexpected 1: above 1.",
-        "Our fprintf provides the trace. It reports just the facts we chose to record. A separate compile exercise omits a right-hand operand. Execution does not start for that build."
+        "Our fprintf provides the trace. It reports just the facts we chose to record. A separate compile exercise omits a right-hand operand. Execution does not start for that build.",
+        "With the same stdin, compare the parsed value first, then the two flags, then the selected output. Record the first difference before editing."
       ]
     },
     {
@@ -285,5 +286,28 @@
     "prerequisites": [
       "c.function-boundary-driver"
     ]
+  },
+  "teaching": {
+    "scene": "A receiving station checks an allowed range. One boundary value unexpectedly gives invalid. Find the earliest calculation that disagrees with your prediction.",
+    "predict": {
+      "prompt": "The input is exactly 70. What values do below and above take? What goes to stderr and what does the operator see on stdout?",
+      "answer": "70 is neither below 20 nor above 70. stderr contains value 70 below 0 above 0. With neither flag set, stdout contains accepted."
+    },
+    "apply": {
+      "prompt": "Supply 19, then 19x. Both produce invalid. Use the trace to explain at which step each input was rejected.",
+      "answer": "19 parses as a number. stderr says value 19 below 1 above 0. With 19x the parser rejects the suffix, so execution stops before computing flags and stderr is empty."
+    },
+    "practice": {
+      "strategy": "Write down the expected flags for 89, 90, and 91 before running. Compare the trace field by field and find the first divergent condition. After one edit, repeat the same inputs.",
+      "diagnosis": "If 90 gives below 0 and above 1, the parser supplied the right value and the lower check worked. Inspect how the upper comparison handles equality."
+    },
+    "syntax": {
+      "termId": "trace",
+      "form": "fprintf(stderr, \"label %d\\n\", expression);",
+      "example": "int below = value < 20;\nint above = value > 70;\nfprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);",
+      "explanation": "fprintf sends the trace values to stderr. puts sends the result to stdout. Predict the values, then compare the two streams separately.",
+      "mistake": "Sending the trace to stdout changes the exact contract output. Looking only at invalid hides whether rejection came from parsing or range checking."
+    },
+    "focus": "    int below = value < 20;\n    int above = value > 70;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;"
   }
 }

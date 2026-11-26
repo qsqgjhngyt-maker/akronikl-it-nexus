@@ -44,7 +44,8 @@
       "paragraphs": [
         "In the teaching program owner is responsible for the allocation. view_total gets temporary access for reading, with no responsibility or permission to release the block.",
         "The call release_values(&owner, &releases) passes the addresses of two live variables. Inside the function, the parameter owner has type int **, and *owner is the pointer value held by main. If *owner is NULL, there is no block to release. Otherwise the function calls free, sets the variable in main to NULL, and counts one release.",
-        "After free, do not evaluate old pointer copies. Storing NULL updates only the owner variable. In this example, temporary access ends when view_total returns."
+        "After free, do not evaluate old pointer copies. Storing NULL updates only the owner variable. In this example, temporary access ends when view_total returns.",
+        "releases counts block releases, not calls to the function. That is an observable check of the shared cleanup path."
       ]
     },
     {
@@ -275,5 +276,28 @@
     "prerequisites": [
       "c.checked-allocation"
     ]
+  },
+  "teaching": {
+    "scene": "A report handles measurements on both success and rejection paths. Use the release count to verify that either path leaves the owner with no allocated block.",
+    "predict": {
+      "prompt": "owner holds 4 and 5. After view_total, release_values runs twice. What do the two printf calls print, and when does the owner's pointer become NULL?",
+      "answer": "It prints total 9 and releases 1. The first call releases the live block, resets the owner's pointer and increments the count. The second sees NULL and changes nothing."
+    },
+    "apply": {
+      "prompt": "For five elements, compare modes 1 and 0 assuming initial allocation succeeds. What part of the report must be the same after two cleanup calls?",
+      "answer": "Mode 1 prints sum 15 and mode 0 prints rejected. Both end with released 1 because each path releases the allocated block once."
+    },
+    "practice": {
+      "strategy": "Identify the owner after allocation and when borrowed access ends. Bring both branches to cleanup and count only an actual release.",
+      "diagnosis": "With 3 1 the starter gives sum 6 and released 0. The sum is correct. The block is freed, but the counter fails to record that event."
+    },
+    "syntax": {
+      "termId": "cleanup",
+      "form": "if (*owner != NULL) {\n    free(*owner);\n    *owner = NULL;\n    ++*releases;\n}",
+      "example": "unsigned releases = 0;\nrelease_values(&owner, &releases);\nrelease_values(&owner, &releases);",
+      "explanation": "Pass &owner and the address of the counter as valid parameters. Resetting through int ** updates the caller's variable, so the next cleanup sees NULL.",
+      "mistake": "Resetting the owner does not update other pointers to the same block. Borrowed pointers must no longer be used after free."
+    },
+    "focus": "    if (*owner != NULL) {\n        free(*owner);\n        *owner = NULL;\n        ++*releases;"
   }
 }

@@ -44,7 +44,8 @@
       "paragraphs": [
         "A gate receives a code from a controller. Before displaying a state, it needs to know whether that code belongs to the protocol. Skipping a step during a transition is a different kind of mistake.",
         "enum GateState names LOCKED and OPEN. The values 10 and 20 are choices of this protocol. Do not assume that every incoming int automatically becomes a valid state.",
-        "In a library, a requested loan can become issued, and an issued loan can become returned. Both state names can belong to the enumeration while their particular transition is still invalid."
+        "In a library, a requested loan can become issued, and an issued loan can become returned. Both state names can belong to the enumeration while their particular transition is still invalid.",
+        "State recognition and transition permission answer different questions. A code can be known while the transition to it is forbidden."
       ]
     },
     {
@@ -278,5 +279,28 @@
     "prerequisites": [
       "c.ordered-conditions"
     ]
+  },
+  "teaching": {
+    "scene": "A gate receives numeric codes from an external log. Identify which codes name valid states and which ones must be rejected before checking a transition.",
+    "predict": {
+      "prompt": "gate_label receives 10, 20 and 0 in that order. Which switch branch handles each input, and what prints?",
+      "answer": "10 matches LOCKED and prints locked. 20 matches OPEN and prints open. No named case matches 0, so default gives unknown."
+    },
+    "apply": {
+      "prompt": "For a lending log, compare pairs 2 → 3, 3 → 2 and 9 → 2. How can you distinguish a forbidden transition from an unknown code?",
+      "answer": "2 → 3 is permitted and gives ok. 3 → 2 contains known states but is reversed, giving denied. 9 → 2 starts with an unknown code, so it gives invalid."
+    },
+    "practice": {
+      "strategy": "Check the input codes against the known set. Mark only the permitted pairs in a transition table and compare both endpoints of each pair.",
+      "diagnosis": "The starter gives denied for 1 2 and ok for 2 2. It checks equality instead of checking permitted transitions."
+    },
+    "syntax": {
+      "termId": "enumerator",
+      "form": "enum GateState { LOCKED = 10, OPEN = 20 };\nswitch (raw) {\ncase LOCKED: puts(\"locked\"); break;\ndefault: puts(\"unknown\"); break;\n}",
+      "example": "enum RequestState { REQUESTED = 1, ISSUED = 2, RETURNED = 3 };\nenum RequestState current = ISSUED;",
+      "explanation": "Named enum constants link numbers to states. A switch case matches the numeric value, and default handles other codes.",
+      "mistake": "An enum type alone does not validate a number from input. Recognize the code before applying transition rules."
+    },
+    "focus": "    switch (raw) {\n    case LOCKED: return \"locked\";\n    case OPEN: return \"open\";\n    default: return \"unknown\";"
   }
 }

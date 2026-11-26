@@ -103,7 +103,8 @@
       "id": "transfer",
       "title": "Capture a booking regression",
       "paragraphs": [
-        "The practice accepts a seat count from 0 through 30 and prints slots with the number. Pin 12x, which incorrectly gives slots 12 in the starter. After the repair, repeat it and a valid input with surrounding spaces. Record the exact output lines so the comparison is reproducible."
+        "The practice accepts a seat count from 0 through 30 and prints slots with the number. Pin 12x, which incorrectly gives slots 12 in the starter. After the repair, repeat it and a valid input with surrounding spaces. Record the exact output lines so the comparison is reproducible.",
+        "When sharing the run record, identify the source version or include a copy. Describe a line ending as LF or explicitly note that it was absent."
       ]
     }
   ],
@@ -308,5 +309,28 @@
       "c.distinguish-c17-diagnostics",
       "c.review-bounds-lifetime-conversion"
     ]
+  },
+  "teaching": {
+    "scene": "An operator found that a number with an extra letter can sometimes be accepted. Make a short record another person can use to reproduce the failure and verify the fix.",
+    "predict": {
+      "prompt": "The example receives 7x followed by LF. What part does strtol convert? What stops the remaining processing, and what will stdout contain?",
+      "answer": "strtol consumes 7 and leaves end at x. The x is neither whitespace nor the end of the string. read_value rejects the input, and main prints invalid."
+    },
+    "apply": {
+      "prompt": "Compare 7 with trailing whitespace and 7 3, both followed by LF. Explain where the check stops and record the two outcomes.",
+      "answer": "For the first line end reaches the string terminator after whitespace, so stdout contains 7. For the second it stops on digit 3, so the result is invalid. The inputs distinguish trailing whitespace from a second number."
+    },
+    "practice": {
+      "strategy": "Preserve the exact input 12x followed by LF and record stdout, stderr, and exit status. After the fix, use the same bytes and add a valid control with 12 and permitted whitespace.",
+      "diagnosis": "If both cases are rejected after the change, check whether the parser still permits trailing whitespace. If it accepts 12 3, inspect the end-of-string check after skipping whitespace."
+    },
+    "syntax": {
+      "termId": "regression-case",
+      "form": "long value = strtol(line, &end, 10);\n/* Check whether a number was consumed and inspect its suffix. */",
+      "example": "while (isspace((unsigned char)*end)) {\n    ++end;\n}\nif (*end != '\\0') {\n    return 0;\n}",
+      "explanation": "strtol consumes the numeric prefix and reports where it stopped. The check after skipping whitespace enforces the contract for the rest of the line.",
+      "mistake": "A successful example alone does not reproduce the original defect. Keep the original failing input alongside a control that must remain accepted."
+    },
+    "focus": "    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;"
   }
 }

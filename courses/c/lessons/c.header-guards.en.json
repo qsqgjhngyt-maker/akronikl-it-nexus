@@ -98,7 +98,8 @@
       "title": "Identify the failed build stage",
       "paragraphs": [
         "The message redefinition of 'Kit' means a complete structure reached the compiler twice. Trace both paths from main.c to kit.h and inspect the #ifndef, #define and #endif boundaries.",
-        "Removing an include can hide the fault while leaving kit.h fragile. Give it its own KIT_H guard and retain the direct dependency."
+        "Removing an include can hide the fault while leaving kit.h fragile. Give it its own KIT_H guard and retain the direct dependency.",
+        "A guard is evaluated while each translation unit is preprocessed. Two separate .c files can include the same header and see its interface independently."
       ]
     },
     {
@@ -293,5 +294,28 @@
     "prerequisites": [
       "c.configure-preprocessor"
     ]
+  },
+  "teaching": {
+    "scene": "A gauge module reaches its measurement structure through two include paths. Find both paths and arrange for one definition in each translation unit.",
+    "predict": {
+      "prompt": "main.c includes gauge.h and gauge_scale.h, which also includes gauge.h. How many definitions of struct Gauge does the compiler see in main, and what does the program print?",
+      "answer": "The first inclusion defines GAUGE_H and emits the structure definition. The second sees the macro and skips the body. main has one definition, and the program prints gauge=18 mm."
+    },
+    "apply": {
+      "prompt": "In a copy of gauge.h, change the guard name in #define but leave the name in #ifndef unchanged. Predict the stage at which the failure appears.",
+      "answer": "The original name is never defined, so both paths see a true condition. Compiling main.c rejects the duplicate definition of struct Gauge. There is no program stdout."
+    },
+    "practice": {
+      "strategy": "Draw both edges from main.c to kit.h: one direct and one through kit_label.h. Guard the structure in its own file, then keep both edges and verify the calculation for two kits.",
+      "diagnosis": "If the build works only after deleting the direct #include, you hid one route to the duplicate. Restore both routes and compare the macro names and the boundaries of the guard."
+    },
+    "syntax": {
+      "termId": "include-guard",
+      "form": "#ifndef UNIQUE_HEADER_H\n#define UNIQUE_HEADER_H\n/* header declarations */\n#endif",
+      "example": "#ifndef GAUGE_H\n#define GAUGE_H\nstruct Gauge {\n    int millimetres;\n};\n#endif",
+      "explanation": "The guard macro starts out undefined, so the first inclusion processes the body. A repeat inclusion in the same translation unit finds that the macro is defined.",
+      "mistake": "Sharing one guard name between two different headers can suppress declarations you need. Give each header a unique guard."
+    },
+    "focus": "#include \"gauge.h\"\n#include \"gauge_scale.h\"\n\nint main(void)\n{\n    struct Gauge sample = {DEFAULT_GAUGE_MM};\n    printf(\"gauge=%d mm\\n\", sample.millimetres);\n    return 0;"
   }
 }

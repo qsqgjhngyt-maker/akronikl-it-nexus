@@ -205,16 +205,18 @@ async function renderCurrent(seq){
  }
  if(!lessonId&&!route.has('assessment')&&['onec','1c-enterprise'].includes(route.get('course'))){
   const courseId=route.get('course'),language=(route.get('locale')||locale)==='en'?'en':'ru';
-  const [{onecCourseNavigation},response]=await Promise.all([
+  const [{onecCourseNavigation,onecOverviewHero},response]=await Promise.all([
    import('../courses/onec-education/candidate.mjs'),
    fetch(new URL('../courses/'+courseId+'/curriculum.json',import.meta.url),{credentials:'omit'}),
   ]);
   if(!response.ok)throw Error('ONEC_CURRICULUM_UNAVAILABLE');
   const curriculum=await response.json();if(seq!==renderSequence)return;
-  const heading=document.createElement('h1');heading.textContent=curriculum.title[language];
+  const selectedModule=route.get('module');
+  const selected=curriculum.modules.some(module=>module.moduleId===selectedModule);
   const overview=document.createElement('section');overview.lang=language;
-  overview.innerHTML=onecCourseNavigation(curriculum,{locale:language,selectedModule:route.get('module')});
-  overview.prepend(heading);root.replaceChildren(overview);return;
+  overview.innerHTML=(selected?'':onecOverviewHero(curriculum,{locale:language}))+
+   onecCourseNavigation(curriculum,{locale:language,selectedModule,includeStyles:selected});
+  root.replaceChildren(overview);return;
  }
  // Публичное чтение 1С без подключения её личного хранилища к C++ vault.
  if(lessonId&&['onec','1c-enterprise'].includes(route.get('course'))){

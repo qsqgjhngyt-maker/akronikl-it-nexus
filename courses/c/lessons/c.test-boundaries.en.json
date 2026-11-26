@@ -145,7 +145,8 @@
       "id": "transfer",
       "title": "Try a different pair of thresholds",
       "paragraphs": [
-        "Practice accepts 10–18. List 9, 10, 17, 18, 19 and a valid-looking prefix with a suffix. Record the expected results before comparing them with the output."
+        "Practice accepts 10–18. List 9, 10, 17, 18, 19 and a valid-looking prefix with a suffix. Record the expected results before comparing them with the output.",
+        "Overflow and an unexpected suffix give the same invalid text but exercise separate checks. Keep both inputs in your table even though their results agree."
       ]
     }
   ],
@@ -354,5 +355,28 @@
     "prerequisites": [
       "c.locate-first-observed-difference"
     ]
+  },
+  "teaching": {
+    "scene": "You are testing an hour selector. A program can appear correct on one ordinary value. Choose numbers and text that exercise different reasons for rejection.",
+    "predict": {
+      "prompt": "The example allows values from 1 through 24 and stdin contains 24. What is the result? How would the nearest outside neighbour reveal an upper-bound error?",
+      "answer": "24 parses as a number and is no greater than 24, so it gives valid. For 25 the upper test is true, so the result is invalid. The pair checks acceptance at the boundary and rejection immediately beyond it."
+    },
+    "apply": {
+      "prompt": "Suppose a copy uses the inclusive range 6–8. Pick cases at and outside both ends, one inside, and a separate suffix check.",
+      "answer": "Five numeric cases: 5 → invalid, 6 → valid, 7 → valid, 8 → valid, and 9 → invalid. Add 7x → invalid because parsing rejects it before any range comparison."
+    },
+    "practice": {
+      "strategy": "Separate short numbers from strings with malformed suffixes. Predict the answers for 9, 10, 17, 18, 19, and 12x. Change the comparison and suffix check one at a time.",
+      "diagnosis": "If 18 is rejected and 17 is accepted, inspect the upper-bound comparison. If both 12x and 12 are accepted, inspect the end of the parsed string."
+    },
+    "syntax": {
+      "termId": "boundary-neighbor",
+      "form": "if (value < minimum || value > maximum) {\n    /* value is outside the inclusive range */\n}",
+      "example": "if (!read_value(&value) || value < 1 || value > 24) {\n    puts(\"invalid\");\n    return 0;\n}",
+      "explanation": "The tests < minimum and > maximum identify values outside an inclusive interval. When read_value fails, || short-circuits before the program evaluates value.",
+      "mistake": "A middle value alone cannot distinguish > maximum from >= maximum. Neighbours on the accepted and rejected sides make the difference observable."
+    },
+    "focus": "int main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 1 || value > 24) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}"
   }
 }

@@ -5,13 +5,21 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/academy-ui-unification.yml'
+      - 'core/academy-course-header.mjs'
       - 'core/academy-course-navigation.mjs'
       - 'core/academy-lesson-*.mjs'
       - 'styles/academy-*.css'
       - 'core/c-course*'
       - 'core/cpp-clarity-r3-renderer.mjs'
+      - 'core/reference-learning-help.mjs'
+      - 'core/learning-views.js'
+      - 'courses/c/lessons/**'
       - 'courses/onec-education/**'
       - 'courses/academy-library/**'
+      - 'pwa/offline-entry.js'
+      - 'tools/build-onec-offline.mjs'
+      - 'tests/academy-lesson-library-browser.mjs'
+      - 'tests/c-course-teaching-preservation.mjs'
       - 'akronikl/presence.*'
 
 permissions:
@@ -44,12 +52,13 @@ jobs:
           test "$(git rev-parse "$BASE^{tree}")" = 98d1698e0618205da0b3e49df863be31546b47eb
           git show -s --format='%H %T' HEAD
           git diff --exit-code "$BASE" HEAD -- \
-            courses/c courses/cpp courses/onec courses/1c-enterprise \
+            courses/c ':(exclude)courses/c/lessons/*.json' courses/cpp courses/onec courses/1c-enterprise \
             courses/clarity courses/cpp-clarity-r3 \
             core/account-storage.js core/storage.js core/startup-intro.js \
             server-access cloudflare sync sandbox project-studio \
             pwa/policy.js pwa/durable-store.js pwa/service-worker.js pwa/interface-update.js
           test "$(git ls-files 'courses/c/lessons/*.json' 'courses/clarity/lessons/*.json' 'courses/cpp-clarity-r3/lessons/*.json' | wc -l)" -eq 420
+          node tests/c-course-teaching-preservation.mjs "$BASE"
       - name: Повторить контракты старта, сессий и изоляции 1С
         run: |
           set -euo pipefail
@@ -88,7 +97,7 @@ jobs:
           node tools/build-cpp-clarity-candidate.mjs
       - name: Проверить 302 редакции C++ и 1С
         run: node tests/reference-courses-rollout-browser.mjs . "$NEXUS_FRONTEND_DIR" "$NEXUS_ACADEMY_EVIDENCE/editions"
-      - name: Сверить каталог и проверить единое меню четырёх курсов
+      - name: Сверить каталог, меню, шапки и возвраты четырёх курсов
         env:
           NEXUS_ACADEMY_LIBRARY_EVIDENCE: /tmp/nexus-academy-ui-evidence/library
         run: |

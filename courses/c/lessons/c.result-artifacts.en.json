@@ -114,7 +114,8 @@
       "id": "transfer",
       "title": "Compare reports from two independent runs",
       "paragraphs": [
-        "Do not save the first report into the editor until the comparison is finished. In a separate copy replace the second quantity with malformed text and run again. Explain why the new run must not offer the old report, even if you downloaded it already."
+        "Do not save the first report into the editor until the comparison is finished. In a separate copy replace the second quantity with malformed text and run again. Explain why the new run must not offer the old report, even if you downloaded it already.",
+        "Verifying a report involves checking the computed total and separately comparing its actual TAB and LF bytes. Start by confirming the path and opening the file."
       ]
     }
   ],
@@ -322,5 +323,28 @@
       "c.validate-all-file-records",
       "c.preserve-first-error-clean-up-streams"
     ]
+  },
+  "teaching": {
+    "scene": "Give the stock manager a report as a separate file. The word ok by itself proves neither what is in the file nor whether the result was saved into the project.",
+    "predict": {
+      "prompt": "The example reads 7 TAB 3 and 8 TAB 0. Which two lines will totals.tsv contain? Where will you see ok?",
+      "answer": "The report contains records TAB total LF, then 2 TAB 3 LF. ok appears in stdout after a successful write and close. The two data lines are in totals.tsv."
+    },
+    "apply": {
+      "prompt": "In a copy of the run, supply an existing totals.tsv with exactly the bytes the example will write. Compare the status and the changes list to a run without a starting report.",
+      "answer": "Both runs give ok and exit code 0. Without a starting report, a new file appears. If the original report matches byte for byte, the result has no changed file in the delta."
+    },
+    "practice": {
+      "strategy": "First record the expected path, header, and data row. Run the valid and malformed TSVs in separate starting states. Inspect the run changes before downloading and explicitly saving the result.",
+      "diagnosis": "If stdout is ok and the delta is empty, compare the starting report to the expected bytes. If success was not reported, identify the validation, write, or close stage before discussing saving."
+    },
+    "syntax": {
+      "termId": "delta",
+      "form": "FILE *report = fopen(path, \"wb\");\nif (report == NULL) { return 1; }\nint written = fprintf(report, \"%s\", text);\nint closed = fclose(report);",
+      "example": "int failed = fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\",\n                     summary.count, summary.total) < 0;\nint report_close = fclose(report);",
+      "explanation": "C17 writes the file and returns a close result. Nexus calculates the delta by comparing the input files and the run results. Identical bytes do not create a changed-file entry.",
+      "mistake": "An empty delta does not mean the program did not run. A file in the run results is not automatically saved into the project."
+    },
+    "focus": "    FILE *report = fopen(\"totals.tsv\", \"wb\");\n    if (report == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    int failed = fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total) < 0;\n    int report_close = fclose(report);\n    if (failed || report_close == EOF) {\n        puts(failed ? \"write-error\" : \"close-output-error\");\n        return 1;\n    }\n    puts(\"ok\");"
   }
 }

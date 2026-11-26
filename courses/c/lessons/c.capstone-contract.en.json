@@ -35,7 +35,8 @@
       "paragraphs": [
         "Shelf 20 is empty during a stocktake, yet item 20 still exists in the log. Seven units arrive tomorrow. If a search returns only a quantity, zero cannot tell you whether the item exists. Find the record by ID first and then read its quantity.",
         "The module contract starts with a headerless records.tsv. Each row is an ID from 1 to 9999, one TAB and a quantity from 0 to 9999. A number has 1–4 decimal digits. Leading zeros are accepted, so 0010 and 10 identify the same record. An empty file is valid and there can be up to 64 records. LF separates lines. The final LF is optional.",
-        "Enter one command per line in stdin. The forms are find ID, set ID QTY and report, with one space between words. Extra characters and a blank command produce invalid and status 2. An unknown ID produces missing and processing continues. Report writes summary.tsv with a tab-separated id and quantity header, then rows in input order. Every report row ends with LF."
+        "Enter one command per line in stdin. The forms are find ID, set ID QTY and report, with one space between words. Extra characters and a blank command produce invalid and status 2. An unknown ID produces missing and processing continues. Report writes summary.tsv with a tab-separated id and quantity header, then rows in input order. Every report row ends with LF.",
+        "The project invariants are compact: the record count stays within capacity, IDs are unique, and set changes only the quantity of an existing item. The report exposes the state after the commands."
       ]
     },
     {
@@ -311,5 +312,28 @@
     "prerequisites": [
       "c.structure-contracts"
     ]
+  },
+  "teaching": {
+    "scene": "A stock operator needs to find items, update quantities, and produce a report. Write down what must remain true after every command and verify it with the output and file.",
+    "predict": {
+      "prompt": "records.tsv holds item 10 with quantity 5 and item 20 with quantity 0. What follows find 10, set 20 7, and report? Write the three console lines and the report row order.",
+      "answer": "stdout contains 10 5, ok, and reported on separate lines. In example-summary.tsv, the header id TAB quantity is followed by 10 TAB 5 and 20 TAB 7. The input row order is preserved. stderr is empty and exit status is 0."
+    },
+    "apply": {
+      "prompt": "Use set 99 4 instead of set 20 7, then find 20 and report. What does the example print and which items reach the file?",
+      "answer": "stdout contains missing, 20 0, and reported. After the header the file still contains 10 TAB 5 and 20 TAB 0. Updating a missing ID adds no record. Compare both the rows and their order."
+    },
+    "practice": {
+      "strategy": "Record the TSV format and the required row order first. Trace the three commands for IDs 42 and 7 against the inventory state. Write expectations for stdout, stderr, exit status, and the file separately.",
+      "diagnosis": "If reported appears but the file contains only the header, check whether the report visits any records. If values are correct but out of order, compare traversal order with load order."
+    },
+    "syntax": {
+      "termId": "invariant",
+      "form": "for (size_t i = 0; i < stock->count; ++i) {\n    const Record *record = &stock->records[i];\n    /* use one complete record */\n}",
+      "example": "const Record *record = &stock->records[i];\nif (fprintf(output, \"%d\\t%d\\n\", record->id, record->quantity) < 0) {\n    problem = \"write-report-error\";\n}",
+      "explanation": "The loop condition i < count visits only populated records. Both the ID and quantity on a report row come from the same Record.",
+      "mistake": "Do not replace the actual count with array capacity. Do not sort the report unless the contract calls for it."
+    },
+    "focus": "    for (size_t i = 0; problem == NULL && i < stock->count; ++i) {\n        const Record *record = &stock->records[i];\n        if (fprintf(output, \"%d\\t%d\\n\", record->id, record->quantity) < 0) {\n            problem = \"write-report-error\";\n        }\n    }\n    if (fclose(output) != 0 && problem == NULL) {\n        problem = \"close-report-error\";"
   }
 }

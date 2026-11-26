@@ -284,5 +284,28 @@
       "c.checked-size-product",
       "c.record-operation-invariants"
     ]
+  },
+  "teaching": {
+    "scene": "A task queue can accept one record and refuse the next. Read the length, capacity and sum to identify which records were actually committed.",
+    "predict": {
+      "prompt": "The queue starts at 1:5 with used = capacity = 1. Growth for appending 8 succeeds, and the next growth for appending 13 is refused. Which report and records remain after both attempts?",
+      "answer": "The first growth sets capacity to 2 and appends 2:8, bringing used to 2. The second returns before writing. The report gives allocation-failed 2 2 13 and lists 1:5 and 2:8."
+    },
+    "apply": {
+      "prompt": "In practice the list starts at 1:10. Compare 6 7 2 and 6 7 0. How do length and sum reveal whether the second new record was committed?",
+      "answer": "For 6 7 2 only 6 is committed, giving allocation-failed 2 2 16. For 6 7 0 both are committed as capacity grows 1 → 2 → 4. The result is ok 3 4 23."
+    },
+    "practice": {
+      "strategy": "Separate calculation of the next capacity, numbering a valid attempt and the actual write. After a refusal, check used, capacity and the sum of committed entries as well as the status.",
+      "diagnosis": "On 20 30 with mode 2 the starter prints ok 3 4 60. The attempt counter remains at zero, so the selected refusal is never reached."
+    },
+    "syntax": {
+      "termId": "committed-prefix",
+      "form": "if (queue->used == queue->capacity && !reserve(queue, policy)) {\n    return 0;\n}\nqueue->items[queue->used] = record;\n++queue->used;",
+      "example": "if (queue->used == queue->capacity && !reserve(queue, policy)) {\n    return 0;\n}\nqueue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = 8};\n++queue->used;",
+      "explanation": "The first used records form the committed prefix. Appending changes it only after a space check and successful growth when needed.",
+      "mistake": "Incrementing used before reserve would expose an unwritten slot. Refusal must also preserve the ownership pointer and capacity."
+    },
+    "focus": "    if (queue->used == queue->capacity && !reserve(queue, policy)) {\n        return 0;\n    }\n    queue->items[queue->used] = (struct Record){.id = queue->used + 1, .value = value};\n    ++queue->used;"
   }
 }

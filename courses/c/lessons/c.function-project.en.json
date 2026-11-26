@@ -285,5 +285,28 @@
     "prerequisites": [
       "c.function-boundary-driver"
     ]
+  },
+  "teaching": {
+    "scene": "A receiving station converts time and mass, then shows labels on its display. Separate the numbers returned by the functions from the lines assembled by the caller.",
+    "predict": {
+      "prompt": "main supplies 3 hours and 2 kilograms. What does each converter return, and where are the labels attached?",
+      "answer": "hours_to_minutes returns 3 × 60 = 180. kilograms_to_grams returns 2 × 1000 = 2000. main adds the labels, producing minutes 180 and grams 2000."
+    },
+    "apply": {
+      "prompt": "For the same report structure, use 5 hours and 6 kilograms. Which direct calls and printed lines check the calculations and labels?",
+      "answer": "Direct calls with 5 and 6 return 300 and 6000. In the report, verify separate lines minutes 300 and grams 6000."
+    },
+    "practice": {
+      "strategy": "State each function’s input and output units. Test both formulas with direct calls in a local copy. In the working program, separately check dispatch and rejection of an unknown code.",
+      "diagnosis": "An output of meters 3 for three kilometers shows input and dispatch reached the meter branch. Check the multiplier in the distance conversion function."
+    },
+    "syntax": {
+      "termId": "decomposition",
+      "form": "static int convert(int value)\n{\n    return value * factor;\n}\n\n/* In the caller: choose the unit and print the result. */",
+      "example": "static int hours_to_minutes(int hours)\n{\n    return hours * 60;\n}",
+      "explanation": "A conversion function takes a number and returns the value in another unit. Dispatch and the printed unit remain the caller’s responsibility.",
+      "mistake": "When a converter prints its own label, the numeric result is harder to test in isolation. Compare the returned value separately."
+    },
+    "focus": "static int hours_to_minutes(int hours)\n{\n    return hours * 60;\n}\n\nstatic int kilograms_to_grams(int kilograms)\n{\n    return kilograms * 1000;\n}\n\nint main(void)\n{\n    printf(\"minutes %d\\n\", hours_to_minutes(3));\n    printf(\"grams %d\\n\", kilograms_to_grams(2));\n    return 0;\n}"
   }
 }

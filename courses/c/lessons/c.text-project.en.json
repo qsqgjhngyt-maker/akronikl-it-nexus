@@ -41,7 +41,8 @@
       "paragraphs": [
         "A log receives messages. The reader checks whether each record is usable based on its length and termination. Then the filter compares the start of each valid line. Test those decisions with separate inputs.",
         "CORRUPT can be a valid line that the filter skips. An overlong line increments rejected regardless of its text.",
-        "Consume the rest of a rejected line through its boundary. The next read_line call then starts on the first byte of the next message."
+        "Consume the rest of a rejected line through its boundary. The next read_line call then starts on the first byte of the next message.",
+        "Counting damaged records and selecting valid ones solve different problems. Valid text without the prefix does not increase rejected."
       ]
     },
     {
@@ -325,5 +326,28 @@
       "c.complete-line-input",
       "c.compare-bounded-strings"
     ]
+  },
+  "teaching": {
+    "scene": "Log tags appear at the start of records. Build a rule that retains the matching text in full and keeps a checkable count of damaged records.",
+    "predict": {
+      "prompt": "The listing receives ID:7, XID:7 and ID:. Which records does it print, and why does the record with the tag inside behave differently?",
+      "answer": "It prints ID:7 and ID:. Their first three bytes equal ID:. XID:7 starts with X, so its prefix check fails."
+    },
+    "apply": {
+      "prompt": "With limit 8 and prefix WARN, handle WARN ok, XWARN and WARN too long. Which line is printed, which is skipped and which increments the count?",
+      "answer": "WARN ok prints. XWARN is valid text and is skipped. WARN too long exceeds the limit, and the final line is rejected 1."
+    },
+    "practice": {
+      "strategy": "Classify the record with the supplied reader first. Count damaged records in their own branch. For valid text, compare only the leading bytes and print the stored record in full.",
+      "diagnosis": "The starter prints ERR and rejected 1 but drops ERR fan. That separates a whole-string check from a check of the first three bytes."
+    },
+    "syntax": {
+      "termId": "prefix",
+      "form": "if (strncmp(record, prefix, prefix_length) == 0) {\n    puts(record);\n}",
+      "example": "if (strncmp(\"ID:7\", \"ID:\", 3) == 0) {\n    puts(\"ID:7\");\n}",
+      "explanation": "strncmp from <string.h> limits the comparison to the given number of bytes. Prefix ID: requires all three bytes, including the colon.",
+      "mistake": "A whole-string comparison rejects a record with the right beginning and extra text. Compare the number of bytes in the prefix."
+    },
+    "focus": "    const char *const records[] = {\"ID:7\", \"XID:7\", \"ID:\"};\n    for (size_t i = 0; i < sizeof records / sizeof records[0]; ++i) {\n        if (strncmp(records[i], \"ID:\", 3) == 0) {\n            puts(records[i]);"
   }
 }

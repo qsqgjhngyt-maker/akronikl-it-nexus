@@ -65,7 +65,7 @@ try {
       curriculum.modules.map(module => module.id));
     assert.equal(await root.locator('[data-academy-topic]').count(), 0);
     await capture('cold-academy-c-390');
-    await modules.first().locator('a').click();
+    await modules.first().locator('[data-academy-open-module]').click();
     const topics = root.locator('[data-academy-course-navigation="topics"] [data-academy-topic]');
     await topics.first().waitFor();
     assert.deepEqual(await topics.evaluateAll(cards => cards.map(card => card.dataset.academyTopic)),
@@ -93,7 +93,7 @@ try {
       await current.locator('[data-action="tools"]').click();
       await current.locator('[data-academy-menu-item="program"]').click();
       const tiles = page.locator('[data-academy-course-navigation="modules"] [data-academy-module]');
-      await tiles.first().locator('a').click();
+      await tiles.first().locator('[data-academy-open-module]').click();
       const firstTopic = page.locator('[data-academy-course-navigation="topics"] [data-academy-topic] a').first();
       await firstTopic.click();
       await page.locator('[data-r3-topic]').waitFor();
@@ -112,11 +112,11 @@ try {
     assert.match(await library.innerText(), /Opening sources requires an internet connection/);
     await page.keyboard.press('Escape');
     await library.waitFor({state:'hidden'});
-    await root.getByRole('button', {name:'Reference', exact:true}).click();
+    await root.getByRole('button', {name:'Terminology reference', exact:true}).click();
     await root.locator('#termDrawer[open] [data-term-card]').first().waitFor();
     await page.keyboard.press('Escape');
     await root.getByRole('button', {name:'Syntax', exact:true}).click();
-    await root.locator('#termDrawer[open] [data-c-syntax-list] pre code').first().waitFor();
+    await root.locator('#termDrawer[open] [data-reference-details] pre code').first().waitFor();
     await page.keyboard.press('Escape');
     await root.locator('footer').getByRole('link', { name:'Next: self-check →' }).click();
     await root.locator('footer').getByRole('link', { name:'Go to practice →' }).click();

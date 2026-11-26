@@ -1,3 +1,4 @@
+import {courseHeroMarkup, courseContinueMarkup, courseTabsMarkup} from './academy-course-header.mjs';
 import {termReferenceMarkup} from './nexus-learning-ui.js';
 import {brandMarkMarkup} from '../core/brand-mark.js';
 import {programmingHubMarkup} from './code-hub-presentation.js';
@@ -5,10 +6,36 @@ import {textFor} from './i18n.js';
 import {glossaryItems,richText,benchmarkMarkup} from './lesson-presentation.js';
 import {codeStudioMarkup} from '../sandbox/code-studio.js';
 import {languageLabel} from '../sandbox/languages.js';
-import {continuationNote,continuationCard,recentProjectsMarkup,orderedCppLessons,learningLaboratory} from './nexus-learning-discovery.js';
+import {continuationNote,recentProjectsMarkup,orderedCppLessons,learningLaboratory} from './nexus-learning-discovery.js';
 import {graphicsPromoMarkup} from '../effects/nexus-graphics-lab.js';
 import {learnerAcademyEntries} from './academy-presentation.js';
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const cppModuleGuide={
+ 'cpp.section.algorithms':{
+  ru:['Проведите задачу от условия до алгоритма и проверьте его вручную.','Запишите вход, результат и шаги. Проверьте обычный и граничный случаи.'],
+  en:['Turn a problem into an algorithm and trace it by hand.','State the input, result and steps. Check an ordinary case and an edge case.'],
+ },
+ 'cpp.section.cpp-basics':{
+  ru:['Соберите первую программу и научитесь выбирать типы для вычислений.','Объясните, какой тип сохраняет дробную часть, и сравните результат на двух входах.'],
+  en:['Build your first program and learn to choose types for calculations.','Explain which type preserves the fraction and compare results for two inputs.'],
+ },
+ 'cpp.section.structured-programming':{
+  ru:['Разделяйте программу на функции, обрабатывайте коллекции и проверяйте границы.','Покажите, где проверяется вход и почему циклы заканчиваются.'],
+  en:['Split a program into functions, process collections and check bounds.','Show where input is validated and why each loop terminates.'],
+ },
+ 'cpp.section.classic-algorithms':{
+  ru:['Сравните способы поиска и сортировки и оцените их стоимость.','Обоснуйте выбор алгоритма и проверьте его на пустом наборе и повторяющихся значениях.'],
+  en:['Compare search and sorting methods and estimate their cost.','Justify the chosen algorithm and test an empty input and repeated values.'],
+ },
+ 'cpp.section.oop':{
+  ru:['Постройте небольшую модель из объектов с контролируемым состоянием и временем жизни.','Назовите владельца ресурса и покажите, как объект остаётся корректным после ошибки.'],
+  en:['Build a small model of objects with controlled state and lifetime.','Identify the resource owner and show how an object stays valid after an error.'],
+ },
+ 'cpp.section.visual-programming':{
+  ru:['Проследите, как событие меняет состояние приложения и обновляет экран.','Сравните допустимое и ошибочное действие и проверьте, что интерфейс остаётся отзывчивым.'],
+  en:['Trace how an event changes application state and updates the screen.','Compare a valid action with a rejected one and check that the interface stays responsive.'],
+ },
+};
 // Одни представления для проверенного online account и открытой локальной копии.
 // Зависимости данных передаются явно; этот модуль не выдаёт Account proof.
 export function createLearningViews(deps){
@@ -56,8 +83,26 @@ function practicumView(id){
 function courseProjectById(id){return cpp?.projectsRu?.projects?.find(item=>item.id===id)||null}
 function projectStudioDashboard(){const ps=projectStudioApi;return shell(`<div class="nexus-project-studio" data-nexus-project-studio>${ps.projectStudioDashboardMarkup({projects:ps.listProjects(),courseProjects:cpp?.projectsRu?.projects||[],locale:prefs.uiLocale})}</div>`,'projects')}
 function projectStudioProject(projectId){const ps=projectStudioApi;const project=ps.getProject(projectId);if(!project)return shell(`<a class="back-link" href="#view=project-studio">← Project Studio</a><section class="placeholder"><h1>${e(t('journey.error.project'))}</h1><p>${e(t('journey.error.project.text'))}</p></section>`,'projects');const source=project.origin?.courseId==='cpp'?courseProjectById(project.origin?.projectId):null;return shell(`<div class="nexus-project-studio" data-nexus-project-studio>${ps.projectStudioViewMarkup({project,courseProject:source,locale:prefs.uiLocale})}</div>`,'projects')}
-function courseTabs(tab){return `<div class="course-tabs"><a aria-current="${tab==='overview'?'page':'false'}" class="${tab==='overview'?'active':''}" href="#course=cpp">${e(t('learningPath.title'))}</a><a aria-current="${tab==='practicums'?'page':'false'}" class="${tab==='practicums'?'active':''}" href="#course=cpp&tab=practicums">${e(t('codeHub.tab.practicums'))}</a><a aria-current="${tab==='projects'?'page':'false'}" class="${tab==='projects'?'active':''}" href="#course=cpp&tab=projects">${e(t('codeHub.courseProjects'))}</a><a href="#view=course-final">${prefs.uiLocale==='en'?'Final assessment':'Итоговая работа'}</a></div>`}
-function courseHead(tab){const p=progress();return `<a class="back-link" href="#view=programming">← NEXUS CODE HUB</a><section class="course-hero"><div class="course-code large">C<span>++</span></div><div><span class="eyebrow">${e(t('codeHub.reference'))}</span><h1>${e(textFor(cpp.manifest.title,prefs.courseLocale))}</h1><p>${e(textFor(cpp.manifest.description,prefs.courseLocale))}</p>${prefs.courseLocale==='en'?`<div class="translation-note">${e(t('codeHub.translationNote'))}</div>`:''}<div class="learning-course-facts"><span><b>${cpp.curriculum.lessons.length}</b> ${e(t('codeHub.tab.topics'))}</span><span><b>${cpp.manifest.practicumCount}</b> ${e(t('codeHub.tab.practicums'))}</span><span><b>${cpp.manifest.projectCount}</b> ${e(t('codeHub.courseProjects'))}</span></div><div class="progress-row"><span>${e(t('course.progress'))}: <b>${p.done}/${p.total}</b></span><span>${p.pct}%</span></div><div class="progress" role="progressbar" aria-label="${e(t('course.progress'))}" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.done}"><i style="width:${p.pct}%"></i></div></div></section>${p.programVersion&&p.programVersion!=='cpp-v7'&&p.legacy?.total>0&&p.legacy.done===p.legacy.total?`<p class="translation-note" data-legacy-completion>${prefs.courseLocale==='en'?'Previous C++ v7 programme completed':'Прежняя программа C++ v7 завершена'}: ${p.legacy.done}/${p.legacy.total}</p>`:''}${courseTabs(tab)}${migration()}`}
+function courseTabs(tab,locale){
+  return courseTabsMarkup(locale,[
+    {href:'#course=cpp',title:t('learningPath.title'),active:tab==='overview'},
+    {href:'#course=cpp&tab=practicums',title:t('codeHub.tab.practicums'),active:tab==='practicums'},
+    {href:'#course=cpp&tab=projects',title:t('codeHub.courseProjects'),active:tab==='projects'},
+    {href:'#view=course-final',title:locale==='en'?'Final assessment':'Итоговая работа'},
+  ]);
+}
+function courseHead(tab,locale=prefs.courseLocale){
+  const p=progress(),en=locale==='en';
+  const hero=courseHeroMarkup({id:'cpp',locale,title:textFor(cpp.manifest.title,locale),
+    description:textFor(cpp.manifest.description,locale),symbol:'C',suffix:'++',
+    facts:[[cpp.curriculum.lessons.length,en?'Lessons':'Темы'],[cpp.manifest.practicumCount,en?'Practicums':'Практикумы'],
+      [cpp.manifest.projectCount,en?'Projects':'Учебные проекты']],progress:p});
+  const translation=en?' <p class="translation-note">'+e(t('codeHub.translationNote'))+'</p>':'';
+  const legacy=p.programVersion&&p.programVersion!=='cpp-v7'&&p.legacy?.total>0&&p.legacy.done===p.legacy.total
+    ? '<p class="translation-note" data-legacy-completion>'+(en?'Previous C++ v7 programme completed':'Прежняя программа C++ v7 завершена')+
+      ': '+p.legacy.done+'/'+p.legacy.total+'</p>':'';
+  return hero+translation+legacy+courseTabs(tab,locale)+migration();
+}
 async function overview(selectedModule){
   const params=new URLSearchParams(globalThis.location?.hash?.slice(1));
   selectedModule??=params.get('module');
@@ -76,6 +121,8 @@ async function overview(selectedModule){
   const lessonHref=(id,focus='')=>`#course=cpp&lesson=${encodeURIComponent(id)}${focus?'&focus='+focus:''}${localeSuffix}`;
   const sections=cpp.curriculum.sections.map(section=>({
     id:section.id,number:section.order,title:textFor(section.title,moduleLocale),
+    description:cppModuleGuide[section.id]?.[moduleLocale]?.[0],
+    criterion:cppModuleGuide[section.id]?.[moduleLocale]?.[1],
     topics:section.lessonIds.map(id=>{
       const lesson=byId[id];
       return {id,number:lessonPositions.get(id)||lesson.order,title:textFor(lesson.title,moduleLocale),
@@ -83,9 +130,17 @@ async function overview(selectedModule){
         detail:t(labFor(id)?'learningPath.topicWithLab':'learningPath.topicMaterials')};
     }),
   }));
+  const resume=cppContinuation();
+  const resumeStage=moduleLocale==='en'?{explanation:'Explanation',selfcheck:'Self-check',practice:'Practice'}:
+    {explanation:'Объяснение',selfcheck:'Самопроверка',practice:'Практика'};
+  const continuation=resume?courseContinueMarkup({locale:moduleLocale,title:textFor(resume.lesson.title,moduleLocale),
+    stage:resume.focus?t('discovery.kind.'+resume.focus):resumeStage[resume.stage],
+    href:resume.href+localeSuffix,visited:!!resume.visitedAt}):'';
   const selectedFilter=params.get('path')==='topics'||sections.some(section=>section.id===selectedModule)?'topics':cppLearningFilter;
-  const navigation=courseNavigationMarkup({locale:moduleLocale,modules:sections,selectedModule,
-    overviewHref:'#course=cpp'+localeSuffix,moduleHref:id=>'#course=cpp&module='+encodeURIComponent(id)+localeSuffix});
+  const selected=sections.some(section=>section.id===selectedModule);
+  const navigation=courseNavigationMarkup({locale:moduleLocale,modules:sections,selectedModule,includeStyles:selected,
+    overviewHref:'#course=cpp&path=topics'+localeSuffix,moduleHref:id=>'#course=cpp&module='+encodeURIComponent(id)+localeSuffix});
+  if(selected)return shell(navigation,'academy');
   const taskGroups=cpp.curriculum.sections.map(sec=>{
     const items=sec.lessonIds.filter(id=>tasks.some(item=>item.id===id));
     if(!items.length)return '';
@@ -100,7 +155,7 @@ async function overview(selectedModule){
   }).join('');
   const filters=[['topics',cpp.curriculum.lessons.length,'codeHub.tab.topics'],['tasks',tasks.length,'learningPath.tasks'],['labs',labs.length,'learningPath.labs']];
   const tabs=filters.map(([id,count,label])=>`<button type="button" id="cppPathTab-${id}" role="tab" aria-selected="${selectedFilter===id}" aria-controls="cppPathPanel-${id}" tabindex="${selectedFilter===id?0:-1}" data-learning-filter="${id}">${e(t(label))}<span class="learning-tab-count">${count}</span></button>`).join('');
-  return shell(courseHead('overview')+continuationCard(cppContinuation(),t,prefs.courseLocale)+`<section class="cpp-learning-path" data-cpp-learning-path data-learning-search><header class="learning-path-head"><div><span class="eyebrow">C++ · NEXUS CODE HUB</span><h2>${e(t('learningPath.title'))}</h2><p>${e(t('learningPath.intro',{modules:cpp.curriculum.sections.length,topics:cpp.curriculum.lessons.length}))}</p></div></header>${learningSearch('materialSearch','learningUi.materialSearch')}<div class="learning-path-tabs" role="tablist" aria-label="${e(t('learningPath.contentType'))}">${tabs}</div><div class="learning-path-panel" id="cppPathPanel-topics" role="tabpanel" aria-labelledby="cppPathTab-topics" tabindex="0" ${selectedFilter==='topics'?'':'hidden'}>${navigation}</div><div class="learning-path-panel" id="cppPathPanel-tasks" role="tabpanel" aria-labelledby="cppPathTab-tasks" tabindex="0" ${selectedFilter==='tasks'?'':'hidden'}><p class="learning-panel-note">${e(t('learningPath.tasksNote'))}</p>${taskGroups}</div><div class="learning-path-panel" id="cppPathPanel-labs" role="tabpanel" aria-labelledby="cppPathTab-labs" tabindex="0" ${selectedFilter==='labs'?'':'hidden'}><p class="learning-panel-note">${e(t('learningPath.labsNote'))}</p><div class="learning-lab-grid">${labCards||`<p class="learning-panel-note">${e(t('learningPath.noLabs'))}</p>`}</div></div>${learningEmpty()}</section>`,'academy');
+  return shell(courseHead('overview',moduleLocale)+continuation+`<section class="cpp-learning-path" data-cpp-learning-path data-learning-search><header class="learning-path-head"><div><span class="eyebrow">C++ · NEXUS CODE HUB</span><h2>${e(t('learningPath.title'))}</h2><p>${e(t('learningPath.intro',{modules:cpp.curriculum.sections.length,topics:cpp.curriculum.lessons.length}))}</p></div></header>${learningSearch('materialSearch','learningUi.materialSearch')}<div class="learning-path-tabs" role="tablist" aria-label="${e(t('learningPath.contentType'))}">${tabs}</div><div class="learning-path-panel" id="cppPathPanel-topics" role="tabpanel" aria-labelledby="cppPathTab-topics" tabindex="0" ${selectedFilter==='topics'?'':'hidden'}>${navigation}</div><div class="learning-path-panel" id="cppPathPanel-tasks" role="tabpanel" aria-labelledby="cppPathTab-tasks" tabindex="0" ${selectedFilter==='tasks'?'':'hidden'}><p class="learning-panel-note">${e(t('learningPath.tasksNote'))}</p>${taskGroups}</div><div class="learning-path-panel" id="cppPathPanel-labs" role="tabpanel" aria-labelledby="cppPathTab-labs" tabindex="0" ${selectedFilter==='labs'?'':'hidden'}><p class="learning-panel-note">${e(t('learningPath.labsNote'))}</p><div class="learning-lab-grid">${labCards||`<p class="learning-panel-note">${e(t('learningPath.noLabs'))}</p>`}</div></div>${learningEmpty()}</section>`,'academy');
 }
 function lessonData(id){
   const language=prefs.courseLocale==='en'?'en':'ru';

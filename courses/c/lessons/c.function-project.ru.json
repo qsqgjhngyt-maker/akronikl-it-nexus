@@ -285,5 +285,28 @@
     "prerequisites": [
       "c.function-boundary-driver"
     ]
+  },
+  "teaching": {
+    "scene": "Пункт приёмки переводит время и массу, а на табло выводит подписи. Разберите отдельно числа, возвращённые функциями, и строки, собранные местом вызова.",
+    "predict": {
+      "prompt": "В main передаются 3 часа и 2 килограмма. Что возвращает каждый конвертер и где к числам добавляются подписи?",
+      "answer": "hours_to_minutes возвращает 3 × 60 = 180. kilograms_to_grams возвращает 2 × 1000 = 2000. В main добавляются подписи, поэтому видны minutes 180 и grams 2000."
+    },
+    "apply": {
+      "prompt": "В той же структуре отчёта сравните 5 часов и 6 килограммов. Какие два прямых вызова и какие строки проверят вычисления и подписи?",
+      "answer": "Прямые вызовы для 5 и 6 возвращают 300 и 6000. В рабочем отчёте проверяются отдельные строки minutes 300 и grams 6000."
+    },
+    "practice": {
+      "strategy": "Опишите назначение функций по единицам. Проверьте обе формулы прямыми вызовами в локальной копии, затем в рабочей программе отдельно проверьте выбор пункта и отклонение неизвестного кода.",
+      "diagnosis": "Вывод meters 3 для трёх километров означает, что ввод и выбор ветки уже дошли до метров. Проверьте коэффициент у функции перевода расстояния."
+    },
+    "syntax": {
+      "termId": "decomposition",
+      "form": "static int convert(int value)\n{\n    return value * factor;\n}\n\n/* In the caller: choose the unit and print the result. */",
+      "example": "static int hours_to_minutes(int hours)\n{\n    return hours * 60;\n}",
+      "explanation": "Функция преобразования получает число и возвращает значение другой единицы. Выбор функции и подпись остаются в вызывающем коде.",
+      "mistake": "Если преобразователь печатает подпись сам, становится труднее проверить один числовой результат. Ожидаемый результат функции должен сравниваться отдельно."
+    },
+    "focus": "static int hours_to_minutes(int hours)\n{\n    return hours * 60;\n}\n\nstatic int kilograms_to_grams(int kilograms)\n{\n    return kilograms * 1000;\n}\n\nint main(void)\n{\n    printf(\"minutes %d\\n\", hours_to_minutes(3));\n    printf(\"grams %d\\n\", kilograms_to_grams(2));\n    return 0;\n}"
   }
 }

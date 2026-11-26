@@ -50,7 +50,8 @@
     {
       "title": "The intake file is unavailable, but the log still closes",
       "paragraphs": [
-        "The fixture input/reading.txt contains 42 and LF. Enter 1 followed by LF in stdin. In this mode a teaching branch skips opening the destination. Input fopen is still real."
+        "The fixture input/reading.txt contains 42 and LF. Enter 1 followed by LF in stdin. In this mode a teaching branch skips opening the destination. Input fopen is still real.",
+        "In this lab, mode 2 injects a controlled failure before the first actual write. It exercises the cleanup path under the same conditions on every run."
       ],
       "steps": [
         "The source stream opens. The output pointer stays NULL.",
@@ -322,5 +323,28 @@
       "c.copy-file-check-eof-and-write",
       "c.single-owner-cleanup"
     ]
+  },
+  "teaching": {
+    "scene": "A receiver copies sensor labels. Opening the destination failed, but the source is already open. Decide what still needs closing, then verify the decision with both counters.",
+    "predict": {
+      "prompt": "In the example input/reading.txt exists and stdin is 1. Which operation is skipped, and what will the two close counters show?",
+      "answer": "Mode 1 skips opening received.txt. The input stream was acquired, and the output remains NULL. The result is open-output-error, closed-input 1, closed-output 0, and exit code 1."
+    },
+    "apply": {
+      "prompt": "Run the same example in mode 2 with a nonempty input. What has been acquired before the refusal, and what data remains in the output file?",
+      "answer": "Both streams have been opened. An intentional refusal on the first write gives write-error. Both counters are 1, and the created received.txt is empty. The failure status still matters even when a file exists."
+    },
+    "practice": {
+      "strategy": "For each mode, record two separate facts: whether input was acquired and whether output was acquired. Translate them into the expected counters. Preserve the first cause of failure independently.",
+      "diagnosis": "In mode 1, closed-input 0 with an existing source exposes a cleanup guard error. Opening the output is irrelevant to whether an already open input must be closed."
+    },
+    "syntax": {
+      "termId": "resource-state",
+      "form": "FILE *stream = NULL;\n/* Acquire the stream before using it. */\nif (stream != NULL) { /* close the acquired stream */ }",
+      "example": "if (input != NULL) {\n    ++closed_input;\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n}",
+      "explanation": "The pointer check protects each stream independently. Incrementing the counter records a call to fclose. The problem == NULL condition preserves the primary error.",
+      "mistake": "Do not use the output stream state to guard closing the input. Once a close has been attempted, do not reuse the old pointer."
+    },
+    "focus": "    int closed_input = 0;\n    int closed_output = 0;\n    if (input != NULL) {\n        ++closed_input;\n        if (fclose(input) == EOF && problem == NULL) {\n            problem = \"close-input-error\";\n        }\n    }\n    if (output != NULL) {\n        ++closed_output;\n        if (fclose(output) == EOF && problem == NULL) {\n            problem = \"close-output-error\";\n        }\n    }"
   }
 }

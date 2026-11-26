@@ -44,7 +44,8 @@
       "paragraphs": [
         "A warehouse knows its batch size before reading the weights. Start the counter at zero and process exactly that many records. Do not consume the first weight of the next batch.",
         "A for loop initialises once, then checks the condition, runs the body and advances the loop variable. With i = 0 and i < n, the body visits indices 0 through n − 1.",
-        "Before each repetition, total equals the sum of values already processed. Adding the current weight preserves that property for the next step."
+        "Before each repetition, total equals the sum of values already processed. Adding the current weight preserves that property for the next step.",
+        "State the invariant for a check: after step i, the sum covers exactly the first i records when steps are numbered from one. This suggests separate tests for an empty batch, one value and the last value of a full batch."
       ]
     },
     {
@@ -319,5 +320,28 @@
     "prerequisites": [
       "c.ordered-conditions"
     ]
+  },
+  "teaching": {
+    "scene": "A hall planner tallies seats row by row. Predict the final total and write down the running value after each row to catch a skipped step.",
+    "predict": {
+      "prompt": "The example has four rows. Each step adds three times the row number to total. What four values does total hold in sequence?",
+      "answer": "The increments are 3, 6, 9 and 12. The running totals are 3, 9, 18 and 30. There is no fifth iteration, so the output is 30."
+    },
+    "apply": {
+      "prompt": "A smaller hall has three rows with 2, 4 and 6 seats. Which trace confirms that each row was counted once?",
+      "answer": "After rows 1, 2 and 3 the totals are 2, 6 and 12. The expected 12 distinguishes a missing last row from one counted twice."
+    },
+    "practice": {
+      "strategy": "First connect the counter to the number of required records. Start the total at zero and validate each record before adding it. Test an empty batch and one with a missing record.",
+      "diagnosis": "If every required record was read and a positive batch still prints `weight 0`, check whether the loop adds the current record to total."
+    },
+    "syntax": {
+      "termId": "accumulator",
+      "form": "int total = 0;\nfor (int i = 0; i < count; ++i) {\n    total += value_for_this_iteration;\n}",
+      "example": "int total = 0;\nfor (int row = 1; row <= 3; ++row) {\n    total += 2 * row;\n}",
+      "explanation": "The accumulator stores the sum of processed values. Zero describes the state before the first step, and each next item is added once.",
+      "mistake": "Update the shared total inside the loop and initialize it before the loop."
+    },
+    "focus": "int main(void)\n{\n    int total = 0;\n    for (int row = 1; row <= 4; ++row) {\n        total += 3 * row;\n    }\n    printf(\"%d\\n\", total);\n    return 0;\n}"
   }
 }

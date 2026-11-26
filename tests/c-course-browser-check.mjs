@@ -43,8 +43,8 @@ const publicResponses = new Map([
   ['/api/akronikl/cloud/preferences', { revision:0, value:null }],
 ]);
 const stageText = {
-  ru:['Объяснение','Самопроверка','Практика','Дальше: самопроверка →','Перейти к практике →','Следующий урок: ','Вернуться к программе →','Посмотреть эталонное решение','Справочник','Отметить изученным','Продолжить: '],
-  en:['Explanation','Self-check','Practice','Next: self-check →','Go to practice →','Next lesson: ','Back to the course outline →','View reference solution','Reference','Mark as studied','Resume: '],
+  ru:['Объяснение','Самопроверка','Практика','Дальше: самопроверка →','Перейти к практике →','Следующий урок: ','Вернуться к программе →','Посмотреть эталонное решение','Справочник терминов','Отметить изученным','Продолжить: '],
+  en:['Explanation','Self-check','Practice','Next: self-check →','Go to practice →','Next lesson: ','Back to the course outline →','View reference solution','Terminology reference','Mark as studied','Resume: '],
 };
 const results = [];
 const pageErrors = [];
@@ -159,13 +159,13 @@ const topicCards = page => course(page).locator('[data-academy-course-navigation
 
 async function openModuleFor(page, topicId) {
   const module = curriculum.modules.find(item => item.topics.some(topic => topic.id === topicId));
-  await course(page).locator('[data-academy-module="' + module.id + '"] a').click();
+  await course(page).locator('[data-academy-module="' + module.id + '"] [data-academy-open-module]').click();
   await topicCards(page).first().waitFor();
 }
 
 async function openTopicFromOutline(page, topicId) {
   await openModuleFor(page, topicId);
-  await course(page).locator('[data-academy-topic="' + topicId + '"] a').click();
+  await course(page).locator('[data-academy-topic="' + topicId + '"] [data-academy-open-module]').click();
 }
 
 async function returnToOutline(page) {
@@ -215,7 +215,7 @@ async function openCourse(page, locale, width) {
     curriculum.modules.map(module => module.id));
   for (const module of curriculum.modules) {
     const availableTopics = module.topics.filter(topic => manifest.availableTopicIds.includes(topic.id));
-    await course(page).locator('[data-academy-module="' + module.id + '"] a').click();
+    await course(page).locator('[data-academy-module="' + module.id + '"] [data-academy-open-module]').click();
     await topicCards(page).first().waitFor();
     assert.deepEqual(await topicCards(page).evaluateAll(cards => cards.map(card => card.dataset.academyTopic)),
       module.topics.map(topic => topic.id));
@@ -226,7 +226,7 @@ async function openCourse(page, locale, width) {
       await topicCards(page).first().waitFor();
       assert.equal(new URLSearchParams(new URL(page.url()).hash.slice(1)).get('module'), module.id);
     }
-    await course(page).locator('[data-academy-course-navigation="topics"] .academy-nav-back').click();
+    await course(page).locator('[data-academy-course-navigation="topics"] [data-academy-back="course"]').click();
     await moduleCards(page).first().waitFor();
   }
 }
@@ -256,8 +256,8 @@ async function checkDraft(page, first, next, words, {studied = 0, complete = tru
   assert.equal(await stdin.inputValue(), input);
   if (first.id === lessons.en[0].id) {
     await editor.evaluate(node => node.setSelectionRange(4, 8));
-    await course(page).locator('[data-c-reference="syntax"]').click();
-    await course(page).locator('dialog[open] [data-c-syntax-list]').waitFor();
+    await course(page).locator('[data-reference-editor-help]').click();
+    await course(page).locator('dialog[open] [data-reference-details]').waitFor();
     await page.keyboard.press('Escape');
     assert.deepEqual(await editor.evaluate(node => [node.value, node.selectionStart, node.selectionEnd]), [source, 4, 8]);
     assert.equal(await stdin.inputValue(), input);
@@ -292,8 +292,10 @@ async function checkDraft(page, first, next, words, {studied = 0, complete = tru
   assert.equal(await stdin.inputValue(), input);
   await returnToOutline(page);
   await course(page).getByRole('heading', { level:1, name:manifest.title[first.locale] }).waitFor();
-  assert.match(await course(page).locator('header.c-panel').innerText(), new RegExp('Studied ' + studied + ' / ' + lessonCount));
-  await course(page).getByRole('link', { name:words[10] + first.title, exact:true }).click();
+  assert.equal(await course(page).locator('[data-academy-course-hero] [data-progress]').innerText(), studied + '/' + lessonCount);
+  const resume = course(page).locator('[data-academy-course-continue]');
+  assert.equal(await resume.locator('[data-academy-continue-title]').innerText(), first.title);
+  await resume.locator('[data-learning-continue]').click();
   await lessonReady(page, first, words[2]);
   assert.equal(await editor.inputValue(), changed);
   assert.equal(await course(page).locator('[data-c-complete]').getAttribute('aria-pressed'), 'false');
@@ -346,7 +348,7 @@ try {
             assert.equal(await presence.isVisible(), width > 390, 'Mobile C controls need a clear tap area');
             await page.locator('.nexus-footer-actions [data-akronikl-open]').waitFor();
             const reference = course(page).getByRole('button', {name:words[8], exact:true});
-            const syntax = course(page).locator('[data-c-reference="syntax"]');
+            const syntax = course(page).locator('[data-reference-editor-help]');
             const drawer = course(page).locator('#termDrawer');
             const hash = new URL(page.url()).hash;
             for (const trigger of [reference, syntax]) {
@@ -362,9 +364,9 @@ try {
             await page.keyboard.press('Escape');
             assert.equal(await reference.evaluate(button => document.activeElement === button), true);
             await syntax.click();
-            const example = drawer.locator('[data-c-syntax-list] pre code').first();
+            const example = drawer.locator('[data-reference-details] pre code').first();
             await example.waitFor();
-            assert.equal(await example.textContent(), lesson.sections.find(section => section.code).code.source);
+            assert.equal(await example.textContent(), lesson.teaching.syntax.form);
             await checkLayout(page, label + '/syntax');
             await page.keyboard.press('Escape');
             assert.equal(await syntax.evaluate(button => document.activeElement === button), true);

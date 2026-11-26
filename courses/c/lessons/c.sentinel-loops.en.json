@@ -44,7 +44,8 @@
       "paragraphs": [
         "An event log may end at a sentinel −1 or simply run out of input. Both endings are valid. An invalid record is an error and should not masquerade as an empty log.",
         "With while (1), exits are checked in the body just after a read. Mark three exits in a trace: end of input, sentinel and error. The task also limits the number of accepted events.",
-        "Choose a sentinel outside the data range. It still has to parse as a value, but it must not be counted."
+        "Choose a sentinel outside the data range. It still has to parse as a value, but it must not be counted.",
+        "The stream can end at a command or at EOF. Both allow a report over accepted values. A broken record takes the separate error branch."
       ]
     },
     {
@@ -311,5 +312,28 @@
     "prerequisites": [
       "c.counted-accumulation"
     ]
+  },
+  "teaching": {
+    "scene": "An event log uses a special number to end its report. Count events before that command and confirm that a later record can no longer change the result.",
+    "predict": {
+      "prompt": "The sample records are 5, 7, −1 and 9. When does count change, and at which record does the loop stop processing?",
+      "answer": "5 raises count to 1 and 7 raises it to 2. −1 stops the loop before another increment. The line with 9 is left unread and the output is 2."
+    },
+    "apply": {
+      "prompt": "A log contains 4, 9, 6 and −1. How does the report change from 4, 9 and −1 when one event appears before the marker?",
+      "answer": "The marker ends both streams. Three events precede it in the first and two in the second. Verify outputs 3 and 2 respectively."
+    },
+    "practice": {
+      "strategy": "Write out the cases in order: end of input, invalid input, marker, then an ordinary temperature. Update count and sum together for each accepted value. Test the marker at the start and after two readings.",
+      "diagnosis": "If `999` produces invalid after two valid readings, inspect whether the marker is recognized before the upper limit on ordinary temperatures."
+    },
+    "syntax": {
+      "termId": "sentinel",
+      "form": "if (value == sentinel) {\n    break;\n}\n++count;",
+      "example": "for (int i = 0; i < length; ++i) {\n    if (events[i] == -1) { break; }\n    ++count;\n}",
+      "explanation": "A sentinel commands termination. The break check comes before the counter update, so the marker itself contributes no event.",
+      "mistake": "Checking the ordinary range first can reject a valid stop command. Classify the marker separately."
+    },
+    "focus": "int main(void)\n{\n    int count = 0;\n    while (1) {\n        int event;\n        int state = read_integer(-1, 20, &event);\n        if (state == READ_END) {\n            break;\n        }\n        if (state != READ_OK) {\n            puts(\"invalid\");\n            return 0;\n        }\n        if (event == -1) {\n            break;\n        }\n        if (count == 5) {\n            puts(\"invalid\");\n            return 0;\n        }\n        ++count;\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}"
   }
 }

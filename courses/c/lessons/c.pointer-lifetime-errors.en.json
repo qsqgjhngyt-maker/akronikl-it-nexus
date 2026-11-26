@@ -305,5 +305,28 @@
       "c.borrowed-pointer-contract",
       "c.local-scope-lived-object"
     ]
+  },
+  "teaching": {
+    "scene": "A reading is taken in a temporary block and printed later. Identify the integer to keep and the object that is live after the closing brace.",
+    "predict": {
+      "prompt": "sensor is 9 in the inner block and current receives its address. What value is available at printf, and which object does the call read?",
+      "answer": "While the block is active, *current yields 9 and the assignment stores it in saved. After the closing brace, printf reads the live saved object and prints 9."
+    },
+    "apply": {
+      "prompt": "The caller's initial value is -8. What should separate runs with -9x and -9 print? Where does the function perform its only write through out?",
+      "answer": "-9x prints invalid and leaves -8. -9 prints -9. The write through out follows the pointer check and successful input, and occurs before the function returns."
+    },
+    "practice": {
+      "strategy": "Initialize the result in the caller. Read into a temporary object, separate failure from success, and check the old result after a failure.",
+      "diagnosis": "With input 27 the starter prints 17. Reading succeeds, but the result keeps its old value. Check whether the value is copied into the outer object."
+    },
+    "syntax": {
+      "termId": "lifetime",
+      "form": "int saved;\n{\n    int local = 9;\n    saved = local;\n}",
+      "example": "int saved;\n{\n    const int sensor = 9;\n    const int *current = &sensor;\n    saved = *current;\n}",
+      "explanation": "The outer saved object holds a copy of the integer. sensor ends its lifetime earlier, so an address held past that boundary cannot replace the copied value.",
+      "mistake": "Returning &local carries the address of an object whose lifetime ends at the return. Use the compile diagnostic to examine this case without executing undefined behavior."
+    },
+    "focus": "    int saved;\n    {\n        const int sensor = 9;\n        const int *current = &sensor;\n        saved = *current;\n    }\n    printf(\"%d\\n\", saved);"
   }
 }

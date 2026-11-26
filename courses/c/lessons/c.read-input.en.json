@@ -51,7 +51,8 @@
         "A charging rack accepts between 1 and 48 cells. An operator enters a line and might accidentally append a unit or press Enter without supplying data. Separate reading a record, recognising a number and checking the rule for the rack.",
         "A 64-byte buffer holds 63 text bytes and a terminating null byte. The newline is consumed but not stored. A line that exceeds capacity is rejected as a whole, even if its prefix would be valid.",
         "READ_OK, READ_END and READ_BAD mean “value ready”, “no new record” and “record rejected”. The library uses end as a bookmark in the string. The later pointers module explains its representation.",
-        "The read_line and read_integer functions are provided. Follow the result from the line to the number and its remainder, then to the range check and status. In main, decide what to print for each status."
+        "The read_line and read_integer functions are provided. Follow the result from the line to the number and its remainder, then to the range check and status. In main, decide what to print for each status.",
+        "Each validation answers a separate question. `end == line` detects missing digits, the range checks the value, and the tail check detects extra text. A range check alone gives no information about the tail."
       ]
     },
     {
@@ -370,5 +371,28 @@
     "prerequisites": [
       "c.integer-quotient-remainder"
     ]
+  },
+  "teaching": {
+    "scene": "An operator enters the number of charging cells on one line. The result should make clear whether the program accepted the entire record, including any spaces after the number.",
+    "predict": {
+      "prompt": "The sample has a space and tab before 18 and a space after it. What does strtol consume, and what prints after the tail check?",
+      "answer": "strtol skips the leading whitespace and reads 18. end points at the trailing space. The loop skips it and reaches '\\0'. The value is in 1…48 and the output is cells 18."
+    },
+    "apply": {
+      "prompt": "An operator enters `18 cells`. How can you verify that the number was recognized and the record was still rejected?",
+      "answer": "strtol returns 18, then skipping the space leaves end at c. Non-whitespace remains before '\\0', so expect invalid."
+    },
+    "practice": {
+      "strategy": "Separate reading the record, parsing the number and checking the tail. Trace where end stops after skipping whitespace. Test both ends of the range and a number followed by a unit.",
+      "diagnosis": "If `12C` gives temperature 12, the numeric prefix already parsed. Inspect the byte at end after skipping whitespace. A complete record reaches '\\0'."
+    },
+    "syntax": {
+      "termId": "remainder",
+      "form": "char *end;\nlong value = strtol(line, &end, 10);\nwhile (isspace((unsigned char)*end)) {\n    ++end;\n}",
+      "example": "char line[] = \"18 units\";\nchar *end;\nlong value = strtol(line, &end, 10);",
+      "explanation": "strtol sets end to the first unparsed byte. After whitespace is skipped, the byte at that address reveals whether part of the record remains.",
+      "mistake": "An allowed numeric value establishes only the number. In `18 units`, the remaining text contains letters."
+    },
+    "focus": "    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;"
   }
 }

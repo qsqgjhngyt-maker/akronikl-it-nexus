@@ -1,3 +1,5 @@
+import {courseBackMarkup} from './academy-course-header.mjs';
+
 const styles = new URL('../styles/academy-course-navigation.css', import.meta.url).href;
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character =>
@@ -17,13 +19,22 @@ export function courseNavigationMarkup({locale, modules, selectedModule, overvie
     const progress = `${module.topics.filter(topic => topic.completed).length}/${module.topics.length}`;
     const progressId = `academy-module-progress-${module.id}`;
     const searchText = [module.title, ...module.topics.map(topic => topic.title)].join(' ');
+    const count = module.topics.length;
+    const topicCount = en ? (count === 1 ? 'lesson' : 'lessons') :
+      count % 100 >= 11 && count % 100 <= 14 ? 'тем' : count % 10 === 1 ? 'тема' : count % 10 >= 2 && count % 10 <= 4 ? 'темы' : 'тем';
     return `<li data-academy-module="${escape(module.id)}" data-search-item data-search-text="${escape(searchText)}">
-      <a class="academy-nav-card" href="${escape(moduleHref(module.id))}" aria-label="${escape(module.title)}" aria-describedby="${escape(progressId)}">
-        <span class="academy-nav-card-label">${en ? 'Module' : 'Модуль'} ${escape(number(module.number ?? index + 1))}</span>
-        <strong>${escape(module.title)}</strong>
-        <span class="academy-nav-card-meta" id="${escape(progressId)}">${module.available === false ? (en ? 'Planned' : 'В плане') : `${studied} <b>${progress}</b>`}</span>
-        <span class="academy-nav-arrow" aria-hidden="true">→</span>
-      </a>
+      <article class="academy-nav-module">
+        <div class="academy-nav-module-meta">
+          <span class="eyebrow">${en ? 'Module' : 'Модуль'} ${escape(number(module.number ?? index + 1))} · ${count} ${topicCount}</span>
+          <span class="academy-nav-card-meta" id="${escape(progressId)}">${module.available === false ? (en ? 'Planned' : 'В плане') : `${studied} <b>${progress}</b>`}</span>
+        </div>
+        <h3><a data-academy-open-module href="${escape(moduleHref(module.id))}" aria-describedby="${escape(progressId)}">${escape(module.title)} <span aria-hidden="true">↗</span></a></h3>
+        ${module.description ? `<p>${escape(module.description)}</p>` : ''}
+        ${module.criterion ? `<p><strong>${en ? 'Assessment' : 'Критерий'}.</strong> ${escape(module.criterion)}</p>` : ''}
+        <ul class="academy-nav-topic-links">${module.topics.map(topic => `<li data-academy-module-topic="${escape(topic.id)}">${topic.href ?
+          `<a href="${escape(topic.href)}"><span>${escape(topic.title)}</span><span aria-hidden="true">${topic.completed ? '✓' : '→'}</span>${topic.completed ? `<span class="academy-nav-visually-hidden"> (${studied})</span>` : ''}</a>` :
+          `<span>${escape(topic.title)}</span>`}</li>`).join('')}</ul>
+      </article>
     </li>`;
   };
 
@@ -43,7 +54,7 @@ export function courseNavigationMarkup({locale, modules, selectedModule, overvie
   return `${includeStyles ? `<link rel="stylesheet" href="${escape(styles)}">` : ''}
     <section data-academy-course-navigation="${selected ? 'topics' : 'modules'}" aria-labelledby="${heading}">
       <header class="academy-nav-heading">
-        ${selected ? `<a class="academy-nav-back" href="${escape(overviewHref)}"><span aria-hidden="true">←</span> ${outlineLabel}</a>
+        ${selected ? `${courseBackMarkup(locale, overviewHref)}
           <p class="academy-nav-card-label">${en ? 'Module' : 'Модуль'} ${escape(moduleNumber)}</p>` : ''}
         <h2 id="${heading}" tabindex="-1" data-academy-nav-heading>${selected ? escape(selected.title) : outlineLabel}</h2>
         ${selected?.description ? `<p>${escape(selected.description)}</p>` : ''}
