@@ -28,7 +28,7 @@ export function annotateReferenceTerms(scope,entries,{limit=18}={}){
  return used.size;
 }
 export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>true,c17=false,relatedTitles={}}){
- const en=locale==='en',say=(ru,eng)=>en?eng:ru,abort=new AbortController();let disposed=false,dialog=null,drawer=null,disposeDrawer=null,drawerTask=null,returnFocus=null,editorSelection=null;
+ const en=locale==='en',say=(ru,eng)=>en?eng:ru,abort=new AbortController();let disposed=false,dialog=null,drawer=null,disposeDrawer=null,drawerTask=null,editorSelection=null;
  const active=()=>!disposed&&isCurrent(),scope=c17?root:root.querySelector('.r3-lesson'),course=c17?'c':lesson.courseId;
  const explicit=new Set((lesson.terms||[]).filter(t=>typeof t==='string'));
  const syntax=c17?lesson.teaching?.syntax:null;
@@ -93,34 +93,42 @@ export async function mountReferenceHelp(root,{lesson,locale='ru',isCurrent=()=>
     },{signal:abort.signal});article.append(detail);
    }
    scope.append(d);drawer=d;disposeDrawer=bindGlossaryDrawer(scope);
-   d.addEventListener('close',()=>{if(!active())return;returnFocus?.focus({preventScroll:true});const ed=root.querySelector('#editor');if(ed&&editorSelection){ed.setSelectionRange(editorSelection.start,editorSelection.end,editorSelection.direction);ed.scrollTop=editorSelection.top;ed.scrollLeft=editorSelection.left}},{signal:abort.signal});
+   d.addEventListener('close',()=>{if(!active()||d.open)return;const ed=root.querySelector('#editor');if(ed&&editorSelection){ed.setSelectionRange(editorSelection.start,editorSelection.end,editorSelection.direction);ed.scrollTop=editorSelection.top;ed.scrollLeft=editorSelection.left}},{signal:abort.signal});
    return d;
   }).catch(error=>{drawerTask=null;throw error});
   return drawerTask;
  }
  root.addEventListener('click',async event=>{
-  const b=event.target.closest('button[data-open-terms],button[data-term]');if(!b||!active())return;
-  if(!drawer){
-   event.preventDefault();event.stopImmediatePropagation();
-   try{
-    await ensureDrawer();
-    // Let the native keyboard activation finish before replaying its click.
-    setTimeout(()=>{if(active()&&b.isConnected)b.click()},0);
-   }catch{if(active())toolbar.insertAdjacentHTML('beforeend','<span role="status">'+say('Справочник недоступен. Повторите открытие.','Reference unavailable. Try opening it again.')+'</span>')}
-   return;
+  const b=event.target.closest('button[data-open-terms],button[data-term]');
+  if(!b||!active())return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  try{
+   const d=await ensureDrawer();
+   if(!d||!active()||!b.isConnected||d.open)return;
+   if(dialog&&dialog!==d)close();dialog=d;
+   const useSyntax=b.hasAttribute('data-reference-editor-help');
+   if(c17)d.querySelector('#termDrawerTitle').textContent=useSyntax?
+    say('Синтаксис C17','C17 syntax'):say('Справочник терминов','Terminology reference');
+   const ed=root.querySelector('#editor');
+   editorSelection=ed?{start:ed.selectionStart,end:ed.selectionEnd,direction:ed.selectionDirection,
+    top:ed.scrollTop,left:ed.scrollLeft}:null;
+   if(useSyntax){
+    const selected=ed?.value.slice(ed.selectionStart,ed.selectionEnd).trim();
+    const word=ed?.value.slice(0,ed.selectionStart).match(/[\p{L}\p{N}_:#<>]+$/u)?.[0];
+    const query=norm(selected?.slice(0,100)||word||'');
+    b.dataset.term=c17?'':entries.find(entry=>[entry.term,...entry.aliases].some(name=>norm(name)===query))?.term||'';
+   }
+   disposeDrawer.open(b);
+   if(useSyntax){
+    const detail=d.querySelector('[data-term-card]:not([hidden]) [data-reference-details]');
+    if(detail)detail.open=true;
+   }
+  }catch{
+   if(active())toolbar.insertAdjacentHTML('beforeend','<span role="status">'+say('Справочник недоступен. Повторите открытие.','Reference unavailable. Try opening it again.')+'</span>');
   }
-  if(dialog&&dialog!==drawer)close();dialog=drawer;returnFocus=b;
-  const useSyntax=b.hasAttribute('data-reference-editor-help');
-  if(c17)drawer.querySelector('#termDrawerTitle').textContent=useSyntax?
-   say('Синтаксис C17','C17 syntax'):say('Справочник терминов','Terminology reference');
-  const ed=root.querySelector('#editor');editorSelection=ed?{start:ed.selectionStart,end:ed.selectionEnd,direction:ed.selectionDirection,top:ed.scrollTop,left:ed.scrollLeft}:null;
-  if(useSyntax){const selected=ed?.value.slice(ed.selectionStart,ed.selectionEnd).trim(),word=ed?.value.slice(0,ed.selectionStart).match(/[\p{L}\p{N}_:#<>]+$/u)?.[0];
-   b.dataset.term=c17?'':(selected?.slice(0,100)||word||'');}
  },{capture:true,signal:abort.signal});
- const onClick=event=>{const b=event.target.closest('button');if(!b||!active())return;
-  if(b.hasAttribute('data-reference-editor-help')&&drawer?.open){const first=[...drawer.querySelectorAll('[data-term-card]')].find(n=>!n.hidden);const detail=first?.querySelector('details');if(detail)detail.open=true;}
-  if(b.hasAttribute('data-learning-tour'))tour();
- };
+ const onClick=event=>{const b=event.target.closest('button');if(b&&active()&&b.hasAttribute('data-learning-tour'))tour();};
  root.addEventListener('click',onClick,{signal:abort.signal});
  function tour(){if(!active())return;close();const opener=root.getRootNode().activeElement||document.activeElement,d=document.createElement('dialog');dialog=d;d.className='r3-dialog learning-tour';d.setAttribute('aria-label',say('Как учиться здесь','How to learn here'));let step=0;
   const onec=course==='onec'||course==='1c-enterprise';
