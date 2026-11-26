@@ -200,14 +200,18 @@ try {
       await page.waitForURL(url=>new URLSearchParams(url.hash.slice(1)).get('view')==='academy');
       if (course==='cpp'&&locale==='ru'&&width===1440) {
         await page.evaluate(async release=>{
-          const {createProject}=await import(release+'project-studio/project-store.js');
-          for(const id of ['onec','1c-enterprise'])createProject({
-            id:'synthetic-'+id,title:'Учебная служба',languageId:'onec',
-            entryFile:'module.bsl',files:[{path:'module.bsl',content:'// Synthetic source',languageId:'onec'}],
-            origin:{kind:'lesson-work',courseId:id},
+          const [{createProject},{withProjectWriter}]=await Promise.all([
+            import(release+'project-studio/project-store.js'),import(release+'project-studio/project-writer.js'),
+          ]);
+          await withProjectWriter(()=>{
+            for(const id of ['onec','1c-enterprise'])createProject({
+              id:'synthetic-'+id,title:'Учебная служба',languageId:'onec',
+              entryFile:'module.bsl',files:[{path:'module.bsl',content:'// Synthetic source',languageId:'onec'}],
+              origin:{kind:'lesson-work',courseId:id},
+            });
           });
         },prefix);
-        await page.locator('a[href="#view=project-studio"]').first().click();
+        await page.goto(origin+'/#view=project-studio');
         const library=page.locator('[data-studio-library]');
         const courseFilter=library.locator('[data-studio-course-filter="1c-enterprise"]');
         await courseFilter.click();
