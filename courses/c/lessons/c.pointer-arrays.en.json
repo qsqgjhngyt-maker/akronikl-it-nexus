@@ -42,14 +42,16 @@
         "To walk through readings, keep a pointer cursor to the current item and end at the position after the used items. Check cursor != end before reading through *cursor.",
         "In begin = readings the array name converts to a pointer to its first element. Adding 1 advances one element because the pointer type determines the stride.",
         "When the working length equals capacity, end points one past the full array. Use this position as a boundary when comparing pointers within the same array. End the loop before reading through end. When length is zero, begin already equals end on the first check.",
-        "begin and end must belong to the same array. Numeric addresses alone do not establish that relationship, so validate the size against the actual buffer."
+        "begin and end must belong to the same array. Numeric addresses alone do not establish that relationship, so validate the size against the actual buffer.",
+        "For a three-element array, mark offsets 0, 1, 2 and draw a separate mark at 3 to the right. The range from offset 1 to 3 contains elements 1 and 2. The right-hand mark is the stop signal. You can step by elements within this array and up to one past it. Only actual elements can be read."
       ]
     },
     {
       "id": "example",
       "title": "Sum three readings and an empty range",
       "paragraphs": [
-        "Picture offsets 0, 1, 2 and 3. Only the first three positions hold values. At position 3 the loop stops before reading."
+        "Picture offsets 0, 1, 2 and 3. Only the first three positions hold values. At position 3 the loop stops before reading.",
+        "On each loop iteration, compare cursor with end first, then record the value read and advance cursor. If they are equal there is no next read. The same order therefore works for an empty or nonempty range."
       ],
       "steps": [
         "The assignments in main give begin offset 0 and end offset 3.",
@@ -329,12 +331,12 @@
       "answer": "The first call reads offsets 0, 1 and 2. The condition is false at offset 3, leaving 15. In the second call begin already equals end, so no reads occur and the sum is 0."
     },
     "apply": {
-      "prompt": "The buffer holds 4, 8, 7 and 9 with a working length of 2. For an inclusive threshold of 8, mark end and predict the count. What changes at length 4?",
-      "answer": "At first, end has offset 2 and only 8 counts, giving 1. At length 4 the end offset becomes 4, making 8 and 9 count for a result of 2."
+      "prompt": "An array contains 12, 3, 8 and 10. Take the range from the second element inclusive to the fourth exclusive. Which values does the loop visit, how many are at least 8, and at which offset does it stop?",
+      "answer": "The loop visits offsets 1 and 2, the values 3 and 8. One value meets the threshold. The stop is at offset 3, so the value 10 is outside the range."
     },
     "practice": {
-      "strategy": "Validate length against capacity before forming end. Compare cursor with end first on each iteration. Test both a zero length and a match at the final active position.",
-      "diagnosis": "For 1, 7 and 8 at length 3, the starter prints 0. The only match is last. Trace whether the end boundary has moved inward."
+      "strategy": "Mark the beginning and the right boundary on paper, then run with zero and with one reading. With a single value at the threshold, check the visit and the comparison separately.",
+      "diagnosis": "If length 0 should produce 0 but the code tries to read a value, locate the first read relative to the comparison with end. For length 1, separately mark when the condition stops the loop."
     },
     "syntax": {
       "termId": "end",

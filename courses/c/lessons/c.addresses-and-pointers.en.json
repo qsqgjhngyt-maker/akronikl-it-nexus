@@ -41,14 +41,16 @@
       "paragraphs": [
         "Two counters need the same increment. A pointer lets the program select a counter first and then use one shared assignment.",
         "In the declaration int *p, the asterisk is part of the declaration of a pointer. The expression *p dereferences p and accesses the object it points to. &value computes the address of the live variable value, which p stores after assignment.",
-        "Before access, establish which live object the pointer targets. In the example the initial assignment proves it. In the exercise the selection is checked before dereferencing."
+        "Before access, establish which live object the pointer targets. In the example the initial assignment proves it. In the exercise the selection is checked before dereferencing.",
+        "Draw three cells: value holding 8, a second counter with its own number, and p. Draw an arrow from p to value. In *p += 3, the number at the arrow's target changes. In p = &other, the arrow itself moves and both numbers stay put."
       ]
     },
     {
       "id": "example",
       "title": "One write and two ways to read it",
       "paragraphs": [
-        "Predict both output numbers. The stored integer changes and p continues to point to the same object."
+        "Predict both output numbers. The stored integer changes and p continues to point to the same object.",
+        "Read each expression aloud. 'Store an address in p' and 'write through p' change different objects. After the addition in the full example, ask which operation could change the number in value."
       ],
       "steps": [
         "The declaration of value creates an object holding 8.",
@@ -298,12 +300,12 @@
       "answer": "It prints 11 11. p first stores the address of value. *p denotes that same object, so adding 3 changes its integer from 8 to 11. The address held by p stays the same."
     },
     "apply": {
-      "prompt": "The left counter starts at 20 and the right at -1. Select the second counter and add 5. What pair proves that the right counter was updated?",
-      "answer": "The pair 20 4 shows where the write went. The first number stays 20, and the second changes from -1 to 4."
+      "prompt": "Two counters left and right hold 6 and 20. Work through p = &left, then *p += 2, then p = &right and *p += 3. What numbers are left, and which assignment changes p itself?",
+      "answer": "After the first write, left is 8. Changing the address makes p point at right and leaves the numbers alone. The next write gives 8 23. The assignment p = &right gives p its new value."
     },
     "practice": {
-      "strategy": "Separate selection, pointer validation and the shared increment into three steps. For each branch, identify the live object whose address selected stores.",
-      "diagnosis": "With input 2 the starter prints 7 10. The increment occurred once, but it changed the first number. Trace the branch that supplies the address."
+      "strategy": "Before adding, mark the selected object in each allowed branch. Pick inputs for both branches and for rejection. Use the other number staying unchanged to verify which object received the write.",
+      "diagnosis": "If the addition ran once but the wrong number changed, put the arithmetic aside. Which object does selected refer to immediately before the write for this choice?"
     },
     "syntax": {
       "termId": "indirection",

@@ -51,7 +51,8 @@
       "id": "example",
       "title": "Build a gauge with two paths to gauge.h",
       "paragraphs": [
-        "main.c includes gauge.h directly and also reaches it through gauge_scale.h. Predict how many definitions of struct Gauge remain in this translation unit."
+        "main.c includes gauge.h directly and also reaches it through gauge_scale.h. Predict how many definitions of struct Gauge remain in this translation unit.",
+        "Sketch main.c → gauge.h and main.c → gauge_scale.h → gauge.h. On each path, note the state of GAUGE_H before entering gauge.h. Decide which paths deliver the complete structure definition to the compiler."
       ],
       "steps": [
         "The direct include defines GAUGE_H and passes through the structure definition.",
@@ -245,7 +246,7 @@
       "Both includes are present. kit.h has its own guard. Inputs 2, 0 and 9 yield parts=8, parts=0 and parts=36 respectively.",
       "Two digits or an empty line yield invalid and exit code 1. stderr is empty for all run cases."
     ],
-    "hint": "KIT_H must cover the body of kit.h itself. KIT_LABEL_H belongs to a different header and does not protect the direct path to kit.h.",
+    "hint": "Draw both paths to the Kit definition. On which visit should KIT_H become defined? Mark the part of kit.h that should be skipped on the second path.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <stdio.h>\n#include \"kit.h\"\n#include \"kit_label.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int kits = read_digit();\n    if (kits < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    struct Kit order = {kits * PARTS_PER_KIT};\n    printf(\"parts=%d\\n\", order.parts);\n    return 0;\n}\n",
@@ -302,8 +303,8 @@
       "answer": "The first inclusion defines GAUGE_H and emits the structure definition. The second sees the macro and skips the body. main has one definition, and the program prints gauge=18 mm."
     },
     "apply": {
-      "prompt": "In a copy of gauge.h, change the guard name in #define but leave the name in #ifndef unchanged. Predict the stage at which the failure appears.",
-      "answer": "The original name is never defined, so both paths see a true condition. Compiling main.c rejects the duplicate definition of struct Gauge. There is no program stdout."
+      "prompt": "Imagine a second file check.c that includes gauge_scale.h first and gauge.h directly second. Mark the path that defines GAUGE_H first and count the copies of struct Gauge in each .c after the headers are processed.",
+      "answer": "In check.c the first entry is through gauge_scale.h, and the direct entry skips the body. Header macros are processed afresh for the new .c file. One definition of the type remains in each of main.c and check.c."
     },
     "practice": {
       "strategy": "Draw both edges from main.c to kit.h: one direct and one through kit_label.h. Guard the structure in its own file, then keep both edges and verify the calculation for two kits.",

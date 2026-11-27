@@ -52,8 +52,8 @@
       "id": "example",
       "title": "Classifying a short ticket queue",
       "paragraphs": [
-        "The example inspects at most five lines. 0 is an empty ticket, −1 ends reading and ticket numbers from 1 to 20 contribute to the sum.",
-        "For 0, 0, 3 and −1 on separate lines, predict which iterations skip the calculation and when ++seen runs."
+        "The example inspects at most five lines. 0 is an empty ticket, -1 ends reading and ticket numbers from 1 to 20 contribute to the sum.",
+        "For 0, 0, 3 and -1 on separate lines, predict which iterations skip the calculation and when ++seen runs."
       ],
       "code": {
         "language": "c",
@@ -66,7 +66,7 @@
       "steps": [
         "Put the limit in the for header.",
         "Check the read status before using ticket.",
-        "A −1 stops traversal. A 0 executes continue.",
+        "A -1 stops traversal. A 0 executes continue.",
         "Only valid tickets change the sum and accepted."
       ],
       "trace": [
@@ -89,7 +89,7 @@
           "Sum 3"
         ],
         [
-          "Line 4: −1",
+          "Line 4: -1",
           "seen 3, accepted 1",
           "exit",
           "break before ++seen"
@@ -110,7 +110,8 @@
       "title": "Use different tests for different contracts",
       "paragraphs": [
         "Six skipped lines followed by a valid seventh line distinguish a scan limit from a measurement limit. A single reading of 30 tests whether the threshold is inclusive.",
-        "Also test an invalid record after a valid value. The contract requires only invalid, with no partial summary."
+        "Also test an invalid record after a valid value. The contract requires only invalid, with no partial summary.",
+        "Write down what ends the loop before computing the report: six inspected records, the marker, or EOF. Compare two short inputs: -99 and 30 followed by EOF give one accepted reading and one reading at the threshold, whereas 999 and 30 give empty. Neither special value contributes to the sum; only the skip lets reading continue."
       ]
     }
   ],
@@ -169,7 +170,7 @@
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "What should happen with six lines of −99 and 32 on a seventh line? Why?",
+      "prompt": "What should happen with six lines of -99 and 32 on a seventh line? Why?",
       "feedback": "Six skipped lines consume six steps without increasing count. The seventh line is not read. The output is empty.",
       "recall": "transfer"
     }
@@ -187,8 +188,8 @@
   ],
   "practice": {
     "title": "Temperatures with skips and a scan limit",
-    "task": "Read at most six records, one per line. Skip −99. Stop at 999 or EOF. Ordinary temperatures run from −40 to 60 inclusive. On an error, print invalid without a partial summary. If no readings were accepted, print empty. Otherwise print three space-separated integers: the accepted count, their sum, and the count at or above 30. Ignore input after termination.",
-    "hint": "Put continue for −99 before the range check. Use >= 30 and check that ++seen belongs in the for header.",
+    "task": "Read at most six records, one per line. Skip -99. Stop at 999 or EOF. Ordinary temperatures run from -40 to 60 inclusive. On an error, print invalid without a partial summary. If no readings were accepted, print empty. Otherwise print three space-separated integers: the accepted count, their sum, and the count at or above 30. Ignore input after termination.",
+    "hint": "Put continue for -99 before the range check. Use >= 30 and check that ++seen belongs in the for header.",
     "criteria": [
       "A skipped line uses one scan slot without affecting the summary.",
       "Count 30 as hot and exclude 29.",
@@ -203,7 +204,7 @@
       },
       {
         "where": "Code Studio",
-        "action": "Fix the −99 skip and the boundary 30.",
+        "action": "Fix the -99 skip and the boundary 30.",
         "why": "The two discrepancies have different causes.",
         "expected": "The sample prints 4 79 2."
       },
@@ -318,8 +319,8 @@
   "teaching": {
     "scene": "A dispatcher reviews a queue with blank tickets and a separate stop command. Track two counts: how many records were seen and how many belong in the report.",
     "predict": {
-      "prompt": "The sample receives 0, 0, 3 and −1. What happens to the accepted count at each record, and which two numbers print?",
-      "answer": "Both zeros take continue and leave accepted at 0. The 3 raises accepted to 1 and sum to 3. −1 ends processing. The output is 1 3."
+      "prompt": "The sample receives 0, 0, 3 and -1. What happens to the accepted count at each record, and which two numbers print?",
+      "answer": "Both zeros take continue and leave accepted at 0. The 3 raises accepted to 1 and sum to 3. -1 ends processing. The output is 1 3."
     },
     "apply": {
       "prompt": "The queue starts with five zeroes, then 6. With a five-record inspection limit, does the program reach 6, and what result follows?",
@@ -327,7 +328,7 @@
     },
     "practice": {
       "strategy": "Make a table for errors, stopping, skipping and normal readings. Keep inspected and accepted counts separate, and count values at or above 30 after accepting them.",
-      "diagnosis": "If −99 produces invalid or changes the sum, check that skipping precedes the ordinary range guard and every report update."
+      "diagnosis": "If -99 produces invalid or changes the sum, check that skipping precedes the ordinary range guard and every report update."
     },
     "syntax": {
       "termId": "skip",

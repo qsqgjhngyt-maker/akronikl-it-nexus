@@ -96,7 +96,8 @@
       "title": "Record the phase that stopped",
       "paragraphs": [
         "The separate _Static_assert rejection is an expected build outcome. There is no program stdout for that build. A launch environment failure is also separate from invalid printed by a running program.",
-        "Log the source, compiler version, C17 mode, exact input, expected and observed stdout, stderr and exit status. Keep inputs and expected program output independent of random values, compiler message localisation and time."
+        "Log the source, compiler version, C17 mode, exact input, expected and observed stdout, stderr and exit status. Keep inputs and expected program output independent of random values, compiler message localisation and time.",
+        "Make the log reproducible. Use a short input, and write down its exact spaces and LF. Use the same compiler version and the identical line before and after the fix. Keep at least one normal case alongside it to ensure the fix did not turn every answer into invalid."
       ]
     },
     {
@@ -260,7 +261,7 @@
       "0 and 30 are accepted, while 31 gives invalid. A normal result has empty stderr and status 0.",
       "Keep the source or revision, the input with its exact line ending and separate before-and-after observations."
     ],
-    "hint": "Keep 12x unchanged between runs. After skipping whitespace, *end must be the terminating zero byte.",
+    "hint": "Keep the input where the versions disagree. Compare where number parsing stopped with where a valid complete line should end. Run a nearby valid input separately.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 0 || value > 30) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"slots %ld\\n\", value);\n    return 0;\n}\n",
@@ -317,8 +318,8 @@
       "answer": "strtol consumes 7 and leaves end at x. The x is neither whitespace nor the end of the string. read_value rejects the input, and main prints invalid."
     },
     "apply": {
-      "prompt": "Compare 7 with trailing whitespace and 7 3, both followed by LF. Explain where the check stops and record the two outcomes.",
-      "answer": "For the first line end reaches the string terminator after whitespace, so stdout contains 7. For the second it stops on digit 3, so the result is invalid. The inputs distinguish trailing whitespace from a second number."
+      "prompt": "Make a pair with the number 12 and a plus sign: put the sign before the number on one line and after it on the other. Add LF to both. Which new input catches a version that checks only the numeric prefix?",
+      "answer": "+12 parses through the end of the line, so the output is 12. After 12+, end is left at the plus sign, so the answer should be invalid. A version that accepts a numeric prefix would incorrectly also print 12 for the second line."
     },
     "practice": {
       "strategy": "Preserve the exact input 12x followed by LF and record stdout, stderr, and exit status. After the fix, use the same bytes and add a valid control with 12 and permitted whitespace.",

@@ -45,14 +45,16 @@
         "A list with two records can have capacity 2 or 6. The resize request sets the new number of slots. Existing records and their values follow a separate contract.",
         "For a positive request, realloc may return a new pointer or NULL. On NULL, the old allocation remains available. Store the result in a temporary variable and update pointer and metadata only after the check.",
         "On success the previous allocation's lifetime ends. Use the returned pointer and derive element pointers from it again. Do not evaluate the old pointer, even for comparison. Initialize new slots before reading them.",
-        "Capacity limits storage, while used counts written entries. Additional slots stay outside the used range until they have been initialized."
+        "Capacity limits storage, while used counts written entries. Additional slots stay outside the used range until they have been initialized.",
+        "Draw the list as two filled cells and the fields used and capacity. When requesting four slots, keep the original block diagram first. After success, redraw the capacity and use the pointer returned by realloc. The block may have stayed in the same place. On failure, leave the original diagram alone."
       ]
     },
     {
       "id": "example",
       "title": "Grow a list of two values",
       "paragraphs": [
-        "Predict used count, new capacity and the sum after resizing [8, 13] to four slots."
+        "Predict used count, new capacity and the sum after resizing [8, 13] to four slots.",
+        "Add the state before and after the call to your trace. Name the reason for the change separately. A request can succeed without allocating, succeed with a new capacity, or fail while preserving the old data."
       ],
       "code": {
         "language": "c",
@@ -297,12 +299,12 @@
       "answer": "capacity becomes 4 and used stays 2. The first two elements still hold 8 and 13, so the sum is 21 and the output is ok 4 21."
     },
     "apply": {
-      "prompt": "For a list holding 4 and 7 with capacity = 2, compare requests 2 0 and 5 0. How do the outputs distinguish an unchanged capacity from controlled refusal to grow?",
-      "answer": "2 0 gives ok 2 11 with no size change. The flag refuses growth for 5 0, giving allocation-failed 2 11. Both preserve the original entries and capacity."
+      "prompt": "A list has two numbers, 8 and 13, and capacity 6. In separate runs, request 2 with permission, 1 with permission, and 4 without permission. Which requests can change the capacity, and what happens to the used elements?",
+      "answer": "If reallocation succeeds, the allowed request for 2 reduces capacity to 2, keeps used at 2 and the sum at 21. The request for 1 violates the used boundary. Policy rejects the forbidden request for 4. Both rejections leave capacity 6, both values and the sum 21."
     },
     "practice": {
-      "strategy": "Validate the new capacity and ensure it can hold all used elements. Keep the realloc result separate. Update both the address and capacity on success.",
-      "diagnosis": "On successful allocation for 6 1, the starter prints ok 2 11. It preserves the sum and gives the success status, but capacity still describes the old size."
+      "strategy": "Before the call, write a state row with used, capacity and the sum. Compare a request for the same capacity, an allowed change and a policy refusal. Check the address and metadata on the branch for successful change.",
+      "diagnosis": "If the sum is right on success but capacity is old, mark accepting the returned pointer and updating the block description separately. Which of these actions did the code reach?"
     },
     "syntax": {
       "termId": "temporary-result",

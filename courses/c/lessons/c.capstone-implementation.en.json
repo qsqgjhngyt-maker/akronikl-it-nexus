@@ -35,7 +35,8 @@
       "paragraphs": [
         "A team lead asks to correct a zero in the stock list. Pass only the parsed ID and quantity into inventory_set. The function finds an existing record and writes the new value there. The main program owns command parsing.",
         "Inventory is declared in inventory.h, which both main.c and inventory.c include. Pass both .c files to the compiler. The header supplies the types and declarations. The implementation in inventory.c is needed by the linker.",
-        "A model check creates an Inventory directly in memory and tests operations without any files. An integration check then runs text commands to confirm that the same invariant holds after reading records.tsv."
+        "A model check creates an Inventory directly in memory and tests operations without any files. An integration check then runs text commands to confirm that the same invariant holds after reading records.tsv.",
+        "Break an update into lookup, writing, and confirming the outcome. An unsuccessful lookup does not reach the write. For a successful lookup, check the new quantity and the neighbouring record. Its ID, quantity, and position should all stay the same."
       ]
     },
     {
@@ -285,7 +286,7 @@
       "The first and last records remain searchable. Only the requested record changes after the update.",
       "ok and missing separate success from absence. With report the artifact includes the updated quantity."
     ],
-    "hint": "Compare your loop with inventory_find. Assign stock->records[i].quantity and return 1 after the assignment.",
+    "hint": "Compare with looking up a record. Mark two outcomes of scanning the records: finding the same ID, and reaching the end without a match. Which outcome permits a quantity change?",
     "exercises": [
       {
         "title": "One more check",
@@ -336,8 +337,8 @@
       "answer": "The lines are 20 0, missing, ok, and 20 7. The first and last searches read the same item in different states. Only a successful set changes its quantity. No report file appears without report."
     },
     "apply": {
-      "prompt": "In a fresh run of the same example, send set 10 0, find 10, and find 20. How will you tell that the update touched only one record?",
-      "answer": "The lines are ok, 10 0, and 20 0. Initially item 10 had 5 and item 20 already had 0. Track the IDs as well as quantities: matching quantities do not make two items one record."
+      "prompt": "In a clean run of the example, send set 99 8, find 20, set 20 8, and find 20. Which observations show that the model rejected the first update and actually wrote the second?",
+      "answer": "Stdout shows missing, 20 0, ok, and 20 8. Rejecting ID 99 does not alter record 20. The next successful set changes only the quantity of the matching record. There is no report because no report command was given."
     },
     "practice": {
       "strategy": "State what the function should return for a found or missing ID. Verify that the scan reaches the last item and that a missing ID changes nothing. Build main.c with inventory.c.",

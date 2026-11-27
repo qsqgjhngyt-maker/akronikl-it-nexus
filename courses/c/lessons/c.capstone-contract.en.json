@@ -43,7 +43,8 @@
       "id": "example",
       "title": "Follow three commands and check the report",
       "paragraphs": [
-        "The file has two rows: item 10 has 5 units and item 20 has none. The three commands below change only record 20. The walkthrough writes example-summary.tsv, keeping summary.tsv for your own work."
+        "The file has two rows: item 10 has 5 units and item 20 has none. The three commands below change only record 20. The walkthrough writes example-summary.tsv, keeping summary.tsv for your own work.",
+        "Before looking at the code, sketch two rows for the stock state. After each command, mark only the changed field and record the visible message. For report, copy both rows to the file in their previous order. Then repeat with input records arriving in another order."
       ],
       "steps": [
         "find 10 finds the first record and prints 10 5.",
@@ -270,7 +271,7 @@
       "find 42, set 7 2 and report print 42 9, ok and reported. Stderr is empty and status is 0.",
       "summary.tsv has exactly three rows with TAB and LF. An empty inventory produces just the header."
     ],
-    "hint": "Use the id and quantity of the same Record while iterating over [0, count).",
+    "hint": "Make a two-row table in load order. Mark the start and end of the report body after the header. Check that the ID and quantity in each row come from the same record.",
     "exercises": [
       {
         "title": "One more check",
@@ -320,8 +321,8 @@
       "answer": "stdout contains 10 5, ok, and reported on separate lines. In example-summary.tsv, the header id TAB quantity is followed by 10 TAB 5 and 20 TAB 7. The input row order is preserved. stderr is empty and exit status is 0."
     },
     "apply": {
-      "prompt": "Use set 99 4 instead of set 20 7, then find 20 and report. What does the example print and which items reach the file?",
-      "answer": "stdout contains missing, 20 0, and reported. After the header the file still contains 10 TAB 5 and 20 TAB 0. Updating a missing ID adds no record. Compare both the rows and their order."
+      "prompt": "In a clean copy, reverse the load order: 20 TAB 0 LF, then 10 TAB 5 LF. Run set 20 3, find 10, and report. Which lines appear on the screen, and which lines appear in the file and in what order?",
+      "answer": "Stdout shows ok, 10 5, and reported. After the id TAB quantity header, the file contains 20 TAB 3 and then 10 TAB 5. The report preserves load order. Looking up a record reads the state without changing that order."
     },
     "practice": {
       "strategy": "Record the TSV format and the required row order first. Trace the three commands for IDs 42 and 7 against the inventory state. Write expectations for stdout, stderr, exit status, and the file separately.",

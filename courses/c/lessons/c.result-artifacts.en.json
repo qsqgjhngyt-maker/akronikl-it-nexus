@@ -50,7 +50,8 @@
     {
       "title": "A summary for two readings",
       "paragraphs": [
-        "The fixture reading.tsv has two rows: 7, TAB, 3, LF and 8, TAB, 0, LF. The report needs a header and one data row. Predict the count and total."
+        "The fixture reading.tsv has two rows: 7, TAB, 3, LF and 8, TAB, 0, LF. The report needs a header and one data row. Predict the count and total.",
+        "Check the summary as its recipient. First explain the two columns, then predict their exact separators. One correct number does not yet establish that you have a table with its header and a separate data row."
       ],
       "steps": [
         "Validate both rows. Obtain count 2 and total 3. Close the source.",
@@ -296,7 +297,7 @@
       "A malformed second row gives invalid line 2, code 1, an empty run delta, and no actions for old results.",
       "The new report is absent from a fresh workspace before you explicitly save it. Once the save is confirmed, verify that both lines open in the workspace."
     ],
-    "hint": "Use fprintf(report, \"records\\ttotal\\n%zu\\t%ld\\n\", summary.count, summary.total). A negative result means a write error.",
+    "hint": "Sketch the report as two lines. The header holds fixed labels, and the second line reads two numbers from the summary. Compare the write check with the separate close check in the worked example.",
     "exercises": [
       {
         "title": "Failure after a successful report",
@@ -328,11 +329,11 @@
     "scene": "Give the stock manager a report as a separate file. The word ok by itself proves neither what is in the file nor whether the result was saved into the project.",
     "predict": {
       "prompt": "The example reads 7 TAB 3 and 8 TAB 0. Which two lines will totals.tsv contain? Where will you see ok?",
-      "answer": "The report contains records TAB total LF, then 2 TAB 3 LF. ok appears in stdout after a successful write and close. The two data lines are in totals.tsv."
+      "answer": "The report contains records TAB total LF, then 2 TAB 3 LF. ok appears in stdout after a successful write and close. The two lines are in totals.tsv."
     },
     "apply": {
-      "prompt": "In a copy of the run, supply an existing totals.tsv with exactly the bytes the example will write. Compare the status and the changes list to a run without a starting report.",
-      "answer": "Both runs give ok and exit code 0. Without a starting report, a new file appears. If the original report matches byte for byte, the result has no changed file in the delta."
+      "prompt": "In a clean copy of the example, set the quantity in the first record to 0 and leave the second at 0 as well. Which numbers should be in totals.tsv, and what remains in stdout? Which bytes will you inspect after downloading?",
+      "answer": "The stdout message is ok. The file contains records TAB total LF, then 2 TAB 0 LF. Both input rows count even though their total is zero. Download totals.tsv and check the header, the single data row, TAB, and both LF bytes."
     },
     "practice": {
       "strategy": "First record the expected path, header, and data row. Run the valid and malformed TSVs in separate starting states. Inspect the run changes before downloading and explicitly saving the result.",

@@ -58,7 +58,8 @@
       "title": "Why two one-digit numbers take four bytes",
       "paragraphs": [
         "The file input.txt contains 3, LF, 6, LF. Leave stdin empty. Before running, list the four bytes that should reach copy.txt.",
-        "Writing begins only after the input has been read and its stream closed successfully. For a file over the limit, also check that no new copy appears, even if its first 64 bytes look valid."
+        "Writing begins only after the input has been read and its stream closed successfully. For a file over the limit, also check that no new copy appears, even if its first 64 bytes look valid.",
+        "At the buffer limit, track two things: how many bytes you have kept, and what the next read returned. A full buffer is allowed. After storing 64 bytes, EOF ends the read, while a 65th data byte has no space left."
       ],
       "steps": [
         "Keep every byte, including LF. After fgetc returns EOF, check ferror before closing the input stream.",
@@ -314,7 +315,7 @@
       "An empty input/route.txt yields written 0 and an empty copy.txt. A missing input/route.txt yields open-input-error, exit code 1, and no new file.",
       "Compare length and bytes. The source stays unchanged. A run file does not enter the editor without an explicit action."
     ],
-    "hint": "In while, keep the condition (byte = fgetc(input)) != EOF. LF is a byte to copy. Keep the existing ferror check after the loop.",
+    "hint": "Trace what fgetc returns for LF and at the end of the file. Preserve the byte for writing and compare it with the stop signal in the loop condition. The ferror check has a separate job.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/route.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-input-error\");\n        return 1;\n    }\n\n    unsigned char bytes[64];\n    size_t length = 0;\n    const char *problem = NULL;\n    int byte;\n    while ((byte = fgetc(input)) != EOF) {\n        if (length == sizeof bytes) {\n            problem = \"input-too-long\";\n            break;\n        }\n        bytes[length++] = (unsigned char)byte;\n    }\n    if (problem == NULL && ferror(input)) {\n        problem = \"read-error\";\n    }\n    if (fclose(input) == EOF && problem == NULL) {\n        problem = \"close-input-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    FILE *output = fopen(\"copy.txt\", \"wb\");\n    if (output == NULL) {\n        puts(\"open-output-error\");\n        return 1;\n    }\n    if (fwrite(bytes, 1, length, output) != length) {\n        problem = \"write-error\";\n    }\n    if (fclose(output) == EOF && problem == NULL) {\n        problem = \"close-output-error\";\n    }\n    if (problem != NULL) {\n        puts(problem);\n        return 1;\n    }\n\n    printf(\"written %zu\\n\", length);\n    return 0;\n}\n",
@@ -363,8 +364,8 @@
       "answer": "There are four bytes: the digit 3, LF, the digit 6, LF. fgetc returns EOF after the final byte is read. written 4 confirms the length. The contents of copy.txt confirm the byte values and their order."
     },
     "apply": {
-      "prompt": "In a separate copy of the input file, remove only the final LF. Leave the line break between 3 and 6. Predict the length and the last bytes of the result.",
-      "answer": "The copy has three bytes: 3, LF, 6. The output is written 3, and there is no LF after the digit 6. Compare the result file itself because the display may add a visual line break."
+      "prompt": "Take a clean copy of the example. Put 63 letters A and one LF in input.txt. Predict the status and the length of the result. Repeat with one extra A before LF. Which observations distinguish a full buffer from an input that is too long?",
+      "answer": "The first sequence uses 64 bytes, so the result is written 64 and copy.txt ends in LF. The second uses 65 bytes. After the buffer fills, the next read finds another byte, so the program reports input-too-long before it opens copy.txt."
     },
     "practice": {
       "strategy": "Mark where the loop reads, checks capacity, and stores the byte. Compare copies with and without the final LF, then check what happens at byte 64 and at byte 65.",

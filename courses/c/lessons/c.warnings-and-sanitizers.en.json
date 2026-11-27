@@ -88,7 +88,8 @@
         "If the installed compiler or libraries do not support these flags, record environment unavailable and keep the actual build error. Code Studio uses Clang/WASI. Record its compile check separately from the native sanitizer run.",
         "A program using count > 7 in place of count > 8 can run without a memory error. A contract test at 8 still exposes the wrong result.",
         "The control uses #pragma clang diagnostic error to enable unused variable as an error for that source. This makes the rejection testable in Code Studio with the existing environment flags.",
-        "A sanitizer inserts checks during compilation. Whether a check triggers depends on the executed path. Code Studio uses the stated control runs here. An ordinary WASI result is not evidence of separate native instrumentation."
+        "A sanitizer inserts checks during compilation. Whether a check triggers depends on the executed path. Code Studio uses the stated control runs here. An ordinary WASI result is not evidence of separate native instrumentation.",
+        "Record three observations independently. First, note whether the strict build produced an executable. Next, note whether this particular run was instrumented and whether it emitted reports. Finally, compare stdout against your predictions for the same inputs. An empty instrumentation log only shows that the checks reported no failure during that run."
       ]
     },
     {
@@ -225,7 +226,7 @@
       "The condition uses limit as the single upper bound.",
       "Log compilation, input results and the instrumented run or its unavailability separately."
     ],
-    "hint": "Use limit where the starter uses 7. The upper allowed value is 8, so it must pass.",
+    "hint": "Test the largest allowed input and its next neighbour first. Compare the condition with the declared limit. Would the condition still work if you changed only that one limit value?",
     "referenceSolution": {
       "language": "c",
       "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    const long limit = 8;\n    long count;\n    if (!read_value(&count) || count < 0 || count > limit) {\n        puts(\"invalid\");\n        return 0;\n    }\n    printf(\"count %ld\\n\", count);\n    return 0;\n}\n",
@@ -279,8 +280,8 @@
       "answer": "The %d conversion receives the expected int and stdout contains count 4. The run checks that call. A limit in the practice task needs separate input cases."
     },
     "apply": {
-      "prompt": "Suppose the code builds cleanly but 8 yields invalid and 7 gives count 7. What does that suggest, and what other input would you keep after fixing it?",
-      "answer": "The observable failure is at the contract boundary 8. After the fix, keep 8 as an accepted case and add 9 as the nearest rejected case so you detect an overbroad fix."
+      "prompt": "You are checking the corrected counter. The strict build passed, but a sanitizer run is unavailable. Input 8 produced count 8 and 9 produced invalid. What findings belong in the report?",
+      "answer": "The strict build passed. The two lines match the contract at the upper boundary and just beyond it. Record why instrumentation was unavailable. There is no result from an instrumented run."
     },
     "practice": {
       "strategy": "Write the exact outputs for 0, 8, and 9. Find where the limit is declared and where the program actually checks the number. If native Clang is available, add a strict build.",

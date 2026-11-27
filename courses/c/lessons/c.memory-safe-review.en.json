@@ -48,7 +48,8 @@
       "id": "example",
       "title": "Read 13 safely at index 1",
       "paragraphs": [
-        "copy_at is called while values and saved are alive. count is the element count calculated from the array in main. After checking index < count, the value fits in size_t and can be used for reading."
+        "copy_at is called while values and saved are alive. count is the element count calculated from the array in main. After checking index < count, the value fits in size_t and can be used for reading.",
+        "Mark the signed-value check, the comparison with the length, and the change to saved. The first two answer whether the element can be read now. The last explains why the result can still be printed after the inner block in practice."
       ],
       "steps": [
         "Supply 1. The input < 0 check lets it through, and uintmax_t stores 1 unchanged.",
@@ -266,7 +267,7 @@
       "Check the sign before the unsigned conversion and check the length before accessing the element.",
       "After the inner block, read only the copied integer saved."
     ],
-    "hint": "The condition index >= count already rejects all values at or above the upper bound. Examine what index != 0 adds.",
+    "hint": "Write down the starter's condition for reaching an array element and its condition for rejection. Should all three indices 0–2 reach the read? Name one valid index where the starter breaks that rule.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <stdint.h>\n#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nstatic int copy_at(const int values[], size_t count, long input, int *out)\n{\n    if (input < 0) {\n        return 0;\n    }\n    uintmax_t index = (uintmax_t)input;\n    if (index >= count) {\n        return 0;\n    }\n    *out = values[(size_t)index];\n    return 1;\n}\n\nint main(void)\n{\n    long input;\n    if (!read_value(&input)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int saved;\n    {\n        const int values[] = {21, 34, 55};\n        size_t count = sizeof values / sizeof values[0];\n        if (!copy_at(values, count, input, &saved)) {\n            puts(\"invalid\");\n            return 0;\n        }\n    }\n    printf(\"%d\\n\", saved);\n    return 0;\n}\n",
@@ -322,8 +323,8 @@
       "answer": "1 passes the negative check. After conversion, 1 is less than the length 2, so the code safely reads values[1], copies 13 into saved, and prints 13."
     },
     "apply": {
-      "prompt": "Predict the results for 2, -1, and 2147483647 separately. At which step does the program avoid indexing in each case?",
-      "answer": "2 and 2147483647 parse but are not below count, so indexing is rejected. -1 is rejected before unsigned conversion. All three runs print invalid."
+      "prompt": "The example has an array of two elements. Predict the results for -0, -1, and 2. Which input has a minus sign without representing a negative number?",
+      "answer": "Parsing -0 yields the value 0, so the example prints 8. -1 is rejected before conversion. 2 is rejected after the length comparison but before reading an element. Both rejections print invalid."
     },
     "practice": {
       "strategy": "Separate the index range from object lifetime. Test the first, middle, and final indices, then the length and a negative input. Copy the value for an accepted index while the array is live.",

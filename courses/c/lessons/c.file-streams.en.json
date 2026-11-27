@@ -52,7 +52,8 @@
       "id": "example",
       "title": "Open the sensor log",
       "paragraphs": [
-        "The run files contain input/reading.txt with 42 and a line feed. The stdin field is empty. Predict whether empty stdin changes what fopen returns."
+        "The run files contain input/reading.txt with 42 and a line feed. The stdin field is empty. Predict whether empty stdin changes what fopen returns.",
+        "When you run the program, check the path and the open status first. Then check what happens when the open stream is closed. You can change an empty stdin and an empty file independently. For your own run, use the shift data in the practice file list."
       ],
       "steps": [
         "Pass the exact path input/reading.txt and mode rb to fopen.",
@@ -268,7 +269,7 @@
       "An existing log and an existing empty log yield opened. A missing log yields open-error. A line in stdin does not stand in for the file.",
       "Close the stream once after a successful open. Input stays unchanged and no new file is produced."
     ],
-    "hint": "Replace NULL with fopen(\"input/shift.txt\", \"rb\"). If it returns NULL, return before calling fclose.",
+    "hint": "Find the shift log in the file list. Compare its full relative path with the path in the worked example. Keep the same read mode.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <stdio.h>\n\nint main(void)\n{\n    FILE *input = fopen(\"input/shift.txt\", \"rb\");\n    if (input == NULL) {\n        puts(\"open-error\");\n        return 1;\n    }\n    if (fclose(input) == EOF) {\n        puts(\"close-error\");\n        return 1;\n    }\n    puts(\"opened\");\n    return 0;\n}\n",
@@ -317,8 +318,8 @@
       "answer": "fopen opens the requested stream, and fclose returns 0 on a successful close. The program prints opened and exits 0. No operation reads the stream, so 42 stays in the file."
     },
     "apply": {
-      "prompt": "In a copy of the run, move an empty reading.txt from input/ to the project root. What changes? What happens when you put it back?",
-      "answer": "At the root, the result is open-error and exit code 1 because input/reading.txt cannot be found. At the original path, the empty file opens. On a successful close, the result is opened and exit code 0."
+      "prompt": "Keep an empty input/reading.txt and add a root-level reading.txt containing 99 to the same training copy. Predict the status. Now remove only input/reading.txt from that copy. Is the remaining file enough for success?",
+      "answer": "The first run gives opened if closing succeeds. The program opens the empty file at the exact path. The second run gives open-error and exit code 1. The file at the root cannot stand in for the file in the input folder."
     },
     "practice": {
       "strategy": "Locate input/shift.txt in the project. Mark when the open succeeds and what the program reaches in each branch. Compare a populated, an empty, and a missing log.",

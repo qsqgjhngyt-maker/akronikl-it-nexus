@@ -50,7 +50,8 @@
     {
       "title": "Two records with a zero quantity",
       "paragraphs": [
-        "The records.tsv fixture contains 7, TAB, 3, LF and 8, TAB, 0, LF. Leave stdin empty. Predict the record count and total."
+        "The records.tsv fixture contains 7, TAB, 3, LF and 8, TAB, 0, LF. Leave stdin empty. Predict the record count and total.",
+        "Separate the checks into three questions. Did you read a complete line? Did both fields end at their required boundaries? Can this record join the ones you already accepted? Identify which check needs the list of IDs already seen."
       ],
       "steps": [
         "read_line keeps the bytes before LF. read_number parses the ID and leaves end at TAB.",
@@ -375,7 +376,7 @@
       "The rows 12 TAB 8 and 26 TAB 3 yield records 2 total 11. With 26 TAB 3junk the result is invalid line 2.",
       "Duplicates, an empty row, and a missing final LF are rejected. The input stays unchanged and no report is created."
     ],
-    "hint": "strtol leaves end at the first character after the number. The condition *end == '\\0' confirms there is no suffix.",
+    "hint": "Follow end after the quantity in a valid record and in a record with an extra letter. Which character should be at that position after LF has been removed from the buffer?",
     "exercises": [
       {
         "title": "A delivery with zero quantity",
@@ -410,8 +411,8 @@
       "answer": "Both rows have a TAB after the ID and no characters after the quantity. Two records are accepted, including the zero-quantity one. The line is records 2 total 3."
     },
     "apply": {
-      "prompt": "In a fresh run, supply the rows 7 TAB 3 LF and 007 TAB 9 LF. Decide whether 007 is a new ID and check the reported line number.",
-      "answer": "Both rows have numeric ID 7. The second row reaches the uniqueness check and is rejected: invalid line 2, exit code 1. No success total is printed."
+      "prompt": "Put 26 TAB 4 LF on the first line. Compare two versions of the second line: 27 TAB 0 LF and 27 TAB 0 without the final LF. Which step decides the second result even though the digits are the same?",
+      "answer": "With LF, both records pass and the output is records 2 total 4. Without LF, read_line finds an incomplete line before the fields are parsed. The result is invalid line 2, exit code 1, and no partial total."
     },
     "practice": {
       "strategy": "Split a delivery row into ID, separator, quantity, and end. Test the suffix, duplicate, and 65th row separately. Then compare the total for a valid file.",

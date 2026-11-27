@@ -45,14 +45,16 @@
         "When count and width are positive, the maximum valid count is SIZE_MAX / width. Compare with that bound before multiplying.",
         "With width = 0, that bound calculation cannot divide by width. The first check therefore ensures a positive divisor. A zero count is outside this task's contract as well.",
         "An out-of-range product computed in an unsigned type wraps and can become small. Check the size before multiplying. This lesson does not allocate memory. The caller passes the address of a live bytes variable, and the function writes the result only on success.",
-        "Rejection reasons imply different corrections. Zero width violates the input contract, while overflow means a positive product does not fit the size type."
+        "Rejection reasons imply different corrections. Zero width violates the input contract, while overflow means a positive product does not fit the size type.",
+        "Practise the rule with a small byte limit of 20. At width 3, six whole slots fit and the two leftover bytes do not form a seventh slot. Division finds the number of full slots before you work out the requested size. In the real program, SIZE_MAX is the largest representable size."
       ]
     },
     {
       "id": "example",
       "title": "Check a large count without allocating",
       "paragraphs": [
-        "For all three calls, predict the status and whether the output variable bytes changes."
+        "For all three calls, predict the status and whether the output variable bytes changes.",
+        "Separate the status from the output variable before tracing. On rejection, the value in bytes does not become the result of the request. Mark 'write occurred' only on the success branch."
       ],
       "code": {
         "language": "c",
@@ -285,12 +287,12 @@
       "answer": "(4, 3) fits and prints 12. SIZE_MAX is above SIZE_MAX / 2, leading to overflow without multiplication. A zero width gives invalid before division."
     },
     "apply": {
-      "prompt": "Compare requests 7 6, 7 0 and the special input -1 2. Which computes a byte size and which ones produce different rejection reasons?",
-      "answer": "7 6 gives bytes 42. 7 0 gives invalid before division. -1 2 becomes (SIZE_MAX, 2), giving overflow before multiplication."
+      "prompt": "For a positive width of 3, take count as SIZE_MAX / 3, then one more. Why may you compute the first product while the second must be rejected before multiplication?",
+      "answer": "The first count is the limit for whole slots. Its product with 3 does not exceed SIZE_MAX. The extra slot does not fit even with the remainder from division, so the second check returns overflow before multiplication."
     },
     "practice": {
-      "strategy": "Check zero sizes before dividing. Compare count with the largest representable quotient. Store the product only on the valid path and distinguish the two errors.",
-      "diagnosis": "The starter gives bytes 3 for 3 4 and invalid for -1 2. It stores count in the first case and fails to report the overflow status in the second."
+      "strategy": "Check a zero rejection and a size-limit rejection separately. For an accepted pair, predict the byte count. Locate the single write to the result and verify that neither rejection reaches it.",
+      "diagnosis": "If -1 2 prints invalid, trace the exercise mapping before the size function. What positive values does the function receive, and at which of its two checks should this path end?"
     },
     "syntax": {
       "termId": "size-max",

@@ -52,7 +52,8 @@
       "title": "Add the morning and evening counts",
       "paragraphs": [
         "The project contains main.c, shift.h, and shift.c. Predict the output and identify the .c files that must be compiled.",
-        "A missing declaration affects checking the call within main.c. A missing definition shows up later, when the linker tries to join the separate parts."
+        "A missing declaration affects checking the call within main.c. A missing definition shows up later, when the linker tries to join the separate parts.",
+        "Keep three kinds of evidence when investigating a failure. The header lets the compiler check the call. The implementation's object file gives the linker a definition. Running the program lets you compare the output with your calculation on paper. A successful build alone does not establish that the arithmetic is right."
       ],
       "steps": [
         "main.c includes shift.h and calls shift_total(4, 7).",
@@ -244,7 +245,7 @@
       "Build main.c and tray.c with the declaration in tray.h. Inputs 0, 6, and 9 give trays=0 slots=0, trays=2 slots=6, and trays=3 slots=9 respectively.",
       "Count a partial tray. The letter n produces invalid and exit code 1. stderr is empty for run cases."
     ],
-    "hint": "For nonnegative n, (n + 2) / 3 gives the needed number of trays. Keep the definition in tray.c and use its return value in main.c.",
+    "hint": "Check the calculation for 0, exactly one full tray, and one item more. Compare those expectations with integer division. Keep the function body in tray.c.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <stdio.h>\n#include \"tray.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int items = read_digit();\n    if (items < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    int trays = trays_needed(items);\n    printf(\"trays=%d slots=%d\\n\", trays, trays * 3);\n    return 0;\n}\n",
@@ -302,8 +303,8 @@
       "answer": "The declaration in shift.h supplies the type, and shift.c provides the definition. Linking connects the call and definition. The function adds 4 and 7, producing shift=11."
     },
     "apply": {
-      "prompt": "Build a copy with shift.c removed from the source list and shift.h still present. What can the compiler still check in main.c? What happens when linking?",
-      "answer": "The compiler sees the declaration, so it can check the arguments and result type. Linking cannot find the definition of shift_total, so the program will not run."
+      "prompt": "In a copy of the shift example, change addition to subtraction in shift.c. Keep the names, declaration, and main.c the same. Predict which build stages succeed and how this differs from building without shift.c.",
+      "answer": "Both source files compile, and linking succeeds. For shift_total(4, 7), the body returns −3 and the program prints shift=-3. The declaration specifies the shape of the call. Without shift.c, the linker has no definition to use."
     },
     "practice": {
       "strategy": "Check the declaration and that tray.c is a build input. Predict the tray count for 0, 4, and 6 items. Trace the return value to main and check how it determines the slot count.",

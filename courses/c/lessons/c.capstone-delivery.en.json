@@ -114,7 +114,8 @@
       "title": "Test your prediction with a new input",
       "paragraphs": [
         "Deliver the source, sample input files, build command, a report and a comparison log. Document the limit of 64 records, that the program does not persist changed quantities to records.tsv, and what can happen on a failed report write.",
-        "Include the exact commands and the observed report in the submission. A screenshot of reported alone does not verify the header, tabs, line feeds, and absence of stale rows."
+        "Include the exact commands and the observed report in the submission. A screenshot of reported alone does not verify the header, tabs, line feeds, and absence of stale rows.",
+        "Use a clean workspace for the rebuild. Before checking, list which files you bring from the submission package and which file the program should create again. Compare the new artifact with the saved one and record the command, input, and observation separately."
       ]
     }
   ],
@@ -281,7 +282,7 @@
       },
       {
         "where": "Code Studio",
-        "action": "Choose wb and run the full set of controls.",
+        "action": "Choose an open mode that leaves no old bytes before the new header. Run the full set of controls.",
         "why": "A successful write must produce just the new header and current records.",
         "expected": "The stale prefix disappears and two report calls can replace the same file within one run."
       },
@@ -297,7 +298,7 @@
       "With an empty records.tsv the report has just its header. After an invalid command, the later report does not execute.",
       "The package contains three source files, fixtures and rebuild instructions. State how you checked restoration of the run artifact."
     ],
-    "hint": "Compare the whole file including its first and last bytes. Check fopen and fclose before claiming the report succeeded.",
+    "hint": "Leave a noticeable stale line in the training report. Before running, predict where the header will start. Compare bytes and name the property that the open mode must provide.",
     "exercises": [
       {
         "title": "One more check",
@@ -348,8 +349,8 @@
       "answer": "The header id TAB quantity is followed by 10 TAB 5 and 20 TAB 7 with LF. set changes the state in memory. records.tsv still has quantity 0 for item 20. reported appears after writing and closing the report."
     },
     "apply": {
-      "prompt": "With the same input, run report, set 10 0, then report in one session. Which lines remain in the file after the second report, and what does stdout show?",
-      "answer": "stdout contains reported, ok, reported. After the second report the file has one header, 10 TAB 0, and 20 TAB 0. Mode wb replaces the previous bytes. A fresh run with the original records.tsv starts with quantity 5 for item 10."
+      "prompt": "In a clean copy of the example, use an empty records.tsv and supply an old example-summary.tsv containing the line old. Run report twice in one session. What will you check besides the number of reported messages?",
+      "answer": "There are two reported lines, empty stderr, and exit code 0. After both successful writes, the file contains only one id TAB quantity LF header. It contains neither the old line's bytes nor a second header."
     },
     "practice": {
       "strategy": "Record both source files, the header, input file, and commands. Start with a stale summary.tsv, then verify two reports in sequence. Save the package and check it after reopening.",

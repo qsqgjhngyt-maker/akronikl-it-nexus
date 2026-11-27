@@ -103,7 +103,8 @@
       "title": "Write a new format",
       "paragraphs": [
         "The independent task needs a line for volume in litres and a second line for fullness. Write the format yourself. The value 2.5 requires two decimal places: 2.50.",
-        "Underline the substitutions that consume arguments. Check their order and types. Then compare the result with the specified spacing and punctuation."
+        "Underline the substitutions that consume arguments. Check their order and types. Then compare the result with the specified spacing and punctuation.",
+        "Read the second line left to right: literal text, a slot for one integer, a printed percent sign, and a newline. Build the format from those parts before checking its output."
       ]
     }
   ],
@@ -199,7 +200,7 @@
       "The numeric values are not written directly into the format text.",
       "You can point to the conversion that consumes each argument."
     ],
-    "hint": "Use %d after Tray. Volume is similar to the weight example, so use %.2f. Write %% for a printed percent sign.",
+    "hint": "The %.2f format gives two digits after the point, as the volume line requires. Use %d for the integer after Tray. To print a literal percent sign, use %%.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <stdio.h>\n\nint main(void)\n{\n    printf(\"Tray %d: %.2f L (%c)\\n\", 3, 2.5, 'B');\n    printf(\"Fill: %d%%\\n\", 80);\n    return 0;\n}\n",
@@ -249,8 +250,8 @@
   "teaching": {
     "scene": "A shelf label has three changing values: its number, mass and section letter. Assemble two lines with a fixed number of decimal places and one visible percent sign.",
     "predict": {
-      "prompt": "Map 5, 1.25, 'A' and 75 to the specifiers. What two lines does the example build, and how many percent signs appear?",
-      "answer": "The first call takes 5 with %d, displays 1.25 with %.2f and writes A with %c. That makes Shelf 5: 1.25 kg (A). The second uses %d for 75 and %% for one percent sign, giving Loaded: 75%."
+      "prompt": "Keep the types and order of the first printf arguments, but imagine replacing 1.25 with 3.5. How would the line change? What argument does %% need on the second line?",
+      "answer": "The first line becomes Shelf 5: 3.50 kg (A). The %.2f format prints two digits after the point even when the last one is zero. On the second line, %% consumes no argument, so 75 goes only into %d."
     },
     "apply": {
       "prompt": "A new measurement tag should show 8 3.50 C and then 40%. Which values would you supply, and how would you check the trailing zero?",

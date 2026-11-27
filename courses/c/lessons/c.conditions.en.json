@@ -102,7 +102,8 @@
       "title": "Priority when multiple rules match",
       "paragraphs": [
         "Consider 0 0 in the packing task. It matches “no stock” and “invalid pack size”. The contract gives the invalid size priority.",
-        "Reading zero successfully differs from a parsing error. read_integer reports a status separately, so zero does not signal failure."
+        "Reading zero successfully differs from a parsing error. read_integer reports a status separately, so zero does not signal failure.",
+        "For each trace, mark the first true branch and separately note whether the remainder is ever calculated. With two zeroes the test checks error priority, before any grouping rule is considered."
       ]
     }
   ],
@@ -313,8 +314,8 @@
       "answer": "interval > 0 is false. && finishes evaluating the condition before `%`, so no division takes place. The else branch prints inspect."
     },
     "apply": {
-      "prompt": "Suppose the marker is at distance 20. Test interval 5 and interval 6 in separate runs. When will aligned appear, and how would you verify the other result?",
-      "answer": "At 5 the first check succeeds and 20 % 5 = 0, so aligned appears. At 6 the remainder is 2, giving inspect."
+      "prompt": "A packer tests four runs, one number per input line: stock 0 with size 4, stock 7 with size 4, stock 8 with size 4, and stock 0 with size 0. In which runs is the remainder calculated and what does each print?",
+      "answer": "For 0 and 4, print empty without computing a remainder. For 7 and 4, the remainder is 3 and the result is partial. For 8 and 4, the remainder is 0 and the result is ready. For 0 and 0, the size check wins, so it prints invalid without doing remainder arithmetic."
     },
     "practice": {
       "strategy": "Order the states from rejected input through ordinary grouping. Pick one input for each branch and check that each run prints a single line.",

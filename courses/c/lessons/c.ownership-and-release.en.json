@@ -45,14 +45,16 @@
         "In the teaching program owner is responsible for the allocation. view_total gets temporary access for reading, with no responsibility or permission to release the block.",
         "The call release_values(&owner, &releases) passes the addresses of two live variables. Inside the function, the parameter owner has type int **, and *owner is the pointer value held by main. If *owner is NULL, there is no block to release. Otherwise the function calls free, sets the variable in main to NULL, and counts one release.",
         "After free, do not evaluate old pointer copies. Storing NULL updates only the owner variable. In this example, temporary access ends when view_total returns.",
-        "releases counts block releases, not calls to the function. That is an observable check of the shared cleanup path."
+        "releases counts block releases, not calls to the function. That is an observable check of the shared cleanup path.",
+        "Draw one block and two arrows to it: owner and the reader's temporary parameter. The arrows do not create a second block or split the duty to release it. After the reader returns, the owner has one duty, whether processing succeeds or rejects."
       ]
     },
     {
       "id": "example",
       "title": "Check the cleanup twice safely",
       "paragraphs": [
-        "Predict when free is called and what view_total reads."
+        "Predict when free is called and what view_total reads.",
+        "In the full listing, count calls to release_values and released blocks separately. On the second call, the owner's state is different, so a rise in one count does not imply a rise in the other."
       ],
       "code": {
         "language": "c",
@@ -284,12 +286,12 @@
       "answer": "It prints total 9 and releases 1. The first call releases the live block, resets the owner's pointer and increments the count. The second sees NULL and changes nothing."
     },
     "apply": {
-      "prompt": "For five elements, compare modes 1 and 0 assuming initial allocation succeeds. What part of the report must be the same after two cleanup calls?",
-      "answer": "Mode 1 prints sum 15 and mode 0 prints rejected. Both end with released 1 because each path releases the allocated block once."
+      "prompt": "Suppose processing declines to compute after obtaining a block. It calls release_values, then the shared cleanup code calls it again. When does ownership end and by how much should the count increase?",
+      "answer": "The first call releases the block and sets owner to NULL. Ownership ends there and the count increases by one. The shared cleanup sees an empty state and does not release anything again."
     },
     "practice": {
-      "strategy": "Identify the owner after allocation and when borrowed access ends. Bring both branches to cleanup and count only an actual release.",
-      "diagnosis": "With 3 1 the starter gives sum 6 and released 0. The sum is correct. The block is freed, but the counter fails to record that event."
+      "strategy": "Name where the duty to release begins. Trace both processing branches from there to and through shared cleanup. Record the owner's state and the count after the first and second calls.",
+      "diagnosis": "If the sum is right but the program returns released 0, inspect only the path where the owner was nonempty. Which event actually happened, and which action should be reflected in the count?"
     },
     "syntax": {
       "termId": "cleanup",

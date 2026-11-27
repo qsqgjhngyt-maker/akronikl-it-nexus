@@ -48,14 +48,16 @@
         "A scanner sends one label per line. Five cells leave room for four label bytes and '\\0'. Once the fourth cell is filled, check what comes next: the record boundary or one more data byte.",
         "LF and the CRLF pair end a line. A final line with data can end at EOF. A blank line has a line ending, while an empty stream contains neither a record nor a line ending.",
         "getchar returns int, which can represent each byte and the separate EOF value. Check that status before converting a byte to char.",
-        "The overflow flag belongs to the entire record. Even when the reader stops copying bytes to the buffer, it continues to locate the record boundary."
+        "The overflow flag belongs to the entire record. Even when the reader stops copying bytes to the buffer, it continues to locate the record boundary.",
+        "Picture a three-cell buffer and the bytes A, B, C arriving one by one. After B the buffer already holds the maximum allowed text. C proves the record is too long, but a new record starts only after the delimiter. You discover the length violation and the record boundary at different times."
       ]
     },
     {
       "id": "example",
       "title": "Four bytes, five bytes and the next label",
       "paragraphs": [
-        "The example reads three records with a five-byte buffer. The supplied read_line stores up to four data bytes, consumes the boundary and writes '\\0' inside the buffer. It handles CR as part of the CRLF pair."
+        "The example reads three records with a five-byte buffer. The supplied read_line stores up to four data bytes, consumes the boundary and writes '\\0' inside the buffer. It handles CR as part of the CRLF pair.",
+        "In the full example, keep two counts: the bytes stored in the buffer and the bytes still to read from the stream up to the delimiter. The second includes discarded tail bytes even after the buffer stops growing."
       ],
       "code": {
         "language": "c",
@@ -332,12 +334,12 @@
       "answer": "It gives ok ABCD, long, ok OK. Four bytes fit with the terminator. The fifth marks an oversized record. The reader drains that record, so OK starts a new one."
     },
     "apply": {
-      "prompt": "The buffer has three cells. The input has XY, XYZ and Z, with EOF right after Z. What report proves the long line did not consume Z?",
-      "answer": "The report is ok XY, long, ok Z. Two cells can hold text. XYZ is classified as one long record, and data already read before EOF makes Z a final record."
+      "prompt": "At the working limit of six, compare two streams: ABCDEF followed by CRLF, and ABCDEF followed by a lone CR at EOF. Why do their record lengths differ?",
+      "answer": "The CR in CRLF is part of the line ending, so the first stream gives ok ABCDEF. At EOF without LF, that CR is a seventh text byte, so the second stream gives long."
     },
     "practice": {
-      "strategy": "Keep the recorded byte count separate from error flags. Test the exact limit, an oversized record and the next record. Choose the final status when the record ends.",
-      "diagnosis": "The starter gives long, long, ok OK on ABCDEF, ABCDEFG and OK. Draining already works. The first record exposes the mistake because it fits exactly."
+      "strategy": "Prepare a record at the limit and one byte over. Follow the longer line with a short record. Predict the first record's status and the start of the next one separately, then find the first line of output that differs.",
+      "diagnosis": "If the extra byte produced long but the next record did not start with the expected character, inspect the stream position at the return from read_line. Which delimiter did the first call consume?"
     },
     "syntax": {
       "termId": "eof",

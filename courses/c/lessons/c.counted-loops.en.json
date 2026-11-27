@@ -116,7 +116,8 @@
       "title": "Check the ends of the batch-size range",
       "paragraphs": [
         "Try n = 0 and n = 1. Ten weights of 200 sum to at most 2000, within the minimum C17 range of int.",
-        "After an error following a valid read, the accumulator holds a partial total. The batch contract calls for invalid because the complete batch was not read."
+        "After an error following a valid read, the accumulator holds a partial total. The batch contract calls for invalid because the complete batch was not read.",
+        "The limit n specifies how many successful reads a complete batch needs. Track the loop step and the accumulator together: before the second weight is read, the sum contains just the first, and a missing second record does not turn that intermediate sum into a report."
       ]
     }
   ],
@@ -328,8 +329,8 @@
       "answer": "The increments are 3, 6, 9 and 12. The running totals are 3, 9, 18 and 30. There is no fifth iteration, so the output is 30."
     },
     "apply": {
-      "prompt": "A smaller hall has three rows with 2, 4 and 6 seats. Which trace confirms that each row was counted once?",
-      "answer": "After rows 1, 2 and 3 the totals are 2, 6 and 12. The expected 12 distinguishes a missing last row from one counted twice."
+      "prompt": "The batch size is 2 and the weights are 4 and 9. Compare the full input with two changes: drop the last weight, or add a line containing 50 after it. What should each run print?",
+      "answer": "The complete batch prints weight 13. With only its first record, it must print invalid instead of weight 4. The extra line after a complete batch is ignored, so the result stays weight 13."
     },
     "practice": {
       "strategy": "First connect the counter to the number of required records. Start the total at zero and validate each record before adding it. Test an empty batch and one with a missing record.",

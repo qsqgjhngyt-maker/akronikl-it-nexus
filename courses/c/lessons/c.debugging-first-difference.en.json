@@ -97,7 +97,8 @@
       "paragraphs": [
         "If the code uses >=, the output at 70 incorrectly becomes invalid. The value 70 and below 0 still match the prediction. Look for the first unexpected 1: above 1.",
         "Our fprintf provides the trace. It reports just the facts we chose to record. A separate compile exercise omits a right-hand operand. Execution does not start for that build.",
-        "With the same stdin, compare the parsed value first, then the two flags, then the selected output. Record the first difference before editing."
+        "With the same stdin, compare the parsed value first, then the two flags, then the selected output. Record the first difference before editing.",
+        "For one run, write your expected values in calculation order and record the observed ones next to them. If the result is invalid and there is no trace, go back to reading the input line. If there is a trace, find the first flag that differs and change only the check that explains it."
       ]
     },
     {
@@ -240,7 +241,7 @@
       "89 gives accepted; 91 and 29 give invalid. Confirm 30 as the valid lower boundary.",
       "Explain the first difference using the above flag. Keep the trace and result formats unchanged."
     ],
-    "hint": "Compare the expected and observed above flag at exactly 90. Reject only values higher than 90.",
+    "hint": "Write down the expected flags for the highest allowed number. Compare them with the starter trace. Which flag differs first, and which comparison sets it?",
     "referenceSolution": {
       "language": "c",
       "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value)) {\n        puts(\"invalid\");\n        return 0;\n    }\n\n    int below = value < 30;\n    int above = value > 90;\n    fprintf(stderr, \"value %ld below %d above %d\\n\", value, below, above);\n    puts(below || above ? \"invalid\" : \"accepted\");\n    return 0;\n}\n",
@@ -294,8 +295,8 @@
       "answer": "70 is neither below 20 nor above 70. stderr contains value 70 below 0 above 0. With neither flag set, stdout contains accepted."
     },
     "apply": {
-      "prompt": "Supply 19, then 19x. Both produce invalid. Use the trace to explain at which step each input was rejected.",
-      "answer": "19 parses as a number. stderr says value 19 below 1 above 0. With 19x the parser rejects the suffix, so execution stops before computing flags and stderr is empty."
+      "prompt": "In the original example, compare inputs 20, 19, and 20x. Two runs have identical stdout. How can you tell the lower-bound rejection from the syntax error?",
+      "answer": "20 gives accepted with below 0 and above 0. 19 gives invalid with below 1 and above 0. 20x also gives invalid, but parsing stops the program before either flag is printed."
     },
     "practice": {
       "strategy": "Write down the expected flags for 89, 90, and 91 before running. Compare the trace field by field and find the first divergent condition. After one edit, repeat the same inputs.",

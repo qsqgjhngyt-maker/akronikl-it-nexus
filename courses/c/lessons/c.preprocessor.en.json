@@ -52,7 +52,8 @@
       "id": "example",
       "title": "Calculate pickup capacity",
       "paragraphs": [
-        "The header sets DELIVERY_MODE to 1. Predict the capacity of three shelves written as 1 + 2. Leave stdin empty."
+        "The header sets DELIVERY_MODE to 1. Predict the capacity of three shelves written as 1 + 2. Leave stdin empty.",
+        "For a new build, record two things separately: the CAPACITY left by the header and the expression the compiler receives after TOTAL expands. If the first is right and the second is wrong, change the expression while keeping the profile. This tests one hypothesis per rebuild."
       ],
       "steps": [
         "First, #include makes the definitions from delivery_policy.h available to the source.",
@@ -239,7 +240,7 @@
       "For 3, 0 and 9 print 18, 0 and 54 with the items= prefix. stderr stays empty.",
       "Two digits or x produce invalid and exit code 1. Use the macro instead of a literal multiplier in main."
     ],
-    "hint": "Check both changes. The directives select the box size, and main must actually use BOX_AMOUNT.",
+    "hint": "Write down the chosen capacity and the number of boxes arriving through stdin separately. Find the first place in the source where the two values meet.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <stdio.h>\n#include \"packing_config.h\"\n\nstatic int read_digit(void)\n{\n    int symbol = getchar();\n    if (symbol < '0' || symbol > '9') {\n        return -1;\n    }\n    int tail = getchar();\n    return tail == '\\n' || tail == EOF ? symbol - '0' : -1;\n}\n\nint main(void)\n{\n    int boxes = read_digit();\n    if (boxes < 0) {\n        puts(\"invalid\");\n        return 1;\n    }\n    printf(\"items=%d\\n\", BOX_AMOUNT(boxes));\n    return 0;\n}\n",
@@ -295,8 +296,8 @@
       "answer": "Mode 1 defines CAPACITY as 8. TOTAL(1 + 2) becomes ((1 + 2) * 8). The result is capacity=8 total=24."
     },
     "apply": {
-      "prompt": "Select DELIVERY_MODE 2 in a copy of the header. Predict both fields after rebuilding, with main.c untouched.",
-      "answer": "The #elif branch defines CAPACITY as 12. The sum 1 + 2 is multiplied by 12. The result is capacity=12 total=36 after the new build."
+      "prompt": "In a copy, keep DELIVERY_MODE at 1. Change only the TOTAL argument to 2 + 3 and rebuild. What output do you expect, and how would it differ if the argument lost its parentheses?",
+      "answer": "The output capacity=8 total=40 comes from ((2 + 3) * 8). Expanding the expression mentally without those parentheses would give (2 + 3 * 8) = 26. The profile is the same in both calculations."
     },
     "practice": {
       "strategy": "Check which profile the header selects. Then trace how the box count read in main reaches the calculation. Test 3, 0, and a malformed line.",

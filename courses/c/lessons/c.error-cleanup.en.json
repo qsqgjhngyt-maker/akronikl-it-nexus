@@ -44,7 +44,8 @@
       "paragraphs": [
         "An operator opens a file for transfer to intake. If the destination cannot open, copying never starts, but the input stream already exists. Input cleanup depends on the input's own state.",
         "Input and output have separate pointers. NULL means that particular stream is absent. Finish in one cleanup block where every acquired stream gets exactly one fclose call.",
-        "Record the reason first, then close the streams. Check fclose but use a close error as the status only if there was no earlier error. The counters count fclose calls, including a call that reports an error."
+        "Record the reason first, then close the streams. Check fclose but use a close error as the status only if there was no earlier error. The counters count fclose calls, including a call that reports an error.",
+        "Keep two open flags and one line for the first failure. Both streams open on the normal path. After opening the output fails, the input is still marked open. Check closing each marked stream separately from choosing the final message."
       ]
     },
     {
@@ -296,7 +297,7 @@
       "Mode 2 yields write-error with both counters at 1. The failed run does not offer an output to save.",
       "Mode 0 stdout begins with ok and labels-copy.txt contains A7, LF, B4, LF."
     ],
-    "hint": "Close the input if input != NULL. The output != NULL guard applies only to fclose(output).",
+    "hint": "After running mode 1, record which stream is already open. Check that the input cleanup decision uses that fact. The counter records calls, so the final status alone is insufficient.",
     "exercises": [
       {
         "title": "The source never opens",
@@ -331,8 +332,8 @@
       "answer": "Mode 1 skips opening received.txt. The input stream was acquired, and the output remains NULL. The result is open-output-error, closed-input 1, closed-output 0, and exit code 1."
     },
     "apply": {
-      "prompt": "Run the same example in mode 2 with a nonempty input. What has been acquired before the refusal, and what data remains in the output file?",
-      "answer": "Both streams have been opened. An intentional refusal on the first write gives write-error. Both counters are 1, and the created received.txt is empty. The failure status still matters even when a file exists."
+      "prompt": "In a separate copy of the example, compare two runs in mode 2. First put a single LF in input/reading.txt, then try an existing empty file. Predict the reason, the two close counts, and the contents of received.txt.",
+      "answer": "With LF, the loop reads one byte and simulates a failure before writing it. The result is write-error and exit code 1. The empty input immediately reaches EOF with no read error, so the result is ok and exit code 0. Both streams close once in each run, and received.txt is empty in both."
     },
     "practice": {
       "strategy": "For each mode, record two separate facts: whether input was acquired and whether output was acquired. Translate them into the expected counters. Preserve the first cause of failure independently.",
