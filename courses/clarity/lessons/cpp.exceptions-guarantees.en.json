@@ -23,6 +23,7 @@
       "title": "Two ways to report an error",
       "paragraphs": [
         "Decide separately which resources are cleaned up on exception and what state the object retains. Automatic cleanup alone does not roll back data.",
+        "The live list has two numbers. You prepare a third, but a write step fails. Record separately whether the temporary resource should be released and which numbers the next reader should see.",
         "Store prepares a replacement sequence and may fail before commitment. Observe the retained sequence and remaining resource count.",
         "A bool or explicit result type works for an expected rejection that a caller should examine immediately. An exception transfers control to a matching handler along the call stack. Choose according to the contract and the layer able to handle the problem. This is not a division into good and bad errors, or a reason to throw at every if statement.",
         "std::runtime_error and std::invalid_argument are standard exception types declared by stdexcept. A throw starts an exceptional path and ordinary execution after that point stops. A try block surrounds the operation and catch receives a matching error object. This lesson injects controlled failures instead of relying on accidental memory exhaustion, making results reproducible."
@@ -363,7 +364,7 @@
       "Output ok 12 0.",
       "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
     ],
-    "hint": "Store already holds {1,2,9}, so its sum after rejection is 12 instead of 3. The original state is lost.",
+    "hint": "Write the live Store and the prepared change separately. At which line does the caller see the update? Compare the success and exception paths against that line.",
     "steps": [
       {
         "where": "Before running",
@@ -424,7 +425,7 @@
       "inputs": "Case: Case 1\nstdin:\n0\nExpected:\nok 12 0\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "Store {1,2}, candidate {1,2,9}.\nOutput rejected 3 0.\nOutput ok 12 0.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
-      "errors": "Store already holds {1,2,9}, so its sum after rejection is 12 instead of 3. The original state is lost.",
+      "errors": "If active returns to zero but the rejected result changes the sum, find the first write to the live Store. Guard cleanup and committing data are separate checks.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

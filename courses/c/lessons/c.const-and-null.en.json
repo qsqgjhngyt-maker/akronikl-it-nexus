@@ -41,14 +41,16 @@
       "paragraphs": [
         "The display should keep the most recent known value. If no sensor is passed, keep the old number. If one is available, read its value and copy it to the display.",
         "The contract gives two kinds of access: const int * for reading and int * for writing. The caller retains both objects. The function borrows their pointers for the call and keeps no pointer afterward.",
-        "A read-only path does not prevent a different, valid path from writing. The sensor in the example remains an ordinary int, so main can assign to it directly."
+        "A read-only path does not prevent a different, valid path from writing. The sensor in the example remains an ordinary int, so main can assign to it directly.",
+        "Split the call into two addresses. The source provides a readable value and the display supplies somewhere to write. If either address is absent, copying stops. A const int * gives read access. Writes through that pointer are prohibited. When the sensor itself is an ordinary int, main can still update it directly."
       ]
     },
     {
       "id": "example",
       "title": "From missing input to the value 49",
       "paragraphs": [
-        "The first line prints status 0 for a missing read. The second prints status 1 for a copy. The second number in each line is the display value."
+        "The first line prints status 0 for a missing read. The second prints status 1 for a copy. The second number in each line is the display value.",
+        "For each call, record whether a copy happened and what the display holds. On rejection, the latter comes from the state before the call. On success, it comes from the live source."
       ],
       "steps": [
         "First read_display gets NULL and a valid &display. Its checks return 0 before writing. display remains 17.",
@@ -315,12 +317,12 @@
       "answer": "The first is 0 17 because there is no read or write. The second call reads the current 49 through view and copies it to display, giving 1 49."
     },
     "apply": {
-      "prompt": "The display starts at -4. On separate runs, check a NULL source, a NULL output and a live source holding 8. What output confirms that both failures preserve the old result?",
-      "answer": "A missing source gives absent -4, and missing output gives invalid -4. Both keep -4. A successful call gives present 8."
+      "prompt": "A display holds 30. First call the function with a live source holding 5 and a missing output. Then pass that source and the display's address. Finally remove the source but keep the display address. How does the display value change?",
+      "answer": "The first call rejects and the display stays at 30. The second succeeds and writes 5. The third rejects, keeping 5, because the source is checked before the write."
     },
     "practice": {
-      "strategy": "Check the writable target and readable source separately. Decide what status each path reports. Write only after both objects are available.",
-      "diagnosis": "With mode 0 the starter gives absent 0. It reports the right status, but changed the display. Check whether that branch performs a write."
+      "strategy": "Mark the read argument and the write argument. Make one rejection case for each missing argument and one success case. Include the old and final display values in your prediction.",
+      "diagnosis": "If the display changed on rejection, find the first assignment through the output. Were both address-presence conditions already checked on that path?"
     },
     "syntax": {
       "termId": "qualified-view",

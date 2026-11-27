@@ -44,14 +44,16 @@
       "paragraphs": [
         "A Record pairs a sequential id with a value. The Queue keeps a pointer to the array, occupied count, and capacity. If no slot is free, append requests growth. On success it writes both fields of the new record and only then increments used.",
         "reserve checks capacity and byte count. After these checks the counter records the growth attempt. A controlled refusal happens before realloc. If realloc itself fails, the old block remains live as well. After success, the list uses the returned pointer.",
-        "The && operator skips the second insertion if the first fails. The sum includes only the value fields of occupied records. Different records can yield the same sum, so check preservation with id:value. destroy frees the current block and resets the list fields."
+        "The && operator skips the second insertion if the first fails. The sum includes only the value fields of occupied records. Different records can yield the same sum, so check preservation with id:value. destroy frees the current block and resets the list fields.",
+        "Picture the list as two log rows: the items, used and capacity state, and a separate attempt counter. A refusal may change the counter because an attempt occurred. It cannot add a record or report available space that has not been obtained. Check these two rows separately."
       ]
     },
     {
       "id": "example",
       "title": "Testing a controlled second growth failure",
       "paragraphs": [
-        "The list starts with record 1:5. First append the value 8 and then try 13. The teaching policy refuses the second growth. Predict the summary and each id:value line."
+        "The list starts with record 1:5. First append the value 8 and then try 13. The teaching policy refuses the second growth. Predict the summary and each id:value line.",
+        "After each append, record what the next step can see: identifiers, sums, used and capacity. Start with one record on paper. Successful growth changes capacity before insertion, and used changes only after both fields are written."
       ],
       "code": {
         "language": "c",
@@ -292,12 +294,12 @@
       "answer": "The first growth sets capacity to 2 and appends 2:8, bringing used to 2. The second returns before writing. The report gives allocation-failed 2 2 13 and lists 1:5 and 2:8."
     },
     "apply": {
-      "prompt": "In practice the list starts at 1:10. Compare 6 7 2 and 6 7 0. How do length and sum reveal whether the second new record was committed?",
-      "answer": "For 6 7 2 only 6 is committed, giving allocation-failed 2 2 16. For 6 7 0 both are committed as capacity grows 1 → 2 → 4. The result is ok 3 4 23."
+      "prompt": "Starting with 1:10, compare 0 17 1 and 0 17 2. Assume initial allocation and any growth permitted by the policy succeed. How can you show that a zero-valued record was added in the second case even though the final sums are equal?",
+      "answer": "The first run gives allocation-failed 1 1 10. In the second, the first growth succeeded and added 2:0, so the output is allocation-failed 2 2 10. Equal sums do not prove equal lists. Observe length and capacity separately."
     },
     "practice": {
-      "strategy": "Separate calculation of the next capacity, numbering a valid attempt and the actual write. After a refusal, check used, capacity and the sum of committed entries as well as the status.",
-      "diagnosis": "On 20 30 with mode 2 the starter prints ok 3 4 60. The attempt counter remains at zero, so the selected refusal is never reached."
+      "strategy": "Mark only the points where the list needs to grow. For a failure at each attempt, predict which record has committed and the state of the list. Compare the reported length as well as the sum.",
+      "diagnosis": "If both inserts succeeded with failure attempt 2, trace the counter between the two calls to reserve. How many requests passed the size check, and when does the program compare the attempt number with the failure policy?"
     },
     "syntax": {
       "termId": "committed-prefix",

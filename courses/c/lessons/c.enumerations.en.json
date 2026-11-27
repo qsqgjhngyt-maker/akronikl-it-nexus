@@ -45,14 +45,16 @@
         "A gate receives a code from a controller. Before displaying a state, it needs to know whether that code belongs to the protocol. Skipping a step during a transition is a different kind of mistake.",
         "enum GateState names LOCKED and OPEN. The values 10 and 20 are choices of this protocol. Do not assume that every incoming int automatically becomes a valid state.",
         "In a library, a requested loan can become issued, and an issued loan can become returned. Both state names can belong to the enumeration while their particular transition is still invalid.",
-        "State recognition and transition permission answer different questions. A code can be known while the transition to it is forbidden."
+        "State recognition and transition permission answer different questions. A code can be known while the transition to it is forbidden.",
+        "Place three cards in a row for the checkout log: requested, issued and returned. Label them with the codes 1, 2 and 3. Now draw only the two allowed arrows. A card tells you whether a state exists. An arrow tells you whether you can reach it from the current state."
       ]
     },
     {
       "id": "example",
       "title": "Names for two gate codes",
       "paragraphs": [
-        "Read the three gate_label calls and name the branch taken by 10, 20 and 0."
+        "Read the three gate_label calls and name the branch taken by 10, 20 and 0.",
+        "The example's switch recognises one gate state. For the practice, use the same idea once for each input code first. Only consider a transition after recognising both codes."
       ],
       "code": {
         "language": "c",
@@ -287,12 +289,12 @@
       "answer": "10 matches LOCKED and prints locked. 20 matches OPEN and prints open. No named case matches 0, so default gives unknown."
     },
     "apply": {
-      "prompt": "For a lending log, compare pairs 2 → 3, 3 → 2 and 9 → 2. How can you distinguish a forbidden transition from an unknown code?",
-      "answer": "2 → 3 is permitted and gives ok. 3 → 2 contains known states but is reversed, giving denied. 9 → 2 starts with an unknown code, so it gives invalid."
+      "prompt": "Compare the pairs 1 1, 3 1 and 3 0 in the checkout log. Which pairs have two state cards, and is that enough to allow a move?",
+      "answer": "For 1 1 and 3 1 both cards exist but there is no matching arrow, so both yield denied. In 3 0 there is no state for 0, so it yields invalid before the transition check."
     },
     "practice": {
-      "strategy": "Check the input codes against the known set. Mark only the permitted pairs in a transition table and compare both endpoints of each pair.",
-      "diagnosis": "The starter gives denied for 1 2 and ok for 2 2. It checks equality instead of checking permitted transitions."
+      "strategy": "Start with the two permitted arrows. Pick a pair of known states that has no arrow and a pair with an unknown code. Check that the different rejection reasons produce different words.",
+      "diagnosis": "If 1 3 yielded ok, recognising codes might already work. Which rule accounts for the intermediate state, and where does your program check it?"
     },
     "syntax": {
       "termId": "enumerator",

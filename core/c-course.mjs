@@ -126,11 +126,21 @@ function renderFiles(files, t, heading) {
       '<p>' + t('Файлов нет', 'No files') + '</p>') + '</div>';
 }
 
+function renderOutput(code, t) {
+  return code.output === undefined ? '' : '<div><h4>' + t('Вывод', 'Output') + '</h4>' +
+    codeBlock(code.output, t('Пустой вывод', 'No output')) + '</div>';
+}
+
+function renderExecutionDetails(code, t) {
+  return renderFiles(code.outputFiles, t, t('Файлы результата', 'Result files')) +
+    (code.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(code.stderr) + '</div>' : '') +
+    (code.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(code.exitCode) + '</p>' : '');
+}
+
 function renderCode(code, t, {showResult = true, focus} = {}) {
   if (!code) return '';
   const input = code.stdin ? '<div><h4>' + t('Ввод', 'Input') + '</h4>' + codeBlock(code.stdin) + '</div>' : '';
-  const result = !showResult || code.output === undefined ? '' : '<div><h4>' + t('Вывод', 'Output') + '</h4>' +
-    codeBlock(code.output, t('Пустой вывод', 'No output')) + '</div>';
+  const result = showResult ? renderOutput(code, t) : '';
   const diagnostic = code.diagnostic ? '<p><strong>' + t('Диагностика', 'Diagnostic') + '</strong> ' +
     escape(code.diagnostic) + '</p>' : '';
   const fullExample = '<div><h4>main.c</h4>' + codeBlock(code.source) + '</div>' +
@@ -141,9 +151,7 @@ function renderCode(code, t, {showResult = true, focus} = {}) {
       '</summary>' + fullExample + '</details>'
     : fullExample) + '</div>' +
     (input || result ? '<div class="c-example-io">' + input + result + '</div>' : '') +
-    (showResult ? renderFiles(code.outputFiles, t, t('Файлы результата', 'Result files')) +
-      (code.stderr ? '<div><h4>' + t('Диагностический вывод', 'Diagnostic output') + '</h4>' + codeBlock(code.stderr) + '</div>' : '') +
-      (code.exitCode ? '<p>' + t('Код завершения ', 'Exit status ') + escape(code.exitCode) + '</p>' : '') : '') +
+    (showResult ? renderExecutionDetails(code, t) : '') +
     diagnostic + '</div>';
 }
 
@@ -163,16 +171,23 @@ function explanation(lesson, t) {
       '<li><button type="button" class="c-section-link" data-c-jump="' + escape(section.id) + '">' +
       escape(section.title) + '</button></li>').join('') + '</ol></nav></details>';
   const traceLabels = [t('Шаг', 'Step'),t('Данные или состояние', 'Data or state'),t('Наблюдение', 'Observation'),t('Почему', 'Why')];
-  const sections = lesson.sections.map((section,index) =>
-    '<section class="c-panel" data-c-section="' + escape(section.id) + '" tabindex="-1"><p class="c-step-count">' +
-    t('Шаг ', 'Step ') + (index+1) + ' / ' + lesson.sections.length + '</p><h2>' + escape(section.title) + '</h2>' +
-    (section.paragraphs ?? []).map(paragraph => '<p>' + escape(paragraph) + '</p>').join('') +
-    (section===workedExample ? reasoning(teaching?.predict, t('Предскажите результат', 'Predict the result'), t) : '') +
-    renderCode(section.code, t, {focus:section===workedExample ? teaching?.focus : undefined}) +
-    (section.steps?.length ? '<ol>' + section.steps.map(step => '<li>' + escape(step) + '</li>').join('') + '</ol>' : '') +
-    (section.trace?.length ? '<ol class="c-trace">' + section.trace.map(row => '<li><dl>' +
+  const sections = lesson.sections.map((section,index) => {
+    const isWorkedExample = section === workedExample;
+    const prediction = isWorkedExample ? teaching?.predict : undefined;
+    const steps = section.steps?.length ? '<ol>' + section.steps.map(step => '<li>' + escape(step) + '</li>').join('') + '</ol>' : '';
+    const trace = section.trace?.length ? '<ol class="c-trace">' + section.trace.map(row => '<li><dl>' +
       row.map((cell, index) => '<div>' + (traceLabels[index] ? '<dt>' + traceLabels[index] + '</dt>' : '') +
-        '<dd>' + escape(cell) + '</dd></div>').join('') + '</dl></li>').join('') + '</ol>' : '') + '</section>').join('');
+        '<dd>' + escape(cell) + '</dd></div>').join('') + '</dl></li>').join('') + '</ol>' : '';
+    const walkthrough = prediction ? '<details data-c-worked-result><summary>' +
+      t('Сверить вывод и ход программы', 'Check the output and program trace') + '</summary>' +
+      renderOutput(section.code, t) + renderExecutionDetails(section.code, t) + steps + trace + '</details>' : steps + trace;
+    return '<section class="c-panel" data-c-section="' + escape(section.id) + '" tabindex="-1"><p class="c-step-count">' +
+      t('Шаг ', 'Step ') + (index+1) + ' / ' + lesson.sections.length + '</p><h2>' + escape(section.title) + '</h2>' +
+      (section.paragraphs ?? []).map(paragraph => '<p>' + escape(paragraph) + '</p>').join('') +
+      reasoning(prediction, t('Предскажите результат', 'Predict the result'), t) +
+      renderCode(section.code, t, {showResult:!prediction, focus:isWorkedExample ? teaching?.focus : undefined}) +
+      walkthrough + '</section>';
+  }).join('');
   const prerequisites = lesson.prerequisites.map(item => item.text ?? item).filter(Boolean);
   const bibliography = (lesson.reading ?? []).map(item => '<li><strong>' + escape(item.title) + '</strong> ' +
     escape([item.edition, item.section].filter(Boolean).join(' · ')) + '<p>' + escape(item.purpose) + '</p></li>').join('');

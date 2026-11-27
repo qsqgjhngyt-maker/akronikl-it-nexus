@@ -45,14 +45,16 @@
         "The laboratory log pairs sensor number 14 with its reading of 320 mV. With separate variables, a copy operation might accidentally move only half of the record.",
         "The declaration struct Sample defines a type. The object current gets its own member values. The dot operator selects a member of that object.",
         "Designated initializers .id and .millivolts bind values to member names. C permits padding between members and at the end, so the structure's memory representation is not a file format.",
-        "Named fields distinguish the roles of the numbers. Copying a structure with a pointer member copies the pointer value. It does not duplicate the target object."
+        "Named fields distinguish the roles of the numbers. Copying a structure with a pointer member copies the pointer value. It does not duplicate the target object.",
+        "Draw two log rows with the same id and millivolts columns. With one row, an adjustment changes the only reading. Copying creates a second row from the current values of both fields. You can then correct the working row and still have the original reading to compare."
       ]
     },
     {
       "id": "example",
       "title": "Save a snapshot before applying a correction",
       "paragraphs": [
-        "Predict the third number. The log must show the sensor identifier, the corrected reading and the reading at the time of the snapshot."
+        "Predict the third number. The log must show the sensor identifier, the corrected reading and the reading at the time of the snapshot.",
+        "Trace two moments: just after copying and just after the correction. In the first, the rows are identical. In the second, one field changes in the working row only. Name that field before running."
       ],
       "code": {
         "language": "c",
@@ -281,12 +283,12 @@
       "answer": "It prints 14 335 320. Both fields are copied first. The increment changes just one field of current, so archived.millivolts still holds 320."
     },
     "apply": {
-      "prompt": "For ID 205 the original measurement is 1990 mV. Compare corrections of +15 and -15 with a permitted result from 0 to 2000 mV. How can the snapshot be checked?",
-      "answer": "+15 gives 2005, so the output is invalid. -15 gives 1975, so the output is 205 1975 1990. The last number confirms the original snapshot."
+      "prompt": "Sensor 73 recorded 1960 mV. An operator tests two independent adjustments, +40 and +41. What does each run print, and what does the last number on success prove?",
+      "answer": "The +40 adjustment reaches exactly 2000, so it prints 73 2000 1960. The last number comes from the snapshot taken before the correction. The +41 result is 2001, so the program prints invalid."
     },
     "practice": {
-      "strategy": "Parse the input into named fields and take a snapshot before changing them. Compute the corrected value separately and check its range. Print the reading from the snapshot last.",
-      "diagnosis": "With 42 780 15 the starter prints 42 780 780. The snapshot is right, but the correction is missing. Check how adjusted is computed."
+      "strategy": "Write down field names and original values, then calculate the proposed reading separately. Test the allowed boundary and the first value beyond it. For a success, check the identifier, current reading and snapshot separately.",
+      "diagnosis": "If both output readings are corrected, mark when the snapshot field was filled. What was the working reading by that point?"
     },
     "syntax": {
       "termId": "structure-copy",

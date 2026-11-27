@@ -355,6 +355,21 @@ try {
           const previous = lessons[locale][index - 1], next = lessons[locale][index + 1];
           await lessonReady(page, lesson, words[0]);
           await checkLayout(page, label + '/explanation');
+          const result = course(page).locator('[data-c-worked-result]');
+          assert.equal(await result.count(), Number(Boolean(lesson.teaching?.predict)), label + '/prediction review');
+          if (lesson.teaching?.predict) {
+            assert.equal(await result.getAttribute('open'), null, label + '/answer revealed before prediction');
+            assert.equal(await result.locator('.c-trace').isVisible(), false, label + '/trace revealed before prediction');
+            if (index === 0 || lesson.id === 'c.read-input') {
+              const reveal = result.locator('summary');
+              if (width < 400) await reveal.tap();
+              else await reveal.press('Enter');
+              await result.locator('.c-trace').waitFor();
+              const expected = lesson.sections.find(section => section.code).code.output;
+              if (expected) assert.equal(await result.locator('pre code').first().textContent(), expected);
+              await checkLayout(page, label + '/worked-example-result');
+            }
+          }
           assert.equal(await course(page).locator('.c-neighbors a').count(), Number(Boolean(previous)) + Number(Boolean(next)));
           if (next) assert.equal(await course(page).locator('.c-neighbors a').last().innerText(), words[5] + next.title + ' →');
           if (index === 0) {

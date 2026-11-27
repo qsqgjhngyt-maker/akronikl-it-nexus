@@ -23,6 +23,7 @@
       "title": "From the model to a real window",
       "paragraphs": [
         "A window signal reports an action. The model decides whether to accept it and refresh reads the actual state.",
+        "Before reading the handler, plan two actions with one record: add a title, then complete that same task. Write the total number of rows and the number of open tasks separately after each action.",
         "So far commands came from stdin. Now text and Return come from a real QLineEdit. TaskModel still enforces the rules; Qt translates user actions into model calls and displays the result. This requires the Qt/WebAssembly target, separate from console Clang/WASI.",
         "Qt is an additional library rather than part of standard C++. In Nexus, create a new C++ application in Project Studio and open src/gui.cpp. The application builds for Qt/WebAssembly and runs in a separate Preview. Console Clang/WASI does not contain Qt: use the graphical project for this task.",
         "TaskFlow contains a model, CLI, GUI, tests, CMake and a target description. Create a separate personal copy. In this toolchain your C++ builds on the device after Qt-runtime preparation; initially downloading the compiler and libraries requires a connection. Environment availability and source correctness are checked separately."
@@ -206,7 +207,8 @@
       "title": "Now try your own task",
       "paragraphs": [
         "Create a separate copy of the complete file bundle. Add an Open tasks QLabel and count only unfinished model tasks in refresh. Change the success text, rebuild the actual C++ and check the keyboard scenario.",
-        "Open all project files and locate entry src/gui.cpp."
+        "Open all project files and locate entry src/gui.cpp.",
+        "Start with one Add task action and check the first row. Complete the task and check that its row remains before testing repeated completion and saving. Use a different title in a new run."
       ]
     }
   ],
@@ -412,7 +414,7 @@
       "alpha is restored; the new success message appears after an actual rebuild.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "In refresh, start open at 0 and increment it only for !task.done. Pass the result to QLabel. tasks().size() includes completed tasks; complete preserves total size while reducing open. Every update, including repeated complete, goes through the same refresh.",
+    "hint": "Choose one task and predict the list length and open count separately after completing it. Find where refresh reads the current completion flag.",
     "steps": [
       {
         "where": "Before running",
@@ -477,14 +479,14 @@
     ],
     "passport": {
       "goal": "Laboratory: A real Qt graphical adapter",
-      "start": "Running the starter with its default input produces:\nundefined",
+      "start": "With no saved tasks, Preview opens a fresh TaskFlow copy with an empty list. Enter alpha and press Return. One task appears. You will add a separate open-task count in this exercise.",
       "where": "Project Studio · Qt",
       "knowledge": "Qt Widgets — A library of actual graphical application controls.\nSignal — A Qt notification about an object action or change.\nContext — The QObject bounding the lifetime of a callback connection.",
       "change": "In a separate base TaskFlow copy, add an Open tasks: N QLabel that counts only tasks with done=false in refresh. The example shows total Tasks; here completion must reduce Open tasks without deleting the task. Change the successful-add message. Preserve Add/Return, Complete selected, accessible name Task title and NXTF1. Run all listed scenarios, including repeated complete and Stop/Run after explicit saving.",
       "inputs": "Case: Ordinary addition\nWindow actions:\nEnter learn C++ and press Enter.\nExpected:\nOne open task; the count reflects the model.",
       "result": "A working window and observations for the listed actions; console output alone does not verify a GUI.",
       "checks": "The base window contains Task title, Add task, Complete selected and Save application data.\nBefore adding: open 0; after alpha: open 1; after completing it: open 0, with the task retained in the model.\nalpha is restored; the new success message appears after an actual rebuild.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "In refresh, start open at 0 and increment it only for !task.done. Pass the result to QLabel. tasks().size() includes completed tasks; complete preserves total size while reducing open. Every update, including repeated complete, goes through the same refresh.",
+      "errors": "If completion leaves Open tasks unchanged, compare the counter with the actual done flag in the model and check whether the label refreshed. The diagnostic line supplements what you see in the window.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     }
   },

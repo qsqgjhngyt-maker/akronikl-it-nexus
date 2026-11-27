@@ -23,6 +23,7 @@
       "title": "Why a long handler blocks interaction",
       "paragraphs": [
         "Split work into ticks with a fixed budget. A cancellation between ticks must not turn a partial sum into a published result.",
+        "Four items remain, and one step can process at most three. Compare cancelling before the next tick and cancelling after the final one. Record where it helps to show progress and where a final result may already be shown.",
         "While a callback processes a whole large input, the queue cannot advance to the next command. Keep progress in Job and handle at most three items per call. Between calls the dispatcher can accept cancellation.",
         "In a single-threaded application, a handler occupying the event loop prevents the next user command from running. A fast average case does not guarantee responsiveness on larger input. Divide the operation into portions and return control to a scheduler between them. Bound both the number of calls and the work performed inside each call.",
         "The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness."
@@ -177,7 +178,8 @@
       "title": "Now try your own task",
       "paragraphs": [
         "Complete a budget 3 step and cancellation. Separate processed from result: partial progress helps diagnosis, while a result is available only on completion.",
-        "Calculate three steps for n=8 without cancellation."
+        "Calculate three steps for n=8 without cancellation.",
+        "With seven items in groups of at most three per step, compare cancellation before step indices 2 and 3. Predict the status, processed count, and published result before running. Which one cannot be inferred automatically from the other two?"
       ]
     }
   ],
@@ -339,13 +341,13 @@
       "done stays unchanged after cancellation; empty job: done processed 0 result 0.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "After one step cancellation blocks further work. candidate=6 is not published before finished. An empty job is already finished before cancellation is checked.",
+    "hint": "Separate processed items, task status, and published result in your table. Predict them after one full step, then move the cancellation request to a neighbouring tick.",
     "steps": [
       {
         "where": "Before running",
         "action": "Calculate three steps for n=8 without cancellation.",
         "why": "The budget is an upper bound; the final step is shorter.",
-        "expected": "done 3,6,8; final sum 36."
+        "expected": "The table shows the state before and after each tick, the number of processed items, and a separate mark for when a result is published."
       },
       {
         "where": "In my program",
@@ -400,7 +402,7 @@
       "inputs": "Case: Case 1\nstdin:\n8 -1\nExpected:\ndone processed 8 result 36\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "done 3,6,8; final sum 36.\ndone processed 8 result 36; cancelled processed 3 result 0.\ndone stays unchanged after cancellation; empty job: done processed 0 result 0.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "After one step cancellation blocks further work. candidate=6 is not published before finished. An empty job is already finished before cancellation is checked.",
+      "errors": "If a partial sum is visible, find the statement that publishes it and check the state at that point. Check the status independently of how many items were processed.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

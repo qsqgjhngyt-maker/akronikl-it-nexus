@@ -23,6 +23,7 @@
       "title": "State determines permitted actions",
       "paragraphs": [
         "A transition table needs a pair: current state and event type. Finish is only valid in particular states.",
+        "Write Finish on two cards. Pair one with running and one with paused. For each pair, decide whether to change the state or record a rejection.",
         "Pause is legal only while running. Command P alone is insufficient: the result also depends on the current state. A state table makes that dependency testable.",
         "Two independent flags called running and paused admit four combinations, including contradictory ones. enum class State names the meaningful states: idle, running, paused and done. For each event the machine checks its current state and selects a transition. An absent transition means rejection, not an arbitrary choice of a next state.",
         "Draw the transition table: Start takes idle to running, Pause takes running to paused, Resume takes paused to running and Finish takes running to done. All other pairs are rejected. This is the laboratory specification. It supports discussing requirements before implementation: finishing while paused is deliberately forbidden here, although another product could permit it."
@@ -327,7 +328,7 @@
       "SPF: paused rejected 1; empty line: idle rejected 0; X: idle rejected 1.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "idle→running→paused; F is legal only in running. Use an explicit Finish branch, then a separate Reopen rule and tests for all pairs.",
+    "hint": "Make a table with current states as rows and event types as columns. Change the state only for a permitted pair. Mark unknown characters separately before calling the handler.",
     "steps": [
       {
         "where": "Before running",
@@ -388,7 +389,7 @@
       "inputs": "Case: First substantive run\nstdin:\nSPRF\nExpected:\ndone rejected 0\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "idle/S→running; running/P→paused; paused/R→running; running/F→done.\ndone rejected 0.\nSPF: paused rejected 1; empty line: idle rejected 0; X: idle rejected 1.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "idle→running→paused; F is legal only in running. Use an explicit Finish branch, then a separate Reopen rule and tests for all pairs.",
+      "errors": "If a paused task unexpectedly becomes done, find the branch that accepts Finish and compare its condition with the table. Give a new event type its own testable branch.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

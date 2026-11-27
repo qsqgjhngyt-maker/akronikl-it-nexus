@@ -33,8 +33,15 @@
       "paragraphs": [
         "First decide which entity must remain even if no row matches it. In a report for all customers, that entity is the customer.",
         "The report must show request minutes for each of two selected customers, including a customer without requests. A correct grand total alone is insufficient: both distinct customer records must survive. We will inspect rows before adding them.",
-        "A and B are short labels for two different references in the training infobase. They are not real addresses or literal values to enter in a reference field. Both customers have the same displayed name “Service”. A name helps a reader but does not make two records identical."
-      ]
+        "A and B are short labels for two different references in the training infobase. They are not real addresses or literal values to enter in a reference field. Both customers have the same displayed name “Service”. A name helps a reader but does not make two records identical.",
+        "First work through three records on paper: customers C and D both named “Workshop” and one request of 7 minutes referring to C. For each customer, look for a request with the same reference. Write down how many rows remain if the report must keep both customers. You do not need to enter these three records in the training infobase."
+      ],
+      "reveal": {
+        "title": "Check the join by hand",
+        "paragraphs": [
+          "C has a match, so write C / 7. D has no match. A left join preserves it as D / NULL. NULL marks a missing row on the right. The name “Workshop” matches, but D is a different reference from C, so C's request does not belong to D."
+        ]
+      }
     },
     {
       "id": "source-tables",
@@ -150,7 +157,8 @@
       "title": "Now choose the result level: one row per customer",
       "paragraphs": [
         "GROUP BY К.Ссылка collects rows with the same customer reference. Group A has 30+45=75 minutes. Group B has no request duration. This report’s contract displays 0 when the sum is absent; ЕСТЬNULL(...,0) states that replacement explicitly.",
-        "Summation follows the join. We can see which rows belong to each group, so 75 and 0 have an explanation. Obtaining one number 75 and displaying two true flags would not replace this walkthrough."
+        "Summation follows the join. We can see which rows belong to each group, so 75 and 0 have an explanation. Obtaining one number 75 and displaying two true flags would not replace this walkthrough.",
+        "In the training infobase, run the joined-rows query first using the two references from your own dataset. Check which reference owns each duration and where a request is missing. Then run the grouped query. This separates an error in joining rows from an error in calculating totals."
       ],
       "code": {
         "language": "1c-query",
@@ -360,7 +368,7 @@
       "Each experiment has two distinct references: X/30 and Y/0 in the first set; X/35 and Y/0 in the second separate set. The second result excludes requests from the first set.",
       "Distinguish an inner join and name-only grouping by the lost group, even when the grand total looks plausible."
     ],
-    "hint": "Join with З.Клиент=К.Ссылка and group by the reference. Use ЕСТЬNULL to state the 0 policy for an absent sum.",
+    "hint": "Check the detailed rows before calculating totals. Which request belongs to each reference? For the customer without a request, record the missing document reference separately from the number the report requires after grouping.",
     "returnAnchor": "joined-rows",
     "steps": [
       {

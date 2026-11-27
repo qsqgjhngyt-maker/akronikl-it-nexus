@@ -42,14 +42,16 @@
         "A log receives messages. The reader checks whether each record is usable based on its length and termination. Then the filter compares the start of each valid line. Test those decisions with separate inputs.",
         "CORRUPT can be a valid line that the filter skips. An overlong line increments rejected regardless of its text.",
         "Consume the rest of a rejected line through its boundary. The next read_line call then starts on the first byte of the next message.",
-        "Counting damaged records and selecting valid ones solve different problems. Valid text without the prefix does not increase rejected."
+        "Counting damaged records and selecting valid ones solve different problems. Valid text without the prefix does not increase rejected.",
+        "Classify a three-record log. A short INFO record lacks the needed beginning but is usable text. A long record with the right tag cannot be accepted as a whole string. A short accepted record with the right tag reaches output. Decide which outcome a record has before deciding whether to update the counter."
       ]
     },
     {
       "id": "example",
       "title": "Select the lines starting with ID:",
       "paragraphs": [
-        "First work through prefix selection on three known strings. The program compares the first three bytes of each one, then prints each whole matching line."
+        "First work through prefix selection on three known strings. The program compares the first three bytes of each one, then prints each whole matching line.",
+        "The ID: example starts with an array of valid strings. This deliberately removes the reader so you can observe selection alone. In the project, put the reader first and keep prefix comparison on the accepted-record branch."
       ],
       "code": {
         "language": "c",
@@ -334,12 +336,12 @@
       "answer": "It prints ID:7 and ID:. Their first three bytes equal ID:. XID:7 starts with X, so its prefix check fails."
     },
     "apply": {
-      "prompt": "With limit 8 and prefix WARN, handle WARN ok, XWARN and WARN too long. Which line is printed, which is skipped and which increments the count?",
-      "answer": "WARN ok prints. XWARN is valid text and is skipped. WARN too long exceeds the limit, and the final line is rejected 1."
+      "prompt": "For a 12-byte limit and the ERR prefix, feed ERR long example, XERR and ERR z in that order. The last record has no newline. Predict both parts of the report and explain how the decisions for the first two records differ.",
+      "answer": "The program prints ERR z and rejected 1 on separate lines. The first record is too long and increments the counter. XERR is valid but starts with X and is simply skipped. The last record contains data, so it is processed at EOF."
     },
     "practice": {
-      "strategy": "Classify the record with the supplied reader first. Count damaged records in their own branch. For valid text, compare only the leading bytes and print the stored record in full.",
-      "diagnosis": "The starter prints ERR and rejected 1 but drops ERR fan. That separates a whole-string check from a check of the first three bytes."
+      "strategy": "Start with a short accepted match and a record that does not match. Once selection works, put an overlong record before a match. Predict stdout and rejected separately so you can identify the stage where the result diverges.",
+      "diagnosis": "If the count is right but ERR fan is missing, the reader might already be correct. How many bytes should your comparison cover, and what text should reach output?"
     },
     "syntax": {
       "termId": "prefix",

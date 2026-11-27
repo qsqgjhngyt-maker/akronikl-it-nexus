@@ -146,7 +146,8 @@
       "title": "Перейдите к собственным порогам",
       "paragraphs": [
         "В практике допустимы значения 10–18. Отметьте входы 9, 10, 17, 18, 19 и одно корректно выглядящее начало с хвостом. Сначала запишите ожидаемые ответы, затем сравните их с наблюдениями.",
-        "Переполнение числа и неверный хвост дают одинаковую строку invalid, но проверяют разные обработчики. Сохраните оба входа в таблице, даже если ответы совпадают."
+        "Переполнение числа и неверный хвост дают одинаковую строку invalid, но проверяют разные обработчики. Сохраните оба входа в таблице, даже если ответы совпадают.",
+        "Составьте ещё одну пару с изменением одного признака. Возьмите новое допустимое число с необязательным знаком. Сохраните число и добавьте только лишний символ. Отметьте в таблице, проходит ли каждая строка разбор и должна ли она доходить до проверки диапазона."
       ]
     }
   ],
@@ -315,7 +316,7 @@
       "Принимаются 10, 18 и число с пробелами по краям. 9 и 19 дают invalid.",
       "12x, abc и число с переполнением дают invalid. Отметьте отдельную причину для каждого."
     ],
-    "hint": "18 и 12x обнаруживают разные дефекты. В parser найдите проверку *end, в main — сравнение с 18.",
+    "hint": "Подберите две строки: числовое значение на верхней границе и допустимое число с лишним хвостом. Какой вход доходит до сравнения с границей? Проверьте каждое предположение отдельно.",
     "referenceSolution": {
       "language": "c",
       "source": "#include <ctype.h>\n#include <errno.h>\n#include <limits.h>\n#include <stdio.h>\n#include <stdlib.h>\n\n/* Read exactly one text line, with or without a final newline. */\nstatic int read_value(long *out)\n{\n    char line[64];\n    size_t used = 0;\n    int ch;\n    int invalid = 0;\n    while ((ch = getchar()) != EOF && ch != '\\n') {\n        if (ch == 0 || ch > CHAR_MAX || used == sizeof line - 1) {\n            invalid = 1;\n        } else {\n            line[used++] = (char)ch;\n        }\n    }\n    if (invalid || ferror(stdin) || used == 0) {\n        return 0;\n    }\n    line[used] = '\\0';\n\n    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE) {\n        return 0;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return 0;\n    }\n    *out = value;\n    return 1;\n}\n\nint main(void)\n{\n    long value;\n    if (!read_value(&value) || value < 10 || value > 18) {\n        puts(\"invalid\");\n        return 0;\n    }\n    puts(\"valid\");\n    return 0;\n}\n",

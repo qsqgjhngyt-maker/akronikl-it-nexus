@@ -42,14 +42,16 @@
         "A stockroom label reads OK and has five cells available. Reading stops at the first cell that holds zero. The remaining cells still belong to the buffer, and the label length is two.",
         "A C string is a sequence of bytes ending at the first '\\0'. The character '0' is visible in text such as T09. The terminating '\\0' marks the boundary.",
         "A label with n single-byte text characters needs at least n + 1 cells. For these labels, strlen gives the number of visible characters.",
-        "Equal capacity allows different lengths. Two five-cell buffers can hold strings of length 2 and 4, depending on the location of the first null byte."
+        "Equal capacity allows different lengths. Two five-cell buffers can hold strings of length 2 and 4, depending on the location of the first null byte.",
+        "Trace four cells with a finger: 'A', '0', '\\0', 'Z'. A string read visits two data cells and stops at the third. The array still has four cells. The fourth byte is still stored, but string printing never reaches it."
       ]
     },
     {
       "id": "example",
       "title": "Where reading stops",
       "paragraphs": [
-        "Mark the indices of O, K and the terminating '\\0' before running the program. The actual output appears below the listing."
+        "Mark the indices of O, K and the terminating '\\0' before running the program. The actual output appears below the listing.",
+        "Work backwards to build a new label. List the visible bytes first, then add a cell for the end of the string. Once the string is ready, check the storage size and the visible length separately."
       ],
       "code": {
         "language": "c",
@@ -310,12 +312,12 @@
       "answer": "It prints OK 2. Both operations stop at '\\0' in position 2. X and Y are still in the array, whose capacity is 5."
     },
     "apply": {
-      "prompt": "Lay out the bytes of the label T09. What is the minimum capacity, and what output proves that the digit 0 stays visible?",
-      "answer": "The bytes are T, '0', '9', '\\0'. Four cells are required. Printing gives T09 3 because the visible digit '0' and the terminator '\\0' are different."
+      "prompt": "Four cells hold 'N', '\\0', '0', '\\0'. What is visible now? Replace only the cell at index 1 with 'X'. What prints and how much does the length increase?",
+      "answer": "The first string is N, one visible byte. After the replacement, the first zero byte is at index 3. The output is NX0, the length grows from 1 to 3, and the capacity stays at 4."
     },
     "practice": {
-      "strategy": "Validate the two input numbers separately. Map the cells for the letter, tens digit, ones digit and terminator. Check an ordinary pair and a pair with a leading zero.",
-      "diagnosis": "For inputs 0 and 9 the starter prints T90 3. The length is correct. Check which digit occupies the first position after the letter."
+      "strategy": "Draw four cells before editing. Pick your own pair of digits, label the visible cells and mark where a string read stops. After the run, check the text and length separately.",
+      "diagnosis": "If input 0 and 9 gives T90 3, the length locates the string end. Which input digit does the first visible byte after T represent? Check the two cell writes separately."
     },
     "syntax": {
       "termId": "terminator",

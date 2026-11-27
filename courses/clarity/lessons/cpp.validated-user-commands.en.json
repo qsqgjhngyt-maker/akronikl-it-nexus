@@ -23,6 +23,7 @@
       "title": "Text is not yet a number",
       "paragraphs": [
         "Parse into a temporary value. Write it into the model only after checking all characters and the allowed range.",
+        "The setting already equals 17. Compare the commands “9” and “9x” on paper. Underline the part that can be read as a number in each. What extra question must be answered before updating the model?",
         "An input field returns text. String 12x begins with a number but is not wholly numeric. Parse into a local candidate and assign only after every check so an error cannot affect the model.",
         "An input field yields text while the model expects a constrained value. The string 12x has a numeric prefix but does not satisfy a contract requiring one complete integer. Silently applying twelve is incorrect. Each laboratory line is a separate command setting a number in 0…100; a rejected line preserves the previous value.",
         "First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases."
@@ -40,7 +41,7 @@
       "id": "example-1",
       "title": "12x does not replace the previous 17",
       "paragraphs": [
-        "from_chars can successfully parse prefix 12: ec is clear, but ptr points at x. Checking the end pointer detects the suffix before result changes."
+        "Find the from_chars call and the two independent checks on its result. Predict the ptr position and the model state after the attempt. Which observation describes only how far parsing progressed?"
       ],
       "prediction": [
         "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string &text, int &result) {\n    int candidate = 0;\n    const auto [ptr, ec] =\n        std::from_chars(text.data(), text.data() + text.size(), candidate);\n    if (ec != std::errc{} || ptr != text.data() + text.size()) {\n        return false;\n    }\n    result = candidate;\n    return true;\n}\nint main() {\n    int value = 17;\n    std::cout << parse(\"12x\", value) << ' ' << value << '\\n';\n}"
@@ -170,7 +171,8 @@
       "title": "Now try your own task",
       "paragraphs": [
         "Your update handles lines one by one. Prepare a candidate, preserve value on rejection, and explain the separate line-count limit.",
-        "Trace lines 12,12x,100."
+        "Trace lines 12,12x,100.",
+        "In separate runs, submit 100 and the same line with one trailing space. Record the model value and refusal count after each command. Explain the difference using the input format's boundary."
       ]
     }
   ],
@@ -332,13 +334,13 @@
       "A rejected line preserves value; a ninth line produces invalid.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "With no line, getline never calls update. An empty line calls update with text.empty(). The commit is value=candidate after checking ec, ptr and bounds.",
+    "hint": "For each input, record whether a line was received, what parsed, and whether characters remain. Decide at what point an update to value is allowed.",
     "steps": [
       {
         "where": "Before running",
         "action": "Trace lines 12,12x,100.",
         "why": "One invalid line does not undo earlier accepted lines.",
-        "expected": "value:17→12→12→100; rejected=1."
+        "expected": "Each row records the parsed prefix, the first unread character, and whether the model may be updated."
       },
       {
         "where": "In my program",
@@ -393,7 +395,7 @@
       "inputs": "Case: First substantive run\nstdin:\n12\n12x\n100\nExpected:\nvalue 100 rejected 1\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "value:17→12→12→100; rejected=1.\nvalue 100 rejected 1.\nA rejected line preserves value; a ninth line produces invalid.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "With no line, getline never calls update. An empty line calls update with text.empty(). The commit is value=candidate after checking ec, ptr and bounds.",
+      "errors": "If text with a suffix was accepted, compare the parser's stopping point with the end of the line. If entirely absent input changes the refusal count, check whether update was called.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

@@ -48,14 +48,16 @@
         "A controller expects keys OK and ADJ. An operator types OK! out of habit. Its first two letters match, but the third byte changes the command. The device needs the whole key.",
         "Separate a complete, valid input record from a rejected one first. After establishing that the array contains its '\\0', the text is ready for strcmp and strlen.",
         "A declaration char text[9] reserves nine cells. Eight can hold text bytes, with a cell left for '\\0' after the input. In that buffer OK still has length two.",
-        "Comparison needs only the first difference or a shared terminator. The example does not need to calculate either length before calling strcmp."
+        "Comparison needs only the first difference or a shared terminator. The example does not need to calculate either length before calling strcmp.",
+        "Suppose a device accepts only GO. First compare GO and GO? by eye. After the two matching letters, the first string has its terminator and the second still has a question mark. A matching beginning is useful for a prefix filter. A command must match in full."
       ]
     },
     {
       "id": "example",
       "title": "Read the result of strcmp",
       "paragraphs": [
-        "Two arrays hold REF, and a third holds REF!. Equal strings compare as zero. Then compare the shorter string with a longer string that shares its first three bytes."
+        "Two arrays hold REF, and a third holds REF!. Equal strings compare as zero. Then compare the shorter string with a longer string that shares its first three bytes.",
+        "Pass the complete accepted string to the library. Keep two separate notes: whether it is safe to read as a string and whether it is a known command. An accepted empty record, for instance, passes the first check and fails the second."
       ],
       "code": {
         "language": "c",
@@ -338,12 +340,12 @@
       "answer": "strcmp gives 0 for the first pair, so equal appears. In the second pair the first three bytes match, then the key's '\\0' precedes '!'. The sign check prints before."
     },
     "apply": {
-      "prompt": "A new command list accepts RUN and STOP. Which of RUN, RUN! and RUNNER should pass exact matching?",
-      "answer": "Only RUN matches. RUN! and RUNNER share the first three bytes but continue beyond them. strcmp with a check for zero distinguishes the exact command."
+      "prompt": "Check a new SET command under the same eight-byte limit. Consider separate inputs SET, SET 3 and SETabcdef. Which inputs reach the command check, which match exactly, and which are rejected before comparison?",
+      "answer": "SET is read and matches exactly. SET 3 only shares the beginning, so it is read but is unknown to the dictionary. SETabcdef has nine bytes and is rejected before comparison."
     },
     "practice": {
-      "strategy": "Use the supplied record validation first. Check equality with each complete key next. Calculate the length only after recognizing a key.",
-      "diagnosis": "The starter accepts OK! and prints known 3. Its byte count is correct, but the third byte should prevent an exact match."
+      "strategy": "Prepare a pair of records with the same beginning and different lengths. First decide whether each is a valid string input. Then check which command the program's contract allows.",
+      "diagnosis": "If OK! came out as known, compare its path with the path for OK. At which position do the strings differ, and does your condition reach that position?"
     },
     "syntax": {
       "termId": "strcmp",

@@ -23,6 +23,7 @@
       "title": "Files follow decision boundaries",
       "paragraphs": [
         "A repeated completion command should be safe. Count completed tasks from their state rather than from button presses.",
+        "There are two tasks. The operator completes the first task twice. Write what the counter should show and which record should keep its previous state. Then identify the file that checks the rule.",
         "As the core grows, main reads commands, model.hpp declares the interface, and model.cpp defines Board rules. Compiling main alone does not prove that the model implementation was linked.",
         "include/model.hpp declares Board, src/model.cpp implements its rules and main.cpp translates input into commands and output. Both cpp files need the header, while ordinary function definitions belong in the implementation. pragma once prevents repeated header inclusion within one translation unit; it does not repair repeated definitions across multiple translation units.",
         "A zero command adds an unfinished task and a positive number completes an existing task. Here an identifier equals its position plus one because deletion is absent. State that teaching restriction explicitly. TaskFlow uses persistent ids: if deletion were added, treating a moving position as identity could select the wrong task."
@@ -180,7 +181,8 @@
       "title": "Now try your own task",
       "paragraphs": [
         "Complete Board::apply in src/model.cpp. Build main.cpp with src/model.cpp and includeRoots=include; use a separate test main instead of two mains in one build.",
-        "Name the roles of main.cpp, model.hpp and model.cpp."
+        "Name the roles of main.cpp, model.hpp and model.cpp.",
+        "In your own check, add two tasks, complete the second twice, then send an unknown ID. Predict the task, completed, and refusal counts separately. Confirm that the intended record changes."
       ]
     }
   ],
@@ -358,7 +360,7 @@
       "The ninth addition is rejected; the original eight tasks remain.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "Two tasks, the first completed, done 1, rejected 0. A missing definition fails linking before execution; a domain rejection occurs in a running program.",
+    "hint": "Gather two observations: what went into the build, and what happened after the command. On paper, record the ID, completion flag, and refusal count separately after each event.",
     "steps": [
       {
         "where": "Before running",
@@ -430,7 +432,7 @@
       "inputs": "Case: First substantive run\nstdin:\n4 0 0 1 1\nExpected:\ntasks 2 done 1 rejected 0\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "Two TUs: main.cpp and src/model.cpp; the header is found through include.\n4 0 0 1 1 → tasks 2 done 1 rejected 0.\nThe ninth addition is rejected; the original eight tasks remain.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "Two tasks, the first completed, done 1, rejected 0. A missing definition fails linking before execution; a domain rejection occurs in a running program.",
+      "errors": "If the program does not start, look for the operation definition in the compiled .cpp files. If the command reached the model, compare the observed state and counters.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

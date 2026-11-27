@@ -16,6 +16,7 @@ import {mountConnectionPanel} from '../connections/panel.js';
 import {resolveMessage,isLocalNexusRequest} from './intents.js';
 import {textFor} from './strings.js';
 import {currentStudy} from '../learning/current-study.js';
+import {createLessonHelp,lessonHelpRoute} from './lesson-help.js';
 import {progressText} from '../learning/progress.js';
 import {createPersonality} from '../personality/controller.js';
 import {mountPersonalityPanel} from '../personality/panel.js';
@@ -57,6 +58,7 @@ export function openExperience(options) {
   const close=button(headActions,'close',()=>dispose({retainConnection:true}),'ak-icon');close.textContent='×';close.setAttribute('aria-label',t('close'));close.dataset.akroniklClose='';
   const body=el('div',dialog,'ak-body');const main=el('section',body,'ak-conversation');main.dataset.akConversation='';
   const log=el('div',main,'ak-messages');log.dataset.akroniklMessages='';log.setAttribute('role','log');log.setAttribute('aria-label',locale==='en'?'Conversation with Akronikl':'Разговор с Akronikl');log.setAttribute('aria-live','polite');log.setAttribute('aria-relevant','additions');log.tabIndex=0;
+  const localLessonHelp=createLessonHelp({log,isCurrent:()=>!dead&&lessonAllowed&&host.current()});
   const welcome=el('section',log,'ak-welcome');el('span',welcome,'ak-orbit','✦').setAttribute('aria-hidden','true');label(el('h3',welcome),'welcome');label(el('p',welcome),'intro');
   const latest=button(main,'newMessages',()=>{log.scrollTop=log.scrollHeight;latest.hidden=true;},'ak-latest');latest.hidden=true;
   const hints=el('div',main,'ak-suggestions');hints.setAttribute('aria-label',locale==='en'?'Suggestions':'Предложения');
@@ -172,7 +174,24 @@ export function openExperience(options) {
   function refreshDiagnostics(s=connections.snapshot()){diagnostic.textContent=JSON.stringify({profile:s.profileId,phase:s.phase,code:s.code,inspection:s.inspection,measurements:lastMetrics,externalAI:s.cloudEnabled},null,2);}
   function mountModels(){connectionPanel?.dispose();connectionPanel=mountConnectionPanel({parent:sections.model,documentRef:doc,controller:connections,locale,allowWebGPU:false});const d=sections.model.querySelector('details');if(d)d.open=true;}
   mountModels();renew();
-  function refreshHints(){hints.replaceChildren();hints.hidden=!suggestionsEnabled;if(!suggestionsEnabled)return;let inLesson=false;try{const r=host.platformState().route;inLesson=!!(r.lesson||r.lessonId);}catch{}for(const key of [inLesson?'simple':'where','academy','saveHelp'])button(hints,key,()=>{input.value=t(key);void submit(input.value,key==='simple'?resolveMessage(input.value):undefined);},'ak-chip');}
+  function refreshHints(){
+    localLessonHelp.reset();
+    hints.replaceChildren();
+    hints.hidden=!suggestionsEnabled;
+    if(!suggestionsEnabled)return;
+    const route=host.current()?options.readRoute():null;
+    const study=lessonAllowed?lessonHelpRoute(route,options.readCourseLocale()):null;
+    if(study){
+      const localHint=el('button',hints,'ak-chip',chatText('Помощь по уроку','Help with this lesson'));
+      localHint.type='button';
+      localHint.dataset.akLocalLessonHelp='';
+      localHint.addEventListener('click',()=>void localLessonHelp.open(study,locale,localHint));
+    }
+    const inLesson=!!(route?.lesson||route?.lessonId);
+    for(const key of [inLesson?'simple':'where','academy','saveHelp']){
+      button(hints,key,()=>{input.value=t(key);void submit(input.value,key==='simple'?resolveMessage(input.value):undefined);},'ak-chip');
+    }
+  }
   function showSection(key){settingsSection=key;for(const k of Object.keys(sections)){sections[k].hidden=k!==key;tabs[k].setAttribute('aria-pressed',String(k===key));}if(key==='advanced')refreshDiagnostics();}
   function toggleSettings(open){settingsOpen=open;drawer.hidden=!open;drawer.inert=!open;main.inert=open;branchRow.inert=open;if(open&&hasVoiceWork())stop();dialog.dataset.settingsOpen=String(open);gear.setAttribute('aria-expanded',String(open));if(open){showSection(settingsSection);drawerTitle.focus();}else gear.focus();}
   function appendMessage(role,text,badge='system',attachments=[],restored=null){

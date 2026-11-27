@@ -45,14 +45,16 @@
         "A training program receives a sensor's result count. Runtime allocation can reserve the validated number of integers. The pointer does not carry the length, so retain count separately.",
         "First verify a positive element count and that count times element size fits. Separate the steps: request bytes, check the result, initialize the elements, compute the sum, and release the block.",
         "Here sizeof *values uses the element type. It does not read memory through values. Unlike sizeof, values[0] accesses an object and is valid only after obtaining a block.",
-        "The exercise distinguishes controlled refusal from actual memory exhaustion. Flag 0 exercises the NULL path reproducibly with a small request."
+        "The exercise distinguishes controlled refusal from actual memory exhaustion. Flag 0 exercises the NULL path reproducibly with a small request.",
+        "Picture a two-cell log. First name the element count and the size of one element. A successful allocation supplies storage, but it has not set the values. Draw two empty cells and put numbers in them before reading. On failure the two cells are still only a plan."
       ]
     },
     {
       "id": "example",
       "title": "An array of three elements",
       "paragraphs": [
-        "Predict the sum after storing 1, 2 and 3. Identify the single path on which the array may be accessed."
+        "Predict the sum after storing 1, 2 and 3. Identify the single path on which the array may be accessed.",
+        "Trace the listing by its action boundaries. How many ints were requested? Did it get a block? Which elements are assigned values? This separation shows why checking the address alone does not make uninitialised cells ready to sum."
       ],
       "code": {
         "language": "c",
@@ -291,12 +293,12 @@
       "answer": "On success it stores 1, 2 and 3 and prints sum 6, then frees the block. With NULL it prints allocation-failed, then returns before writing."
     },
     "apply": {
-      "prompt": "Consider requests 6 1 and 6 0. What output demonstrates both successful initialization and controlled refusal without accessing the block?",
-      "answer": "On successful allocation, 6 1 produces sum 21 by adding 1 through 6. 6 0 gives allocation-failed. The flag refuses the request before malloc."
+      "prompt": "Compare the new practice inputs 2 1, 2 0 and 2 2. At which steps do the three paths diverge? Assume the allowed malloc request succeeds.",
+      "answer": "On success, 2 1 fills two cells and gives sum 3. Input 2 0 is valid, but policy returns NULL without malloc, giving allocation-failed. Input 2 2 is rejected while validating the allowed flags and produces invalid."
     },
     "practice": {
-      "strategy": "Check the flag, positive size and product before requesting storage. Check the returned address, initialize all used slots and release the block.",
-      "diagnosis": "For 4 1 the starter prints allocation-failed even though the request passed validation. Find out whether the final branch returns the address from malloc."
+      "strategy": "Make three marks on paper: request valid, block obtained and cells written. Find the check or action for each in the program. Pick a small allowed request and a policy rejection to exercise different paths.",
+      "diagnosis": "If 4 1 ended with allocation-failed, trace the return from allocate_values after the size and flag checks succeed. What value did the function return, and did it reach the allocation request?"
     },
     "syntax": {
       "termId": "allocation",

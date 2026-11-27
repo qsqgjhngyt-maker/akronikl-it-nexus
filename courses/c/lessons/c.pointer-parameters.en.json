@@ -41,14 +41,16 @@
       "paragraphs": [
         "A function must order two measurement limits. Pass the addresses of the existing objects, so the results go into the caller’s variables.",
         "C passes each argument by value. Here the copied value is an address, so a and &low point to the same low object. Changing the parameter a itself would change only its local copy of the address.",
-        "Establish pointer validity before reading or writing. In the example the addresses come from two live int objects, and the function also rejects NULL."
+        "Establish pointer validity before reading or writing. In the example the addresses come from two live int objects, and the function also rejects NULL.",
+        "Parameters a and b receive copies of addresses. Draw their arrows to low and high. Reassigning a would only move an arrow inside the function. Assigning to *a changes the caller's low. Swapping requires this second kind of action, and the original low value must be saved in time."
       ]
     },
     {
       "id": "example",
       "title": "Swap 9 and 4",
       "paragraphs": [
-        "Save the first value separately, then trace the assignments in their execution order."
+        "Save the first value separately, then trace the assignments in their execution order.",
+        "Before the first write, fill three cells: low, high and saved. Then update one cell at a time. As long as saved holds the old low value, that number remains available even after low loses it."
       ],
       "steps": [
         "The swap call passes the addresses of low and high. The check accepts both live objects.",
@@ -311,12 +313,12 @@
       "answer": "Both objects temporarily hold 4. saved preserved 9 before the write to low. The last assignment takes 9 from saved and writes it to high."
     },
     "apply": {
-      "prompt": "With low = 8 and high = 2, reason through normalize(&low, &low). Does it swap, and what triple does the same main print?",
-      "answer": "It compares 8 with itself and returns from the already-ordered branch without writing. The output is 8 2 0."
+      "prompt": "Two distinct objects hold 7 and 7. Trace normalize with their addresses. Then set the second object to 6 and call the function again. Give the final pair and the flag for each call.",
+      "answer": "The first call finds an acceptable order and leaves 7 7 with flag 0. After the second object becomes 6, the function saves the first value, exchanges the two and gives 6 7 with flag 1."
     },
     "practice": {
-      "strategy": "Check both pointers and decide whether a swap is necessary before writing. Save the earlier integer before the first assignment. Check reversed, ordered and equal pairs.",
-      "diagnosis": "With 12 and -2, the starter prints -2 -2 1. The second value is lost because saved contains the address of the object that was already changed. Compare the temporary's type with that of the value being saved."
+      "strategy": "Take two different numbers in reverse order and write down the actual values after each operation. Repeat with equal numbers and explain why the second case does not need any write.",
+      "diagnosis": "If both cells are equal after the swap, find the moment the old first number disappeared from both cells. The saved quantity must be a number at that point. What does the saved address point to if you copied an address instead?"
     },
     "syntax": {
       "termId": "temporary",

@@ -45,14 +45,16 @@
         "The operation starts with a valid store. A request needs a unique identifier and the sequence new → active → done. An invalid command must preserve the previous record.",
         "Separate checking from writing. First decide whether the change is valid. Assign only in the success branch. For insertion, store count and capacity separately.",
         "Check order affects the diagnostic result. If the store is full and the ID already exists, this contract reports duplicate because it checks the ID before capacity. A test can then explain each rejection unambiguously.",
-        "Rejection priority is part of the observable contract. The same final array can come with duplicate or full, so check both the reply and the records."
+        "Rejection priority is part of the observable contract. The same final array can come with duplicate or full, so check both the reply and the records.",
+        "Treat 101:1 as a card that can move only to the next state. Keep two boxes beside an operation: its decision and the state afterwards. After rejection, copy the previous state into the next box. After success, use the new state as the input to the next operation."
       ]
     },
     {
       "id": "example",
       "title": "A storage tray advances one state at a time",
       "paragraphs": [
-        "Tray 41 is in RECEIVED. The first attempt tries to store it immediately. Predict what the program prints after each attempt."
+        "Tray 41 is in RECEIVED. The first attempt tries to store it immediately. Predict what the program prints after each attempt.",
+        "The tray example contains two separate operations. Read the second state line even if the first operation was denied. It shows that rejection leaves the tray alone and does not stop the next operation from being checked."
       ],
       "code": {
         "language": "c",
@@ -292,12 +294,12 @@
       "answer": "The direct move to STORED is denied, giving denied and 41:1. From the preserved RECEIVED state, the move to CHECKED succeeds. The next lines are ok and 41:2."
     },
     "apply": {
-      "prompt": "A store with three slots holds 101:1 and 203:2. Insert 321:1, then request insertion of 203:1. Which rejection takes priority once the store is full?",
-      "answer": "The first insertion gives ok. The second finds existing ID 203 and gives duplicate even though there is no room. The final records are 101:1 203:2 321:1."
+      "prompt": "For the initial store 101:1 and 203:2, compare the lines '2 101 2 2 203 2' and '2 101 2 9 203 2'. What is the important difference between the two pairs of operations?",
+      "answer": "In the first line both operations are recognised. The first gives ok and 101:2, and the second gives denied, leaving 101:2 203:2. In the second line 9 is an unknown operation code, so the entire input yields invalid before the first command runs."
     },
     "practice": {
-      "strategy": "Write down the valid states and check order for each operation. Look up the record before testing capacity. Change the store only on a successful branch.",
-      "diagnosis": "Two insertions of 321 produce ok and full in the starter. The second operation reaches the capacity check before testing for an existing identifier."
+      "strategy": "Check the shape of the entire line first. For valid input, write down each operation result and the state afterwards. Include a case in which a full store also already contains the requested identifier.",
+      "diagnosis": "If a test produces full instead of duplicate, mark which two conditions were already true before the operation. Which refusal does the contract give priority?"
     },
     "syntax": {
       "termId": "invariant",

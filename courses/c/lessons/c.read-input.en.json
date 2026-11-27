@@ -60,7 +60,8 @@
       "title": "A valid cell count",
       "paragraphs": [
         "The input contains a space and a tab before 18 and a space after it. Trace this input in the listing and predict what will be stored in cells.",
-        "read_line limits and records bytes. strtol reads a decimal integer and marks the position after the digits. Only after all checks does read_integer store the integer and return READ_OK."
+        "read_line limits and records bytes. strtol reads a decimal integer and marks the position after the digits. Only after all checks does read_integer store the integer and return READ_OK.",
+        "First trace only strtol: the number it finds and where the digits end. Then open the full program. read_line reads the whole record. After resetting errno, the program converts the number and checks for conversion errors and the rack's range. Only then does it inspect the tail and store the value in cells."
       ],
       "code": {
         "language": "c",
@@ -111,7 +112,8 @@
       "title": "Separate numeric syntax from the input contract",
       "paragraphs": [
         "Trace the listing again with 0 in place of 18. The numeric syntax still parses, but the rack rule rejects zero.",
-        "A blank record differs from an empty stream. Both produce invalid here, but in an empty stream the program has not read a record."
+        "A blank record differs from an empty stream. Both produce invalid here, but in an empty stream the program has not read a record.",
+        "In the practice task the number can be negative. Test a valid negative reading, the same reading with a letter suffix, and an out-of-range reading separately. The latter two both print invalid for different reasons."
       ]
     }
   ],
@@ -375,15 +377,15 @@
   "teaching": {
     "scene": "An operator enters the number of charging cells on one line. The result should make clear whether the program accepted the entire record, including any spaces after the number.",
     "predict": {
-      "prompt": "The sample has a space and tab before 18 and a space after it. What does strtol consume, and what prints after the tail check?",
-      "answer": "strtol skips the leading whitespace and reads 18. end points at the trailing space. The loop skips it and reaches '\\0'. The value is in 1…48 and the output is cells 18."
+      "prompt": "Compare two short records: “27 ” and “27 cells”. What number does strtol recognise in both? Where does the end bookmark land in each case once the space is skipped? For this paper exercise, the number itself is already within the rack's 1–48 range.",
+      "answer": "Both records yield 27 and initially leave end at the space. After the space, end points to the terminating '\\0' in the first record and to c in the second. The value is in range, but only the first record is valid as a whole."
     },
     "apply": {
-      "prompt": "An operator enters `18 cells`. How can you verify that the number was recognized and the record was still rejected?",
-      "answer": "strtol returns 18, then skipping the space leaves end at c. Non-whitespace remains before '\\0', so expect invalid."
+      "prompt": "Consider two inputs: “47r” and “49 ”. Which rule does each break? Explain why the same invalid message does not by itself locate the cause.",
+      "answer": "In “47r” the number parses and is in range, but r remains. In “49 ” the number parses and a whitespace tail is allowed on its own, but 49 exceeds the upper bound of 48. To locate the cause, identify which check each input failed."
     },
     "practice": {
-      "strategy": "Separate reading the record, parsing the number and checking the tail. Trace where end stops after skipping whitespace. Test both ends of the range and a number followed by a unit.",
+      "strategy": "Choose two in-range readings and imagine appending a letter to one of them. Write three observations: what number was read, where the bookmark lands after spaces, and what may be printed. Then check the boundaries of the separate temperature rule.",
       "diagnosis": "If `12C` gives temperature 12, the numeric prefix already parsed. Inspect the byte at end after skipping whitespace. A complete record reaches '\\0'."
     },
     "syntax": {
@@ -393,6 +395,6 @@
       "explanation": "strtol sets end to the first unparsed byte. After whitespace is skipped, the byte at that address reveals whether part of the record remains.",
       "mistake": "An allowed numeric value establishes only the number. In `18 units`, the remaining text contains letters."
     },
-    "focus": "    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);\n    if (end == line || errno == ERANGE || value < low || value > high) {\n        return READ_BAD;\n    }\n    while (isspace((unsigned char)*end)) {\n        ++end;\n    }\n    if (*end != '\\0') {\n        return READ_BAD;\n    }\n\n    *out = (int)value;\n    return READ_OK;"
+    "focus": "    char *end;\n    errno = 0;\n    long value = strtol(line, &end, 10);"
   }
 }

@@ -45,14 +45,16 @@
         "The workshop stores tools under IDs 17, 23 and 42. The number 23 is not an index: it is the key on position 1.",
         "Search compares only the id of each record. The condition i < count keeps the index in bounds when count matches the number of accessible records. Compute the length where the array itself is visible. A parameter declared as tools[] receives a pointer, and sizeof on that parameter cannot give the element count.",
         "The function returns the address of a matching element or NULL. The array in main stays alive until main ends. const makes the matching pointer suitable for reading the record.",
-        "The returned pointer identifies the original record. It stays usable only while the referenced array is alive."
+        "The returned pointer identifies the original record. It stays usable only while the referenced array is alive.",
+        "Try a search on a paper log with two active rows, 9:4 and 4:0. The key 4 appears in different columns. Look only in the id column first. When you find a match, read the quantity from that same row even if it is zero."
       ]
     },
     {
       "id": "example",
       "title": "One key is found and the other is absent",
       "paragraphs": [
-        "Before running, mark which element find checks first and how many it examines for 30."
+        "Before running, mark which element find checks first and how many it examines for 30.",
+        "Trace one pass to a matching row and one to the end of the array. In the first, the caller has an address for a record. In the second, it only has an absence marker and there are no fields to read."
       ],
       "code": {
         "language": "c",
@@ -282,12 +284,12 @@
       "answer": "The second record's id matches 23. The search returns its address and prints 23 5. The search for 30 traverses the range with no match. NULL leads to missing."
     },
     "apply": {
-      "prompt": "The log contains a record 54:0 but no record 55. Which two different outputs show that zero stock is distinct from an absent record?",
-      "answer": "54 gives 54 0 because the record was found. 55 gives missing because the search returned no object address."
+      "prompt": "The working range contains 9:4 and 4:0, with room for a third row beyond it. How do the results differ for key 4 at length 1, key 4 at length 2 and key 8 at length 2?",
+      "answer": "At length 1, key 4 is missing because the 4 in the first row is a quantity. At length 2, the second row matches and the output is 4 0. Neither active row has key 8, so its result is missing."
     },
     "practice": {
-      "strategy": "Traverse only the active records. Compare the key with id and return the matching address. Check for a result before reading any member.",
-      "diagnosis": "The starter prints missing for 77 even though the last record has id 77 and quantity 26. Check which member is compared with the key."
+      "strategy": "Check the search with a zero quantity, the last row and an absent key. Write down the index of the match. If there is no match, mark where the range ends.",
+      "diagnosis": "If key 77 yielded missing, trace the last loop check. Was that row in the range, and which of its fields took part in the comparison?"
     },
     "syntax": {
       "termId": "lookup-key",

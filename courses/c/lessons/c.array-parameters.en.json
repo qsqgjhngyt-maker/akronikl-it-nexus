@@ -92,7 +92,8 @@
       "title": "The result reveals where the loop stopped",
       "paragraphs": [
         "A loop with index < length − 1 skips the last active position. Summing exposes that mistake when the last value is nonzero. For a threshold count, choose a case where the last element meets the threshold.",
-        "The compiler example declares two parameters for first_or_zero. The call supplies one argument. Locate the missing length in the declaration and explain where the program can compute it."
+        "The compiler example declares two parameters for first_or_zero. The call supplies one argument. Locate the missing length in the declaration and explain where the program can compute it.",
+        "Compare the symptoms: reading one extra slot can overcount, while skipping the last active slot can undercount. Choose a threshold that makes the boundary value a match. Otherwise the wrong loop bound may leave the count unchanged."
       ]
     },
     {
@@ -311,8 +312,8 @@
       "answer": "The first call visits 0, 1 and 2, adds 5 + 8 + 2 and returns 15. The second skips the loop body and returns the initial sum 0."
     },
     "apply": {
-      "prompt": "A sensor stores 7, 2 and 5, with only the first two active. What will the sum return, and how can you test zero active readings?",
-      "answer": "The active items are 7 and 2, so the sum is 9. A length of 0 on the same buffer should give 0 without reading an element."
+      "prompt": "The same buffer holds 4, 7, 6, and 7. With threshold 7, compare active lengths 2 and 4. Why can't you get the short result by scanning all four slots?",
+      "answer": "Length 2 reads only indices 0 and 1, with one match at 7. Length 4 includes another match at index 3, for a total of two. Using capacity instead of active length would incorrectly include the last match in the short scan."
     },
     "practice": {
       "strategy": "Validate the supplied length at the call boundary and list the indices it covers. Count only active items, and test equality to the threshold and length 0 separately.",

@@ -23,6 +23,7 @@
       "title": "A resource is more than memory",
       "paragraphs": [
         "A weak reference lets you check whether an object remains available. A successful lock result temporarily owns it and affects when it is destroyed.",
+        "Draw a counter and one arrow from an owner to a resource. What happens to that arrow on leaving the block? Add an observer and decide which arrow affects the lifetime of the object.",
         "A resource can be an open file or an occupied training license. Here active counts resources that have yet to be released.",
         "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit.",
         "The teaching Resource increments an external counter and decrements it in its destructor. std::make_unique creates an owner whose destructor deletes Resource. When work returns early, the local unique_ptr is still destroyed. This demonstrates ordinary early exit; cleanup during exception propagation is checked separately in the exception lesson."
@@ -361,7 +362,7 @@
       "Expect active 0 and invalid respectively.",
       "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
     ],
-    "hint": "lock() created a shared_ptr that keeps the parent alive. Once it is destroyed, root is the last owner.",
+    "hint": "Circle the exits from work. For each, list the owners already created and what the caller can inspect afterwards.",
     "steps": [
       {
         "where": "Before running",
@@ -422,7 +423,7 @@
       "inputs": "Case: Case 1\nstdin:\n0\nExpected:\nactive 0\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "One owner on early return, two on normal return.\nThe line 2 active 0.\nExpect active 0 and invalid respectively.\nAdd one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task.",
-      "errors": "lock() created a shared_ptr that keeps the parent alive. Once it is destroyed, root is the last owner.",
+      "errors": "When testing weak_ptr, include the result of lock() among the live shared_ptr objects for as long as it is in scope. Listing only observers cannot explain the time of destruction.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

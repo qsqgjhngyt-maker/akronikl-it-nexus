@@ -23,6 +23,7 @@
       "title": "Two independent lifetimes",
       "paragraphs": [
         "The listener list can change during a call. Keep the current invocation alive and look up the next handler again.",
+        "A notification list has a subscription to a window that is now closed. Mark separately whether the subscription exists and whether its recipient is alive. What observation would confirm removal of the subscription itself?",
         "A window may close before its event source. A captured raw this would then be unsafe. In this model the callback observes its receiver through weak_ptr, while a separate Subscription removes the entry from the source.",
         "An event source and its receiver can disappear at different times. Capturing a raw this does not extend the object’s lifetime; a callback retained by the source can outlive its receiver. Capturing shared_ptr extends ownership but can sometimes create a cycle. Before choosing a pointer, draw who owns the source, receiver and subscription.",
         "main owns SignalState and an integer receiver through shared_ptr. The callback stores a weak_ptr to the receiver, while Subscription stores a weak_ptr to the source. Neither subscription nor callback is required to keep its target alive. Test destroying each owner independently; absence of a crash is insufficient without checking invocation counts."
@@ -40,7 +41,7 @@
       "id": "example-1",
       "title": "Observer after owner removal",
       "paragraphs": [
-        "lock temporarily creates a shared_ptr only for a live object. After the first output the temporary value is destroyed; owner.reset removes the final owner."
+        "Mark where the temporary owner appears and where the original one goes away. At both points, write what the weak_ptr can observe. Then reveal the log."
       ],
       "prediction": [
         "#include <iostream>\n#include <memory>\nint main() {\n    auto owner = std::make_shared<int>(7);\n    std::weak_ptr<int> observer = owner;\n    if (auto value = observer.lock()) {\n        std::cout << *value << '\\n';\n    }\n    owner.reset();\n    std::cout << \"expired \" << observer.expired() << '\\n';\n}"
@@ -188,7 +189,8 @@
       "title": "Now try your own task",
       "paragraphs": [
         "Complete Subscription cleanup and the safe callback. The id snapshot determines order; a fresh find skips a handler already removed by another callback.",
-        "Draw signal→handler⇢receiver and Subscription⇢signal."
+        "Draw signal→handler⇢receiver and Subscription⇢signal.",
+        "In your own trace, compare removing the subscription while its recipient is alive with destroying a recipient while its subscription remains. Which observations need separate entries?"
       ]
     }
   ],
@@ -350,7 +352,7 @@
       "A destroyed receiver is not invoked; a removed subscription does not remain in the map.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "mode 0:value 2; mode 1:value−1; mode 2:value 1; subscriptions 0 after scope exit. The std::function copy survives removal of its map entry.",
+    "hint": "For each emit, mark two things: whether the subscription exists and whether it can obtain a live recipient. Check both marks again after leaving the scope.",
     "steps": [
       {
         "where": "Before running",
@@ -411,7 +413,7 @@
       "inputs": "Case: First substantive run\nstdin:\n0\nExpected:\nvalue 2 subscriptions 0\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "receiver can disappear before signal without a dangling access.\nvalue 2 subscriptions 0.\nA destroyed receiver is not invoked; a removed subscription does not remain in the map.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "mode 0:value 2; mode 1:value−1; mode 2:value 1; subscriptions 0 after scope exit. The std::function copy survives removal of its map entry.",
+      "errors": "A subscription count of zero need not tell you when the recipient disappeared. Check the owners' lifetimes and count actual handler calls separately in the log.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

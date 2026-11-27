@@ -41,14 +41,16 @@
       "paragraphs": [
         "An inner block gets a reading. Later code needs that number. Copy the reading into an outer variable while the source object is still alive.",
         "An address and a copied value have different periods of use. A pointer to a local object in the inner block is usable for access only during the object’s lifetime. The copied integer remains usable as long as saved lives.",
-        "A function can use the same model with an int *out from its caller. During the call, &sample points to a live object. The function copies the number there after a successful read."
+        "A function can use the same model with an int *out from its caller. During the call, &sample points to a live object. The function copies the number there after a successful read.",
+        "Mark entry to the inner block, result storage and the end of the block on a timeline. The temporary sensor's address is useful while the object exists. If the number is needed later, copy the number itself into a variable created outside the block. The result then has a lifetime of its own."
       ]
     },
     {
       "id": "example",
       "title": "The integer 9 outlives the inner block",
       "paragraphs": [
-        "The object on the left of the assignment belongs to the outer block. On the right, the code reads sensor while execution is still in its block."
+        "The object on the left of the assignment belongs to the outer block. On the right, the code reads sensor while execution is still in its block.",
+        "Apply the model to two objects in the reader function. A local number is needed for validation. The caller's object holds the result. The contract connects them by a single copy after success."
       ],
       "steps": [
         "main declares saved in the outer block. The inner block creates sensor holding 9.",
@@ -313,12 +315,12 @@
       "answer": "While the block is active, *current yields 9 and the assignment stores it in saved. After the closing brace, printf reads the live saved object and prints 9."
     },
     "apply": {
-      "prompt": "The caller's initial value is -8. What should separate runs with -9x and -9 print? Where does the function perform its only write through out?",
-      "answer": "-9x prints invalid and leaves -8. -9 prints -9. The write through out follows the pointer check and successful input, and occurs before the function returns."
+      "prompt": "Two calls reuse one output variable, which initially holds 17. The first input is 12 and the second is 8x. What is stored after each call, and how many assignments through out happened?",
+      "answer": "The first call stores 12. The second input is rejected, so the variable still holds 12. There is one write through out, in the successful first call."
     },
     "practice": {
-      "strategy": "Initialize the result in the caller. Read into a temporary object, separate failure from success, and check the old result after a failure.",
-      "diagnosis": "With input 27 the starter prints 17. Reading succeeds, but the result keeps its old value. Check whether the value is copied into the outer object."
+      "strategy": "Draw the boundary between parsing and storing the result. Take a valid number and the same number with a suffix. Predict which record leaves the output value as it was.",
+      "diagnosis": "If main signals changed after a rejection, look for a copy before validation finished. At which step did the program know the whole input was valid?"
     },
     "syntax": {
       "termId": "lifetime",
