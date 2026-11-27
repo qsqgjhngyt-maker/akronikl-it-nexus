@@ -23,6 +23,7 @@
       "title": "Why a queue is needed",
       "paragraphs": [
         "When a handler creates an event, decide where it enters relative to those already waiting. A sum does not encode order.",
+        "Two requests are already waiting. Handling the first adds another request to the back. Write down which request should be handled second and devise a log that could verify the order.",
         "An event can arrive while another is being handled. A queue separates arrival from processing: collect the input, then take the oldest item. Later this boundary will help keep a window responsive.",
         "A handler can generate another action: adding a task may require refreshing a list. Immediately invoking another handler increases stack depth and can expose partially updated state. A queue stores the new event until a later dispatch step. This changes when processing occurs, so ordering must be specified as a contract rather than treated as an implementation detail.",
         "For input 3, 2, 3, the laboratory first enqueues all three numbers. Each three appends a one to the back. Processing therefore visits 3, 2, 3, 1, 1: total ten and five calls. Recursive dispatch would process a one immediately after the first three. Equal final totals do not prove equal behaviour; an event log can distinguish the implementations."
@@ -344,7 +345,7 @@
       "24 dispatches; overflow rejects insertion without losing the three existing items.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "Each 3 appends 1 at the tail; the queued 2 stays ahead of the new ones. Total 10 does not distinguish another permutation: record the processing order.",
+    "hint": "Redraw the queue after processing one item. Mark the removed item and the new one added by the handler separately. Check both the intermediate log and the final result.",
     "steps": [
       {
         "where": "Before running",
@@ -405,7 +406,7 @@
       "inputs": "Case: First substantive run\nstdin:\n3 3 2 3\nExpected:\ntotal 10 processed 5\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "Order 3,2,3,1,1; five dispatches.\ntotal 10 processed 5.\n24 dispatches; overflow rejects insertion without losing the three existing items.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "Each 3 appends 1 at the tail; the queued 2 stays ahead of the new ones. Total 10 does not distinguish another permutation: record the processing order.",
+      "errors": "If the total agrees but the sequence looks doubtful, trace the queue again after the first insertion by a handler. The total alone cannot detect a reordering.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

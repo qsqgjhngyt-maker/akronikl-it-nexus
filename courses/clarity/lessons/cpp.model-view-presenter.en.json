@@ -23,6 +23,7 @@
       "title": "Responsibility boundaries",
       "paragraphs": [
         "The view receives the state after the model decides. Record all calls in a test so the final frame cannot hide missed updates.",
+        "The panel already shows two. The model receives a rejected decrease and then an allowed increase. Record two observations for the user: the model's decision and the numbers shown after each request.",
         "A stock model can check quantity without a screen. A view displays a number; a Presenter connects an incoming command to the model and a view update. Later, real Qt widgets can replace the fake.",
         "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make.",
         "The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept."
@@ -330,7 +331,7 @@
       "Log 2,7,4,4; INT_MAX leaves stock 2 with one rejection.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "show receives 2,7,4,4; the final command is rejected. last stores only 4 and cannot detect missing intermediate updates.",
+    "hint": "Before editing, write a row for model decisions and another for show calls, including the initial display. At each point, check that the presenter reads the actual model.",
     "steps": [
       {
         "where": "Before running",
@@ -391,7 +392,7 @@
       "inputs": "Case: First substantive run\nstdin:\n3 5 -3 20\nExpected:\nstock 4 rejected 1\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "Stock 7,4,4; one rejection.\nstock 4 rejected 1.\nLog 2,7,4,4; INT_MAX leaves stock 2 with one rejection.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "show receives 2,7,4,4; the final command is rejected. last stores only 4 and cannot detect missing intermediate updates.",
+      "errors": "If the last number looks right but the log is shorter than expected, compare all show calls from startup through a refusal. The last value alone cannot detect a missed call.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

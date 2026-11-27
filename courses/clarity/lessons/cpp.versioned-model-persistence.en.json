@@ -23,6 +23,7 @@
       "title": "A format is an interface",
       "paragraphs": [
         "Validate loaded data independently of the active model. Accept it only after checking version, entries and the end of input.",
+        "The live list holds one verified value. A new file arrives with a valid first record. What else must be checked before replacing the list? Write what should still be visible if loading fails.",
         "A saved file may be old or truncated. Updating the live model while reading can leave mixed old and new data on failure. Build a separate candidate and replace the model only after validating the complete format.",
         "Saved data may outlive a program version. A format needs an explicit marker and field definitions. Teaching format EV1 stores an element count and values in 0…100. A future EV2 cannot be guessed to mean EV1: identical numbers might have different meanings. Reject unknown versions before mutation, and treat migration as a separate checkable algorithm.",
         "EV1 3 1 2 3 declares three values; EV1 2 1 is incomplete, while EV1 0 extra contains unexpected data. Whitespace between tokens is flexible but extra tokens are forbidden. A count limit of eight bounds memory and the teaching scenarios. If a product needs more data, revise the limit and tests explicitly."
@@ -58,7 +59,7 @@
       "id": "example-2",
       "title": "Candidate 1,−2 does not replace 9",
       "paragraphs": [
-        "The whole candidate is checked. Predict both the result bool and the live model’s first element after detecting−2."
+        "Compare the two vectors before replace runs. If validation of the candidate stops early, does the swap take place? Predict the success flag and the value main reads."
       ],
       "prediction": [
         "#include <iostream>\n#include <vector>\nbool replace(std::vector<int> &values, std::vector<int> candidate) {\n    for (int x : candidate) {\n        if (x < 0) {\n            return false;\n        }\n    }\n    values.swap(candidate);\n    return true;\n}\nint main() {\n    std::vector<int> values{9};\n    std::cout << replace(values, {1, -2}) << ' ' << values[0] << '\\n';\n}"
@@ -182,7 +183,8 @@
       "title": "Now try your own task",
       "paragraphs": [
         "Complete EV1 loading and canonical saving. Roundtrip checks agreement between the pair; separate corrupted inputs check rejection and preservation of the old model.",
-        "Write the grammar: EV1 count, then exactly count values 0–100."
+        "Write the grammar: EV1 count, then exactly count values 0–100.",
+        "For your own check, submit a valid EV1 record, then change only its version tag to EV2 in a separate run. Record the load result and the state available immediately after a refusal."
       ]
     }
   ],
@@ -344,7 +346,7 @@
       "On rejection the entire vector matches before/after; roundtrip preserves values and count.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "The commit is model.swap(candidate) after EOF validation. A zero count does not permit trailing extra; before commit model remains{99}.",
+    "hint": "Record the version, field count, and end-of-input position on separate lines. Decide what should remain observable until all these checks finish.",
     "steps": [
       {
         "where": "Before running",
@@ -405,7 +407,7 @@
       "inputs": "Case: First substantive run\nstdin:\nEV1 3 1 2 3\nExpected:\nEV1 3 1 2 3\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "EV1 3 1 2 3 is valid; EV1 2 1 is truncated.\nThe first input saves as EV1 3 1 2 3; rejection prints rejected 99.\nOn rejection the entire vector matches before/after; roundtrip preserves values and count.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "The commit is model.swap(candidate) after EOF validation. A zero count does not permit trailing extra; before commit model remains{99}.",
+      "errors": "If a failed load changes the model, locate the first write to the live data. If the new format can only read what it wrote itself, compare it with an independently valid record.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

@@ -23,6 +23,7 @@
       "title": "From a sequence to events",
       "paragraphs": [
         "An event proposes an action and a handler decides whether the model changes. Draw the transition after validation.",
+        "A panel counter starts at zero. Ask it to subtract one and then add one. Draw the two successive states and mark where a rejection should be recorded.",
         "In an ordinary calculation, main chooses the next step. Here, incoming commands choose the order. Imagine an occupied-seat counter: +1 takes a seat, −1 releases one, and 0 resets the reading. The handler must preserve its bounds for every next command.",
         "A console exercise often receives all input and immediately computes an answer. An application must also respond when a user decides to add a task, edit a field or cancel an action. An event reports something that happened; its handler decides what that occurrence means for the model. Event order becomes part of the input, so rearranging the same actions can change the result.",
         "Consider a counter constrained to zero through ten. Event 1 increments it, -1 decrements it and 0 resets it. The trace 1, 0, 1 ends at one, whereas 1, 1, 0 ends at zero. This is event-driven logic even without a window. A graphical adapter can later translate button presses into these same commands without changing the counter rule."
@@ -348,7 +349,7 @@
       "First input: value 0 rejected 2; second: invalid. Update the boundary test with the rule.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "States 1,0,0; one rejection. −1 is a parsed command forbidden at 0. x breaks the whole trace format and produces invalid.",
+    "hint": "Label input parsing and event dispatch separately. For each integer command, record the handler's decision and whether the previous value was preserved.",
     "steps": [
       {
         "where": "Before running",
@@ -409,7 +410,7 @@
       "inputs": "Case: First substantive run\nstdin:\n4 1 1 -1 1\nExpected:\nvalue 2 rejected 0\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "value:0→1→2→1→2; rejected=0.\nvalue 2 rejected 0.\nFirst input: value 0 rejected 2; second: invalid. Update the boundary test with the rule.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "States 1,0,0; one rejection. −1 is a parsed command forbidden at 0. x breaks the whole trace format and produces invalid.",
+      "errors": "If one bad command produces invalid for the whole sequence, check whether a complete integer token was read. Input syntax and rejection of a well-formed event belong to different steps.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {

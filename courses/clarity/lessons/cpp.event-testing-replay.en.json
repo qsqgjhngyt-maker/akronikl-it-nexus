@@ -23,6 +23,7 @@
       "title": "From a call to a sequence",
       "paragraphs": [
         "A trace tests reproducibility, while an independent prediction tests correctness. Repeatable behaviour can still be wrong.",
+        "Two runs of a trace gave the same answer. Think of one command whose correct result you can work out independently. How could you use it to tell a repeatable mistake from a correct run?",
         "The same faulty algorithm can return the same answer twice. Replay therefore compares repetitions, while independent expected results and invariants check what the operations mean.",
         "An event-driven defect may require several actions. One add call says little about add→complete→complete or import→failure→save. A test needs initial state, an ordered trace, observations after steps and an expected outcome. Removing unnecessary events from a failing trace helps find a minimal reproduction.",
         "The laboratory starts at zero; each number is a delta and accepted results stay in 0…10. For 3, -5, 2, the first command succeeds, the second is rejected and the third yields five. Also check rejected=1. An implementation that merely clamps negative results to zero produces another outcome and violates preservation on rejection."
@@ -40,7 +41,7 @@
       "id": "example-1",
       "title": "Two replays of 3,−5,2",
       "paragraphs": [
-        "Each replay starts from 0. −5 is rejected at state 3, then +2 reaches 5. Write all three states before revealing the output."
+        "Each replay starts at 0. Write the state after each of the three commands, carrying the previous value forward whenever the check skips a change. Then predict the outcome of the second run."
       ],
       "prediction": [
         "#include <iostream>\n#include <vector>\nint replay(const std::vector<int> &trace) {\n    int state = 0;\n    for (int delta : trace) {\n        if (state + delta >= 0 && state + delta <= 10) {\n            state += delta;\n        }\n    }\n    return state;\n}\nint main() {\n    const std::vector<int> trace{3, -5, 2};\n    std::cout << replay(trace) << ' ' << replay(trace) << '\\n';\n}"
@@ -187,7 +188,8 @@
       "title": "Now try your own task",
       "paragraphs": [
         "Complete replay for an input trace while retaining bounded arithmetic. Independently predict value and rejected, then compare the two runs.",
-        "Calculate 3 3 -5 2 manually."
+        "Calculate 3 3 -5 2 manually.",
+        "Compare the two pairs +8, +2 and +8, +3 on a fresh model. Predict the final value and refusal count for both. Replay both traces and check the results against your calculation."
       ]
     }
   ],
@@ -349,13 +351,13 @@
       "Original:value 10 rejected 0; the mutant differs from the expectation.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
     ],
-    "hint": "A single+10 from 0 must yield 10 with no rejection. Both faulty replays may return 0 identically: agreement is not an independent oracle.",
+    "hint": "Choose an input at an included boundary. Before running, write down the initial state, expected result, and reason from the contract. Compare both repeats with that prediction.",
     "steps": [
       {
         "where": "Before running",
         "action": "Calculate 3 3 -5 2 manually.",
         "why": "The expectation must exist before execution.",
-        "expected": "value 5, rejected 1; states 0→3→3→5."
+        "expected": "Record four trace positions including the initial state, with the reason for each refusal. Check the run against that record."
       },
       {
         "where": "In my program",
@@ -410,7 +412,7 @@
       "inputs": "Case: First substantive run\nstdin:\n3 3 -5 2\nExpected:\nvalue 5 rejected 1 replay PASS\n",
       "result": "Source, exact input and actual stdout. If output files are specified, check their contents separately.",
       "checks": "value 5, rejected 1; states 0→3→3→5.\nvalue 5 rejected 1 replay PASS.\nOriginal:value 10 rejected 0; the mutant differs from the expectation.\nAdd one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution.",
-      "errors": "A single+10 from 0 must yield 10 with no rejection. Both faulty replays may return 0 identically: agreement is not an independent oracle.",
+      "errors": "If the two results agree but your prediction differs, find the first command with a divergent state. A repeatability check does not replace that independent prediction.",
       "recovery": "Keep the failing version separately. Compare the first differing step with the walkthrough; fix one cause and repeat an ordinary and a boundary case. Opening the reference does not replace your code."
     },
     "runAssessment": {
